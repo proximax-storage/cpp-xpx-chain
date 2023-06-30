@@ -6,6 +6,7 @@
 
 #include "LevyTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/cache_core/AccountStateCache.h"
 
 namespace catapult { namespace test {
 		
@@ -68,10 +69,11 @@ namespace catapult { namespace test {
 	
 	void AddMosaicWithLevy(cache::CatapultCacheDelta& cache, MosaicId id, Height height, state::LevyEntryData levy, const Key& owner) {
 		auto& mosaicCacheDelta = cache.sub<cache::MosaicCache>();
+		auto& accountStateCacheDelta = cache.sub<cache::AccountStateCache>();
 		auto definition = state::MosaicDefinition(height, owner, 1, model::MosaicProperties::FromValues({ { 1, 2, 20 } }));
 		auto entry = state::MosaicEntry(id, definition);
 		mosaicCacheDelta.insert(entry);
-		
+		accountStateCacheDelta.addAccount(owner, Height(1));
 		auto& levyCacheDelta = cache.sub<cache::LevyCache>();
 		auto levyEntry = CreateLevyEntry(id, levy, true, false);
 		levyCacheDelta.insert(levyEntry);

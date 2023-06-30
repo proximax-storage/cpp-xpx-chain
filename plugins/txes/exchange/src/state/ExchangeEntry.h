@@ -140,6 +140,12 @@ namespace catapult { namespace state {
 			return m_expiredBuyOffers;
 		}
 
+		ExchangeEntry upgrade(const Key& newOwner) const{
+			auto newEntry = ExchangeEntry(*this);
+			newEntry.m_owner = newOwner;
+			return newEntry;
+		}
+
 	private:
 		Key m_owner;
 		VersionType m_version;

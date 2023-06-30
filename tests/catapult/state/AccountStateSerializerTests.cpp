@@ -113,6 +113,8 @@ namespace catapult { namespace state {
 			accountState.SupplementalPublicKeys.node().set(std::move(temp));
 			test::FillWithRandomData(temp);
 			accountState.SupplementalPublicKeys.vrf().set(std::move(temp));
+			test::FillWithRandomData(temp);
+			accountState.SupplementalPublicKeys.upgrade().set(std::move(temp));
 			test::RandomFillAccountData(0, accountState, numMosaics, numMosaics);
 			accountState.Balances.optimize(test::GenerateRandomValue<MosaicId>());
 			return accountState;
@@ -226,6 +228,7 @@ namespace catapult { namespace state {
 					   + (HasFlag(AccountPublicKeys::KeyType::Linked, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
 					   + (HasFlag(AccountPublicKeys::KeyType::Node, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
 					   + (HasFlag(AccountPublicKeys::KeyType::VRF, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
+					   + (HasFlag(AccountPublicKeys::KeyType::Upgrade, accountState.SupplementalPublicKeys.mask()) ? Key::Size : 0)
 					   + accountState.Balances.lockedBalances().size() * sizeof(model::Mosaic)
 					   + accountState.Balances.balances().size() * sizeof(model::Mosaic)
 					   + accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot)
@@ -246,6 +249,10 @@ namespace catapult { namespace state {
 					pKeysPointer++;
 				}
 				if(HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask))
+				{
+					pKeysPointer++;
+				}
+				if(HasFlag(AccountPublicKeys::KeyType::Upgrade, header.LinkedKeysMask))
 				{
 					pKeysPointer++;
 				}
@@ -273,6 +280,7 @@ namespace catapult { namespace state {
 				accountState.SupplementalPublicKeys.linked().unset();
 				accountState.SupplementalPublicKeys.node().unset();
 				accountState.SupplementalPublicKeys.vrf().unset();
+				accountState.SupplementalPublicKeys.upgrade().unset();
 				auto* pKeysPointer = reinterpret_cast<const Key*>(GetBodyPointer(header));
 				if(HasFlag(AccountPublicKeys::KeyType::Linked, header.LinkedKeysMask))
 				{
@@ -287,6 +295,11 @@ namespace catapult { namespace state {
 				if(HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask))
 				{
 					accountState.SupplementalPublicKeys.vrf().set(*pKeysPointer);
+					pKeysPointer++;
+				}
+				if(HasFlag(AccountPublicKeys::KeyType::Upgrade, header.LinkedKeysMask))
+				{
+					accountState.SupplementalPublicKeys.upgrade().set(*pKeysPointer);
 					pKeysPointer++;
 				}
 				auto bytePointer = reinterpret_cast<const uint8_t*>(pKeysPointer);
@@ -350,6 +363,9 @@ namespace catapult { namespace state {
 
 				if (HasFlag(AccountPublicKeys::KeyType::VRF, header.LinkedKeysMask))
 					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.vrf(), pData);
+
+				if (HasFlag(AccountPublicKeys::KeyType::Upgrade, header.LinkedKeysMask))
+					pData += SetPublicKeyFromDataToBuffer(accountState.SupplementalPublicKeys.upgrade(), pData);
 				if(HasAdditionalData(AdditionalDataFlags::HasOldState, accountState.GetAdditionalDataMask()))
 				{
 					auto data = CopyToBuffer(*accountState.OldState);

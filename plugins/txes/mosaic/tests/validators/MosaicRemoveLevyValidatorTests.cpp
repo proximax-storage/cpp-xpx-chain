@@ -12,6 +12,7 @@
 #include "tests/test/LevyTestUtils.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "catapult/constants.h"
+#include "catapult/cache_core/AccountStateCache.h"
 
 namespace catapult {
     namespace validators {
@@ -123,6 +124,9 @@ namespace catapult {
             auto cache = test::LevyCacheFactory::Create(config);
             auto delta = cache.createDelta();
             auto signer = test::GenerateRandomByteArray<Key>();
+
+			auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
+			accountStateCacheDelta.addAccount(signer, Height(1));
 
             test::AddMosaic(delta, Currency_Mosaic_Id, Height(1), Eternal_Artifact_Duration, signer);
             cache.commit(Height());

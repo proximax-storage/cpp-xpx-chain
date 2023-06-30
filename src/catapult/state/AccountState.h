@@ -47,9 +47,26 @@ namespace catapult { namespace state {
 		Locked
 	};
 
+	/// Relation of accounts, as upgraded from or to.
+	enum class UpgradeRelationTypeResult : uint8_t {
+		/// Accounts are unrelated.
+		Unrelated,
+
+		/// Account has been upgraded from specified account.
+		UpgradeFrom = 0x01,
+
+		/// Account was upgraded to specified account..
+		UpgradedTo = 0x02
+	};
+
+	MAKE_BITWISE_ENUM(UpgradeRelationTypeResult)
+
 	enum class AdditionalDataFlags : size_t {
 		HasOldState = 0
 	};
+
+	/// Returns \c true if \a account has been upgraded or is the result of an upgrade.
+	UpgradeRelationTypeResult IsUpgraded(const AccountState& accountState);
 
 	/// Account state data.
 	struct AccountState : public VersionableState {
@@ -152,6 +169,12 @@ namespace catapult { namespace state {
 
 	/// Gets the vrf public key associated with \a accountState or a zero key.
 	Key GetVrfPublicKey(const AccountState& accountState);
+
+	/// Gets the upgrade public key associated with \a accountState or a zero key.
+	Key GetUpgradePublicKey(const AccountState& accountState);
+
+	/// Gets the public key of the account this \a accountState was upgraded from or a zero key.
+	Key GetPreviousPublicKey(const AccountState& accountState);
 
 	/// Requires that \a remoteAccountState and \a mainAccountState state are linked.
 	void RequireLinkedRemoteAndMainAccounts(const AccountState& remoteAccountState, const AccountState& mainAccountState);

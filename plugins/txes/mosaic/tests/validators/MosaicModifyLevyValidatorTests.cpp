@@ -13,6 +13,7 @@
 #include "tests/test/LevyTestUtils.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
+#include "catapult/cache_core/AccountStateCache.h"
 
 namespace catapult {
     namespace validators {
@@ -82,6 +83,9 @@ namespace catapult {
                 auto owner = test::GenerateRandomByteArray<Key>();
                 auto signer = test::GenerateRandomByteArray<Key>();
 
+				auto& accountStateCache = delta.sub<cache::AccountStateCache>();
+				accountStateCache.addAccount(owner, Height(1));
+				accountStateCache.addAccount(signer, Height(1));
                 auto xORLevy = model::MosaicLevyRaw(levy.Type, levy.Recipient,
                                                     test::UnresolveXor(MosaicId(levy.MosaicId.unwrap())), levy.Fee);
                 auto notification = model::MosaicModifyLevyNotification<1>(test::UnresolveXor(Currency_Mosaic_Id),

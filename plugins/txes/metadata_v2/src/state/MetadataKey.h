@@ -66,6 +66,8 @@ namespace catapult { namespace state {
 		/// Gets the namespace target.
 		NamespaceId namespaceTarget() const;
 
+		model::MetadataTarget metadataTarget() const;
+
 	private:
 		void require(model::MetadataType metadataType, const char* name) const;
 

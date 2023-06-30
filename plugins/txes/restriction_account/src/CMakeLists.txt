@@ -2,4 +2,4 @@ cmake_minimum_required(VERSION 3.2)
 
 set(PLUGIN_BASE_NAME catapult.plugins.restrictionaccount)
 
-catapult_tx_plugin_src(${PLUGIN_BASE_NAME} catapult.plugins.globalstore.sdk)
+catapult_tx_plugin_src(${PLUGIN_BASE_NAME} catapult.plugins.globalstore.sdk catapult.plugins.property)

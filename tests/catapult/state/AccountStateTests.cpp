@@ -46,6 +46,8 @@ namespace catapult { namespace state {
 		EXPECT_EQ(AccountType::Unlinked, state.AccountType);
 		EXPECT_EQ(Key(), GetLinkedPublicKey(state));
 		EXPECT_EQ(Key(), GetNodePublicKey(state));
+		EXPECT_EQ(Key(), GetVrfPublicKey(state));
+		EXPECT_EQ(Key(), GetUpgradePublicKey(state));
 		EXPECT_EQ(0u, state.Balances.size());
 	}
 

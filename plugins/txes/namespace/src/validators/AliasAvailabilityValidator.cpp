@@ -20,6 +20,8 @@
 
 #include "Validators.h"
 #include "src/cache/NamespaceCache.h"
+#include "src/catapult/cache_core/AccountStateCache.h"
+#include "src/catapult/cache_core/AccountStateCacheUtils.h"
 #include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
@@ -29,6 +31,7 @@ namespace catapult { namespace validators {
 	DEFINE_STATEFUL_VALIDATOR(AliasAvailability, [](const auto& notification, const auto& context) {
 		const auto& cache = context.Cache.template sub<cache::NamespaceCache>();
 		auto namespaceIter = cache.find(notification.NamespaceId);
+		const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
 		if (!namespaceIter.tryGet())
 			return Failure_Namespace_Alias_Namespace_Unknown;
 
@@ -42,6 +45,6 @@ namespace catapult { namespace validators {
 		else if (model::AliasAction::Unlink == notification.AliasAction && state::AliasType::None == aliasType)
 			return Failure_Namespace_Alias_Does_Not_Exist;
 
-		return root.owner() == notification.Owner ? ValidationResult::Success : Failure_Namespace_Alias_Owner_Conflict;
+		return cache::GetCurrentlyActiveAccountKey(accountStateCache, root.owner()) == notification.Owner ? ValidationResult::Success : Failure_Namespace_Alias_Owner_Conflict;
 	});
 }}

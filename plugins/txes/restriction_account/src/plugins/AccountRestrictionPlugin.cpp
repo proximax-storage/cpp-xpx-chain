@@ -86,7 +86,8 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreateAccountAddressRestrictionValueModificationObserver())
 				.add(observers::CreateAccountMosaicRestrictionValueModificationObserver())
-				.add(observers::CreateAccountOperationRestrictionValueModificationObserver());
+				.add(observers::CreateAccountOperationRestrictionValueModificationObserver())
+				.add(observers::CreatePropertyMigrationObserver());
 		});
 	}
 }}

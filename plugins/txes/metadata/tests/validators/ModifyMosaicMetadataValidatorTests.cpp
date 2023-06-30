@@ -23,11 +23,12 @@ namespace catapult { namespace validators {
 		void PopulateCache(cache::CatapultCache& cache) {
 			auto delta = cache.createDelta();
 			auto& mosaicCacheDelta = delta.sub<cache::MosaicCache>();
-			
+			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 			model::MosaicProperties::PropertyValuesContainer values{};
 			auto definition = state::MosaicDefinition(Height(1), Mosaic_Owner, 3, model::MosaicProperties::FromValues(values));
 			auto entry = state::MosaicEntry(Mosaic_Id, definition);
 			entry.increaseSupply(Amount(666));
+			accountStateCache.addAccount(Mosaic_Owner, Height(1));
 			mosaicCacheDelta.insert(entry);
 
 			cache.commit(Height(1));
@@ -36,13 +37,14 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const UnresolvedMosaicId& metadataId,
-				Key signer) {
+				Key signer,
+				const std::function<void(cache::CatapultCache&)>& populateCache = PopulateCache) {
 			// Arrange:
 			test::MutableBlockchainConfiguration config;
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
 			config.Network.SetPluginConfiguration(pluginConfig);
 			auto cache = test::MetadataCacheFactory::Create(config.ToConst());
-			PopulateCache(cache);
+			populateCache(cache);
 			auto pValidator = CreateModifyMosaicMetadataValidator();
 			auto notification = model::ModifyMosaicMetadataNotification_v1(signer, metadataId);
 
@@ -92,5 +94,31 @@ namespace catapult { namespace validators {
 				Failure_Metadata_Mosaic_Not_Found,
 				UnresolvedMosaicId(4),
 				test::GenerateRandomByteArray<Key>());
+	}
+	TEST(TEST_CLASS, SuccessWhenMosaicExistAndOwnerValidUpgraded) {
+		// Act:
+		Key signer = test::GenerateRandomByteArray<Key>();
+		AssertValidationResult(
+				ValidationResult::Success,
+				UnresolvedMosaicId(Mosaic_Id.unwrap()),
+				signer,
+				[&signer](cache::CatapultCache& cache) {
+					auto delta = cache.createDelta();
+					auto& mosaicCacheDelta = delta.sub<cache::MosaicCache>();
+					auto& accountStateCache = delta.sub<cache::AccountStateCache>();
+					model::MosaicProperties::PropertyValuesContainer values{};
+					auto definition = state::MosaicDefinition(Height(1), Mosaic_Owner, 3, model::MosaicProperties::FromValues(values));
+					auto entry = state::MosaicEntry(Mosaic_Id, definition);
+					entry.increaseSupply(Amount(666));
+					accountStateCache.addAccount(Mosaic_Owner, Height(1));
+					auto& ownerAcc = accountStateCache.find(Mosaic_Owner).get();
+					accountStateCache.addAccount(signer, Height(1));
+					auto& signerAcc = accountStateCache.find(signer).get();
+					signerAcc.OldState = std::make_shared<state::AccountState>(ownerAcc);
+					ownerAcc.SupplementalPublicKeys.upgrade().set(signer);
+					mosaicCacheDelta.insert(entry);
+
+					cache.commit(Height(1));
+				});
 	}
 }}

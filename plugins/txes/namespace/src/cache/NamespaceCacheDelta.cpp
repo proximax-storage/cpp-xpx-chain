@@ -59,7 +59,7 @@ namespace catapult { namespace cache {
 			, m_pConfigHolder(options.ConfigHolderPtr)
 	{}
 
-	void BasicNamespaceCacheDelta::insert(const state::RootNamespace& ns) {
+	void BasicNamespaceCacheDelta::insert(const state::RootNamespace& ns, bool isRenewal) {
 		// register the namespace for expiration at the end of its lifetime (if its lifetime changes later, it will not be pruned)
 		const auto& blockchainConfig = m_pConfigHolder->Config(height());
 		const auto& pluginConfig = blockchainConfig.Network.template GetPluginConfiguration<config::NamespaceConfiguration>();
@@ -69,17 +69,18 @@ namespace catapult { namespace cache {
 
 		auto historyIter = m_pHistoryById->find(ns.id());
 		auto* pHistory = historyIter.get();
+
 		if (pHistory) {
 			// if the owner changed, remove all of the current root's children
 			const auto& activeChildren = pHistory->back().children();
-			if (pHistory->back().owner() != ns.owner()) {
+			// If the owner changed but it is a renewal, then it is just the owner updating after an account upgrade.
+			if (pHistory->back().owner() != ns.owner() && !isRenewal) {
 				RemoveAll(*m_pNamespaceById, activeChildren);
 				decrementActiveSize(activeChildren.size());
 			} else {
 				incrementDeepSize(activeChildren.size());
 			}
-
-			pHistory->push_back(ns.owner(), nsLifetimeWithGracePeriod);
+			pHistory->push_back(ns.owner(), nsLifetimeWithGracePeriod, isRenewal);
 			incrementDeepSize();
 			return;
 		}

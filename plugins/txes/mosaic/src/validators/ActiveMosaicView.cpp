@@ -21,6 +21,8 @@
 #include "Validators.h"
 #include "ActiveMosaicView.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
+#include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 
 namespace catapult { namespace validators {
 
@@ -42,6 +44,7 @@ namespace catapult { namespace validators {
 		if (!IsValidationResultSuccess(result))
 			return result;
 
-		return iter.get().definition().owner() != owner ? Failure_Mosaic_Owner_Conflict : ValidationResult::Success;
+		auto& accountStateCache = m_cache.sub<cache::AccountStateCache>();
+		return cache::GetCurrentlyActiveAccountKey(accountStateCache, iter.get().definition().owner()) != owner ? Failure_Mosaic_Owner_Conflict : ValidationResult::Success;
 	}
 }}

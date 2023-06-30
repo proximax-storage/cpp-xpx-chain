@@ -6,6 +6,8 @@
 
 #include "Validators.h"
 #include "src/cache/SuperContractCache.h"
+#include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 
 namespace catapult { namespace validators {
 
@@ -13,10 +15,11 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(Deactivate, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& superContractCache = context.Cache.sub<cache::SuperContractCache>();
+		const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
 		auto superContractCacheIter = superContractCache.find(notification.SuperContract);
 		auto& superContractEntry = superContractCacheIter.get();
 
-		if (superContractEntry.owner() != notification.Signer && superContractEntry.mainDriveKey() != notification.Signer)
+		if (cache::GetCurrentlyActiveAccountKey(accountStateCache, superContractEntry.owner()) != notification.Signer && cache::GetCurrentlyActiveAccountKey(accountStateCache, superContractEntry.owner()) != notification.Signer)
 			return Failure_SuperContract_Operation_Is_Not_Permitted;
 
 		if (superContractEntry.mainDriveKey() != notification.DriveKey)

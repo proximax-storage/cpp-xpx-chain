@@ -20,7 +20,6 @@ namespace {
 	///Move supplemental account keys
 	void TransferSupplementalKeys(state::AccountState& originalAccount, state::AccountState& newAccount)
 	{
-
 		newAccount.SupplementalPublicKeys.linked().set(originalAccount.SupplementalPublicKeys.linked().get());
 		originalAccount.SupplementalPublicKeys.linked().unset();
 
@@ -29,6 +28,8 @@ namespace {
 
 		newAccount.SupplementalPublicKeys.vrf().set(originalAccount.SupplementalPublicKeys.vrf().get());
 		originalAccount.SupplementalPublicKeys.vrf().unset();
+
+		originalAccount.SupplementalPublicKeys.upgrade().set(newAccount.PublicKey);
 	}
 	void TransferGenerateNewState(state::AccountState& originalAccount, state::AccountState& newAccount, Height eventHeight)
 	{

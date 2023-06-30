@@ -46,8 +46,12 @@ namespace catapult { namespace state {
 			/// VRF public key.
 			VRF = 0x04,
 
+			/// Upgraded public key.
+
+			Upgrade = 0x08,
+
 			/// All valid keys.
-			All = Linked | Node | VRF
+			All = Linked | Node | VRF | Upgrade
 		};
 
 		// endregion
@@ -176,12 +180,19 @@ namespace catapult { namespace state {
 		/// Gets the vrf public key accessor.
 		PublicKeyAccessor<Key>& vrf();
 
+		/// Gets the (const) node public key accessor.
+		const PublicKeyAccessor<Key>& upgrade() const;
+
+		/// Gets the node public key accessor.
+		PublicKeyAccessor<Key>& upgrade();
+
 
 
 	private:
 		PublicKeyAccessor<Key> m_linkedPublicKeyAccessor;
 		PublicKeyAccessor<Key> m_nodePublicKeyAccessor;
 		PublicKeyAccessor<Key> m_vrfPublicKeyAccessor;
+		PublicKeyAccessor<Key> m_upgradePublicKeyAccessor;
 	};
 
 	MAKE_BITWISE_ENUM(AccountPublicKeys::KeyType)

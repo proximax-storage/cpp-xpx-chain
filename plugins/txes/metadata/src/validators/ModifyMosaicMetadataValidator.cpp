@@ -7,6 +7,8 @@
 #include "Validators.h"
 #include "plugins/txes/mosaic/src/cache/MosaicCache.h"
 #include "catapult/validators/ValidatorContext.h"
+#include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 
 namespace catapult { namespace validators {
 
@@ -18,12 +20,14 @@ namespace catapult { namespace validators {
 			return Failure_Metadata_MosaicId_Malformed;
 
 		const auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
+		const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
+
 		auto it = mosaicCache.find(MosaicId(notification.MetadataId.unwrap()));
 
 		if (!it.tryGet())
 			return Failure_Metadata_Mosaic_Not_Found;
 
-		if (it.get().definition().owner() != notification.Signer)
+		if (cache::GetCurrentlyActiveAccountKey(accountStateCache, it.get().definition().owner()) != notification.Signer)
 			return Failure_Metadata_Mosaic_Modification_Not_Permitted;
 
 		return ValidationResult::Success;

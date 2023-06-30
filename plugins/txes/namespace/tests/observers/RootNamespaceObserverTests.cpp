@@ -23,6 +23,7 @@
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/cache_core/AccountStateCache.h"
 
 namespace catapult { namespace observers {
 
@@ -50,7 +51,7 @@ namespace catapult { namespace observers {
 
 			// - seed the cache
 			auto& namespaceCacheDelta = context.cache().sub<cache::NamespaceCache>();
-			seedCache(namespaceCacheDelta);
+			seedCache(context.cache());
 
 			// Act:
 			test::ObserveNotification(*pObserver, notification, context);
@@ -59,17 +60,22 @@ namespace catapult { namespace observers {
 			checkCache(namespaceCacheDelta);
 		}
 
-		void SeedCacheEmpty(cache::NamespaceCacheDelta& namespaceCacheDelta) {
+		void SeedCacheEmpty(cache::CatapultCacheDelta& catapultCacheDelta) {
 			// Sanity:
+			auto& namespaceCacheDelta = catapultCacheDelta.sub<cache::NamespaceCache>();
 			test::AssertCacheContents(namespaceCacheDelta, {});
 		}
 
 		auto SeedCacheWithRoot25TreeSigner(const Key& signer) {
-			return [&signer](auto& namespaceCacheDelta) {
+			return [&signer](cache::CatapultCacheDelta& catapultCacheDelta) {
 				// Arrange: create a cache with { 25 } and { 25, 36 }
+				auto& namespaceCacheDelta = catapultCacheDelta.sub<cache::NamespaceCache>();
+				auto& accountStateCacheDelta = catapultCacheDelta.sub<cache::AccountStateCache>();
 				namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), signer, test::CreateLifetime(10, 123)));
 				namespaceCacheDelta.insert(state::Namespace(test::CreatePath({ 25, 36 })));
 
+
+				accountStateCacheDelta.addAccount(signer, Height(0));
 				// Sanity:
 				test::AssertCacheContents(namespaceCacheDelta, { 25, 36 });
 			};
@@ -257,6 +263,54 @@ namespace catapult { namespace observers {
 		}
 	}
 
+	TEST(TEST_CLASS, ObserverAddsNamespaceOnCommit_RootRenewalChangeOwnerFromUpgrade) {
+		// Arrange: create a root namespace for removal
+		auto signer = test::GenerateRandomByteArray<Key>();
+		auto owner = test::GenerateRandomByteArray<Key>();
+		auto notification = CreateRootNotification(signer, NamespaceId(25));
+
+		// Act: remove it
+		RunRootTest(
+				notification,
+				ObserverTestContext(NotifyMode::Commit, Height{444}),
+				[&signer, &owner](auto& catapultCacheDelta) {
+					// Arrange: create a cache with { 25, 26 }
+					cache::NamespaceCacheDelta& namespaceCacheDelta = catapultCacheDelta.template sub<cache::NamespaceCache>();
+					namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), owner, test::CreateLifetime(10, 555)));
+					namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(26), owner, test::CreateLifetime(10, 555)));
+					auto& space = namespaceCacheDelta.find(NamespaceId(25)).get();
+					namespaceCacheDelta.insert(state::Namespace(test::CreatePath({ 25, 36 })));
+					namespaceCacheDelta.insert(state::Namespace(test::CreatePath({ 25, 37 })));
+					namespaceCacheDelta.insert(state::Namespace(test::CreatePath({ 25, 38 })));
+					cache::AccountStateCacheDelta& accountStateCacheDelta = catapultCacheDelta.template sub<cache::AccountStateCache>();
+					accountStateCacheDelta.addAccount(owner, Height(1));
+					accountStateCacheDelta.addAccount(signer, Height(1));
+					auto& signerAcc = accountStateCacheDelta.find(signer).get();
+					auto& ownerAcc = accountStateCacheDelta.find(owner).get();
+
+					signerAcc.OldState = std::make_shared<state::AccountState>(ownerAcc);
+
+					ownerAcc.SupplementalPublicKeys.upgrade().set(signer);
+
+					// Sanity:
+					test::AssertCacheContents(namespaceCacheDelta, { 25, 26, 36, 37, 38 });
+				},
+				[&signer](auto& namespaceCacheDelta) {
+					// Assert: the root was transferred
+					EXPECT_EQ(5u, namespaceCacheDelta.activeSize());
+					// Three children were transfered and one root was updated.
+					EXPECT_EQ(9u, namespaceCacheDelta.deepSize());
+					ASSERT_TRUE(namespaceCacheDelta.contains(NamespaceId(25)));
+
+					auto namespaceIter = namespaceCacheDelta.find(NamespaceId(25));
+					const auto& entry = namespaceIter.get();
+					EXPECT_EQ(Namespace_Base_Id, entry.ns().parentId());
+
+					EXPECT_EQ(signer, entry.root().owner());
+					EXPECT_EQ(entry.root().size(), 3);
+					EXPECT_FALSE(entry.root().empty());
+				});
+	}
 	// endregion
 
 	// region rollback
@@ -270,8 +324,9 @@ namespace catapult { namespace observers {
 		RunRootTest(
 				notification,
 				ObserverTestContext(NotifyMode::Rollback, Height{444}),
-				[&signer](auto& namespaceCacheDelta) {
+				[&signer](auto& catapultCacheDelta) {
 					// Arrange: create a cache with { 25, 26 }
+					auto& namespaceCacheDelta = catapultCacheDelta.template sub<cache::NamespaceCache>();
 					namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), signer, test::CreateLifetime(10, 20)));
 					namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(26), signer, test::CreateLifetime(10, 20)));
 
@@ -285,6 +340,8 @@ namespace catapult { namespace observers {
 					EXPECT_TRUE(namespaceCacheDelta.contains(NamespaceId(26)));
 				});
 	}
+
+
 
 	// endregion
 }}

@@ -107,6 +107,7 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
+					"PropertyMigrationObserver",
 					"AccountAddressRestrictionValueModificationObserver",
 					"AccountMosaicRestrictionValueModificationObserver",
 					"AccountOperationRestrictionValueModificationObserver"

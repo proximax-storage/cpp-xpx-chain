@@ -24,6 +24,7 @@
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/cache_core/AccountStateCache.h"
 
 namespace catapult { namespace validators {
 
@@ -69,13 +70,14 @@ namespace catapult { namespace validators {
 			static constexpr auto Default_Id = UnresolvedMosaicId(55);
 		};
 
-		template<typename TTestTraits, typename TMosaicId>
+		template<typename TTestTraits, typename TMosaicId, typename TPopulateCache = std::function<void(cache::CatapultCacheDelta&)>>
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				TMosaicId affectedMosaicId,
 				Height height,
 				const Key& transactionSigner,
-				const Key& artifactOwner) {
+				const Key& artifactOwner,
+				const TPopulateCache& populateCache = [](cache::CatapultCacheDelta&) {}) {
 			// Arrange:
 			auto pValidator = TTestTraits::Create();
 
@@ -86,6 +88,10 @@ namespace catapult { namespace validators {
 			auto cache = test::MosaicCacheFactory::Create();
 			auto delta = cache.createDelta();
 			test::AddMosaic(delta, ResolvedMosaicTraits::Default_Id, Height(50), BlockDuration(100), artifactOwner);
+			auto& accountStateCache = delta.template sub<cache::AccountStateCache>();
+			accountStateCache.addAccount(artifactOwner, Height(1));
+
+			populateCache(delta);
 			cache.commit(Height());
 
 			auto readOnlyCache = delta.toReadOnly();
@@ -140,6 +146,18 @@ namespace catapult { namespace validators {
 	MOSAIC_ID_TRAITS_BASED_DUAL_TEST(SuccessWhenMosaicIsActiveAndOwnerMatches) {
 		// Assert:
 		AssertValidationResult<TTestTraits>(ValidationResult::Success, TTraits::Default_Id, Height(100));
+	}
+
+	MOSAIC_ID_TRAITS_BASED_DUAL_TEST(SuccessWhenMosaicIsActiveAndOwnerMatchesDueToUpgrade) {
+		// Assert:
+		auto artifactOwner = test::GenerateRandomByteArray<Key>();
+		auto signer = test::GenerateRandomByteArray<Key>();
+		AssertValidationResult<TTestTraits>(ValidationResult::Success, TTraits::Default_Id, Height(100), signer, artifactOwner, [&](cache::CatapultCacheDelta& cache){
+			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
+			accountStateCache.addAccount(signer, Height(1));
+			auto& owner = accountStateCache.find(artifactOwner).get();
+			owner.SupplementalPublicKeys.upgrade().set(signer);
+		});
 	}
 	// region nonzero property mask
 

@@ -81,7 +81,7 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Inserts the root namespace \a ns into the cache.
-		void insert(const state::RootNamespace& ns);
+		void insert(const state::RootNamespace& ns, bool isExtension = false);
 
 		/// Inserts the namespace \a ns into the cache.
 		void insert(const state::Namespace& ns);

@@ -21,14 +21,15 @@
 
 #include "Observers.h"
 #include "src/cache/MetadataCache.h"
+#include "catapult/cache_core/AccountStateCache.h"
+#include "src/cache/MetadataCacheUtils.h"
 
 namespace catapult { namespace observers {
 
 	namespace {
-		void UpdateCache(cache::MetadataCacheDelta& cache, const state::MetadataKey& metadataKey, const RawBuffer& valueBuffer) {
-			auto metadataIter = cache.find(metadataKey.uniqueKey());
-
-			if (!metadataIter.tryGet()) {
+		void UpdateCache(cache::MetadataCacheDelta& cache, cache::ReadOnlyAccountStateCache accountStateCache, const state::MetadataKey& metadataKey, const RawBuffer& valueBuffer) {
+			auto metadataIter = cache::FindEntryKeyIfParticipantsHaveBeenUpgradedByCrawlingHistory(accountStateCache, cache, metadataKey);
+			if (!metadataIter.second) {
 				auto metadataEntry = state::MetadataEntry(metadataKey);
 				metadataEntry.value().update(valueBuffer);
 				cache.insert(metadataEntry);
@@ -36,9 +37,18 @@ namespace catapult { namespace observers {
 			}
 
 			if (0 == valueBuffer.Size)
-				cache.remove(metadataKey.uniqueKey());
-			else
-				metadataIter.get().value().update(valueBuffer);
+				cache.remove(metadataIter.first.uniqueKey());
+			else {
+				if(metadataIter.first.uniqueKey() == metadataKey.uniqueKey())
+					metadataIter.second->value().update(valueBuffer);
+				else {
+					cache.remove(metadataIter.first.uniqueKey());
+					auto metadataEntry = state::MetadataEntry(metadataIter.first);
+					metadataEntry.value().update(valueBuffer);
+					cache.insert(metadataEntry);
+				}
+
+			}
 		}
 	}
 
@@ -46,6 +56,7 @@ namespace catapult { namespace observers {
 			const model::MetadataValueNotification<1>& notification,
 			const ObserverContext& context) {
 		auto& cache = context.Cache.sub<cache::MetadataCache>();
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>().asReadOnly();
 
 		int32_t valueSize = notification.ValueSize;
 		if (NotifyMode::Commit == context.Mode) {
@@ -57,6 +68,6 @@ namespace catapult { namespace observers {
 		}
 
 		auto metadataKey = state::ResolveMetadataKey(notification.PartialMetadataKey, notification.MetadataTarget, context.Resolvers);
-		UpdateCache(cache, metadataKey, { notification.ValuePtr, static_cast<size_t>(valueSize) });
+		UpdateCache(cache, accountStateCache, metadataKey, { notification.ValuePtr, static_cast<size_t>(valueSize) });
 	})
 }}

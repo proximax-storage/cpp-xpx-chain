@@ -48,6 +48,7 @@ namespace catapult { namespace plugins {
 			template<typename TTransaction>
 			static void RaiseCustomNotifications(const TTransaction& transaction, NotificationSubscriber& sub) {
 				sub.notify(AccountPublicKeyNotification<1>(transaction.TargetKey));
+				sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {}, {transaction.TargetKey}));
 			}
 		};
 
@@ -59,6 +60,7 @@ namespace catapult { namespace plugins {
 
 			template<typename TTransaction>
 			static void RaiseCustomNotifications(const TTransaction& transaction, NotificationSubscriber& sub) {
+				sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {}, {transaction.TargetKey}));
 				sub.notify(MosaicRequiredNotification<1>(transaction.TargetKey, transaction.TargetMosaicId));
 			}
 		};
@@ -71,6 +73,7 @@ namespace catapult { namespace plugins {
 
 			template<typename TTransaction>
 			static void RaiseCustomNotifications(const TTransaction& transaction, NotificationSubscriber& sub) {
+				sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {}, {transaction.TargetKey}));
 				sub.notify(NamespaceRequiredNotification<1>(transaction.TargetKey, transaction.TargetNamespaceId));
 			}
 		};

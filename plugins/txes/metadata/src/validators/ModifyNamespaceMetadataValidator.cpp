@@ -7,6 +7,8 @@
 #include "Validators.h"
 #include "plugins/txes/namespace/src/cache/NamespaceCache.h"
 #include "catapult/validators/ValidatorContext.h"
+#include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 
 namespace catapult { namespace validators {
 
@@ -18,12 +20,14 @@ namespace catapult { namespace validators {
 			return Failure_Metadata_NamespaceId_Malformed;
 
 		const auto& namespaceCache = context.Cache.sub<cache::NamespaceCache>();
+		const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
+
 		auto it = namespaceCache.find(notification.MetadataId);
 
 		if (!it.tryGet())
 			return Failure_Metadata_Namespace_Not_Found;
 
-		if (it.get().root().owner() != notification.Signer)
+		if (cache::GetCurrentlyActiveAccountKey(accountStateCache, it.get().root().owner()) != notification.Signer)
 			return Failure_Metadata_Namespace_Modification_Not_Permitted;
 
 		return ValidationResult::Success;

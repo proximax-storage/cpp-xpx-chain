@@ -45,6 +45,15 @@ namespace catapult { namespace cache {
 
 	/// Find an account state by public key or address using a ReadOnlyAccountStateCache \a cache and a \a publicKey and a pointer to a constant copy.
 	std::unique_ptr<const state::AccountState> FindAccountStateByPublicKeyOrAddress(const cache::ReadOnlyAccountStateCache& cache, const Key& publicKey);
+
 	/// Find an account state by public key or address using a AccountStateCacheDelta \a cache and a \a publicKey. Returns a pointer to the actual data. Note: AccountState not owned
+	/// Important. This pointer is only alive for as long as the delta set is alive and the record is not removed!
 	state::AccountState* GetAccountStateByPublicKeyOrAddress(cache::AccountStateCacheDelta& cache, const Key& publicKey);
+
+	/// Get the currently active key used by an originally upgraded account. Does no validation in case the account contains no public key record.
+	const Key GetCurrentlyActiveAccountKey(const cache::ReadOnlyAccountStateCache& cache, const state::AccountState& state);
+
+	/// Get the currently active key used by an originally upgraded account. Does no validation in case the account contains no public key record.
+	const Key GetCurrentlyActiveAccountKey(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey);
+
 }}

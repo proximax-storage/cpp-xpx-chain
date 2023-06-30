@@ -113,6 +113,10 @@ namespace catapult { namespace state {
 		/// \note The method shares the children of this root namespace with the new root namespace.
 		RootNamespace renew(const NamespaceLifetime& newLifetime) const;
 
+		/// Creates a new root namespace with \a lifetime and new owner.
+		/// \note The method shares the children of this root namespace with the new root namespace.
+		RootNamespace renew(const Key& newOwner, const NamespaceLifetime& newLifetime) const;
+
 		/// Creates an ordered set of child namespace paths.
 		/// \note Child paths are ordered lexicographically.
 		OrderedChildPaths sortedChildPaths() const;

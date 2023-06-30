@@ -85,4 +85,20 @@ namespace catapult { namespace cache {
 
 		return nullptr;
 	}
+
+	const Key GetCurrentlyActiveAccountKey(const cache::ReadOnlyAccountStateCache& cache, const state::AccountState& state) {
+		auto trackedState = state;
+		while(trackedState.SupplementalPublicKeys.upgrade()){
+			trackedState = cache.find(trackedState.SupplementalPublicKeys.upgrade().get()).get();
+		}
+		return trackedState.PublicKey;
+	}
+
+	const Key GetCurrentlyActiveAccountKey(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey) {
+		auto trackedState = cache.find(accountKey).get();
+		while(trackedState.SupplementalPublicKeys.upgrade()){
+			trackedState = cache.find(trackedState.SupplementalPublicKeys.upgrade().get()).get();
+		}
+		return trackedState.PublicKey;
+	}
 }}

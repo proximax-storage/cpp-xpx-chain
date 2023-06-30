@@ -22,6 +22,8 @@
 #include "Validators.h"
 #include "src/cache/NamespaceCache.h"
 #include "catapult/validators/ValidatorContext.h"
+#include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 
 namespace catapult { namespace validators {
 
@@ -29,6 +31,7 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(RequiredNamespace, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& cache = context.Cache.sub<cache::NamespaceCache>();
+		const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
 
 		auto namespaceIter = cache.find(notification.NamespaceId);
 		if (!namespaceIter.tryGet())
@@ -39,7 +42,7 @@ namespace catapult { namespace validators {
 		if (!root.lifetime().isActiveOrGracePeriod(context.Height))
 			return Failure_Namespace_Expired;
 
-		return root.owner() == notification.Owner
+		return cache::GetCurrentlyActiveAccountKey(accountStateCache, root.owner()) == notification.Owner
 				? ValidationResult::Success
 				: Failure_Namespace_Owner_Conflict;
 	})

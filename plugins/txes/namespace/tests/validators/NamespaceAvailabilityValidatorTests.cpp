@@ -27,6 +27,7 @@
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/cache_core/AccountStateCache.h"
 
 namespace catapult { namespace validators {
 
@@ -47,8 +48,7 @@ namespace catapult { namespace validators {
 			auto cache = test::NamespaceCacheFactory::Create(Grace_Period_Duration);
 			{
 				auto cacheDelta = cache.createDelta();
-				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();
-				seedCache(namespaceCacheDelta);
+				seedCache(cacheDelta);
 				cache.commit(Height());
 			}
 
@@ -98,23 +98,31 @@ namespace catapult { namespace validators {
 			EXPECT_EQ(expectedResult, result) << "height " << height;
 		}
 
-		state::RootNamespace CreateRootNamespace(NamespaceId id, const state::NamespaceLifetime& lifetime) {
-			return state::RootNamespace(id, test::CreateRandomOwner(), lifetime);
+		state::RootNamespace CreateRootNamespace(NamespaceId id, const Key& owner, const state::NamespaceLifetime& lifetime) {
+			return state::RootNamespace(id, owner, lifetime);
 		}
 	}
 
 	namespace {
-		void SeedCacheWithRoot25(cache::NamespaceCacheDelta& namespaceCacheDelta) {
+		void SeedCacheWithRoot25(cache::CatapultCacheDelta& cacheDelta) {
 			// Arrange: create a cache with { 25 }
-			namespaceCacheDelta.insert(CreateRootNamespace(NamespaceId(25), test::CreateLifetime(10, 20)));
+			auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();
+			auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
+			auto owner = test::CreateRandomOwner();
+			accountStateCacheDelta.addAccount(owner, Height(1));
+			namespaceCacheDelta.insert(CreateRootNamespace(NamespaceId(25), owner, test::CreateLifetime(10, 20)));
+
 
 			// Sanity:
 			test::AssertCacheContents(namespaceCacheDelta, { 25 });
 		}
 
 		auto SeedCacheWithRoot25Signer(const Key& signer) {
-			return [&signer](auto& namespaceCacheDelta) {
+			return [&signer](auto& cacheDelta) {
 				// Arrange: create a cache with { 25 }
+				auto& namespaceCacheDelta = cacheDelta.template sub<cache::NamespaceCache>();
+				auto& accountStateCacheDelta = cacheDelta.template sub<cache::AccountStateCache>();
+				accountStateCacheDelta.addAccount(signer, Height(1));
 				namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), signer, test::CreateLifetime(10, 20)));
 
 				// Sanity:
@@ -201,6 +209,32 @@ namespace catapult { namespace validators {
 		}
 	}
 
+	TEST(ROOT_TEST_CLASS, CanRenewRootNamespaceWithUpgradedOwnerBeforeGracePeriodExpiration) {
+		// Arrange: namespace is deactivated at height 20 and grace period is 25, so it is available starting at 45
+		for (auto height : { Height(45), Height(100) }) {
+			// Act: try to renew the owner of a root that has expired and exceeded its grace period
+			auto signer = test::GenerateRandomByteArray<Key>();
+			auto owner = test::GenerateRandomByteArray<Key>();
+			auto notification = model::RootNamespaceNotification<1>(signer, NamespaceId(25), Default_Duration);
+			RunRootTest(ValidationResult::Success, notification, height, [&signer, &owner](auto& cacheDelta) {
+				// Arrange: create a cache with { 25 }
+				auto& namespaceCacheDelta = cacheDelta.template sub<cache::NamespaceCache>();
+				auto& accountStateCacheDelta = cacheDelta.template sub<cache::AccountStateCache>();
+				namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), signer, test::CreateLifetime(10, 20)));
+				accountStateCacheDelta.addAccount(owner, Height(1));
+				accountStateCacheDelta.addAccount(signer, Height(1));
+
+				auto &ownerAcc = accountStateCacheDelta.find(owner).get();
+				auto &signerAcc = accountStateCacheDelta.find(signer).get();
+				ownerAcc.SupplementalPublicKeys.upgrade().set(signer);
+				signerAcc.OldState = std::make_shared<state::AccountState>(ownerAcc);
+
+				// Sanity:
+				test::AssertCacheContents(namespaceCacheDelta, { 25 });
+			});
+		}
+	}
+
 	TEST(ROOT_TEST_CLASS, CanChangeRootNamespaceOwnerAfterGracePeriodExpiration) {
 		// Arrange: namespace is deactivated at height 20 and grace period is 25, so it is available starting at 45
 		for (auto height : { Height(45), Height(100) }) {
@@ -227,8 +261,9 @@ namespace catapult { namespace validators {
 				expectedResult,
 				notification,
 				height,
-				[&signer, &lifetime](auto& namespaceCacheDelta) {
+				[&signer, &lifetime](auto& cacheDelta) {
 					// Arrange: create a cache with { 25 }
+					auto& namespaceCacheDelta = cacheDelta.template sub<cache::NamespaceCache>();
 					namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), signer, lifetime));
 
 					// Sanity:
@@ -268,8 +303,12 @@ namespace catapult { namespace validators {
 
 	namespace {
 		auto SeedCacheWithRoot25TreeSigner(const Key& signer) {
-			return [&signer](auto& namespaceCacheDelta) {
+			return [&signer](auto& cacheDelta) {
+
+				auto& namespaceCacheDelta = cacheDelta.template sub<cache::NamespaceCache>();
 				// Arrange: create a cache with { 25 }, { 25, 36 } and { 25, 36, 49 }
+				auto& accountStateCacheDelta = cacheDelta.template sub<cache::AccountStateCache>();
+				accountStateCacheDelta.addAccount(signer, Height(1));
 				namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), signer, test::CreateLifetime(10, 20)));
 				namespaceCacheDelta.insert(state::Namespace(test::CreatePath({ 25, 36 })));
 				namespaceCacheDelta.insert(state::Namespace(test::CreatePath({ 25, 36, 49 })));

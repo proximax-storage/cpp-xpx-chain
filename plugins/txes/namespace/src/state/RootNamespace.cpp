@@ -150,6 +150,10 @@ namespace catapult { namespace state {
 		return RootNamespace(m_id, m_owner, newLifetime, m_pChildren);
 	}
 
+	RootNamespace RootNamespace::renew(const Key& newOwner, const NamespaceLifetime& newLifetime) const {
+		return RootNamespace(m_id, newOwner, newLifetime, m_pChildren);
+	}
+
 	RootNamespace::OrderedChildPaths RootNamespace::sortedChildPaths() const {
 		RootNamespace::OrderedChildPaths orderedPaths;
 		for (const auto& child : *m_pChildren)

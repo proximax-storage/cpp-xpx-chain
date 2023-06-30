@@ -82,6 +82,10 @@ namespace catapult { namespace state {
 		return NamespaceId(m_targetId);
 	}
 
+	model::MetadataTarget MetadataKey::metadataTarget() const {
+		return model::MetadataTarget{m_metadataType, m_targetId};
+	}
+
 	void MetadataKey::require(model::MetadataType metadataType, const char* name) const {
 		if (m_metadataType == metadataType)
 			return;

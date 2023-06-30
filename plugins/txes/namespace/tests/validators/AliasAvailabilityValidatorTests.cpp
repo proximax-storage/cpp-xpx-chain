@@ -23,6 +23,7 @@
 #include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
+#include "catapult/cache_core/AccountStateCache.h"
 
 using namespace catapult::model;
 
@@ -41,8 +42,8 @@ namespace catapult { namespace validators {
 		auto CreateAndSeedCache(TSeedCacheFunc seedCache) {
 			auto cache = test::NamespaceCacheFactory::Create();
 			auto cacheDelta = cache.createDelta();
-			auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();
-			seedCache(namespaceCacheDelta);
+
+			seedCache(cacheDelta);
 			cache.commit(Height());
 			return cache;
 		}
@@ -80,7 +81,32 @@ namespace catapult { namespace validators {
 		RunAvailabilityTest(Failure_Namespace_Alias_Owner_Conflict, notification, [&owner](auto& cache) {
 			auto namespaceOwner = owner;
 			namespaceOwner[0] ^= 0xFF;
-			cache.insert(state::RootNamespace(Default_Namespace_Id, namespaceOwner, test::CreateLifetime(100, 300)));
+			auto& accountStateCacheDelta = cache.template sub<cache::AccountStateCache>();
+			accountStateCacheDelta.addAccount(namespaceOwner, Height(1));
+
+			auto& namespaceCacheDelta = cache.template sub<cache::NamespaceCache>();
+			namespaceCacheDelta.insert(state::RootNamespace(Default_Namespace_Id, namespaceOwner, test::CreateLifetime(100, 300)));
+		});
+	}
+
+	TEST(TEST_CLASS, SuccessWhenOwnerIsUpgradedAccount) {
+		// Arrange:
+		auto owner = test::GenerateRandomByteArray<Key>();
+		auto signer = test::GenerateRandomByteArray<Key>();
+		AliasOwnerNotification<1> notification(signer, Default_Namespace_Id, AliasAction::Link);
+
+		// Assert:
+		RunAvailabilityTest(ValidationResult::Success, notification, [&owner, &signer](auto& cache) {
+			cache::AccountStateCacheDelta& accountStateCacheDelta = cache.template sub<cache::AccountStateCache>();
+			accountStateCacheDelta.addAccount(owner, Height(1));
+			accountStateCacheDelta.addAccount(signer, Height(1));
+
+			auto &ownerAcc = accountStateCacheDelta.find(owner).get();
+			auto &signerAcc = accountStateCacheDelta.find(signer).get();
+			ownerAcc.SupplementalPublicKeys.upgrade().set(signer);
+			signerAcc.OldState = std::make_shared<state::AccountState>(ownerAcc);
+			auto& namespaceCacheDelta = cache.template sub<cache::NamespaceCache>();
+			namespaceCacheDelta.insert(state::RootNamespace(Default_Namespace_Id, owner, test::CreateLifetime(100, 300)));
 		});
 	}
 
@@ -91,7 +117,10 @@ namespace catapult { namespace validators {
 
 		// Assert: notification is at height 200, so limit lifetime to 150
 		RunAvailabilityTest(Failure_Namespace_Expired, notification, [&owner](auto& cache) {
-			cache.insert(state::RootNamespace(Default_Namespace_Id, owner, test::CreateLifetime(100, 150)));
+			auto& accountStateCacheDelta = cache.template sub<cache::AccountStateCache>();
+			accountStateCacheDelta.addAccount(owner, Height(1));
+			auto& namespaceCacheDelta = cache.template sub<cache::NamespaceCache>();
+			namespaceCacheDelta.insert(state::RootNamespace(Default_Namespace_Id, owner, test::CreateLifetime(100, 150)));
 		});
 	}
 
@@ -132,13 +161,16 @@ namespace catapult { namespace validators {
 
 			// Assert:
 			RunAvailabilityTest(expectedResult, notification, [&owner, linkState](auto& cache) {
-				cache.insert(state::RootNamespace(Default_Namespace_Id, owner, test::CreateLifetime(100, 300)));
-				cache.insert(state::Namespace(test::CreatePath({ 123, 234 })));
-				TTraits::Prepare(cache);
+				auto& namespaceCacheDelta = cache.template sub<cache::NamespaceCache>();
+				auto& accountStateCacheDelta = cache.template sub<cache::AccountStateCache>();
+				accountStateCacheDelta.addAccount(owner, Height(1));
+				namespaceCacheDelta.insert(state::RootNamespace(Default_Namespace_Id, owner, test::CreateLifetime(100, 300)));
+				namespaceCacheDelta.insert(state::Namespace(test::CreatePath({ 123, 234 })));
+				TTraits::Prepare(namespaceCacheDelta);
 
 				// type of alias does not matter
 				if (LinkState::Set == linkState)
-					test::SetRandomAlias<MosaicId>(cache, TTraits::Notification_Namespace_Id);
+					test::SetRandomAlias<MosaicId>(namespaceCacheDelta, TTraits::Notification_Namespace_Id);
 			});
 		}
 	}

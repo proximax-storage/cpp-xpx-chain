@@ -82,6 +82,7 @@ namespace catapult { namespace observers {
 				EXPECT_EQ(newAccount.Balances.size(), 1);
 				EXPECT_EQ(newAccount.Balances.get(Harvesting_Mosaic_Id), Amount(1000));
 				EXPECT_EQ(newAccount.SupplementalPublicKeys.linked().get(), remoteKey);
+				EXPECT_EQ(account.SupplementalPublicKeys.upgrade().get(), newAccount.PublicKey);
 
 			}
 			else
@@ -97,6 +98,7 @@ namespace catapult { namespace observers {
 				EXPECT_EQ(account.Balances.size(), 1);
 				EXPECT_EQ(account.Balances.get(Harvesting_Mosaic_Id), Amount(1000));
 				EXPECT_EQ(account.SupplementalPublicKeys.linked().get(), remoteKey);
+				EXPECT_EQ(account.SupplementalPublicKeys.upgrade().get(), Key());
 
 			}
 		}

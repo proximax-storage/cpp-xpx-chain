@@ -6,7 +6,8 @@
 
 #include "Validators.h"
 #include "src/cache/DriveCache.h"
-
+#include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 namespace catapult { namespace validators {
 
 	using Notification = model::DriveFilesRewardNotification<1>;
@@ -14,6 +15,8 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(DriveFilesReward, Notification)(const MosaicId& streamingMosaicId) {
 		return MAKE_STATEFUL_VALIDATOR(DriveFilesReward, [streamingMosaicId](const Notification &notification, const ValidatorContext &context) {
 			const auto &driveCache = context.Cache.sub<cache::DriveCache>();
+			const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
+
 			auto driveIter = driveCache.find(notification.DriveKey);
 			const auto &driveEntry = driveIter.get();
 
@@ -34,7 +37,7 @@ namespace catapult { namespace validators {
 				if (pInfo->Uploaded == 0)
 					return Failure_Service_Zero_Upload_Info;
 
-				if (!driveEntry.hasReplicator(pInfo->Participant) && driveEntry.owner() != pInfo->Participant)
+				if (!driveEntry.hasReplicator(pInfo->Participant) && cache::GetCurrentlyActiveAccountKey(accountStateCache, driveEntry.owner()) != pInfo->Participant)
 					return Failure_Service_Participant_Is_Not_Registered_To_Drive;
 
 				if (driveEntry.hasReplicator(pInfo->Participant)) {

@@ -38,6 +38,7 @@ namespace catapult { namespace validators {
 		void PopulateCache(cache::CatapultCache& cache) {
 			auto delta = cache.createDelta();
 			auto& namespaceCacheDelta = delta.sub<cache::NamespaceCache>();
+			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 
 			namespaceCacheDelta.insert(state::RootNamespace(Root_Namespace_Id, Namespace_Owner, state::NamespaceLifetime(Height(10), Height(20))));
 			namespaceCacheDelta.insert(state::Namespace(CreatePath({ Root_Namespace_Id.unwrap(), Child_Namespace_Id.unwrap() })));
@@ -46,14 +47,15 @@ namespace catapult { namespace validators {
 				Child_Namespace_Id.unwrap(),
 				Child_Child_Namespace_Id.unwrap()
 			})));
-
+			accountStateCache.addAccount(Namespace_Owner, Height(1));
 			cache.commit(Height(1));
 		}
 
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const NamespaceId& metadataId,
-				Key signer) {
+				Key signer,
+				const std::function<void(cache::CatapultCache&)>& populateCache = PopulateCache) {
 			// Arrange:
 			test::MutableBlockchainConfiguration config;
 			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
@@ -63,7 +65,7 @@ namespace catapult { namespace validators {
 			config.Network.SetPluginConfiguration(namespacePluginConfig);
 			config.Network.SetPluginConfiguration(metadataPluginConfig);
 			auto cache = test::MetadataCacheFactory::Create(config.ToConst());
-			PopulateCache(cache);
+			populateCache(cache);
 			auto pValidator = CreateModifyNamespaceMetadataValidator();
 			auto notification = model::ModifyNamespaceMetadataNotification_v1(signer, metadataId);
 
@@ -113,5 +115,35 @@ namespace catapult { namespace validators {
 			Failure_Metadata_Namespace_Not_Found,
 			CreateValidNamespaceId(3),
 			test::GenerateRandomByteArray<Key>());
+	}
+
+	TEST(TEST_CLASS, SuccessWhenNamespaceExistAndOwnerValidUpgraded) {
+		// Act:
+		Key signer = test::GenerateRandomByteArray<Key>();
+		AssertValidationResult(
+				ValidationResult::Success,
+				Root_Namespace_Id,
+				signer,
+				[&signer](cache::CatapultCache& cache) {
+					auto delta = cache.createDelta();
+					auto& namespaceCacheDelta = delta.sub<cache::NamespaceCache>();
+					auto& accountStateCache = delta.sub<cache::AccountStateCache>();
+
+					namespaceCacheDelta.insert(state::RootNamespace(Root_Namespace_Id, Namespace_Owner, state::NamespaceLifetime(Height(10), Height(20))));
+					namespaceCacheDelta.insert(state::Namespace(CreatePath({ Root_Namespace_Id.unwrap(), Child_Namespace_Id.unwrap() })));
+					namespaceCacheDelta.insert(state::Namespace(CreatePath({
+							Root_Namespace_Id.unwrap(),
+							Child_Namespace_Id.unwrap(),
+							Child_Child_Namespace_Id.unwrap()
+					})));
+					accountStateCache.addAccount(Namespace_Owner, Height(1));
+					auto& ownerAcc = accountStateCache.find(Namespace_Owner).get();
+					accountStateCache.addAccount(signer, Height(1));
+					auto& signerAcc = accountStateCache.find(signer).get();
+
+					ownerAcc.SupplementalPublicKeys.upgrade().set(signer);
+					signerAcc.OldState = std::make_shared<state::AccountState>(ownerAcc);
+					cache.commit(Height(1));
+				});
 	}
 }}

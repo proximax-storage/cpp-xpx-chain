@@ -37,6 +37,9 @@ namespace catapult { namespace state {
 
 		if (HasFlag(AccountPublicKeys::KeyType::VRF, accountPublicKeys.mask()))
 			output.write(accountPublicKeys.vrf().get());
+
+		if (HasFlag(AccountPublicKeys::KeyType::Upgrade, accountPublicKeys.mask()))
+			output.write(accountPublicKeys.upgrade().get());
 	}
 	void AccountStateNonHistoricalSerializer::Save(const AccountState& accountState, io::OutputStream& output) {
 		// write version
@@ -128,6 +131,7 @@ namespace catapult { namespace state {
 			auto accountPublicKeysMask = static_cast<AccountPublicKeys::KeyType>(io::Read8(input));
 			accountPublicKeys.linked().unset();
 			accountPublicKeys.node().unset();
+			accountPublicKeys.upgrade().unset();
 			if (HasFlag(AccountPublicKeys::KeyType::Linked, accountPublicKeysMask))
 				ReadSupplementalPublicKey(input, accountPublicKeys.linked());
 
@@ -136,6 +140,9 @@ namespace catapult { namespace state {
 
 			if (HasFlag(AccountPublicKeys::KeyType::VRF, accountPublicKeysMask))
 				ReadSupplementalPublicKey(input, accountPublicKeys.vrf());
+
+			if (HasFlag(AccountPublicKeys::KeyType::Upgrade, accountPublicKeysMask))
+				ReadSupplementalPublicKey(input, accountPublicKeys.upgrade());
 
 		}
 		AccountState LoadAccountStateWithoutHistory(io::InputStream& input, VersionType& version) {

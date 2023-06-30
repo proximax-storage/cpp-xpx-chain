@@ -36,6 +36,7 @@ namespace catapult { namespace state {
 		bool AreLinked(const AccountState& lhs, const AccountState& rhs) {
 			return GetLinkedPublicKey(lhs) == rhs.PublicKey && GetLinkedPublicKey(rhs) == lhs.PublicKey;
 		}
+
 	}
 
 	bool IsRemote(AccountType accountType) {
@@ -46,6 +47,16 @@ namespace catapult { namespace state {
 
 		default:
 			return false;
+		}
+	}
+
+	UpgradeRelationTypeResult IsUpgraded(const AccountState& accountState) {
+		auto result = UpgradeRelationTypeResult::Unrelated;
+		if(accountState.IsLocked()) {
+			result |= UpgradeRelationTypeResult::UpgradeFrom;
+		}
+		if(accountState.OldState) {
+			result |= UpgradeRelationTypeResult::UpgradedTo;
 		}
 	}
 
@@ -78,5 +89,13 @@ namespace catapult { namespace state {
 
 	Key GetNodePublicKey(const AccountState& accountState) {
 		return accountState.SupplementalPublicKeys.node().get();
+	}
+
+	Key GetUpgradePublicKey(const AccountState& accountState) {
+		return accountState.SupplementalPublicKeys.upgrade().get();
+	}
+
+	Key GetPreviousPublicKey(const AccountState& accountState) {
+		return accountState.OldState ? accountState.OldState->PublicKey : Key();
 	}
 }}

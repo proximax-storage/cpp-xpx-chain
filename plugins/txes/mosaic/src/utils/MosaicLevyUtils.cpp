@@ -10,7 +10,8 @@
 #include "src/model/MosaicLevy.h"
 #include "src/validators/Validators.h"
 #include "src/validators/ActiveMosaicView.h"
-
+#include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 namespace catapult {
     namespace utils {
 
@@ -50,13 +51,15 @@ namespace catapult {
                 return validators::Failure_Mosaic_Id_Not_Found;
 
             auto &mosaicCache = context.Cache.sub<cache::MosaicCache>();
+			const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
+
             auto mosaicIter = mosaicCache.find(id);
             if (!mosaicIter.tryGet())
                 return validators::Failure_Mosaic_Id_Not_Found;
 
             /// 0. check if signer allowed to modify levy
             auto &entry = mosaicIter.get();
-            if (entry.definition().owner() != signer)
+            if (cache::GetCurrentlyActiveAccountKey(accountStateCache, entry.definition().owner()) != signer)
                 return validators::Failure_Mosaic_Ineligible_Signer;
 
             return validators::ValidationResult::Success;

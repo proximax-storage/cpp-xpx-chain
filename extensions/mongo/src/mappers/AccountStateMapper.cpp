@@ -79,6 +79,7 @@ namespace catapult { namespace mongo { namespace mappers {
 		{
 			StreamPublicKey(builder, "node", mask, state::AccountPublicKeys::KeyType::Node, accountPublicKeys.node());
 			StreamPublicKey(builder, "vrf", mask, state::AccountPublicKeys::KeyType::VRF, accountPublicKeys.vrf());
+			StreamPublicKey(builder, "upgrade", mask, state::AccountPublicKeys::KeyType::Upgrade, accountPublicKeys.upgrade());
 		}
 
 		builder << bson_stream::close_document;

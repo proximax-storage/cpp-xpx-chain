@@ -23,6 +23,7 @@
 #include "src/cache/MosaicCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 #include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
@@ -63,8 +64,9 @@ namespace catapult { namespace validators {
 			if (entry.definition().properties().is(model::MosaicFlags::Transferable))
 				return ValidationResult::Success;
 
+			const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
 			// 3. if it's NOT transferable then owner must be either sender or recipient
-			if (!IsMosaicOwnerParticipant(context.Cache, entry.definition().owner(), notification, context.Resolvers))
+			if (!IsMosaicOwnerParticipant(context.Cache, cache::GetCurrentlyActiveAccountKey(accountStateCache, entry.definition().owner()), notification, context.Resolvers))
 				return Failure_Mosaic_Non_Transferable;
 
 			return ValidationResult::Success;

@@ -65,7 +65,7 @@ namespace catapult { namespace state {
 
 	public:
 		/// Adds a new root namespace around \a owner and \a lifetime at the end of the history.
-		void push_back(const Key& owner, const NamespaceLifetime& lifetime);
+		void push_back(const Key& owner, const NamespaceLifetime& lifetime, bool isRenewal = false);
 
 		/// Removes the last entry in the history.
 		void pop_back();

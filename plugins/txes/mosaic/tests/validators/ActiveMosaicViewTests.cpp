@@ -24,6 +24,7 @@
 #include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/cache_core/AccountStateCache.h"
 
 namespace catapult { namespace validators {
 
@@ -93,7 +94,9 @@ namespace catapult { namespace validators {
 		// Arrange:
 		auto cache = test::MosaicCacheFactory::Create();
 		auto delta = cache.createDelta();
+		auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 		test::AddEternalMosaic(delta, MosaicId(123), Height(50), owner);
+		accountStateCache.addAccount(owner, Height(1));
 		cache.commit(Height());
 
 		auto readOnlyCache = delta.toReadOnly();
@@ -140,6 +143,36 @@ namespace catapult { namespace validators {
 			EXPECT_EQ(ValidationResult::Success, result);
 			EXPECT_EQ(MosaicId(123), mosaicIter.get().mosaicId());
 		});
+	}
+
+	TEST(TEST_CLASS, CanGetActiveMosaicWithUpgradedOwner) {
+		// Arrange:
+		const auto& owner = test::GenerateRandomByteArray<Key>();
+		const auto& descendant = test::GenerateRandomByteArray<Key>();
+		auto cache = test::MosaicCacheFactory::Create();
+		auto delta = cache.createDelta();
+		auto& accountStateCache = delta.sub<cache::AccountStateCache>();
+		test::AddEternalMosaic(delta, MosaicId(123), Height(50), owner);
+
+		accountStateCache.addAccount(owner, Height(1));
+		auto& ownerAcc = accountStateCache.find(owner).get();
+		accountStateCache.addAccount(descendant, Height(1));
+		auto& signerAcc = accountStateCache.find(descendant).get();
+
+		ownerAcc.SupplementalPublicKeys.upgrade().set(descendant);
+		signerAcc.OldState = std::make_shared<state::AccountState>(ownerAcc);
+
+		cache.commit(Height());
+
+		auto readOnlyCache = delta.toReadOnly();
+		auto view = ActiveMosaicView(readOnlyCache);
+
+		ActiveMosaicView::FindIterator mosaicIter;
+		auto result = view.tryGet(MosaicId(123), Height(100), descendant, mosaicIter);
+
+		// Assert:
+		EXPECT_EQ(ValidationResult::Success, result);
+		EXPECT_EQ(MosaicId(123), mosaicIter.get().mosaicId());
 	}
 
 	// endregion

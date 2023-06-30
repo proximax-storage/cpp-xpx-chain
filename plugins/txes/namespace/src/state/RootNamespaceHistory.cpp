@@ -88,14 +88,18 @@ namespace catapult { namespace state {
 		return utils::Sum(m_rootHistory, [](const auto& rootNamespace) { return rootNamespace.size(); });
 	}
 
-	void RootNamespaceHistory::push_back(const Key& owner, const NamespaceLifetime& lifetime) {
+	void RootNamespaceHistory::push_back(const Key& owner, const NamespaceLifetime& lifetime, bool isRenewal) {
 		if (!m_rootHistory.empty()) {
 			const auto& previousNamespace = back();
 			if (previousNamespace.owner() == owner) {
 				// inherit all children since it is the same owner
 				m_rootHistory.push_back(previousNamespace.renew(lifetime));
 				return;
+			} else if(isRenewal) { // When it is a renewal but the owners differ, it means it's the result of an account upgrade
+				m_rootHistory.push_back(previousNamespace.renew(owner, lifetime));
+				return;
 			}
+
 		}
 
 		m_rootHistory.emplace_back(m_id, owner, lifetime);

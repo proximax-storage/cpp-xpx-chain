@@ -46,6 +46,7 @@ namespace catapult { namespace test {
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto options = cache::NamespaceCacheTypes::Options{ pConfigHolder };
 			subCaches[cacheId] = MakeSubCachePlugin<cache::NamespaceCache, cache::NamespaceCacheStorage>(options);
+			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 
