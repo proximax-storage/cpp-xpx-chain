@@ -12,7 +12,7 @@ namespace catapult { namespace state {
 
 	void CommitteeEntrySerializer::Save(const CommitteeEntry& entry, io::OutputStream& output) {
 		// write version
-		io::Write32(output, 1);
+		io::Write32(output, entry.version());
 
 		io::Write(output, entry.key());
 		io::Write(output, entry.owner());
@@ -22,12 +22,15 @@ namespace catapult { namespace state {
 		io::Write8(output, entry.canHarvest());
 		io::WriteDouble(output, entry.activity());
 		io::WriteDouble(output, entry.greed());
+
+		if (entry.version() > 1)
+			io::Write64(output, entry.expirationTime().unwrap());
 	}
 
 	CommitteeEntry CommitteeEntrySerializer::Load(io::InputStream& input) {
 		// read version
 		VersionType version = io::Read32(input);
-		if (version > 1)
+		if (version > 2)
 			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of CommitteeEntry", version);
 
 		Key key;
@@ -41,6 +44,10 @@ namespace catapult { namespace state {
 		auto activity = io::ReadDouble(input);
 		auto greed = io::ReadDouble(input);
 
-		return state::CommitteeEntry(key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed, disabledHeight);
+		auto expirationTime = Timestamp(0);
+		if (version > 1)
+			expirationTime = Timestamp{io::Read64(input)};
+
+		return state::CommitteeEntry(key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed, disabledHeight, version, expirationTime);
 	}
 }}

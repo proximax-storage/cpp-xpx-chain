@@ -11,6 +11,8 @@
 #include "catapult/utils/NetworkTime.h"
 #include "catapult/extensions/ServerHooks.h"
 
+namespace catapult { namespace harvesting { class UnlockedAccounts; }}
+
 namespace catapult { namespace dbrb {
 
     class TransactionSender {
@@ -19,12 +21,14 @@ namespace catapult { namespace dbrb {
 				const crypto::KeyPair& keyPair,
 				const config::ImmutableConfiguration& immutableConfig,
 				const DbrbConfiguration& dbrbConfig,
-				handlers::TransactionRangeHandler transactionRangeHandler)
+				handlers::TransactionRangeHandler transactionRangeHandler,
+				std::shared_ptr<harvesting::UnlockedAccounts> pHarvesterAccounts)
 			: m_keyPair(keyPair)
 			, m_networkIdentifier(immutableConfig.NetworkIdentifier)
 			, m_generationHash(immutableConfig.GenerationHash)
 			, m_transactionTimeout(dbrbConfig.TransactionTimeout.millis())
 			, m_transactionRangeHandler(std::move(transactionRangeHandler))
+			, m_pHarvesterAccounts(std::move(pHarvesterAccounts))
 		{}
 
     public:
@@ -40,5 +44,6 @@ namespace catapult { namespace dbrb {
         GenerationHash m_generationHash;
 		Timestamp m_transactionTimeout;
         handlers::TransactionRangeHandler m_transactionRangeHandler;
+		std::shared_ptr<harvesting::UnlockedAccounts> m_pHarvesterAccounts;
     };
 }}

@@ -21,6 +21,9 @@ namespace catapult { namespace builders {
 		/// for the network specified by \a networkIdentifier.
 		AddDbrbProcessBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer);
 
+		/// Adds \a harvesterKey to attached keys.
+		void addHarvesterKey(const Key& harvesterKey);
+
 	public:
 		/// Builds a new modify multisig account transaction.
 		model::UniqueEntityPtr<Transaction> build() const;
@@ -31,5 +34,8 @@ namespace catapult { namespace builders {
 	private:
 		template<typename TTransaction>
 		model::UniqueEntityPtr<TTransaction> buildImpl() const;
+
+	private:
+		std::vector<Key> m_harvesterKeys;
 	};
 }}

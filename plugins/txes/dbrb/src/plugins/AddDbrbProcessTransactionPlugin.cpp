@@ -20,6 +20,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 			case 1: {
 				sub.notify(AddDbrbProcessNotification<1>(transaction.Signer));
+				sub.notify(ActiveHarvestersNotification<1>(transaction.HarvesterKeysPtr(), transaction.HarvesterKeysCount));
 				break;
 			}
 

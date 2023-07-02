@@ -10,6 +10,11 @@
 
 namespace catapult { namespace chain {
 
+	constexpr auto CommitteePhaseCount = 4u;
+
+	void IncreasePhaseTime(uint64_t& phaseTimeMillis, const model::NetworkConfiguration& config);
+	void DecreasePhaseTime(uint64_t& phaseTimeMillis, const model::NetworkConfiguration& config);
+
 	struct Committee {
 	public:
 		explicit Committee(int64_t round = -1)

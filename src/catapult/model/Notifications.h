@@ -665,4 +665,33 @@ namespace catapult { namespace model {
 	};
 
 	// endregion
+
+	// region harvesters
+
+	/// Notification of active harvesters.
+	template<VersionType version>
+	struct ActiveHarvestersNotification;
+
+	template<>
+	struct ActiveHarvestersNotification<1> :  public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Active_Harvesters_v1_Notification;
+
+	public:
+		explicit ActiveHarvestersNotification(const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
+			: Notification(Notification_Type, sizeof(MosaicActiveNotification<1>))
+			, HarvesterKeysPtr(pHarvesterKeys)
+			, HarvesterKeysCount(harvesterKeysCount)
+		{}
+
+	public:
+		/// Active harvester keys.
+		const Key* HarvesterKeysPtr;
+
+		/// Harvester key count.
+		uint16_t HarvesterKeysCount;
+	};
+
+	// endregion
 }}

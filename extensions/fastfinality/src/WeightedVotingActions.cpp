@@ -22,8 +22,6 @@
 namespace catapult { namespace fastfinality {
 
 	namespace {
-		constexpr auto CommitteePhaseCount = 4u;
-
 		bool ApprovalRatingSufficient(
 				const double approvalRating,
 				const double totalRating,
@@ -286,7 +284,6 @@ namespace catapult { namespace fastfinality {
 
 				bool success = false;
 				for (const auto& pBlock : blocks) {
-					CATAPULT_LOG(debug) << "committee round " << committeeManager.committee().Round << ", block round " << pBlock->round();
 					committeeManager.reset();
 					while (committeeManager.committee().Round < pBlock->round())
 						committeeManager.selectCommittee(config.Network);
@@ -332,34 +329,6 @@ namespace catapult { namespace fastfinality {
 		};
 	}
 
-	namespace {
-		void IncreasePhaseTime(uint64_t& phaseTimeMillis, const model::NetworkConfiguration& config) {
-			if (1.0 == config.CommitteeTimeAdjustment)
-				return;
-
-			auto maxPhaseTimeMillis = config.MaxCommitteePhaseTime.millis();
-			if (phaseTimeMillis == maxPhaseTimeMillis)
-				return;
-
-			phaseTimeMillis *= config.CommitteeTimeAdjustment;
-			if (phaseTimeMillis > maxPhaseTimeMillis)
-				phaseTimeMillis = maxPhaseTimeMillis;
-		}
-
-		void DecreasePhaseTime(uint64_t& phaseTimeMillis, const model::NetworkConfiguration& config) {
-			if (1.0 == config.CommitteeTimeAdjustment)
-				return;
-
-			auto minPhaseTimeMillis = config.MinCommitteePhaseTime.millis();
-			if (phaseTimeMillis == minPhaseTimeMillis)
-				return;
-
-			phaseTimeMillis /= config.CommitteeTimeAdjustment;
-			if (phaseTimeMillis < minPhaseTimeMillis)
-				phaseTimeMillis = minPhaseTimeMillis;
-		}
-	}
-
 	action CreateDefaultDetectStageAction(
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
@@ -377,20 +346,20 @@ namespace catapult { namespace fastfinality {
 			const auto& block = pLastBlockElement->Block;
 			const auto& config = pConfigHolder->Config().Network;
 
-			auto roundStart = block.Timestamp + Timestamp(CommitteePhaseCount * block.committeePhaseTime());
+			auto roundStart = block.Timestamp + Timestamp(chain::CommitteePhaseCount * block.committeePhaseTime());
 			auto currentTime = timeSupplier();
 			if (block.Timestamp > currentTime)
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid current time", currentTime, block.Timestamp)
 
 			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
-			DecreasePhaseTime(phaseTimeMillis, config);
-			auto nextRoundStart = roundStart + Timestamp(CommitteePhaseCount * phaseTimeMillis);
+			chain::DecreasePhaseTime(phaseTimeMillis, config);
+			auto nextRoundStart = roundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
 			committeeManager.selectCommittee(config);
 
 			while (nextRoundStart < timeSupplier()) {
 				roundStart = nextRoundStart;
-				IncreasePhaseTime(phaseTimeMillis, config);
-				nextRoundStart = nextRoundStart + Timestamp(CommitteePhaseCount * phaseTimeMillis);
+				chain::IncreasePhaseTime(phaseTimeMillis, config);
+				nextRoundStart = nextRoundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
 
 				committeeManager.selectCommittee(config);
 			}
@@ -987,7 +956,7 @@ namespace catapult { namespace fastfinality {
 			CATAPULT_LOG(debug) << "incremented round " << nextRound;
 			auto nextRoundStart = currentRound.RoundStart + std::chrono::milliseconds(GetPhaseEndTimeMillis(CommitteePhase::Commit, currentRound.PhaseTimeMillis));
 			uint64_t nextPhaseTimeMillis = currentRound.PhaseTimeMillis;
-			IncreasePhaseTime(nextPhaseTimeMillis, pConfigHolder->Config().Network);
+			chain::IncreasePhaseTime(nextPhaseTimeMillis, pConfigHolder->Config().Network);
 			committeeData.setCommitteeRound(CommitteeRound{
 				nextRound,
 				CommitteePhase::Propose,
@@ -1012,7 +981,7 @@ namespace catapult { namespace fastfinality {
 			const auto& config = pConfigHolder->Config().Network;
 			auto nextRoundStart = currentRound.RoundStart + std::chrono::milliseconds(GetPhaseEndTimeMillis(CommitteePhase::Commit, currentRound.PhaseTimeMillis));
 			uint64_t nextPhaseTimeMillis = currentRound.PhaseTimeMillis;
-			DecreasePhaseTime(nextPhaseTimeMillis, pConfigHolder->Config().Network);
+			chain::DecreasePhaseTime(nextPhaseTimeMillis, pConfigHolder->Config().Network);
 			committeeData.setCommitteeRound(CommitteeRound{
 				0u,
 				CommitteePhase::Propose,

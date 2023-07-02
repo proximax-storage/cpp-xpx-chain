@@ -127,9 +127,15 @@ namespace catapult { namespace chain {
 	const Committee& WeightedVotingCommitteeManager::selectCommittee(const model::NetworkConfiguration& networkConfig) {
 		auto previousRound = m_committee.Round;
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
+		auto pLastBlockElement = lastBlockElementSupplier()();
 		if (previousRound < 0) {
+			m_phaseTime = pLastBlockElement->Block.committeePhaseTime();
+			DecreasePhaseTime(m_phaseTime, networkConfig);
+			m_timestamp = pLastBlockElement->Block.Timestamp + Timestamp(CommitteePhaseCount * m_phaseTime);
 			LogAccountData(m_accounts);
 		} else {
+			IncreasePhaseTime(m_phaseTime, networkConfig);
+			m_timestamp = m_timestamp + Timestamp(CommitteePhaseCount * m_phaseTime);
 			decreaseActivities(config);
 		}
 
@@ -138,14 +144,18 @@ namespace catapult { namespace chain {
 		// Compute account rates and sort them in descending order.
 		std::multimap<double, Key, std::greater<>> rates;
 		for (const auto& pair : m_accounts) {
+			const auto& key = pair.first;
 			const auto& accountData = pair.second;
+
 			if (!accountData.CanHarvest)
 				continue;
 
-			const auto& key = pair.first;
+			if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp && (networkConfig.EmergencyHarvesters.find(key) == networkConfig.EmergencyHarvesters.cend()))
+				continue;
+
 			auto weight = CalculateWeight(accountData);
 			const auto& hash = previousRound < 0 ?
-				m_pHasher->calculateHash(m_hashes[key], lastBlockElementSupplier()()->GenerationHash, key) :
+				m_pHasher->calculateHash(m_hashes[key], pLastBlockElement->GenerationHash, key) :
 				m_pHasher->calculateHash(m_hashes.at(key));
 			auto hit = *reinterpret_cast<const uint64_t*>(hash.data());
 			if (hit == 0u)

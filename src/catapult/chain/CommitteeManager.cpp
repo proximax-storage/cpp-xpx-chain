@@ -8,6 +8,32 @@
 
 namespace catapult { namespace chain {
 
+	void IncreasePhaseTime(uint64_t& phaseTimeMillis, const model::NetworkConfiguration& config) {
+		if (1.0 == config.CommitteeTimeAdjustment)
+			return;
+
+		auto maxPhaseTimeMillis = config.MaxCommitteePhaseTime.millis();
+		if (phaseTimeMillis == maxPhaseTimeMillis)
+			return;
+
+		phaseTimeMillis *= config.CommitteeTimeAdjustment;
+		if (phaseTimeMillis > maxPhaseTimeMillis)
+			phaseTimeMillis = maxPhaseTimeMillis;
+	}
+
+	void DecreasePhaseTime(uint64_t& phaseTimeMillis, const model::NetworkConfiguration& config) {
+		if (1.0 == config.CommitteeTimeAdjustment)
+			return;
+
+		auto minPhaseTimeMillis = config.MinCommitteePhaseTime.millis();
+		if (phaseTimeMillis == minPhaseTimeMillis)
+			return;
+
+		phaseTimeMillis /= config.CommitteeTimeAdjustment;
+		if (phaseTimeMillis < minPhaseTimeMillis)
+			phaseTimeMillis = minPhaseTimeMillis;
+	}
+
 	void CommitteeManager::setLastBlockElementSupplier(const model::BlockElementSupplier& supplier) {
 		if (!!m_lastBlockElementSupplier)
 			CATAPULT_THROW_RUNTIME_ERROR("last block element supplier already set");

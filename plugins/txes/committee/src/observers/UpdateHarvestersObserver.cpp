@@ -47,7 +47,6 @@ namespace catapult { namespace observers {
 			auto readOnlyCache = context.Cache.toReadOnly();
 			cache::ImportanceView importanceView(readOnlyCache.sub<cache::AccountStateCache>());
 
-			CATAPULT_LOG(debug) << "committee round " << pCommitteeManager->committee().Round << ", notification round " << notification.Round;
 			pCommitteeManager->reset();
 			while (pCommitteeManager->committee().Round < notification.Round)
 				pCommitteeManager->selectCommittee(networkConfig);
@@ -57,9 +56,8 @@ namespace catapult { namespace observers {
 			const auto& committee = pCommitteeManager->committee();
 			auto& accounts = pCommitteeManager->accounts();
 			accounts.at(committee.BlockProposer).Activity += pluginConfig.ActivityCommitteeCosignedDelta;
-			for (const auto& key : committee.Cosigners) {
+			for (const auto& key : committee.Cosigners)
 				accounts.at(key).Activity += pluginConfig.ActivityCommitteeCosignedDelta;
-			}
 
 			auto iter = committeeCache.find(committee.BlockProposer);
 			auto& entry = iter.get();

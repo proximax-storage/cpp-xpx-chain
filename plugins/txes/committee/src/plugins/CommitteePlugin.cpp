@@ -51,7 +51,8 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreateAddHarvesterObserver())
 				.add(observers::CreateRemoveHarvesterObserver())
-				.add(observers::CreateUpdateHarvestersObserver(pCommitteeManager, pAccountCollector));
+				.add(observers::CreateUpdateHarvestersObserver(pCommitteeManager, pAccountCollector))
+				.add(observers::CreateActiveHarvestersObserver());
 		});
 	}
 }}

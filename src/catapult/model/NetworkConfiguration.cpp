@@ -117,6 +117,8 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(DbrbRegistrationDuration);
 		config.DbrbRegistrationGracePeriod = utils::TimeSpan::FromHours(1);
 		TRY_LOAD_CHAIN_PROPERTY(DbrbRegistrationGracePeriod);
+		config.EnableHarvesterExpiration = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableHarvesterExpiration);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 
@@ -137,10 +139,14 @@ namespace catapult { namespace model {
 
 		auto dbrbBootstrapProcesses = bag.getAllOrdered<bool>("dbrb.bootstrap.processes");
 		for (const auto& [key, enabled] : dbrbBootstrapProcesses) {
-			if (enabled) {
-				auto processId = crypto::ParseKey(key);
-				config.DbrbBootstrapProcesses.emplace(processId);
-			}
+			if (enabled)
+				config.DbrbBootstrapProcesses.emplace(crypto::ParseKey(key));
+		}
+
+		auto emergencyHarvesters = bag.getAllOrdered<bool>("harvesters");
+		for (const auto& [key, enabled] : emergencyHarvesters) {
+			if (enabled)
+				config.EmergencyHarvesters.emplace(crypto::ParseKey(key));
 		}
 
 		return config;

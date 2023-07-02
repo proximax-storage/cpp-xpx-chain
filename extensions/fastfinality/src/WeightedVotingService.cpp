@@ -25,6 +25,7 @@ namespace catapult { namespace fastfinality {
 	namespace {
 		constexpr auto Writers_Service_Name = "weightedvoting.writers";
 		constexpr auto Readers_Service_Name = "weightedvoting.readers";
+		constexpr auto Fsm_Service_Name = "weightedvoting.fsm";
 		constexpr auto Service_Id = ionet::ServiceIdentifier(0x54654144);
 
 		std::shared_ptr<harvesting::UnlockedAccounts> CreateUnlockedAccounts(const harvesting::HarvestingConfiguration& config) {
@@ -114,18 +115,19 @@ namespace catapult { namespace fastfinality {
 
 				auto connectionSettings = extensions::GetConnectionSettings(config);
 				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
-				locator.registerRootedService(Writers_Service_Name, pWriters);
+				locator.registerService(Writers_Service_Name, pWriters);
 
-
-				auto pFsmShared = pServiceGroup->pushService([pWriters, &config, &keyPair = locator.keyPair(), &state, &dbrbConfig = m_dbrbConfig](const std::shared_ptr<thread::IoThreadPool>& pPool) {
-					dbrb::TransactionSender transactionSender(keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
+				auto pUnlockedAccounts = CreateUnlockedAccounts(m_harvestingConfig);
+				auto pFsmShared = pServiceGroup->pushService([pWritersWeak = std::weak_ptr<net::PacketWriters>(pWriters), &config, &keyPair = locator.keyPair(), &state, &dbrbConfig = m_dbrbConfig, pUnlockedAccounts](const std::shared_ptr<thread::IoThreadPool>& pPool) {
+					dbrb::TransactionSender transactionSender(keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local), pUnlockedAccounts);
 					auto chainHeightSupplier = [&storage = state.storage()]() {
 						return storage.view().chainHeight();
 					};
-					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWriters, state.packetIoPickers(), config::ToLocalDbrbNode(config),
+					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWritersWeak, state.packetIoPickers(), config::ToLocalDbrbNode(config),
 						keyPair, pPool, std::move(transactionSender), state.pluginManager().dbrbViewFetcher(), state.timeSupplier(), chainHeightSupplier);
 					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess);
 				});
+				locator.registerService(Fsm_Service_Name, pFsmShared);
 
 				const auto& pluginManager = state.pluginManager();
 				pFsmShared->dbrbProcess()->registerPacketHandlers(pFsmShared->packetHandlers());
@@ -184,7 +186,7 @@ namespace catapult { namespace fastfinality {
 				locator.registerService(Readers_Service_Name, pReaders);
 
 				auto& committeeData = pFsmShared->committeeData();
-				committeeData.setUnlockedAccounts(CreateUnlockedAccounts(m_harvestingConfig));
+				committeeData.setUnlockedAccounts(pUnlockedAccounts);
 				committeeData.setBeneficiary(crypto::ParseKey(m_harvestingConfig.Beneficiary));
 				auto& actions = pFsmShared->actions();
 
