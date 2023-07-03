@@ -107,8 +107,9 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(13u, sub.numNotifications());
+		ASSERT_EQ(14u, sub.numNotifications());
 		auto i = 0u;
+		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Storage_Owner_Management_Prohibition_v1_Notification, sub.notificationTypes()[i++]);
@@ -162,15 +163,23 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin(config);
 		auto pTransaction = CreateTransaction<TTraits>();
 		auto contractKey = Key(CalculateTransactionHash(*pTransaction, config.GenerationHash, sub).array());
+		Hash256 paymentHash;
+		crypto::Sha3_256_Builder sha3;
+		sha3.update({contractKey, config.GenerationHash});
+		sha3.final(paymentHash);
+		auto contractExecutionPaymentKey = Key(paymentHash.array());
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(2u, sub.numMatchingNotifications());
+		ASSERT_EQ(3u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-
 		EXPECT_EQ(contractKey, notification.PublicKey);
+		const auto& notification1 = sub.matchingNotifications()[1];
+		EXPECT_EQ(pTransaction->Assignee, notification1.PublicKey);
+		const auto& notification2 = sub.matchingNotifications()[2];
+		EXPECT_EQ(contractExecutionPaymentKey, notification2.PublicKey);
 	}
 
 	// endregion
