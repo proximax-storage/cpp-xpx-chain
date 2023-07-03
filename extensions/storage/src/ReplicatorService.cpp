@@ -174,10 +174,10 @@ namespace catapult { namespace storage {
             auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(driveKey));
             m_pReplicator->asyncModify(
 				driveKey.array(),
-				sirius::drive::ModificationRequest{
+				std::make_unique<sirius::drive::ModificationRequest>(sirius::drive::ModificationRequest{
 					downloadDataCdi.array(),
 					modificationId.array(), utils::FileSize::FromMegabytes(dataSizeMegabytes).bytes(),
-					replicators});
+					replicators}));
         }
 
 		void startStream(
@@ -191,11 +191,11 @@ namespace catapult { namespace storage {
 			auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(driveKey));
 			m_pReplicator->asyncStartStream(
 					driveKey.array(),
-					sirius::drive::StreamRequest { streamId.array(),
+					std::make_unique<sirius::drive::StreamRequest>(sirius::drive::StreamRequest{ streamId.array(),
 												   streamerKey.array(),
 												   folder,
 												   utils::FileSize::FromMegabytes(expectedSizeMegabytes).bytes(),
-												   replicators });
+												   replicators }));
 		}
 
 		void streamPaymentPublished(const Key& driveKey,
@@ -215,7 +215,8 @@ namespace catapult { namespace storage {
 
 			m_pReplicator->asyncIncreaseStream(
 					driveKey.array(),
-					sirius::drive::StreamIncreaseRequest { streamId.array(), modificationIt->ExpectedUploadSize });
+					std::make_unique<sirius::drive::StreamIncreaseRequest>(sirius::drive::StreamIncreaseRequest{
+							streamId.array(), modificationIt->ExpectedUploadSize }));
 		}
 
 		void finishStream(
@@ -227,11 +228,11 @@ namespace catapult { namespace storage {
 
 			m_pReplicator->asyncFinishStreamTxPublished(
 					driveKey.array(),
-					sirius::drive::StreamFinishRequest {
+					std::make_unique<sirius::drive::StreamFinishRequest>(sirius::drive::StreamFinishRequest {
 							streamId.array(),
 							finishDownloadDataCdi.array(),
 							utils::FileSize::FromMegabytes(actualSizeMegabytes).bytes(),
-					});
+					}));
 		}
 
 		void removeDriveModification(const Key& driveKey, const Hash256& transactionHash) {
@@ -264,10 +265,10 @@ namespace catapult { namespace storage {
 
 			m_pReplicator->asyncAddDownloadChannelInfo(
 					pChannel->DriveKey.array(),
-					sirius::drive::DownloadRequest{
+					std::make_unique<sirius::drive::DownloadRequest>(sirius::drive::DownloadRequest{
 						channelId.array(), utils::FileSize::FromMegabytes(pChannel->DownloadSizeMegabytes).bytes(),
 						castedReplicators,
-						castedConsumers});
+						castedConsumers}));
 
 			if (pChannel->ApprovalTrigger) {
 				m_pReplicator->asyncInitiateDownloadApprovalTransactionInfo(pChannel->ApprovalTrigger->array(), channelId.array());
@@ -354,15 +355,17 @@ namespace catapult { namespace storage {
 				recipientShard
 			};
 
-			m_pReplicator->asyncAddDrive(driveKey.array(), request);
+			m_pReplicator->asyncAddDrive(driveKey.array(), std::make_unique<sirius::drive::AddDriveRequest>(request));
 
 			auto pLastApprovedModification = m_storageState.getLastApprovedDataModification(drive.Id);
 			if (!!pLastApprovedModification) {
-				m_pReplicator->asyncApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationApprovalTransactionInfo{
+				m_pReplicator->asyncApprovalTransactionHasBeenPublished(
+						std::make_unique<sirius::drive::PublishedModificationApprovalTransactionInfo>(
+						sirius::drive::PublishedModificationApprovalTransactionInfo{
 					pLastApprovedModification->DriveKey.array(),
 					pLastApprovedModification->Id.array(),
 					drive.RootHash.array(),
-					castReplicatorKeys<std::array<uint8_t, 32>>(pLastApprovedModification->Signers)});
+					castReplicatorKeys<std::array<uint8_t, 32>>(pLastApprovedModification->Signers)}));
 			}
 
 			// Actually the time may not be the time of the last block,
@@ -476,21 +479,21 @@ namespace catapult { namespace storage {
 			CATAPULT_LOG(debug) << "update drive replicators" << driveKey;
 
         	auto replicators = castReplicatorKeys<sirius::Key>(m_storageState.getDriveReplicators(driveKey));
-			m_pReplicator->asyncSetReplicators(driveKey.array(), replicators);
+        	m_pReplicator->asyncSetReplicators(driveKey.array(), std::make_unique<sirius::drive::ReplicatorList>(replicators));
         }
 
         void updateShardDonator(const Key& driveKey) {
         	CATAPULT_LOG(debug) << "update shardDonator" << driveKey;
 
         	auto donatorShard = castReplicatorKeys<sirius::Key>(m_storageState.getDonatorShard(driveKey, m_keyPair.publicKey()));
-			m_pReplicator->asyncSetShardDonator(driveKey.array(), donatorShard);
+        	m_pReplicator->asyncSetShardDonator(driveKey.array(), std::make_unique<sirius::drive::ReplicatorList>(donatorShard));
 		}
 
         void updateShardRecipient(const Key& driveKey) {
         	CATAPULT_LOG(debug) << "update shardRecipient" << driveKey;
 
         	auto recipientShard = castReplicatorKeys<sirius::Key>(m_storageState.getRecipientShard(driveKey, m_keyPair.publicKey()));
-			m_pReplicator->asyncSetShardRecipient(driveKey.array(), recipientShard);
+        	m_pReplicator->asyncSetShardRecipient(driveKey.array(), std::make_unique<sirius::drive::ReplicatorList>(recipientShard));
 		}
 
 		void updateDownloadChannelReplicators(const Hash256& channelId) {
@@ -505,7 +508,7 @@ namespace catapult { namespace storage {
 
         	auto replicators = castReplicatorKeys<sirius::Key>(pChannel->Replicators);
 
-			m_pReplicator->asyncSetChanelShard(channelId.array(), replicators);
+			m_pReplicator->asyncSetChanelShard(std::make_unique<sirius::Hash256>(channelId.array()), std::make_unique<sirius::drive::ReplicatorList>(replicators));
 		}
 
 		void updateDriveDownloadChannels(const Key& driveKey) {
@@ -645,17 +648,17 @@ namespace catapult { namespace storage {
                 const Hash256& rootHash,
                 std::vector<Key>& replicators) {
 			auto replicatorKeys = castReplicatorKeys<std::array<uint8_t, 32>>(replicators);
-            m_pReplicator->asyncApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationApprovalTransactionInfo{
-				driveKey.array(),
-				modificationId.array(),
-				rootHash.array(),
-				replicatorKeys});
-        }
+            m_pReplicator->asyncApprovalTransactionHasBeenPublished(std::make_unique<sirius::drive::PublishedModificationApprovalTransactionInfo>(
+							sirius::drive::PublishedModificationApprovalTransactionInfo {
+									driveKey.array(), modificationId.array(), rootHash.array(), replicatorKeys }));
+		}
 
         void dataModificationSingleApprovalPublished(const Key& driveKey, const Hash256& modificationId) {
-            m_pReplicator->asyncSingleApprovalTransactionHasBeenPublished(sirius::drive::PublishedModificationSingleApprovalTransactionInfo{
+            m_pReplicator->asyncSingleApprovalTransactionHasBeenPublished(
+            		std::make_unique<sirius::drive::PublishedModificationSingleApprovalTransactionInfo>(
+					sirius::drive::PublishedModificationSingleApprovalTransactionInfo{
 				driveKey.array(),
-				modificationId.array()});
+				modificationId.array()}));
         }
 
         void downloadApprovalPublished(const Hash256& approvalTrigger, const Hash256& downloadChannelId) {
@@ -680,6 +683,7 @@ namespace catapult { namespace storage {
         }
 
         void stop() {
+			m_pReplicator->stopReplicator();
 			m_pReplicator.reset();
         }
 
@@ -710,12 +714,13 @@ namespace catapult { namespace storage {
 					foundShard = true;
 					m_pReplicator->asyncStartDriveVerification(
 							driveKey.array(),
+							std::make_unique<sirius::drive::VerificationRequest>(
 							sirius::drive::VerificationRequest { verificationTrigger,
 																 i,
 																 modificationId,
 																 castReplicatorKeys<sirius::Key>(shardList),
 																 verification.Duration,
-																 flattenShards});
+																 flattenShards}));
 				}
 			}
 		}

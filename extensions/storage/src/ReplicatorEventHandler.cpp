@@ -320,7 +320,7 @@ namespace catapult { namespace storage {
 						return;
 					}
 
-					pReplicator->asyncOnDownloadOpinionReceived(info);
+					pReplicator->asyncOnDownloadOpinionReceived(std::make_unique<sirius::drive::DownloadApprovalTransactionInfo>(info));
 				});
 			}
 

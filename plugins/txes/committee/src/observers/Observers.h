@@ -25,4 +25,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(UpdateHarvesters, model::BlockCommitteeNotification<1>)(
 		const std::shared_ptr<chain::WeightedVotingCommitteeManager>& pCommitteeManager,
 		const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector);
+
+	/// Observes changes triggered by active harvesters notifications
+	DECLARE_OBSERVER(ActiveHarvesters, model::ActiveHarvestersNotification<1>)();
 }}

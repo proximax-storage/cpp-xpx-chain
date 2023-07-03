@@ -116,8 +116,8 @@ namespace catapult { namespace local {
 						auto config = extensions::LoadActiveNetworkConfig(stateDir);
 						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(config);
 					} else {
-						/// Not first boot but no config was saved yet, we just use the nemesis block configuration.
-						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(std::get<0>(bundleConfig));
+						/// Not first boot but no config was saved yet, we just use the local network configuration.
+						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(m_pBootstrapper->config().Network);
 					}
 				}
 

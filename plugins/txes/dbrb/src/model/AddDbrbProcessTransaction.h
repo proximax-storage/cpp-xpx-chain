@@ -22,9 +22,20 @@ namespace catapult { namespace model {
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_AddDbrbProcess, 1)
 
 	public:
+		uint16_t HarvesterKeysCount;
+
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(HarvesterKeys, Key)
+
+	private:
+		template<typename T>
+		static auto* HarvesterKeysPtrT(T& transaction) {
+			return transaction.HarvesterKeysCount ? THeader::PayloadStart(transaction) : nullptr;
+		}
+
+	public:
 		// Calculates the real size of \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType);
+			return sizeof(TransactionType) + transaction.HarvesterKeysCount * Key_Size;
 		}
 	};
 

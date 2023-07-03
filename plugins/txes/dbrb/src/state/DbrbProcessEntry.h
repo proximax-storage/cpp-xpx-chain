@@ -12,9 +12,9 @@ namespace catapult { namespace state {
 
 	class DbrbProcessEntry {
 	public:
-		explicit DbrbProcessEntry(const dbrb::ProcessId& processId, const Timestamp& expirationTime, VersionType version = 1)
+		explicit DbrbProcessEntry(const dbrb::ProcessId& processId, Timestamp expirationTime, VersionType version = 1)
 			: m_processId(processId)
-			, m_expirationTime(expirationTime)
+			, m_expirationTime(std::move(expirationTime))
 			, m_version(version)
 		{}
 

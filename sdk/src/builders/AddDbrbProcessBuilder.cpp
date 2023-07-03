@@ -12,9 +12,16 @@ namespace catapult { namespace builders {
 		: TransactionBuilder(networkIdentifier, signer)
 	{}
 
+	void AddDbrbProcessBuilder::addHarvesterKey(const Key& harvesterKey) {
+		m_harvesterKeys.emplace_back(harvesterKey);
+	}
+
 	template<typename TransactionType>
 	model::UniqueEntityPtr<TransactionType> AddDbrbProcessBuilder::buildImpl() const {
-		auto pTransaction = createTransaction<TransactionType>(sizeof(TransactionType));
+		auto size = sizeof(TransactionType) + m_harvesterKeys.size() * Key_Size;
+		auto pTransaction = createTransaction<TransactionType>(size);
+		pTransaction->HarvesterKeysCount = utils::checked_cast<size_t, uint16_t>(m_harvesterKeys.size());
+		std::copy(m_harvesterKeys.cbegin(), m_harvesterKeys.cend(), pTransaction->HarvesterKeysPtr());
 		return pTransaction;
 	}
 

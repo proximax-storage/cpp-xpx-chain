@@ -158,6 +158,12 @@ namespace catapult { namespace model {
 		/// Public keys of the DBRB bootstrap processes.
 		dbrb::ViewData DbrbBootstrapProcesses;
 
+		/// Allows expiration of harvesters.
+		bool EnableHarvesterExpiration;
+
+		/// Special group of harvesters that never expire.
+		std::set<Key> EmergencyHarvesters;
+
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
 

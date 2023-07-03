@@ -15,16 +15,18 @@ namespace catapult { namespace state {
 		// Creates a account data around \a lastSigningBlockHeight, \a effectiveBalance, \a canHarvest,
 		// \a activity and \a greed.
 		explicit AccountData(
-				const Height& lastSigningBlockHeight,
-				const Importance& effectiveBalance,
+				Height lastSigningBlockHeight,
+				Importance effectiveBalance,
 				bool canHarvest,
 				double activity,
-				double greed)
-			: LastSigningBlockHeight(lastSigningBlockHeight)
-			, EffectiveBalance(effectiveBalance)
+				double greed,
+				Timestamp expirationTime = Timestamp(0))
+			: LastSigningBlockHeight(std::move(lastSigningBlockHeight))
+			, EffectiveBalance(std::move(effectiveBalance))
 			, CanHarvest(canHarvest)
 			, Activity(activity)
 			, Greed(greed)
+			, ExpirationTime(std::move(expirationTime))
 		{}
 
 	public:
@@ -42,6 +44,9 @@ namespace catapult { namespace state {
 
 		/// The account greed.
 		double Greed;
+
+		/// The time after which the harvester is considered inactive and is not selected into committee.
+		Timestamp ExpirationTime;
 	};
 
 	// Committee entry.
@@ -57,30 +62,45 @@ namespace catapult { namespace state {
 				bool canHarvest,
 				double activity,
 				double greed,
-				const Height& disabledHeight = Height(0))
+				Height disabledHeight = Height(0),
+				VersionType version = 1,
+				Timestamp expirationTime = Timestamp(0))
 			: m_key(key)
 			, m_owner(owner)
-			, m_disabledHeight(disabledHeight)
-			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed)
+			, m_disabledHeight(std::move(disabledHeight))
+			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed, expirationTime)
+			, m_version(version)
 		{}
 
 		// Creates a committee entry around \a key and \a data.
-		explicit CommitteeEntry(const Key& key, const Key& owner, const AccountData& data, const Height& disabledHeight = Height(0))
+		explicit CommitteeEntry(const Key& key, const Key& owner, const AccountData& data, const Height& disabledHeight = Height(0), VersionType version = 1)
 			: m_key(key)
 			, m_owner(owner)
 			, m_disabledHeight(disabledHeight)
 			, m_data(data)
+			, m_version(version)
 		{}
 
 		// Creates a committee entry around \a key and \a data.
-		explicit CommitteeEntry(const Key& key, const Key& owner, AccountData&& data, const Height& disabledHeight = Height(0))
+		explicit CommitteeEntry(const Key& key, const Key& owner, AccountData&& data, const Height& disabledHeight = Height(0), VersionType version = 1)
 			: m_key(key)
 			, m_owner(owner)
 			, m_disabledHeight(disabledHeight)
 			, m_data(std::move(data))
+			, m_version(version)
 		{}
 
 	public:
+		/// Gets the entry version.
+		VersionType version() const {
+			return m_version;
+		}
+
+		/// Sets the entry version.
+		void setVersion(VersionType version) {
+			m_version = version;
+		}
+
 		/// Gets the harvester public key.
 		const Key& key() const {
 			return m_key;
@@ -154,10 +174,19 @@ namespace catapult { namespace state {
 			m_data.Greed = greed;
 		}
 
+		const Timestamp& expirationTime() const {
+			return m_data.ExpirationTime;
+		}
+
+		void setExpirationTime(const Timestamp& expirationTime) {
+			m_data.ExpirationTime = expirationTime;
+		}
+
 	private:
 		Key m_key;
 		Key m_owner;
 		Height m_disabledHeight;
 		AccountData m_data;
+		VersionType m_version;
 	};
 }}

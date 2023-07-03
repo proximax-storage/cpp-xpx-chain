@@ -49,5 +49,7 @@ namespace catapult { namespace chain {
 		std::shared_ptr<cache::CommitteeAccountCollector> m_pAccountCollector;
 		std::map<Key, Hash256> m_hashes;
 		cache::AccountMap m_accounts;
+		Timestamp m_timestamp;
+		uint64_t m_phaseTime;
 	};
 }}

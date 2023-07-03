@@ -7,6 +7,7 @@
 #include "TransactionSender.h"
 #include "sdk/src/builders/AddDbrbProcessBuilder.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
+#include "catapult/harvesting_core/UnlockedAccounts.h"
 #include "catapult/model/EntityHasher.h"
 #include <boost/dynamic_bitset.hpp>
 
@@ -14,6 +15,8 @@ namespace catapult { namespace dbrb {
 
     Hash256 TransactionSender::sendAddDbrbProcessTransaction() {
         builders::AddDbrbProcessBuilder builder(m_networkIdentifier, m_keyPair.publicKey());
+		for (const auto& keyPair : m_pHarvesterAccounts->view())
+			builder.addHarvesterKey(keyPair.publicKey());
         auto pTransaction = utils::UniqueToShared(builder.build());
         pTransaction->Deadline = utils::NetworkTime() + m_transactionTimeout;
         send(pTransaction);
