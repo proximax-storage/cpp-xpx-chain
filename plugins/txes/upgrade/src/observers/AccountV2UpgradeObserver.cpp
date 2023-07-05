@@ -20,14 +20,21 @@ namespace {
 	///Move supplemental account keys
 	void TransferSupplementalKeys(state::AccountState& originalAccount, state::AccountState& newAccount)
 	{
-		newAccount.SupplementalPublicKeys.linked().set(originalAccount.SupplementalPublicKeys.linked().get());
-		originalAccount.SupplementalPublicKeys.linked().unset();
-
-		newAccount.SupplementalPublicKeys.node().set(originalAccount.SupplementalPublicKeys.node().get());
-		originalAccount.SupplementalPublicKeys.node().unset();
-
-		newAccount.SupplementalPublicKeys.vrf().set(originalAccount.SupplementalPublicKeys.vrf().get());
-		originalAccount.SupplementalPublicKeys.vrf().unset();
+		if(originalAccount.SupplementalPublicKeys.linked())
+		{
+			newAccount.SupplementalPublicKeys.linked().set(originalAccount.SupplementalPublicKeys.linked().get());
+			originalAccount.SupplementalPublicKeys.linked().unset();
+		}
+		if(originalAccount.SupplementalPublicKeys.node())
+		{
+			newAccount.SupplementalPublicKeys.node().set(originalAccount.SupplementalPublicKeys.node().get());
+			originalAccount.SupplementalPublicKeys.node().unset();
+		}
+		if(originalAccount.SupplementalPublicKeys.vrf())
+		{
+			newAccount.SupplementalPublicKeys.vrf().set(originalAccount.SupplementalPublicKeys.vrf().get());
+			originalAccount.SupplementalPublicKeys.vrf().unset();
+		}
 
 		originalAccount.SupplementalPublicKeys.upgrade().set(newAccount.PublicKey);
 	}
