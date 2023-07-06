@@ -19,4 +19,12 @@ namespace catapult { namespace test {
 	state::DbrbProcessEntry CreateDbrbProcessEntry(const dbrb::ProcessId& processId, const Timestamp& expirationTime) {
 		return state::DbrbProcessEntry(processId, expirationTime);
 	}
+
+	void AssertEqualDbrbProcessEntry(const state::DbrbProcessEntry& entry1, const state::DbrbProcessEntry& entry2) {
+		//EXPECT_EQ(entry1.processId(), entry2.processId());
+		EXPECT_EQ_MEMORY(entry1.processId().data(), entry2.processId().data(), Key_Size);
+		EXPECT_EQ(entry1.expirationTime(), entry2.expirationTime());
+		EXPECT_EQ(entry1.version(), entry2.version());
+	}
+
 }}

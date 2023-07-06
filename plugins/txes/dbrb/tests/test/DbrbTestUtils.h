@@ -16,6 +16,7 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/nodeps/Random.h"
+#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 
@@ -46,4 +47,6 @@ namespace catapult { namespace test {
     model::UniqueEntityPtr<TTransaction> CreateAddDbrbProcessTransaction() {
         return CreateTransaction<TTransaction>(model::Entity_Type_AddDbrbProcess);
     }
+
+	void AssertEqualDbrbProcessEntry(const state::DbrbProcessEntry& entry1, const state::DbrbProcessEntry& entry2);
 }}
