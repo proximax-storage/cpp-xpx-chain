@@ -37,7 +37,7 @@ namespace catapult { namespace test {
 			auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>();
 			auto pDbrbViewFetcher = std::make_shared<cache::DbrbViewFetcherImpl>();
 			subCaches[cache::DbrbViewCache::Id] =
-					test::MakeSubCachePlugin<cache::DbrbViewCache, cache::DbrbViewCacheStorage>(pConfigHolder, pDbrbViewFetcher);
+					test::MakeSubCachePlugin<cache::DbrbViewCache, cache::DbrbViewCacheStorage>(pConfig, pDbrbViewFetcher);
 
 			return subCaches;
 		}
