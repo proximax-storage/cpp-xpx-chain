@@ -228,7 +228,7 @@ namespace catapult::model {
 	template<>
 	struct BatchExecutionSingleNotification<1> : public Notification {
 	public:
-		static constexpr auto Notification_Type = SuperContract_v2_Unsuccessful_Batch_Execution_v1_Notification;
+		static constexpr auto Notification_Type = SuperContract_v2_Batch_Execution_Single_v1_Notification;
 
 	public:
 		explicit BatchExecutionSingleNotification(

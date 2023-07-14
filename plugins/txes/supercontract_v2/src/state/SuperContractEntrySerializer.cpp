@@ -187,7 +187,7 @@ namespace catapult { namespace state {
 
         void LoadProofOfExecution(ProofOfExecution& poEx, io::InputStream& input) {
             poEx.StartBatchId = io::Read64(input);
-            std::array<uint8_t, 32> tBuffer;
+            std::array<uint8_t, 32> tBuffer{};
             io::Read(input, tBuffer);
             poEx.T.fromBytes(tBuffer);
             io::Read(input, poEx.R);
@@ -226,7 +226,7 @@ namespace catapult { namespace state {
                 auto batchId = io::Read64(input);
                 Batch batch;
                 batch.Success = io::Read8(input);
-                std::array<uint8_t, 32> tBuffer;
+                std::array<uint8_t, 32> tBuffer{};
                 io::Read(input, tBuffer);
                 batch.PoExVerificationInformation.fromBytes(tBuffer);
                 LoadCompletedCalls(batch.CompletedCalls, input);
@@ -239,7 +239,7 @@ namespace catapult { namespace state {
         // read version
 		VersionType version = io::Read32(input);
 		if (version > 1)
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of SuperContractEntry", version);
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of SuperContractEntry", version)
 
         Key key;
 		input.read(key);
