@@ -36,7 +36,8 @@ namespace catapult { namespace model {
 			case 3:
 				return header.Size - sizeof(BlockHeader);
 			default:
-				return reinterpret_cast<const BlockHeaderV4&>(header).TransactionPayloadSize;
+				//return reinterpret_cast<const BlockHeaderV4&>(header).TransactionPayloadSize; // offset 4 bytes
+				return header.Size - sizeof(BlockHeaderV4);
 		}
 	}
 
