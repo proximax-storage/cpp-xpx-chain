@@ -86,11 +86,13 @@ namespace catapult { namespace mongo { namespace plugins {
         void StreamCompletedCalls(bson_stream::document& builder, const std::vector<state::CompletedCall>& completedCalls) {
             auto array = builder << "completedCalls" << bson_stream::open_array;
             for (const auto& completed : completedCalls) {
-                array << "callId" << ToBinary(completed.CallId)
+            	bson_stream::document callBuilder;
+            	callBuilder << "callId" << ToBinary(completed.CallId)
                     << "caller" << ToBinary(completed.Caller)
                     << "status" << static_cast<int16_t>(completed.Status)
                     << "executionWork" << ToInt64(completed.ExecutionWork)
                     << "downloadWork" << ToInt64(completed.DownloadWork);
+				array << callBuilder;
             }
             array << bson_stream::close_array;
         }
@@ -104,6 +106,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 auto poExVerificationInformation = batch.second.PoExVerificationInformation.toBytes();
                 batchBuilder << "poExVerificationInformation" << ToBinary(poExVerificationInformation.data(), poExVerificationInformation.size());
                 StreamCompletedCalls(batchBuilder, batch.second.CompletedCalls);
+				array << batchBuilder;
             }
             array << bson_stream::close_array;
         }
