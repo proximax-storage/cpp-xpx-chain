@@ -136,14 +136,23 @@ namespace catapult { namespace observers {
 
     TEST(TEST_CLASS, DataModificationSingleApproval_Rollback) {
         // Arrange:
+//		CacheValues values;
+//		values.ExpectedBcDriveEntry = CreateInitialBcDriveEntry(test::GenerateRandomByteArray<Key>());
+//		values.ExpectedReplicatorEntry = CreateInitialReplicatorEntry(values.ExpectedBcDriveEntry);
+//		values.InitialBcDriveEntry = CreateExpectedBcDriveEntry(values.ExpectedBcDriveEntry);
+//		values.InitialReplicatorEntry = CreateExpectedReplicatorEntry(
+//				values.ExpectedReplicatorEntry,
+//				values.ExpectedBcDriveEntry.completedDataModifications().end()->Id
+//		);
 		CacheValues values;
-		values.ExpectedBcDriveEntry = CreateInitialBcDriveEntry(test::GenerateRandomByteArray<Key>());
-		values.ExpectedReplicatorEntry = CreateInitialReplicatorEntry(values.ExpectedBcDriveEntry);
-		values.InitialBcDriveEntry = CreateExpectedBcDriveEntry(values.ExpectedBcDriveEntry);
-		values.InitialReplicatorEntry = CreateExpectedReplicatorEntry(
-				values.ExpectedReplicatorEntry,
-				values.ExpectedBcDriveEntry.completedDataModifications().end()->Id
+		values.InitialBcDriveEntry = CreateInitialBcDriveEntry(test::GenerateRandomByteArray<Key>());
+		values.InitialReplicatorEntry = CreateInitialReplicatorEntry(values.InitialBcDriveEntry);
+		values.ExpectedBcDriveEntry = CreateExpectedBcDriveEntry(values.InitialBcDriveEntry);
+		values.ExpectedReplicatorEntry = CreateExpectedReplicatorEntry(
+				values.InitialReplicatorEntry,
+				values.InitialBcDriveEntry.completedDataModifications().rbegin()->Id
 		);
+
 
         // Assert
         EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);

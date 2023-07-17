@@ -72,7 +72,7 @@ namespace catapult { namespace builders {
 			pTransaction->Size = utils::checked_cast<size_t, uint32_t>(size);
 			pTransaction->Type = TTransaction::Entity_Type;
 			pTransaction->Version = MakeVersion(m_networkIdentifier, TTransaction::Current_Version);
-			//pTransaction->Signer = m_signer;
+			pTransaction->Signer = m_signer;
 
 			// transaction data
 			setAdditionalFields(*pTransaction);
