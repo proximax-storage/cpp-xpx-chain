@@ -58,6 +58,6 @@ namespace catapult::observers {
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		auto driveIter = driveCache.find(driveKey);
 		auto& driveEntry = driveIter.get();
-		driveEntry.ownerManagement() == state::OwnerManagement::ALLOWED;
+		driveEntry.setOwnerManagement(state::OwnerManagement::ALLOWED);
 	}
 }
