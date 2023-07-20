@@ -27,19 +27,19 @@ namespace catapult { namespace config {
 
 	// region BlockchainConfiguration
 
-	namespace {
-		std::string Qualify(const std::string& name) {
-			std::ostringstream out;
-			out << "config-" << name << ".properties";
-			return out.str();
-		}
 
-		std::string HostQualify(const std::string& name, const std::string& host) {
-			std::ostringstream out;
-			out << "config-" << name << "-" << host << ".properties";
-			return out.str();
-		}
+	std::string Qualify(const std::string& name) {
+		std::ostringstream out;
+		out << "config-" << name << ".properties";
+		return out.str();
 	}
+
+	std::string HostQualify(const std::string& name, const std::string& host) {
+		std::ostringstream out;
+		out << "config-" << name << "-" << host << ".properties";
+		return out.str();
+	}
+
 
 	BlockchainConfiguration::BlockchainConfiguration(
 			ImmutableConfiguration immutableConfig,

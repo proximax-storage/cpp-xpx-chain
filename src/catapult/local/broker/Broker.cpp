@@ -32,7 +32,7 @@
 #include "catapult/thread/Scheduler.h"
 #include "catapult/utils/StackLogger.h"
 #include "catapult/extensions/NemesisBlockLoader.h"
-
+#include "catapult/config/ConfigurationFileLoader.h"
 namespace catapult { namespace local {
 
 	namespace {
@@ -82,8 +82,8 @@ namespace catapult { namespace local {
 						auto config = extensions::LoadActiveNetworkConfig(stateDir);
 						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(config);
 					} else {
-						/// Not first boot but no config was saved yet, we just use the nemesis block configuration.
-						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(std::get<0>(bundleConfig));
+						/// Not first boot but no config was saved yet, so we will load the file from resources folder. This happens when first transitioning to this feature, but booting from an incomplete snapshot.
+						initNetworkConfig = std::make_unique<model::NetworkConfiguration>(config::LoadIniConfiguration<model::NetworkConfiguration>(boost::filesystem::path(m_pBootstrapper->resourcesPath()) / config::Qualify("network")));
 					}
 				}
 

@@ -91,6 +91,12 @@ namespace catapult { namespace config {
 		static BlockchainConfiguration LoadLocalFromPath(const boost::filesystem::path& resourcesPath, const std::string& extensionsHost);
 	};
 
+	/// Qualifies a \a name representing a resource file, by adding the .properties extension and config- prefix.
+	std::string Qualify(const std::string& name);
+
+	/// Qualifies a \a name representing a resource file, by adding the .properties and host extension and config- prefix.
+	std::string HostQualify(const std::string& name, const std::string& host);
+
 	/// Extracts a node representing the local node from \a config.
 	ionet::Node ToLocalNode(const BlockchainConfiguration& config);
 
