@@ -243,8 +243,8 @@ enabled = true
 [plugin:catapult.plugins.supercontract_v2]
 
 enabled = true
-minExecutorCount = 10
 maxRowSize = 100
 maxExecutionPayment = 10'000'000'000
-maxServicePaymentsSize = 5
-maxAutoExecutions = 5
+maxServicePaymentsSize = 512
+maxAutoExecutions = 10000
+automaticExecutionsDeadline = 5760
