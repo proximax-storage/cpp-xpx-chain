@@ -86,7 +86,7 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(3u, sub.numNotifications());
 		auto i = 0u;
 		EXPECT_EQ(SuperContract_v2_Contract_State_Update_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(SuperContract_v2_Unsuccessful_Batch_Execution_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(SuperContract_v2_Batch_Execution_Single_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(SuperContract_v2_Proof_Of_Execution_v1_Notification, sub.notificationTypes()[i++]);
 	}
 

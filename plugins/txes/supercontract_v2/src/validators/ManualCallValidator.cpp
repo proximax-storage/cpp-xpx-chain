@@ -41,18 +41,17 @@ namespace catapult { namespace validators {
             return Failure_SuperContract_v2_Deployment_In_Progress;
         }
 
-        std::set<MosaicId> bannedMosaicIds({
-                context.Config.Immutable.StorageMosaicId,
-                context.Config.Immutable.StreamingMosaicId,
-                context.Config.Immutable.ReviewMosaicId,
-                context.Config.Immutable.SuperContractMosaicId,
+        std::set<UnresolvedMosaicId> bannedMosaicIds({
+        		GetUnresolvedStorageMosaicId(context.Config.Immutable),
+        		config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+                config::GetUnresolvedSuperContractMosaicId(context.Config.Immutable),
+                config::GetUnresolvedReviewMosaicId(context.Config.Immutable),
         });
 
 		for (const auto& servicePayment: notification.ServicePayments) {
-            const auto& mosaicId = context.Resolvers.resolve(servicePayment.MosaicId);
-
-            if (bannedMosaicIds.count(mosaicId))
+            if (bannedMosaicIds.count(servicePayment.MosaicId)) {
 				return Failure_SuperContract_v2_Invalid_Service_Payment_Mosaic;
+			}
 		}
 
         return ValidationResult::Success;

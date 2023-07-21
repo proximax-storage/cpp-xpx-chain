@@ -42,6 +42,7 @@ namespace catapult {
 			config.Immutable.StorageMosaicId = MosaicId(1);
 			config.Immutable.StreamingMosaicId = MosaicId(2);
 			config.Immutable.SuperContractMosaicId = MosaicId(3);
+			config.Immutable.ReviewMosaicId = MosaicId(4);
 
             return (config.ToConst());
         }
