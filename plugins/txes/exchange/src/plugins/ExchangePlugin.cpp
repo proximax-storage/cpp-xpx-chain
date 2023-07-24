@@ -69,6 +69,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateExchangeV2Observer())
 				.add(observers::CreateRemoveOfferV1Observer(pConfigHolder->Config().Immutable.CurrencyMosaicId))
 				.add(observers::CreateRemoveOfferV2Observer(pConfigHolder->Config().Immutable.CurrencyMosaicId))
+				.add(observers::CreateAccountV2OfferUpgradeObserver())
 				.add(observers::CreateCleanupOffersObserver());
 		});
 	}

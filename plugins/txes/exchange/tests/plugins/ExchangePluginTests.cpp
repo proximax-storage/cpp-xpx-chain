@@ -83,6 +83,7 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetObserverNames() {
 				return {
 					"CleanupOffersObserver",
+					"AccountV2OfferUpgradeObserver",
 					"OfferV1Observer",
 					"OfferV2Observer",
 					"OfferV3Observer",

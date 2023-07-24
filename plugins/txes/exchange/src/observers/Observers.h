@@ -9,6 +9,7 @@
 #include "catapult/observers/ObserverTypes.h"
 #include "src/cache/ExchangeCache.h"
 #include "src/model/ExchangeNotifications.h"
+#include "plugins/txes/upgrade/src/model/BlockchainUpgradeNotifications.h"
 
 namespace catapult { namespace observers {
 
@@ -46,4 +47,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by block notifications
 	DECLARE_OBSERVER(CleanupOffers, model::BlockNotification<1>)();
+
+	/// Observes changes triggered by block notifications
+	DECLARE_OBSERVER(AccountV2OfferUpgrade, model::AccountV2UpgradeNotification<1>)();
 }}
