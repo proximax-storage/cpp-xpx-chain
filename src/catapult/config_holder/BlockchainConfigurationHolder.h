@@ -47,7 +47,7 @@ namespace catapult { namespace config {
 			m_pCache = pCache;
 		}
 
-		void InitializeNetworkConfiguration(const model::NetworkConfiguration& networkConfiguration, const config::SupportedEntityVersions& supportedEntities);
+		void InitializeNetworkConfiguration(const model::NetworkConfiguration& networkConfiguration);
 		void SetPluginInitializer(PluginInitializer&& initializer) {
 			m_pluginInitializer = std::move(initializer);
 		}

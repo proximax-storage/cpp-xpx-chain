@@ -37,14 +37,8 @@ namespace catapult { namespace local {
 			}
 
 		public:
-
-			void loadAll() {
-				loadSystemPlugins();
-				loadConfiguredPlugins();
-			}
-
-			void loadConfiguredPlugins() {
-				for (const auto& pair : m_bootstrapper.pluginManager().config().Plugins) {
+			void loadConfiguredPlugins(const model::NetworkConfiguration& config) {
+				for (const auto& pair : config.Plugins) {
 					bool load = true;
 					for(const auto& systemName : m_bootstrapper.extensionManager().systemPluginNames()) {
 						if(pair.first == systemName) {
@@ -92,15 +86,9 @@ namespace catapult { namespace local {
 		return std::make_unique<io::FileBlockStorage>(stagingDirectory, io::FileBlockStorageMode::None);
 	}
 
-	std::vector<plugins::PluginModule> LoadConfigurablePlugins(extensions::ProcessBootstrapper& bootstrapper) {
+	std::vector<plugins::PluginModule> LoadConfigurablePlugins(extensions::ProcessBootstrapper& bootstrapper, const model::NetworkConfiguration& config) {
 		BootstrapperPluginLoader loader(bootstrapper);
-		loader.loadConfiguredPlugins();
-		return loader.modules();
-	}
-
-	std::vector<plugins::PluginModule> LoadAllPlugins(extensions::ProcessBootstrapper& bootstrapper) {
-		BootstrapperPluginLoader loader(bootstrapper);
-		loader.loadAll();
+		loader.loadConfiguredPlugins(config);
 		return loader.modules();
 	}
 }}
