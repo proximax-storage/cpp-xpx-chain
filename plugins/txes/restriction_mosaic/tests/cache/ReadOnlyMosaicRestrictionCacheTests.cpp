@@ -31,7 +31,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, NetworkIdentifierIsExposed) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(19);
-		MosaicRestrictionCache originalCache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(networkIdentifier));
+		MosaicRestrictionCache originalCache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(10, networkIdentifier));
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, ReadOnlyMosaicRestrictionCache(*originalCache.createView(Height())).networkIdentifier());

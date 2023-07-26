@@ -35,7 +35,7 @@ namespace catapult { namespace cache {
 		struct AccountRestrictionCacheMixinTraits {
 			class CacheType : public AccountRestrictionCache {
 			public:
-				CacheType() : AccountRestrictionCache(CacheConfiguration(), test::CreateAccountRestrictionConfigHolder())
+				CacheType() : AccountRestrictionCache(CacheConfiguration(), test::CreateAccountRestrictionConfigHolder(10))
 				{}
 			};
 
@@ -91,7 +91,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheWrappersExposeNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(18);
-		AccountRestrictionCache cache(CacheConfiguration(), test::CreateAccountRestrictionConfigHolder(networkIdentifier));
+		AccountRestrictionCache cache(CacheConfiguration(), test::CreateAccountRestrictionConfigHolder(10, networkIdentifier));
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.createView(Height())->networkIdentifier());

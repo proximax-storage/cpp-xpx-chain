@@ -35,28 +35,28 @@ namespace catapult { namespace test {
 	/// Cache factory for creating a catapult cache composed of account restriction cache and core caches.
 	struct AccountRestrictionCacheFactory {
 	private:
-		static auto CreateSubCachesWithAccountRestrictionCache(model::NetworkIdentifier networkIdentifier) {
+		static auto CreateSubCachesWithAccountRestrictionCache(model::NetworkIdentifier networkIdentifier, uint maxAccountRestrictionValues) {
 			auto cacheId_Temp = (cache::AccountRestrictionCache::Id > cache::PropertyCache::Id ? cache::AccountRestrictionCache::Id : cache::PropertyCache::Id);
 			auto cacheId = cacheId_Temp > cache::GlobalStoreCache::Id ? cacheId_Temp : cache::GlobalStoreCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			auto holder = CreateAccountRestrictionConfigHolder(networkIdentifier);
+			auto holder = CreateAccountRestrictionConfigHolder(maxAccountRestrictionValues, networkIdentifier);
 			subCaches[cache::AccountRestrictionCache::Id] = MakeSubCachePlugin<cache::AccountRestrictionCache, cache::AccountRestrictionCacheStorage>(
 					holder);
 			subCaches[cache::PropertyCache::Id] = MakeSubCachePlugin<cache::PropertyCache, cache::PropertyCacheStorage>(holder);
 			subCaches[cache::GlobalStoreCache::Id] = MakeSubCachePlugin<cache::GlobalStoreCache, cache::GlobalStoreCacheStorage>(holder);
+			CoreSystemCacheFactory::AppendSubCaches(holder, subCaches);
 			return subCaches;
 		}
 
 	public:
 		/// Creates an empty catapult cache around default configuration.
-		static cache::CatapultCache Create() {
-			return Create(config::BlockchainConfiguration::Uninitialized());
+		static cache::CatapultCache Create(uint maxAccountRestrictionValues = 10) {
+			return Create(config::BlockchainConfiguration::Uninitialized(), maxAccountRestrictionValues);
 		}
 
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
-			auto subCaches = CreateSubCachesWithAccountRestrictionCache(config.Immutable.NetworkIdentifier);
-			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config, uint maxAccountRestrictionValues = 10) {
+			auto subCaches = CreateSubCachesWithAccountRestrictionCache(config.Immutable.NetworkIdentifier, maxAccountRestrictionValues);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 	};

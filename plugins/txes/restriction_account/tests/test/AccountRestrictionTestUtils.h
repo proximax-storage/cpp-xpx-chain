@@ -42,7 +42,7 @@ namespace catapult { namespace test {
 	/// Asserts that account restrictions \a actual is equal to \a expected.
 	void AssertEqual(const state::AccountRestrictions& expected, const state::AccountRestrictions& actual);
 
-	std::shared_ptr<config::BlockchainConfigurationHolder> CreateAccountRestrictionConfigHolder(model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Zero);
+	std::shared_ptr<config::BlockchainConfigurationHolder> CreateAccountRestrictionConfigHolder(uint maxAccountRestrictionValues, model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Zero);
 
 	Address ConvertToAddress(const Key& key);
 

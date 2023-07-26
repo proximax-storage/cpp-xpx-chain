@@ -57,27 +57,25 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateAccountOperationRestrictionModificationValuesValidator());
 		});
 
-		auto config = model::LoadPluginConfiguration<config::AccountRestrictionConfiguration>(
-				manager.config());
-		manager.addPluginInitializer([config](auto& networkConfig) {
-		  networkConfig.template SetPluginConfiguration<config::AccountRestrictionConfiguration>(config);
+		manager.addPluginInitializer([](auto& networkConfig) {
+		  networkConfig.template InitPluginConfiguration<config::AccountRestrictionConfiguration>();
 		});
-		manager.addStatefulValidatorHook([maxAccountRestrictionValues = config.MaxAccountRestrictionValues](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateAccountAddressRestrictionRedundantModificationValidator())
 				.add(validators::CreateAccountAddressRestrictionValueModificationValidator())
-				.add(validators::CreateMaxAccountAddressRestrictionValuesValidator(maxAccountRestrictionValues))
+				.add(validators::CreateMaxAccountAddressRestrictionValuesValidator())
 				.add(validators::CreateAddressInteractionValidator())
 				.add(validators::CreateAccountAddressRestrictionNoSelfModificationValidator())
 
 				.add(validators::CreateAccountMosaicRestrictionRedundantModificationValidator())
 				.add(validators::CreateAccountMosaicRestrictionValueModificationValidator())
-				.add(validators::CreateMaxAccountMosaicRestrictionValuesValidator(maxAccountRestrictionValues))
+				.add(validators::CreateMaxAccountMosaicRestrictionValuesValidator())
 				.add(validators::CreateMosaicRecipientValidator())
 
 				.add(validators::CreateAccountOperationRestrictionRedundantModificationValidator())
 				.add(validators::CreateAccountOperationRestrictionValueModificationValidator())
-				.add(validators::CreateMaxAccountOperationRestrictionValuesValidator(maxAccountRestrictionValues))
+				.add(validators::CreateMaxAccountOperationRestrictionValuesValidator())
 				.add(validators::CreateOperationRestrictionValidator())
 				.add(validators::CreateAccountOperationRestrictionNoSelfBlockingValidator());
 		});

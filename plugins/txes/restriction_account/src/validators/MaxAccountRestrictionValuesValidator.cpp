@@ -29,9 +29,9 @@ namespace catapult { namespace validators {
 	namespace {
 		template<typename TRestrictionValue, typename TNotification>
 		ValidationResult Validate(
-				uint16_t maxAccountRestrictionValues,
 				const TNotification& notification,
 				const ValidatorContext& context) {
+			auto maxAccountRestrictionValues = context.Config.Network.template GetPluginConfiguration<config::AccountRestrictionConfiguration>().MaxAccountRestrictionValues;
 			if (maxAccountRestrictionValues < notification.RestrictionAdditionsCount + notification.RestrictionDeletionsCount)
 				return Failure_RestrictionAccount_Modification_Count_Exceeded;
 			const auto& cache = context.Cache.sub<cache::AccountRestrictionCache>();
@@ -52,12 +52,12 @@ namespace catapult { namespace validators {
 	}
 
 #define DEFINE_ACCOUNT_RESTRICTION_MAX_VALUES_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE, ACCOUNT_RESTRICTION_VALUE_TYPE) \
-	DECLARE_STATEFUL_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)(uint16_t maxAccountRestrictionValues) { \
+	DECLARE_STATEFUL_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)() { \
 		using ValidatorType = stateful::FunctionalNotificationValidatorT<NOTIFICATION_TYPE>; \
-		return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", [maxAccountRestrictionValues]( \
+		return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", []( \
 				const NOTIFICATION_TYPE& notification, \
 				const ValidatorContext& context) { \
-			return Validate<ACCOUNT_RESTRICTION_VALUE_TYPE, NOTIFICATION_TYPE>(maxAccountRestrictionValues, notification, context); \
+			return Validate<ACCOUNT_RESTRICTION_VALUE_TYPE, NOTIFICATION_TYPE>(notification, context); \
 		}); \
 	}
 

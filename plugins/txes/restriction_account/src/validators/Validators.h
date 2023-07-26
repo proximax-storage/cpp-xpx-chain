@@ -44,8 +44,7 @@ namespace catapult { namespace validators {
 	/* Validator that applies to account restriction notifications and validates that: */ \
 	/* - the maximum number of modifications (\a maxAccountRestrictionValues) is not exceeded */ \
 	/* - the maximum number of account restriction values (\a maxAccountRestrictionValues) is not exeeded */ \
-	DECLARE_STATEFUL_VALIDATOR(MaxAccount##VALUE_NAME##RestrictionValues, model::ModifyAccount##VALUE_NAME##RestrictionsNotification)( \
-			uint16_t maxAccountRestrictionValues);
+	DECLARE_STATEFUL_VALIDATOR(MaxAccount##VALUE_NAME##RestrictionValues, model::ModifyAccount##VALUE_NAME##RestrictionsNotification)();
 
 	DECLARE_SHARED_VALIDATORS(Address)
 	DECLARE_SHARED_VALIDATORS(Mosaic)

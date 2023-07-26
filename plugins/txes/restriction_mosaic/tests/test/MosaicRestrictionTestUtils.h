@@ -31,7 +31,7 @@ namespace catapult { namespace test {
 	/// Asserts that mosaic restriction entry \a actual is equal to \a expected.
 	void AssertEqual(const state::MosaicRestrictionEntry& expected, const state::MosaicRestrictionEntry& actual);
 
-	std::shared_ptr<config::BlockchainConfigurationHolder> CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Zero);
+	std::shared_ptr<config::BlockchainConfigurationHolder> CreateMosaicRestrictionConfigHolder(uint maxMosaicRestrictionValues, model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Zero);
 
 	Address ConvertToAddress(const Key& key);
 

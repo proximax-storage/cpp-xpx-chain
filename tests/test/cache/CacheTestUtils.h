@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCache.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/cache/SubCachePluginAdapter.h"
 #include <memory>
 #include <vector>
@@ -50,6 +51,12 @@ namespace catapult { namespace test {
 				const config::BlockchainConfiguration& config,
 				const cache::CacheConfiguration& cacheConfig,
 				std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches);
+		/// Adds all core sub caches initialized with \a pConfigHolder and \a cacheConfig to \a subCaches.
+		static void AppendSubCaches(
+				const std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder,
+				std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches,
+				const cache::CacheConfiguration& cacheConfig = cache::CacheConfiguration());
+
 	};
 
 	/// Creates a sub cache plugin given \a args for a plugin that doesn't require configuration.

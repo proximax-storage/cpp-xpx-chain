@@ -90,6 +90,30 @@ namespace catapult { namespace test {
 		subCaches[NetworkConfigCache::Id] = MakeSubCachePluginWithCacheConfiguration<NetworkConfigCache, NetworkConfigCacheStorage>(netConfigCacheConfig, pConfigHolder);
 	}
 
+	void CoreSystemCacheFactory::AppendSubCaches(
+			const std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder,
+			std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches,
+			const cache::CacheConfiguration& cacheConfig
+			) {
+		using namespace cache;
+
+		subCaches[AccountStateCache::Id] = MakeSubCachePluginWithCacheConfiguration<AccountStateCache, AccountStateCacheStorage>(
+				cacheConfig,
+				CreateAccountStateCacheOptions(pConfigHolder));
+
+		subCaches[BlockDifficultyCache::Id] = MakeConfigurationFreeSubCachePlugin<BlockDifficultyCache, BlockDifficultyCacheStorage>(pConfigHolder);
+
+		std::string name;
+		if(cacheConfig.CacheDatabaseDirectory == "") {
+			name = cache::NetworkConfigCache::Name;
+		} else {
+			name = cacheConfig.CacheDatabaseDirectory+"/"+cache::NetworkConfigCache::Name;
+		}
+		auto netConfigCacheConfig = CacheConfiguration(cache::NetworkConfigCache::Name, utils::FileSize(), cacheConfig.ShouldStorePatriciaTrees ? PatriciaTreeStorageMode::Enabled : PatriciaTreeStorageMode::Disabled);
+		netConfigCacheConfig.ShouldUseCacheDatabase = cacheConfig.ShouldUseCacheDatabase;
+		subCaches[NetworkConfigCache::Id] = MakeSubCachePluginWithCacheConfiguration<NetworkConfigCache, NetworkConfigCacheStorage>(netConfigCacheConfig, pConfigHolder);
+	}
+
 	// endregion
 
 	cache::CatapultCache CreateEmptyCatapultCache() {

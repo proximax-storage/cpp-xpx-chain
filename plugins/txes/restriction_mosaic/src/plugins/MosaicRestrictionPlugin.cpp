@@ -54,19 +54,17 @@ namespace catapult { namespace plugins {
 			builder.add(validators::CreateMosaicRestrictionTypeValidator());
 		});
 
-		auto config = model::LoadPluginConfiguration<config::MosaicRestrictionConfiguration>(
-				manager.config());
-		manager.addPluginInitializer([config](auto& networkConfig) {
-		  networkConfig.template SetPluginConfiguration<config::MosaicRestrictionConfiguration>(config);
+		manager.addPluginInitializer([](auto& networkConfig) {
+		  networkConfig.template InitPluginConfiguration<config::MosaicRestrictionConfiguration>();
 		});
-		manager.addStatefulValidatorHook([maxMosaicRestrictionValues = config.MaxMosaicRestrictionValues](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateMosaicRestrictionBalanceDebitValidator())
 				.add(validators::CreateMosaicRestrictionBalanceTransferValidator())
 				.add(validators::CreateMosaicRestrictionRequiredValidator())
-				.add(validators::CreateMosaicGlobalRestrictionMaxValuesValidator(maxMosaicRestrictionValues))
+				.add(validators::CreateMosaicGlobalRestrictionMaxValuesValidator())
 				.add(validators::CreateMosaicGlobalRestrictionModificationValidator())
-				.add(validators::CreateMosaicAddressRestrictionMaxValuesValidator(maxMosaicRestrictionValues))
+				.add(validators::CreateMosaicAddressRestrictionMaxValuesValidator())
 				.add(validators::CreateMosaicAddressRestrictionModificationValidator());
 		});
 

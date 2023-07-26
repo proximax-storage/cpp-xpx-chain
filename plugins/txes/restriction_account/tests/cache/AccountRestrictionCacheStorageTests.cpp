@@ -33,7 +33,7 @@ namespace catapult { namespace cache {
 			using StorageType = AccountRestrictionCacheStorage;
 			class CacheType : public AccountRestrictionCache {
 			public:
-				CacheType() : AccountRestrictionCache(CacheConfiguration(), test::CreateAccountRestrictionConfigHolder())
+				CacheType() : AccountRestrictionCache(CacheConfiguration(), test::CreateAccountRestrictionConfigHolder(10))
 				{}
 			};
 

@@ -29,9 +29,9 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicRestrictionMaxValuesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicGlobalRestrictionMaxValues, 10)
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicGlobalRestrictionMaxValues)
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicAddressRestrictionMaxValues, 10)
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicAddressRestrictionMaxValues)
 
 	// region traits
 
@@ -94,12 +94,17 @@ namespace catapult { namespace validators {
 			// Arrange:
 			TTraits traits;
 
-			auto pValidator = TTraits::CreateValidator(10);
+			auto pValidator = TTraits::CreateValidator();
 			auto notification = traits.createNotification(222, operationType);
-			auto cache = test::MosaicRestrictionCacheFactory::Create();
+			auto cache = test::MosaicRestrictionCacheFactory::Create(model::NetworkIdentifier::Zero, 10);
+			auto cacheView = cache.createView();
+			auto readOnlyCache = cacheView.toReadOnly();
+			model::ResolverContext resolverContext;
+			auto holder = test::CreateMosaicRestrictionConfigHolder(10, model::NetworkIdentifier::Zero);
+			auto context = validators::ValidatorContext(holder->Config(), Height(100), Timestamp(8888), resolverContext, readOnlyCache);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
@@ -124,17 +129,23 @@ namespace catapult { namespace validators {
 			// Arrange:
 			TTraits traits;
 
-			auto pValidator = TTraits::CreateValidator(10);
+			auto pValidator = TTraits::CreateValidator();
 			auto notification = traits.createNotification(222, operationType);
-			auto cache = test::MosaicRestrictionCacheFactory::Create();
+			auto cache = test::MosaicRestrictionCacheFactory::Create(model::NetworkIdentifier::Zero, 10);
 			{
 				auto delta = cache.createDelta();
 				traits.addRestrictionWithValuesToCache(delta.sub<cache::MosaicRestrictionCache>(), 3);
 				cache.commit(Height());
 			}
 
+			auto cacheView = cache.createView();
+			auto readOnlyCache = cacheView.toReadOnly();
+			model::ResolverContext resolverContext;
+			auto holder = test::CreateMosaicRestrictionConfigHolder(10, model::NetworkIdentifier::Zero);
+			auto context = validators::ValidatorContext(holder->Config(), Height(100), Timestamp(8888), resolverContext, readOnlyCache);
+
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
@@ -166,17 +177,23 @@ namespace catapult { namespace validators {
 			TTraits traits;
 
 			uint64_t notificationRestrictionValue = operationType == OperationType::Add ? numMaxValues + 10 : numInitialValues - 2;
-			auto pValidator = TTraits::CreateValidator(numMaxValues);
+			auto pValidator = TTraits::CreateValidator();
 			auto notification = traits.createNotification(notificationRestrictionValue, operationType);
-			auto cache = test::MosaicRestrictionCacheFactory::Create();
+			auto cache = test::MosaicRestrictionCacheFactory::Create(model::NetworkIdentifier::Zero, numMaxValues);
 			{
 				auto delta = cache.createDelta();
 				traits.addRestrictionWithValuesToCache(delta.sub<cache::MosaicRestrictionCache>(), numInitialValues);
 				cache.commit(Height());
 			}
+			auto cacheView = cache.createView();
+			auto readOnlyCache = cacheView.toReadOnly();
+			model::ResolverContext resolverContext;
+			auto holder = test::CreateMosaicRestrictionConfigHolder(numMaxValues, model::NetworkIdentifier::Zero);
+			auto context = test::CreateValidatorContext(holder->Config(), Height(100), readOnlyCache);
+
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

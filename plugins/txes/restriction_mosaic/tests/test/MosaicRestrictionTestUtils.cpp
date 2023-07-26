@@ -73,10 +73,10 @@ namespace catapult { namespace test {
 			AssertEqual(expected.asGlobalRestriction(), actual.asGlobalRestriction());
 	}
 
-	std::shared_ptr<config::BlockchainConfigurationHolder> CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier networkIdentifier) {
+	std::shared_ptr<config::BlockchainConfigurationHolder> CreateMosaicRestrictionConfigHolder(uint maxMosaicRestrictionValues, model::NetworkIdentifier networkIdentifier) {
 		auto pluginConfig = config::MosaicRestrictionConfiguration::Uninitialized();
 		pluginConfig.Enabled = true;
-		pluginConfig.MaxMosaicRestrictionValues = 10;
+		pluginConfig.MaxMosaicRestrictionValues = maxMosaicRestrictionValues;
 		auto networkConfig = model::NetworkConfiguration::Uninitialized();
 		networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 		networkConfig.SetPluginConfiguration(pluginConfig);

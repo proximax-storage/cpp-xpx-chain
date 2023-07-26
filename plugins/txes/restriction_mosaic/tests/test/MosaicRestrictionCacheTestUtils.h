@@ -32,17 +32,17 @@ namespace catapult { namespace test {
 	struct MosaicRestrictionCacheFactory {
 	public:
 		/// Creates an empty catapult cache with optional \a networkIdentifier.
-		static cache::CatapultCache Create(model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Zero) {
+		static cache::CatapultCache Create(model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Zero, uint maxMosaicRestrictionValues = 10) {
 			auto cacheId = cache::MosaicRestrictionCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			subCaches[cacheId] = MakeSubCachePlugin<cache::MosaicRestrictionCache, cache::MosaicRestrictionCacheStorage>(test::CreateMosaicRestrictionConfigHolder(networkIdentifier)
+			subCaches[cacheId] = MakeSubCachePlugin<cache::MosaicRestrictionCache, cache::MosaicRestrictionCacheStorage>(test::CreateMosaicRestrictionConfigHolder(maxMosaicRestrictionValues, networkIdentifier)
 					);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
-			return Create(config.Immutable.NetworkIdentifier);
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config, uint maxMosaicRestrictionValues = 10) {
+			return Create(config.Immutable.NetworkIdentifier, maxMosaicRestrictionValues);
 		}
 	};
 }}

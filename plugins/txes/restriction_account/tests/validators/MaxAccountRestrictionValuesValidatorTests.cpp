@@ -30,9 +30,9 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MaxAccountRestrictionValuesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxAccountAddressRestrictionValues, 5)
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxAccountMosaicRestrictionValues, 5)
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxAccountOperationRestrictionValues, 5)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxAccountAddressRestrictionValues)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxAccountMosaicRestrictionValues)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxAccountOperationRestrictionValues)
 
 	namespace {
 		struct AccountAddressRestrictionTraits : public test::BaseAccountAddressRestrictionTraits {
@@ -77,7 +77,8 @@ namespace catapult { namespace validators {
 
 			// Arrange:
 			auto initialValues = test::GenerateUniqueRandomDataVector<typename TRestrictionValueTraits::ValueType>(numInitialValues);
-			auto cache = test::AccountRestrictionCacheFactory::Create();
+			auto holder = test::CreateAccountRestrictionConfigHolder(maxAccountRestrictionValues, model::NetworkIdentifier::Zero);
+			auto cache = test::AccountRestrictionCacheFactory::Create(maxAccountRestrictionValues);
 			auto source = test::GenerateRandomByteArray<Key>();
 			auto address = model::PublicKeyToAddress(source, model::NetworkIdentifier::Zero);
 			test::PopulateAccountRestrictionCache<TRestrictionValueTraits>(cache, address, initialValues);
@@ -90,14 +91,19 @@ namespace catapult { namespace validators {
 			for (auto i = 0u; i < numDeletions; ++i)
 				restrictionDeletions.push_back(TRestrictionValueTraits::ToUnresolved(initialValues[i]));
 
-			auto pValidator = TRestrictionValueTraits::CreateValidator(maxAccountRestrictionValues);
+			auto pValidator = TRestrictionValueTraits::CreateValidator();
 			auto notification = test::CreateAccountRestrictionsNotification<TRestrictionValueTraits>(
 					model::PublicKeyToAddress(source, model::NetworkIdentifier::Zero),
 					restrictionAdditions,
 					restrictionDeletions);
 
+			auto cacheView = cache.createView();
+			auto readOnlyCache = cacheView.toReadOnly();
+			model::ResolverContext resolverContext;
+			auto context = validators::ValidatorContext(holder->Config(), Height(100), Timestamp(8888), resolverContext, readOnlyCache);
+
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "numAdditions " << numAdditions << ", numDeletions " << numDeletions;

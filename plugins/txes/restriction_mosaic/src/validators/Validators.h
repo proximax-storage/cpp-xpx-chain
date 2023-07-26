@@ -36,18 +36,18 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(MosaicRestrictionRequired, model::MosaicRestrictionRequiredNotification)();
 
 	/// Validator that applies to new value notifications of mosaic global restriction modifications and validates that:
-	/// - the requested modification will not cause the number of restrictions to exceed \a maxMosaicRestrictionValues
+	/// - the requested modification will not cause the number of restrictions to exceed maxMosaicRestrictionValues
 	/// - delete only applies to existing values
 	DECLARE_STATEFUL_VALIDATOR(
 			MosaicGlobalRestrictionMaxValues,
-			model::MosaicGlobalRestrictionModificationNewValueNotification)(uint8_t maxMosaicRestrictionValues);
+			model::MosaicGlobalRestrictionModificationNewValueNotification)();
 
 	/// Validator that applies to new value notifications of mosaic address restriction modifications and validates that:
-	/// - the requested modification will not cause the number of restrictions to exceed \a maxMosaicRestrictionValues
+	/// - the requested modification will not cause the number of restrictions to exceed maxMosaicRestrictionValues
 	/// - delete only applies to existing values
 	DECLARE_STATEFUL_VALIDATOR(
 			MosaicAddressRestrictionMaxValues,
-			model::MosaicAddressRestrictionModificationNewValueNotification)(uint8_t maxMosaicRestrictionValues);
+			model::MosaicAddressRestrictionModificationNewValueNotification)();
 
 	/// Validator that applies to previous value notifications of mosaic global restriction modifications and validates that:
 	/// - the specified previous value(s) match the current value(s)

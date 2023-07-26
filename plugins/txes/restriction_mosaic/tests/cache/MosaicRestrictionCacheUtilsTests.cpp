@@ -65,7 +65,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, GetMosaicGlobalRestrictionResolvedRules_ResolutionSkippedWhenNoRulesAreSet) {
 		// Arrange:
-		MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier(12)));
+		MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(10, model::NetworkIdentifier(12)));
 		auto delta = cache.createDelta(Height(0));
 		SeedCacheWithMosaicGlobalRestrictionRules(*delta, 200, MosaicId(), MosaicId());
 
@@ -84,7 +84,7 @@ namespace catapult { namespace cache {
 				MosaicId secondReferenceMosaicId,
 				const MosaicRestrictionResolvedRule& expectedSecondResolvedRule) {
 			// Arrange:
-			MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier(12)));
+			MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(10, model::NetworkIdentifier(12)));
 			auto delta = cache.createDelta(Height());
 			SeedCacheWithMosaicGlobalRestrictionRules(*delta, referenceKey, referenceMosaicId, secondReferenceMosaicId);
 
@@ -141,7 +141,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, GetMosaicGlobalRestrictionResolvedRules_CannotResolveRuleWithExplicitSelfReference) {
 		// Arrange:
-		MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier(12)));
+		MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(10, model::NetworkIdentifier(12)));
 		auto delta = cache.createDelta(Height());
 		SeedCacheWithMosaicGlobalRestrictionRules(*delta, 200, MosaicId(111), MosaicId());
 
@@ -175,7 +175,7 @@ namespace catapult { namespace cache {
 				const std::vector<MosaicRestrictionResolvedRule>& resolvedRules) {
 			// Arrange:
 			auto address = test::GenerateRandomByteArray<Address>();
-			MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(model::NetworkIdentifier(12)));
+			MosaicRestrictionCache cache(CacheConfiguration(), test::CreateMosaicRestrictionConfigHolder(10, model::NetworkIdentifier(12)));
 			auto delta = cache.createDelta(Height());
 			SeedCacheWithMosaicAddressRestrictionRules(*delta, address);
 

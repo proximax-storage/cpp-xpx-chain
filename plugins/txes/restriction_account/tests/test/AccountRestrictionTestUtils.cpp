@@ -92,10 +92,10 @@ namespace catapult { namespace test {
 		}
 	}
 
-	std::shared_ptr<config::BlockchainConfigurationHolder> CreateAccountRestrictionConfigHolder(model::NetworkIdentifier networkIdentifier) {
+	std::shared_ptr<config::BlockchainConfigurationHolder> CreateAccountRestrictionConfigHolder(uint maxAccountRestrictionValues, model::NetworkIdentifier networkIdentifier) {
 		auto pluginConfig = config::AccountRestrictionConfiguration::Uninitialized();
 		pluginConfig.Enabled = true;
-		pluginConfig.MaxAccountRestrictionValues = 10;
+		pluginConfig.MaxAccountRestrictionValues = maxAccountRestrictionValues;
 		auto networkConfig = model::NetworkConfiguration::Uninitialized();
 		networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 		networkConfig.SetPluginConfiguration(pluginConfig);
