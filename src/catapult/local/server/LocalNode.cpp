@@ -122,7 +122,7 @@ namespace catapult { namespace local {
 
 						loadStateFromDisk();
 
-						configHeight = m_cacheHolder.cache().configHeight();
+						configHeight = m_cacheHolder.cache().configHeight() + Height(1);
 						pConfigHolder->SetCache(nullptr);
 						m_cacheHolder.cache() = m_pluginManager.createCache();
 						m_pluginManager.reset();
