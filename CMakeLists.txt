@@ -69,6 +69,10 @@ if(NOT APPLE)
 	set(DO_NOT_SKIP_BUILD_TESTS TRUE)
 endif()
 
+if(SKIP_UT)
+	set(DO_NOT_SKIP_BUILD_TESTS FALSE)
+endif()
+
 # run catapult tests first
 add_subdirectory(src)
 if(DO_NOT_SKIP_BUILD_TESTS)
@@ -87,10 +91,5 @@ if (EXISTS "${CMAKE_SOURCE_DIR}/internal/CMakeLists.txt")
 endif()
 
 add_subdirectory(tools)
-
-# Help programs
-if(DO_NOT_SKIP_BUILD_TESTS)
-add_subdirectory(spammer)
-endif()
 
 add_subdirectory(cpp-xpx-storage-sdk)
