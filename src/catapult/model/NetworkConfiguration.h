@@ -183,7 +183,6 @@ namespace catapult { namespace model {
 		uint64_t executionPaymentToGasMultiplier;
 		uint64_t downloadPaymentToGasMultiplier;
 
-		uint8_t networkIdentifier;
 	private:
 		/// Map of plugin configurations.
 		mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> m_pluginConfigs;

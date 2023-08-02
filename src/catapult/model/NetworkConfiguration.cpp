@@ -141,8 +141,6 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(executionPaymentToGasMultiplier);
 		config.downloadPaymentToGasMultiplier  = 1000000U;
 		TRY_LOAD_CHAIN_PROPERTY(downloadPaymentToGasMultiplier);
-		config.networkIdentifier;
-		TRY_LOAD_CHAIN_PROPERTY(networkIdentifier);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 
