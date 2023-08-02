@@ -167,6 +167,23 @@ namespace catapult { namespace model {
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
 
+		uint64_t autorunSCLimit;
+
+		std::string autorunFile;
+
+		std::string autorunFunction;
+		uint64_t maxAutorunExecutableSize;
+		uint64_t maxAutomaticExecutableSize;
+		uint64_t maxManualExecutableSize;
+
+		std::string storagePathPrefix;
+
+		unsigned int internetBufferSize;
+
+		uint64_t executionPaymentToGasMultiplier;
+		uint64_t downloadPaymentToGasMultiplier;
+
+		uint8_t networkIdentifier;
 	private:
 		/// Map of plugin configurations.
 		mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> m_pluginConfigs;
