@@ -242,7 +242,6 @@ namespace catapult { namespace dbrb {
 	}
 
 	void DbrbProcess::onAcknowledgedQuorumCollected(const AcknowledgedMessage& message) {
-
 		// Replacing certificate.
 		auto& data = m_broadcastData[message.PayloadHash];
 		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Quorum collected in view " << message.View << ". Payload " << data.Payload->Type << " from " << data.Sender;
@@ -250,8 +249,9 @@ namespace catapult { namespace dbrb {
 		data.Certificate.clear();
 		const auto& acknowledgedSet = data.QuorumManager.AcknowledgedPayloads[message.View];
 		for (const auto& [processId, hash] : acknowledgedSet) {
-			if (hash == message.PayloadHash)
-				data.Certificate[processId] = data.Signatures.at(std::make_pair(message.View, processId));
+			auto iter = data.Signatures.find(std::make_pair(message.View, processId));
+			if (hash == message.PayloadHash && data.Signatures.end() != iter)
+				data.Certificate[processId] = iter->second;
 		}
 
 		// Disseminating Commit message.
