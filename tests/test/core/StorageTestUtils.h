@@ -20,7 +20,7 @@
 
 #pragma once
 #include <string>
-
+#include <cstdint>
 namespace catapult { namespace test {
 
 	/// Prepares the storage by copying seed data into the \a destination directory.

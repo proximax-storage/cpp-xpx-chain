@@ -20,7 +20,7 @@
 
 #pragma once
 #include <string>
-
+#include <cstdint>
 namespace catapult { namespace utils {
 
 	/// A diagnostic counter id.

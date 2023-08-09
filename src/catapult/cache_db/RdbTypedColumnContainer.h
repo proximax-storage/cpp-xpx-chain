@@ -88,7 +88,7 @@ namespace catapult { namespace cache {
 
 				if (!m_pStorage) {
 					auto value = TDescriptor::Serializer::DeserializeValue(m_iterator.buffer());
-					m_pStorage = std::make_unique<StorageType>(TDescriptor::ToStorage(value));
+					m_pStorage = std::make_shared<StorageType>(TDescriptor::ToStorage(value));
 				}
 
 				return *m_pStorage;

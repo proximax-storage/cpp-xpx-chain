@@ -20,14 +20,15 @@
 
 #include <catapult/io/StringOutputStream.h>
 #include "catapult/io/BufferInputStreamAdapter.h"
-#include "tests/catapult/cache_db/test/RdbTestUtils.h"
+#include "tests/test/cache/RdbTestUtils.h"
 #include "catapult/cache_db/RdbTypedColumnContainer.h"
-#include "tests/catapult/cache_db/test/BasicMapDescriptor.h"
-#include "tests/catapult/cache_db/test/StringKey.h"
+#include "tests/test/cache/BasicMapDescriptor.h"
+#include "tests/test/cache/StringKey.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
 #include "catapult/cache_db/RocksInclude.h"
 #include "catapult/io/PodIoUtils.h"
+#include "tests/test/other/DeltaElementsTestUtils.h"
 
 namespace catapult { namespace cache {
 
@@ -356,51 +357,10 @@ namespace catapult { namespace cache {
 
 	// region test real container iteration
 	namespace {
-		struct RealTestValue {
-		public:
-			std::string KeyCopy; //10
-			int Integer; //4
-			std::string RandomData; //20
-		};
-		struct RealColumnDescriptor : public test::BasicMapDescriptor<test::StringKey, RealTestValue> {
-		public:
-			struct Serializer {
-			public:
-
-				static std::string SerializeValue(const ValueType& value) {
-					io::StringOutputStream output(34);
-					std::array<uint8_t, 10> key;
-					std::array<uint8_t, 20> randomValue;
-					std::copy(value.KeyCopy.begin(), value.KeyCopy.end(), key.data());
-					std::copy(value.RandomData.begin(), value.RandomData.end(), randomValue.data());
-					io::Write(output, key);
-					io::Write32(output, value.Integer);
-					io::Write(output, randomValue);
-					return output.str();
-				}
-
-				static ValueType DeserializeValue(const RawBuffer& buffer) {
-					io::BufferInputStreamAdapter<RawBuffer> input(buffer);
-					RealTestValue returnValue;
-					std::array<uint8_t, 10> key;
-					std::array<uint8_t, 20> randomValue;
-					io::Read(input, key);
-					returnValue.Integer = io::Read32(input);
-					io::Read(input, randomValue);
-					returnValue.KeyCopy = std::string(key.begin(), key.end());
-					returnValue.RandomData = std::string(randomValue.begin(), randomValue.end());
-					return returnValue;
-				}
-
-				static uint64_t KeyToBoundary(const KeyType& key) {
-					return key.size();
-				}
-			};
-		};
 
 		auto CreateRealTestValues(int count)
 		{
-			std::map<std::string, RealTestValue> values;
+			std::map<std::string, test::RealTestValue> values;
 			for(auto i = 0; i < count; i++)
 			{
 				auto key = std::string(reinterpret_cast<const char*>(test::GenerateRandomArray<10>().data()), 10);
@@ -422,12 +382,7 @@ namespace catapult { namespace cache {
 		}
 
 		auto CreateRealContainer(RocksDatabase& db) {
-			return RdbTypedColumnContainer<RealColumnDescriptor, RdbColumnContainer>(db, 0);
-		}
-
-		template<typename TContainer>
-		auto ToSlice(const TContainer& container) {
-			return rocksdb::Slice(reinterpret_cast<const char*>(container.data()), container.size());
+			return RdbTypedColumnContainer<test::RealColumnDescriptor, RdbColumnContainer>(db, 0);
 		}
 
 	}
@@ -437,7 +392,7 @@ namespace catapult { namespace cache {
 		test::RdbTestContext context(DefaultSettings(), [&values](auto& db, const auto& columns) {
 			for(auto& val : values)
 			{
-				db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(val.second.KeyCopy), RealColumnDescriptor::Serializer::SerializeValue(val.second));
+				db.Put(rocksdb::WriteOptions(), columns[0], test::ToSlice(val.second.KeyCopy), test::RealColumnDescriptor::Serializer::SerializeValue(val.second));
 			}
 
 		});
@@ -460,7 +415,7 @@ namespace catapult { namespace cache {
 		test::RdbTestContext context(DefaultSettings(), [&values](auto& db, const auto& columns) {
 		  for(auto& val : values)
 		  {
-			  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(val.second.KeyCopy), RealColumnDescriptor::Serializer::SerializeValue(val.second));
+			  db.Put(rocksdb::WriteOptions(), columns[0], test::ToSlice(val.second.KeyCopy), test::RealColumnDescriptor::Serializer::SerializeValue(val.second));
 		  }
 
 		});
@@ -480,6 +435,148 @@ namespace catapult { namespace cache {
 		}
 
 		EXPECT_EQ(iter, container.cend());
+
+	}
+
+	namespace {
+		struct TestWrapper {
+			TestWrapper(cache::RdbTypedColumnContainer<test::RealColumnDescriptor>* container) : m_pContainer(container) {
+			}
+			class const_iterator {
+			public:
+				/// Creates an uninitialized iterator.
+				const_iterator() = default;
+
+				/// Creates a conditional iterator around \a iter for a storage container.
+				explicit const_iterator(cache::RdbTypedColumnContainer<test::RealColumnDescriptor>::const_iterator&& iterator)
+					: m_storageIter(std::move(iterator))
+				{}
+			public:
+				/// Returns \c true if this iterator is equal to \a rhs.
+				bool operator==(const const_iterator& rhs) const {
+					return m_storageIter == rhs.m_storageIter;
+				}
+
+				/// Returns \c true if this iterator is not equal to \a rhs.
+				bool operator!=(const const_iterator& rhs) const {
+					return !(*this == rhs);
+				}
+
+			public:
+				const_iterator& operator++()
+				{
+					m_storageIter++;
+					return *this;
+				}
+
+				const_iterator operator++(int)
+				{
+					const_iterator iter = *this;
+					++(*this);
+					return *this;
+				}
+
+				const_iterator& operator--()
+				{
+					m_storageIter--;
+					return *this;
+				}
+
+				const_iterator operator--(int)
+				{
+					const_iterator iter = *this;
+					--(*this);
+					return iter;
+				}
+
+			public:
+				/// Returns a const reference to the current element.
+				const auto& operator*() const {
+					return *m_storageIter;
+				}
+
+				/// Returns a const pointer to the current element.
+				const auto* operator->() const {
+					return &operator*();
+				}
+
+			private:
+				cache::RdbTypedColumnContainer<test::RealColumnDescriptor>::const_iterator m_storageIter;
+			};
+
+			/// Returns a const iterator to the element following the last element of the underlying set.
+			const_iterator cend() const {
+				return const_iterator(m_pContainer->cend());
+			}
+
+			/// Returns a const iterator to the first element of the underlying set.
+			const_iterator cbegin() const {
+				return const_iterator(m_pContainer->cbegin());
+			}
+
+			const_iterator end() const {
+				return cend();
+			}
+
+			/// Returns a const iterator to the first element of the underlying set.
+			const_iterator begin() const {
+				return cbegin();
+			}
+
+			cache::RdbTypedColumnContainer<test::RealColumnDescriptor>* m_pContainer;
+		};
+	}
+
+	TEST(TEST_CLASS, CanIterateOverExistingCacheValuesManualForLoopWithWrapper) {
+		// Arrange:
+		auto values = CreateRealTestValues(10);
+		test::RdbTestContext context(DefaultSettings(), [&values](auto& db, const auto& columns) {
+			for(auto& val : values)
+			{
+				db.Put(rocksdb::WriteOptions(), columns[0], test::ToSlice(val.second.KeyCopy), test::RealColumnDescriptor::Serializer::SerializeValue(val.second));
+			}
+
+		});
+		auto container = CreateRealContainer(context.database());
+		auto wrapper =  TestWrapper(&container);
+		// Assert:
+		auto iter = wrapper.cbegin();
+		for(auto i = 0; i < 10; i++)
+		{
+			auto val = *iter;
+			EXPECT_NE(values.find(val.first.str()), values.cend());
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.first.str());
+			EXPECT_EQ(values[val.first.str()].Integer, val.second.Integer);
+			EXPECT_EQ(values[val.first.str()].RandomData, val.second.RandomData);
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.second.KeyCopy);
+			iter++;
+		}
+
+		EXPECT_EQ(iter, wrapper.cend());
+
+	}
+
+	TEST(TEST_CLASS, CanIterateOverExistingCacheValuesManualForLoop) {
+		// Arrange:
+		auto values = CreateRealTestValues(10);
+		test::RdbTestContext context(DefaultSettings(), [&values](auto& db, const auto& columns) {
+			for(auto& val : values)
+			{
+				db.Put(rocksdb::WriteOptions(), columns[0], test::ToSlice(val.second.KeyCopy), test::RealColumnDescriptor::Serializer::SerializeValue(val.second));
+			}
+
+		});
+		auto container = CreateRealContainer(context.database());
+
+		// Assert:
+		for(auto val : container)
+		{
+			EXPECT_NE(values.find(val.first.str()), values.cend());
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.first.str());
+			EXPECT_EQ(values[val.first.str()].Integer, val.second.Integer);
+			EXPECT_EQ(values[val.first.str()].RandomData, val.second.RandomData);
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.second.KeyCopy);
+		}
 
 	}
 

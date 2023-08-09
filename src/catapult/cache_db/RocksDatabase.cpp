@@ -248,9 +248,6 @@ namespace catapult { namespace cache {
 				delete iterator;
 			}
 		}
-
-		if (status.ok())
-			return;
 	}
 
 	void RocksDatabase::getLowerOrEqual(size_t columnId, const rocksdb::Slice& key, RdbDataIterator& result) {

@@ -23,7 +23,10 @@
 #include "catapult/utils/ContainerHelpers.h"
 #include "tests/test/other/DeltaElementsTestUtils.h"
 #include "tests/TestHarness.h"
+#include "tests/test/cache/RdbTestUtils.h"
 #include <unordered_set>
+#include "catapult/cache_db/RocksInclude.h"
+
 
 namespace catapult { namespace deltaset {
 
@@ -434,7 +437,7 @@ namespace catapult { namespace deltaset {
 
 	TEST(TEST_CLASS, StorageBasedCacheIsBroadIterableCanIterate) {
 		// Act:
-		MapTraits::DiffUnderlying::ContainerType container(ConditionalContainerMode::Storage);
+		MapTraits::SameUnderlying::ContainerType container(ConditionalContainerMode::Storage);
 		std::map<std::pair<std::string, int>, std::string> values;
 		values.insert(std::make_pair(std::make_pair("alpha", 5), "alpha"));
 		values.insert(std::make_pair(std::make_pair("gamma", 5), "gamma"));
@@ -443,9 +446,9 @@ namespace catapult { namespace deltaset {
 		values.insert(std::make_pair(std::make_pair("epsilon", 5), "epsilon"));
 
 
-		MapTraits::DiffUnderlying::DeltaElementsWrapper wrapper;
+		MapTraits::SameUnderlying::DeltaElementsWrapper wrapper;
 		for(auto& value : values)
-			MapTraits::DiffUnderlying::AddElement(wrapper.Added, value.first.first, value.first.second);
+			MapTraits::SameUnderlying::AddElement(wrapper.Added, value.first.first, value.first.second);
 		container.update(wrapper.deltas());
 
 		// Assert:
@@ -458,5 +461,77 @@ namespace catapult { namespace deltaset {
 			EXPECT_EQ(record.second, iter->second);
 		}
 	}
+
+	namespace {
+		// region MapTraits
+
+		struct RealMapTraits {
+		private:
+			using Types = test::DeltaElementsTestUtils::Types;
+			template<typename TKeyTraits, typename TStorageMap, typename TMemoryMap>
+			struct BasicMapTraits {
+			public:
+				using DeltaElementsWrapper = test::DeltaElementsTestUtils::Wrapper<TMemoryMap>;
+				using ContainerType = ConditionalContainer<TKeyTraits, TStorageMap, TMemoryMap>;
+
+			public:
+				static ContainerType CreateContainer(ConditionalContainerMode mode) {
+					return ContainerType(mode);
+				}
+
+				static auto MakeKey(const std::string& name, unsigned int value) {
+					return std::make_pair(name, value);
+				}
+
+				static const test::MutableTestElement& GetValue(const typename TStorageMap::ValueType& pair) {
+					return pair.second;
+				}
+
+				static bool Contains(const ContainerType& map, const std::string& name, unsigned int value) {
+					return map.cend() != map.find(MakeKey(name, value));
+				}
+			};
+
+		public:
+			using MapTraits = BasicMapTraits<Types::RealStorageTraits::KeyTraits, Types::RealStorageMapType, Types::RealMemoryMapType>;
+			using Serializer = test::RealColumnDescriptor::Serializer;
+			using ElementType = Types::RealStorageTraits::ValueType;
+		};
+	}
+	TEST(TEST_CLASS, RealStorageBasedCacheIsBroadIterableCanIterate) {
+		// Act:
+		std::map<std::string, test::RealColumnDescriptor::ValueType> values;
+		values.insert(std::make_pair("alpha", RealMapTraits::ElementType{"alpha", 5, "alpha"}));
+		values.insert(std::make_pair("gamma", RealMapTraits::ElementType{"gamma", 5, "gamma"}));
+		values.insert(std::make_pair("beta", RealMapTraits::ElementType{"beta", 5, "beta"}));
+		values.insert(std::make_pair("delta", RealMapTraits::ElementType{"delta", 5, "delta"}));
+		values.insert(std::make_pair("epsilon", RealMapTraits::ElementType{"epsilon", 5, "epsilon"}));
+		test::RdbTestContext context(cache::RocksDatabaseSettings(
+											 test::TempDirectoryGuard::DefaultName(),
+											 { "default" },
+											 utils::FileSize::FromKilobytes(0),
+											 cache::FilterPruningMode::Disabled), [&values](auto& db, const auto& columns) {
+			for(auto& val : values)
+			{
+				db.Put(rocksdb::WriteOptions(), columns[0], test::ToSlice(val.second.KeyCopy), RealMapTraits::Serializer::SerializeValue(val.second));
+			}
+
+		});
+		RealMapTraits::MapTraits::ContainerType container(ConditionalContainerMode::Storage, context.database(), 0);
+
+		// Assert:
+
+		auto recordItr = container.cbegin();
+
+		for(auto i = 0; i < 5; i++) {
+			auto& record = *recordItr;
+			auto data = record.first.str();
+			EXPECT_EQ(values[data].KeyCopy, record.second.KeyCopy);
+			EXPECT_EQ(values[data].Integer, record.second.Integer);
+			EXPECT_EQ(values[data].RandomData, record.second.RandomData);
+			recordItr++;
+		}
+	}
+
 	// endregion
 }}

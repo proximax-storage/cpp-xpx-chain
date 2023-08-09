@@ -20,7 +20,7 @@
 
 #include "catapult/cache_db/RocksPruningFilter.h"
 #include "catapult/cache_db/RocksInclude.h"
-#include "tests/catapult/cache_db/test/SliceTestUtils.h"
+#include "tests/test/cache/SliceTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {

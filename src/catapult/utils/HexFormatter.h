@@ -24,6 +24,7 @@
 #include <array>
 #include <iostream>
 #include <vector>
+#include <cstdint>
 
 namespace catapult { namespace utils {
 

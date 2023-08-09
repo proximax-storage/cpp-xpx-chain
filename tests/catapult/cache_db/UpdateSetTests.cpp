@@ -21,9 +21,9 @@
 #include "catapult/cache_db/UpdateSet.h"
 #include "catapult/deltaset/BaseSetCommitPolicy.h"
 #include "catapult/deltaset/PruningBoundary.h"
-#include "tests/catapult/cache_db/test/BasicMapDescriptor.h"
-#include "tests/catapult/cache_db/test/RdbTestUtils.h"
-#include "tests/catapult/cache_db/test/StringKey.h"
+#include "tests/test/cache/BasicMapDescriptor.h"
+#include "tests/test/cache/RdbTestUtils.h"
+#include "tests/test/cache/StringKey.h"
 #include "tests/test/other/DeltaElementsTestUtils.h"
 #include "tests/test/other/UpdateSetTests.h"
 

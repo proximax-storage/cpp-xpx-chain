@@ -21,8 +21,8 @@
 #include "catapult/cache_db/RocksDatabase.h"
 #include "catapult/io/FileLock.h"
 #include "catapult/io/RawFile.h"
-#include "tests/catapult/cache_db/test/RdbTestUtils.h"
-#include "tests/catapult/cache_db/test/SliceTestUtils.h"
+#include "tests/test/cache/RdbTestUtils.h"
+#include "tests/test/cache/SliceTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 #include <boost/filesystem.hpp>

@@ -4,4 +4,11 @@ if(MSVC)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
 endif()
 
-catapult_test_executable_target_header_only(tests.catapult.deltaset nodeps test)
+set(TARGET_NAME tests.catapult.deltaset)
+
+catapult_test_executable_target_header_only(${TARGET_NAME} nodeps test)
+
+target_link_libraries(${TARGET_NAME} catapult.io tests.catapult.test.cache)
+catapult_add_rocksdb_dependencies(${TARGET_NAME})
+
+set_property(TEST ${TARGET_NAME} PROPERTY LABELS Database_Rocks)

@@ -130,15 +130,17 @@ namespace catapult { namespace deltaset {
 			}
 
 		public:
-			/// Returns a const pointer to the current element.
-			const auto* operator->() const {
-				return &operator*();
-			}
 
 			/// Returns a const reference to the current element.
 			const auto& operator*() const {
 				return ConditionalContainerMode::Storage == m_mode ? *m_storageIter : *m_memoryIter;
 			}
+
+			/// Returns a const pointer to the current element.
+			const auto* operator->() const {
+				return &operator*();
+			}
+
 
 		private:
 			typename StorageSetType::const_iterator m_storageIter;

@@ -21,7 +21,7 @@
 #pragma once
 #include "catapult/utils/NonCopyable.h"
 #include <string>
-
+#include <cstdint>
 namespace catapult { namespace mongo { struct BulkWriteResult; } }
 
 namespace catapult { namespace mongo {
