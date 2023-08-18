@@ -3,6 +3,7 @@ include(cmake/sanitizers.cmake)
 
 ### enable testing
 enable_testing()
+configure_file(cmake/CTestCustom.cmake ${CMAKE_BINARY_DIR})
 
 ### enable ccache if available
 find_program(CCACHE_FOUND ccache)
