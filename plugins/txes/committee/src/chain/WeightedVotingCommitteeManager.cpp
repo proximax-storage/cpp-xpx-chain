@@ -130,14 +130,17 @@ namespace catapult { namespace chain {
 		auto pLastBlockElement = lastBlockElementSupplier()();
 		if (previousRound < 0) {
 			m_phaseTime = pLastBlockElement->Block.committeePhaseTime();
-			DecreasePhaseTime(m_phaseTime, networkConfig);
-			m_timestamp = pLastBlockElement->Block.Timestamp + Timestamp(CommitteePhaseCount * m_phaseTime);
+			m_timestamp = pLastBlockElement->Block.Timestamp;
 			LogAccountData(m_accounts);
 		} else {
-			IncreasePhaseTime(m_phaseTime, networkConfig);
-			m_timestamp = m_timestamp + Timestamp(CommitteePhaseCount * m_phaseTime);
+			if (previousRound > 0) {
+				IncreasePhaseTime(m_phaseTime, networkConfig);
+			} else {
+				DecreasePhaseTime(m_phaseTime, networkConfig);
+			}
 			decreaseActivities(config);
 		}
+		m_timestamp = m_timestamp + Timestamp(CommitteePhaseCount * m_phaseTime);
 
 		m_committee = Committee(previousRound + 1);
 

@@ -281,6 +281,10 @@ namespace catapult { namespace local {
 				return m_nodes.view();
 			}
 
+			extensions::ServiceState& state() {
+				return *m_pServiceState;
+			}
+
 		private:
 			const config::BlockchainConfiguration& config() {
 				return m_pluginManager.configHolder()->Config();

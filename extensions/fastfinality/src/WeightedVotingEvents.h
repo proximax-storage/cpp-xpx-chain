@@ -52,4 +52,6 @@ namespace catapult { namespace fastfinality {
 	struct CommitBlockSucceeded{};
 
 	struct Stop{};
+
+	struct Hold{};
 }}

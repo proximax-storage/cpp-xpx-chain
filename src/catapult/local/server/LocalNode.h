@@ -27,7 +27,10 @@
 namespace catapult {
 	namespace cache { class CatapultCache; }
 	namespace crypto { class KeyPair; }
-	namespace extensions { class ProcessBootstrapper; }
+	namespace extensions {
+		class ProcessBootstrapper;
+		class ServiceState;
+	}
 	namespace ionet { class NodeContainerView; }
 	namespace model { class ChainScore; }
 }
@@ -83,6 +86,9 @@ namespace catapult { namespace local {
 
 		/// Gets the current nodes.
 		virtual ionet::NodeContainerView nodes() const = 0;
+
+		/// Sets max chain height.
+		virtual extensions::ServiceState& state() = 0;
 	};
 
 	/// Creates and boots a local node around the specified key pair (\a keyPair) and bootstrapper (\a pBootstrapper).
