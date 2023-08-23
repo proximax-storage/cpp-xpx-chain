@@ -171,6 +171,22 @@ namespace catapult { namespace local {
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunAddPropertyTest(context));
 
+		std::cout << "First" << '\n';
+		for(auto& e : stateHashesPair.first) {
+			for(auto& ee : e){
+				std::cout << int(ee) << ' ';
+			}
+			std::cout << '\n';
+		}
+
+		std::cout << "Second" << '\n';
+		for(auto& e : stateHashesPair.second) {
+			for(auto& ee : e){
+				std::cout << int(ee) << ' ';
+			}
+			std::cout << '\n';
+		}
+
 		// Assert: all state hashes are nonzero
 		test::AssertAllNonZero(stateHashesPair.first, 2);
 		test::AssertUnique(stateHashesPair.first);

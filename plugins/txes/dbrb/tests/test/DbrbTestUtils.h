@@ -16,6 +16,7 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/nodeps/Random.h"
+#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 
@@ -27,6 +28,33 @@ namespace catapult { namespace test {
 		const dbrb::ProcessId& processId = test::GenerateRandomByteArray<dbrb::ProcessId>(),
 		const Timestamp& expirationTime = test::GenerateRandomValue<Timestamp>()
     );
+
+	struct DbrbProcessCacheFactory {
+	private:
+		static auto CreateSubCachesWithDbrbProcessCache(const config::BlockchainConfiguration& config) {
+			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cache::DbrbViewCache::Id + 1);
+			auto pConfig = config::CreateMockConfigurationHolder(config);
+			auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>();
+			auto pDbrbViewFetcher = std::make_shared<cache::DbrbViewFetcherImpl>();
+			subCaches[cache::DbrbViewCache::Id] =
+					test::MakeSubCachePlugin<cache::DbrbViewCache, cache::DbrbViewCacheStorage>(pConfig, pDbrbViewFetcher);
+
+			return subCaches;
+		}
+
+	public:
+		/// Creates an empty catapult cache around default configuration.
+		static cache::CatapultCache Create() {
+			return Create(test::MutableBlockchainConfiguration().ToConst());
+		}
+
+		/// Creates an empty catapult cache around \a config.
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
+			auto subCaches = CreateSubCachesWithDbrbProcessCache(config);
+			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
+			return cache::CatapultCache(std::move(subCaches));
+		}
+	};
 
     /// Creates a transaction.
     template<typename TTransaction>
@@ -46,4 +74,6 @@ namespace catapult { namespace test {
     model::UniqueEntityPtr<TTransaction> CreateAddDbrbProcessTransaction() {
         return CreateTransaction<TTransaction>(model::Entity_Type_AddDbrbProcess);
     }
+
+	void AssertEqualDbrbProcessEntry(const state::DbrbProcessEntry& entry1, const state::DbrbProcessEntry& entry2);
 }}

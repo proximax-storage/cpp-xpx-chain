@@ -12,7 +12,7 @@ namespace catapult { namespace observers {
 	using Notification = model::AddDbrbProcessNotification<1>;
 
 	DECLARE_OBSERVER(AddDbrbProcess, Notification)() {
-		return MAKE_OBSERVER(PrepareDrive, Notification, ([](const Notification& notification, const ObserverContext& context) {
+		return MAKE_OBSERVER(AddDbrbProcess, Notification, ([](const Notification& notification, const ObserverContext& context) {
 		  	if (NotifyMode::Rollback == context.Mode)
 			  	CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (AddDbrbProcess)");
 

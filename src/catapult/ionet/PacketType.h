@@ -218,9 +218,10 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(SdaExchange_State_Path, FACILITY_BASED_CODE(800, ExchangeSda)) \
 	\
     /* SDA-SDA Offer Group state path has been requested by a client. */ \
-    ENUM_VALUE(SdaOfferGroup_State_Path, FACILITY_BASED_CODE(800, SdaOfferGroup)) \
+    ENUM_VALUE(SdaOfferGroup_State_Path, FACILITY_BASED_CODE(800, SdaOfferGroup))       \
 	\
-	/* diagnostic packets have types [1100, 2000) */ \
+    ENUM_VALUE(DbrbView_State_Path, FACILITY_BASED_CODE(800, DbrbView)) \
+/* diagnostic packets have types [1100, 2000) */       \
 	\
 	/* Request for the current diagnostic counter values. */ \
 	ENUM_VALUE(Diagnostic_Counters, 1100) \
@@ -313,7 +314,9 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(SdaExchange_Infos, FACILITY_BASED_CODE(1200, ExchangeSda)) \
 	\
 	/* SDA-SDA Offer Group infos have been requested by a client. */ \
-	ENUM_VALUE(SdaOfferGroup_Infos, FACILITY_BASED_CODE(1200, SdaOfferGroup))  \
+	ENUM_VALUE(SdaOfferGroup_Infos, FACILITY_BASED_CODE(1200, SdaOfferGroup))     \
+    \
+	ENUM_VALUE(DbrbView_Infos, FACILITY_BASED_CODE(1200, DbrbView)) \
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

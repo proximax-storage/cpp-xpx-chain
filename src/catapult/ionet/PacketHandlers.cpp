@@ -114,7 +114,6 @@ namespace catapult { namespace ionet {
 			CATAPULT_LOG(warning) << "requested unknown handler: " << packet;
 			return nullptr;
 		}
-
 		const auto& handler = m_handlers[rawType];
 		return handler ? &handler : nullptr;
 	}

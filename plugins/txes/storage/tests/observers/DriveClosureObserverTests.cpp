@@ -144,7 +144,7 @@ namespace catapult { namespace observers {
 		}
     }
 
-    TEST(TEST_CLASS, DriveClosure_RemoveFirstDrive) {
+    TEST(TEST_CLASS, DriveClosure_RemoveFirstDrive)  {
     	// Arrange:
     	CacheValues values;
 
