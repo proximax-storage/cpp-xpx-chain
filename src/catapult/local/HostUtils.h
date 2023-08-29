@@ -54,8 +54,5 @@ namespace catapult { namespace local {
 
 	std::vector<plugins::PluginModule> LoadSystemPlugins(extensions::ProcessBootstrapper& bootstrapper);
 
-	std::vector<plugins::PluginModule> LoadConfigurablePlugins(extensions::ProcessBootstrapper& bootstrapper);
-
-	/// Loads all plugins using \a bootstrapper.
-	std::vector<plugins::PluginModule> LoadAllPlugins(extensions::ProcessBootstrapper& bootstrapper);
+	std::vector<plugins::PluginModule> LoadConfigurablePlugins(extensions::ProcessBootstrapper& bootstrapper, const model::NetworkConfiguration& config);
 }}

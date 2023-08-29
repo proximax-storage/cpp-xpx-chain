@@ -24,6 +24,7 @@
 #include "plugins/txes/upgrade/src/config/BlockchainUpgradeConfiguration.h"
 #include "plugins/txes/config/src/config/NetworkConfigConfiguration.h"
 #include "plugins/txes/committee/src/config/CommitteeConfiguration.h"
+#include "plugins/txes/dbrb/src/config/DbrbConfiguration.h"
 #include "NemesisCompatibleConfiguration.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
@@ -77,6 +78,9 @@ namespace catapult { namespace test {
 			{ "activityCommitteeCosignedDelta", "0.01" },
 			{ "activityCommitteeNotCosignedDelta", "0.02" },
 		} } }));
+		config.Plugins.emplace(PLUGIN_NAME(dbrb), utils::ConfigurationBag({ { "", {
+			{ "enabled", "true" },
+		} } }));
 
 		config.template InitPluginConfiguration<config::TransferConfiguration>();
 		config.template InitPluginConfiguration<config::MosaicConfiguration>();
@@ -84,6 +88,7 @@ namespace catapult { namespace test {
 		config.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 		config.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
 		config.template InitPluginConfiguration<config::CommitteeConfiguration>();
+		config.template InitPluginConfiguration<config::DbrbConfiguration>();
 	}
 
 	namespace {

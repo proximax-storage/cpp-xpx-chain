@@ -84,7 +84,8 @@ namespace catapult { namespace fastfinality {
 
 				sml::state<Commit> + sml::on_entry<sml::_> / ACTION(CommitConfirmedBlock),
 				sml::state<Commit> + sml::event<CommitBlockFailed> / ACTION(IncrementRound) = sml::state<CommitteeSelection>,
-				sml::state<Commit> + sml::event<CommitBlockSucceeded> / ACTION(ResetRound) = sml::state<CommitteeSelection>
+				sml::state<Commit> + sml::event<CommitBlockSucceeded> / ACTION(ResetRound) = sml::state<CommitteeSelection>,
+				sml::state<Commit> + sml::event<Hold> = sml::state<OnHold>
 			);
 		}
 	};

@@ -21,7 +21,6 @@ Makefile
 build.sh
 compile_commands.json
 __pycache__
-data*/
 npm-*.log*
 .vscode/
 /build/

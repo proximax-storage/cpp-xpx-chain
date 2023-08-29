@@ -36,7 +36,7 @@ namespace catapult { namespace dbrb {
 			chain::TimeSupplier timeSupplier,
 			const supplier<Height>& chainHeightSupplier);
 
-	private:
+	protected:
 		/// Process identifier.
 		ProcessId m_id;
 
@@ -72,9 +72,9 @@ namespace catapult { namespace dbrb {
 
 	public:
 		/// Broadcast arbitrary \c payload into the system.
-		void broadcast(const Payload&);
+		virtual void broadcast(const Payload&);
 
-		void processMessage(const Message& message);
+		virtual void processMessage(const Message& message);
 
 	public:
 		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers);
@@ -84,15 +84,15 @@ namespace catapult { namespace dbrb {
 		NodeRetreiver& nodeRetreiver();
 
 	private:
-		void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients);
-		void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient);
+		virtual void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients);
+		virtual void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient);
 
 		Signature sign(const Payload&);
 		static bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
 
 		void onPrepareMessageReceived(const PrepareMessage&);
-		void onAcknowledgedMessageReceived(const AcknowledgedMessage&);
-		void onCommitMessageReceived(const CommitMessage&);
+		virtual void onAcknowledgedMessageReceived(const AcknowledgedMessage&);
+		virtual void onCommitMessageReceived(const CommitMessage&);
 		void onDeliverMessageReceived(const DeliverMessage&);
 
 		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);

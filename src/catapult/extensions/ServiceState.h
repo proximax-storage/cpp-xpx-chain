@@ -83,6 +83,7 @@ namespace catapult { namespace extensions {
 				, m_pluginManager(pluginManager)
 				, m_pool(pool)
 				, m_packetHandlers(m_pluginManager.configHolder()->Config().Node.MaxPacketDataSize.bytes32())
+				, m_maxChainHeight(Height(0))
 		{}
 
 	public:
@@ -197,6 +198,14 @@ namespace catapult { namespace extensions {
 			return config().Immutable.NetworkIdentifier;
 		}
 
+		const Height& maxChainHeight() const {
+			return m_maxChainHeight;
+		}
+
+		void setMaxChainHeight(const Height& height) {
+			m_maxChainHeight = height;
+		}
+
 	private:
 		// references
 		ionet::NodeContainer& m_nodes;
@@ -221,5 +230,6 @@ namespace catapult { namespace extensions {
 		ionet::ServerPacketHandlers m_packetHandlers;
 		ServerHooks m_hooks;
 		net::PacketIoPickerContainer m_packetIoPickers;
+		Height m_maxChainHeight;
 	};
 }}

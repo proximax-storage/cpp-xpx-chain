@@ -342,6 +342,12 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
+		// region configure plugin manager
+
+		void reset();
+
+		// endregion
+
 	private:
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;

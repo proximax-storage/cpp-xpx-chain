@@ -61,17 +61,13 @@ namespace catapult { namespace local {
 
 				/// First we must determine if this is the first boot. If it is we must load nemesis block
 				auto isFirstBoot = IsStatePresent(m_dataDirectory);
-				std::unique_ptr<const model::NetworkConfiguration> initNetworkConfig;
-				std::unique_ptr<const config::SupportedEntityVersions> initSupportedEntities;
 				/// We must retrieve the configuration from the nemesis block
-				io::FileBlockStorage storage(m_dataDirectory.rootDir().str(), io::FileBlockStorageMode::Hash_Index);
-				//This is the first boot, so we must load the nemesis block network configuration
-				const auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
-				auto bundleConfig = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
-				initSupportedEntities = std::make_unique<const config::SupportedEntityVersions>(std::get<1>(bundleConfig));
 				if(isFirstBoot) {
-					/// We set base config as the one in nemesis block.
-					initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(std::get<0>(bundleConfig));
+					/// This is the first boot, so we must load the nemesis block network configuration.
+					io::FileBlockStorage storage(m_dataDirectory.rootDir().str(), io::FileBlockStorageMode::Hash_Index);
+					const auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
+					auto bundleConfig = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+					m_pBootstrapper->configHolder()->InitializeNetworkConfiguration(std::get<0>(bundleConfig));
 				}
 				else {
 					auto stateDir = m_dataDirectory.dir("state");
@@ -79,20 +75,13 @@ namespace catapult { namespace local {
 					/// At this point the configurations for the plugins are still uninitialized
 					if(extensions::HasActiveNetworkConfig(stateDir)) {
 						auto config = extensions::LoadActiveNetworkConfig(stateDir);
-						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(config);
-					} else {
-						/// Not first boot but no config was saved yet, we just use the nemesis block configuration.
-						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(std::get<0>(bundleConfig));
+						m_pBootstrapper->configHolder()->InitializeNetworkConfiguration(config);
 					}
 				}
 
-				// At this point we have managed to obtain the proper network configuration that we should boot up the chain with. We will load remaining plugins.
-				/// Initialize proper zero network config.
-				CATAPULT_LOG(debug) << "initializing network configuration from previous state";
-				m_pBootstrapper->configHolder()->InitializeNetworkConfiguration(*initNetworkConfig, *initSupportedEntities);
 				/// Load non system plugins
 				CATAPULT_LOG(debug) << "registering addon plugins";
-				auto addonPlugins = LoadConfigurablePlugins(*m_pBootstrapper);
+				auto addonPlugins = LoadConfigurablePlugins(*m_pBootstrapper, m_pBootstrapper->config().Network);
 				m_pluginModules.insert(m_pluginModules.cend(), addonPlugins.begin(), addonPlugins.end());
 
 				/// New caches have been registered so we must update the cache.

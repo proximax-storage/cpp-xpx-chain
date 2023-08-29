@@ -902,10 +902,12 @@ namespace catapult { namespace fastfinality {
 	action CreateDefaultCommitConfirmedBlockAction(
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 			const consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&>& rangeConsumer,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			chain::CommitteeManager& committeeManager) {
-		return [pFsmWeak, rangeConsumer, pConfigHolder, &committeeManager]() {
+			extensions::ServiceState& state) {
+		return [pFsmWeak, rangeConsumer, &state]() {
 			TRY_GET_FSM()
+
+			auto pConfigHolder = state.pluginManager().configHolder();
+			auto& committeeManager = state.pluginManager().getCommitteeManager();
 
 			bool success = false;
 			auto& committeeData = pFsmShared->committeeData();
@@ -930,10 +932,13 @@ namespace catapult { namespace fastfinality {
 				success = pPromise->get_future().get();
 			}
 
-			DelayAction(pFsmWeak, pFsmShared->timer(), GetPhaseEndTimeMillis(CommitteePhase::Commit, committeeData.committeeRound().PhaseTimeMillis), [pFsmWeak, success] {
+			DelayAction(pFsmWeak, pFsmShared->timer(), GetPhaseEndTimeMillis(CommitteePhase::Commit, committeeData.committeeRound().PhaseTimeMillis), [pFsmWeak, success, &state] {
 				TRY_GET_FSM()
 
-				if (success) {
+				auto maxChainHeight = state.maxChainHeight();
+				if (success && (maxChainHeight > Height(0)) && (pFsmShared->committeeData().confirmedBlock()->Height >= maxChainHeight)) {
+					pFsmShared->processEvent(Hold{});
+				} else if (success) {
 					pFsmShared->processEvent(CommitBlockSucceeded{});
 				} else {
 					pFsmShared->processEvent(CommitBlockFailed{});
