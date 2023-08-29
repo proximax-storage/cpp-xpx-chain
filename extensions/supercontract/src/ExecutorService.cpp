@@ -93,7 +93,6 @@ namespace catapult::contract {
 
 	public:
 		void start() {
-			auto pool = m_serviceState.pool().pushIsolatedPool("ContractQuery", 1);
 			std::vector<uint8_t> privateKeyBuffer = { m_keyPair.privateKey().begin(), m_keyPair.privateKey().end() };
 			auto privateKey = std::move(*reinterpret_cast<sirius::crypto::PrivateKey*>(privateKeyBuffer.data()));
 			auto keyPair = sirius::crypto::KeyPair::FromPrivate(std::move(privateKey));
@@ -120,6 +119,7 @@ namespace catapult::contract {
 						m_config.VirtualMachineRPCHost + ":" + m_config.VirtualMachineRPCPort,
 						m_config.ExecutorLogPath,
 						static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier));
+				m_pExecutor = std::move(executor);
 			} else {
 				std::unique_ptr<ServiceBuilder<blockchain::Blockchain>> blockchainBuilder =
 						std::make_unique<StorageBlockchainBuilder>(m_contractState);

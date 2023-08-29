@@ -6,6 +6,7 @@
 
 #include "StorageBlockchain.h"
 #include <boost/asio.hpp>
+#include <catapult/utils/NetworkTime.h>
 
 namespace catapult { namespace contract {
 
@@ -17,7 +18,7 @@ namespace catapult { namespace contract {
 			auto storageBlock = m_contractState.getBlock(Height(height));
 			Block block;
 			block.m_blockHash = storageBlock->EntityHash.array();
-			block.m_blockTime = storageBlock->Block.Timestamp.unwrap();
+			block.m_blockTime = utils::ToUnixTime(storageBlock->Block.Timestamp).unwrap();
 			callback->postReply(std::move(block));
 		});
 	}
