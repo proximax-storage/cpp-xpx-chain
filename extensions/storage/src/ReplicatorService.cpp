@@ -100,10 +100,7 @@ namespace catapult { namespace storage {
 				m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local),
 				m_storageState);
 
-			auto pool = m_serviceState.pool().pushIsolatedPool("StorageQuery", 1);
-
             m_pReplicatorEventHandler = CreateReplicatorEventHandler(
-				std::move(pool),
 				std::move(transactionSender),
 				m_storageState,
 				m_transactionStatusHandler,

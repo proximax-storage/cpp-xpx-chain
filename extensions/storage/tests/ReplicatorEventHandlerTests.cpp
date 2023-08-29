@@ -27,7 +27,6 @@ namespace catapult { namespace storage {
 
         // Act:
         auto testee = storage::CreateReplicatorEventHandler(
-			{},
 			std::move(transactionSender),
 			storageState,
 			transactionStatusHandler,
