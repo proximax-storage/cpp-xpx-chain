@@ -40,6 +40,7 @@ namespace catapult { namespace model {
 	NetworkConfiguration NetworkConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
 		NetworkConfiguration config;
 
+
 #define LOAD_NETWORK_PROPERTY(NAME) utils::LoadIniProperty(bag, "network", #NAME, config.Info.NAME)
 
 		LOAD_NETWORK_PROPERTY(PublicKey);
@@ -199,5 +200,5 @@ namespace catapult { namespace model {
 		return config.MaxRollbackBlocks + config.MaxDifficultyBlocks;
 	}
 
-	// endregion
+// endregion
 }}

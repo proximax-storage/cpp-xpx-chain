@@ -15,11 +15,11 @@ namespace catapult { namespace contract {
 	namespace {
 		void RegisterExtension(extensions::ProcessBootstrapper& bootstrapper) {
 			const auto& config = bootstrapper.config();
+
 			auto storageConfig = ExecutorConfiguration::LoadFromPath(bootstrapper.resourcesPath());
 			auto pTransactionStatusHandler = std::make_shared<TransactionStatusHandler>();
 			auto pExecutorService = std::make_shared<ExecutorService>(
 					std::move(storageConfig), pTransactionStatusHandler);
-
 			notification_handlers::DemuxHandlerBuilder builder;
 			builder
 			.add(notification_handlers::CreateManualCallHandler(pExecutorService))

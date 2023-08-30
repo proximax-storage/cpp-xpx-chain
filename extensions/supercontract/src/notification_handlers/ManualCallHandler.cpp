@@ -27,6 +27,7 @@ namespace catapult { namespace notification_handlers {
 					return;
 				}
 
+				pExecutorService->updateConfig();
 				pExecutorService->addManualCall(notification.ContractKey,
 												notification.CallId,
 												notification.FileName,

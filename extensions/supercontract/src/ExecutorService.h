@@ -11,6 +11,7 @@
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ServiceRegistrar.h"
 #include "catapult/ionet/Node.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include <catapult/crypto/CurvePoint.h>
 #include <set>
 #include <optional>
@@ -82,9 +83,14 @@ namespace catapult { namespace contract {
 				const Key& contractKey,
 				Height height);
 
+		const extensions::ServiceState& getServiceState();
+
+		const uint64_t getLatestConfigChange() const;
+
+		void updateConfig();
+
 	private:
 		class Impl;
-
 		std::unique_ptr<Impl> m_pImpl;
 
 		crypto::KeyPair m_keyPair;

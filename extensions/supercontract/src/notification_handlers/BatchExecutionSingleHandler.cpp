@@ -31,6 +31,7 @@ namespace catapult { namespace notification_handlers {
 					return;
 				}
 
+				pExecutorService->updateConfig();
 				pExecutorService->batchExecutionSinglePublished(notification.ContractKey, notification.BatchId);
 			}
 			catch (...) {
