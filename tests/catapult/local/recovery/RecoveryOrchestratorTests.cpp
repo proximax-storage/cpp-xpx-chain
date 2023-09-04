@@ -248,7 +248,7 @@ namespace catapult { namespace local {
 
 				mocks::MockMemoryBlockStorage storage([](){return mocks::CreateNemesisBlockElement(test::Basic_MemoryBlockStorage_NemesisBlockData);});
 				auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
-				auto configs = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+				auto configs = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement, config.Immutable);
 				const_cast<config::SupportedEntityVersions&>(config.SupportedEntityVersions) = std::get<1>(configs);
 				const_cast<model::NetworkConfiguration&>(config.Network) = std::get<0>(configs);
 

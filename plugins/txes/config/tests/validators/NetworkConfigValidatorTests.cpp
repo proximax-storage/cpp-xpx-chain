@@ -82,7 +82,7 @@ namespace catapult { namespace validators {
 		std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(uint64_t maxBlockChainConfigSizeMb, uint64_t maxSupportedEntityVersionsSizeMb) {
 			test::MutableBlockchainConfiguration config;
 			std::istringstream input(networkConfigWithPlugin);
-			config.Network = model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(input));
+			config.Network = model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(input), config.Immutable);
 			auto pluginConfig = config::NetworkConfigConfiguration::Uninitialized();
 			pluginConfig.MaxBlockChainConfigSize = utils::FileSize::FromMegabytes(maxBlockChainConfigSizeMb);
 			pluginConfig.MaxSupportedEntityVersionsSize = utils::FileSize::FromMegabytes(maxSupportedEntityVersionsSizeMb);

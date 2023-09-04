@@ -26,13 +26,22 @@ namespace catapult { namespace model {
 #define TEST_CLASS InflationCalculatorTests
 
 	namespace {
+		struct TestInflationCalculator : public InflationCalculator {
+			using InflationCalculator::InflationCalculator;
+			IntervalMetadata GetIntervalMetadata(Height height) {
+				return m_intervalMetadata.at(height);
+			}
+			bool ContainsIntervalMetadata(Height height) {
+				return m_intervalMetadata.find(height) != m_intervalMetadata.cend();
+			}
+		};
 		struct InflationEntry {
 			catapult::Height Height;
 			catapult::Amount Amount;
 		};
 
-		InflationCalculator CreateInflationCalculator(const std::vector<InflationEntry>& inflationEntries) {
-			InflationCalculator calculator;
+		TestInflationCalculator CreateInflationCalculator(const std::vector<InflationEntry>& inflationEntries) {
+			TestInflationCalculator calculator;
 			for (const auto& inflationEntry : inflationEntries)
 				calculator.add(inflationEntry.Height, inflationEntry.Amount);
 
@@ -47,10 +56,11 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, InflationCalculatorIsInitiallyEmpty) {
 		// Act:
-		InflationCalculator calculator;
+		TestInflationCalculator calculator;
 
 		// Assert:
 		EXPECT_EQ(0u, calculator.size());
+		EXPECT_THROW(calculator.getSpotAmount(Height(1)), catapult_runtime_error);
 	}
 
 	// endregion
@@ -59,19 +69,29 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CanAddSingleInflationEntry) {
 		// Arrange:
-		InflationCalculator calculator;
+		TestInflationCalculator calculator(Amount(300));
 
 		// Act:
-		calculator.add(Height(5), Amount(123));
+		calculator.add(Height(1), Amount(50), Amount(500));
 
 		// Assert:
 		EXPECT_EQ(1u, calculator.size());
-		EXPECT_TRUE(calculator.contains(Height(5), Amount(123)));
+		EXPECT_TRUE(calculator.contains(Height(1), Amount(50)));
+		EXPECT_TRUE(calculator.ContainsIntervalMetadata(Height(1)));
+
+		// Continue:
+
+		auto metadata = calculator.GetIntervalMetadata(Height(1));
+
+		EXPECT_EQ(metadata.Height, Height(4));
+		EXPECT_EQ(metadata.TotalInflationWithinInterval, Amount(200));
+		EXPECT_EQ(metadata.Inflation, Amount(0));
+		EXPECT_EQ(metadata.StartTotalInflation, Amount(0));
 	}
 
 	TEST(TEST_CLASS, CanAddMultipleInflationEntries) {
 		// Arrange:
-		InflationCalculator calculator;
+		TestInflationCalculator calculator;
 
 		// Act:
 		calculator.add(Height(5), Amount(345));
@@ -87,7 +107,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CannotAddInflationEntryAtHeightZero) {
 		// Arrange:
-		InflationCalculator calculator;
+		TestInflationCalculator calculator;
 
 		// Act + Assert:
 		EXPECT_THROW(calculator.add(Height(0), Amount(123)), catapult_invalid_argument);
@@ -121,7 +141,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, GetSpotAmountReturnsZeroWhenMapIsEmpty) {
 		// Arrange:
-		InflationCalculator calculator;
+		TestInflationCalculator calculator;
 
 		// Act + Assert:
 		for (auto rawHeight : { 0u, 1u, 10u, 123456u })
@@ -157,7 +177,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, GetCumulativeAmountReturnsZeroWhenMapIsEmpty) {
 		// Arrange:
-		InflationCalculator calculator;
+		TestInflationCalculator calculator;
 
 		// Act + Assert:
 		for (auto rawHeight : { 1u, 5u, 10u, 123456u })

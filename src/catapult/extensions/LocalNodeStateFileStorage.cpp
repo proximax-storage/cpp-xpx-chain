@@ -99,10 +99,10 @@ namespace catapult { namespace extensions {
 		}
 	}
 
-	const model::NetworkConfiguration LoadActiveNetworkConfig(const config::CatapultDirectory& directory) {
+	const model::NetworkConfiguration LoadActiveNetworkConfig(const config::CatapultDirectory& directory, const config::ImmutableConfiguration& immutableConfig) {
 		auto networkConfig = LoadActiveNetworkConfigString(directory);
 		auto stream = std::istringstream(networkConfig);
-		return model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(stream));
+		return model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(stream), immutableConfig);
 	}
 	const std::string LoadActiveNetworkConfigString(const config::CatapultDirectory& directory) {
 		auto inputStream = OpenInputStream(directory, Network_Config_Filename);

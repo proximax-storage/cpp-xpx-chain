@@ -154,7 +154,7 @@ namespace catapult { namespace test {
 
 			// modify nemesis block and resign it
 			auto& nemesisBlock = const_cast<model::Block&>(pNemesisBlockElement->Block);
-			return extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+			return extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement, config::ImmutableConfiguration::Uninitialized());
 		}
 		/// Gets the primary (first) local node.
 		local::LocalNode& localNode() const {

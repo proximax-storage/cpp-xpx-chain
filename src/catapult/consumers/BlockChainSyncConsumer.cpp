@@ -38,37 +38,37 @@ namespace catapult { namespace consumers {
 			return disruptor::CompletionStatus::Aborted == result.CompletionStatus;
 		}
 
-		model::NetworkConfiguration ParseConfig(const uint8_t* pConfig, uint16_t configSize) {
+		model::NetworkConfiguration ParseConfig(const uint8_t* pConfig, uint16_t configSize, const config::ImmutableConfiguration& immutableConfig) {
 			std::istringstream inputBlock(std::string(reinterpret_cast<const char*>(pConfig), configSize));
-			return model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
+			return model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock), immutableConfig);
 		}
 
 		template<typename TTransaction>
-		void AddConfig(model::NetworkConfigurations& configs, const Height& blockHeight, const TTransaction& transaction) {
+		void AddConfig(model::NetworkConfigurations& configs, const Height& blockHeight, const TTransaction& transaction, const config::ImmutableConfiguration& immutableConfig) {
 			configs.emplace(
 				blockHeight +  Height(transaction.ApplyHeightDelta.unwrap()),
-				ParseConfig(transaction.BlockChainConfigPtr(), transaction.BlockChainConfigSize));
+				ParseConfig(transaction.BlockChainConfigPtr(), transaction.BlockChainConfigSize, immutableConfig));
 		}
 
 		template<typename TTransaction>
-		void AddConfig(std::set<Height>& configHeights, const Height& blockHeight, const TTransaction& transaction) {
+		void AddConfig(std::set<Height>& configHeights, const Height& blockHeight, const TTransaction& transaction, const config::ImmutableConfiguration&) {
 			configHeights.insert(blockHeight +  Height(transaction.ApplyHeightDelta.unwrap()));
 		}
 
 		template<typename TDescriptor, typename TContainer>
-		void AddAggregateConfigs(TContainer& configHeights, const Height& blockHeight, const model::Transaction& transaction)
+		void AddAggregateConfigs(TContainer& configHeights, const Height& blockHeight, const model::Transaction& transaction, const config::ImmutableConfiguration& immutableConfig)
 		{
 			const auto& aggregate = static_cast<const model::AggregateTransaction<TDescriptor>&>(transaction);
 			for (const auto& subTransaction : aggregate.Transactions()) {
 				if (model::Entity_Type_Network_Config == subTransaction.Type) {
 					AddConfig(configHeights, blockHeight,
-							  static_cast<const model::EmbeddedNetworkConfigTransaction&>(subTransaction));
+							  static_cast<const model::EmbeddedNetworkConfigTransaction&>(subTransaction), immutableConfig);
 				}
 			}
 		}
 
 		template<typename TContainer>
-		bool ExtractConfigs(const BlockElements& elements, TContainer& configs) {
+		bool ExtractConfigs(const BlockElements& elements, TContainer& configs, const config::ImmutableConfiguration& immutableConfig) {
 			try {
 				for (const auto& blockElement : elements) {
 					for (const auto& transactionElement : blockElement.Transactions) {
@@ -76,12 +76,12 @@ namespace catapult { namespace consumers {
 						auto type = transaction.Type;
 						if (model::Entity_Type_Network_Config == type) {
 							AddConfig(configs, blockElement.Block.Height,
-								static_cast<const model::NetworkConfigTransaction&>(transaction));
+								static_cast<const model::NetworkConfigTransaction&>(transaction), immutableConfig);
 						} else if (model::Entity_Type_Aggregate_Complete_V1 == type || model::Entity_Type_Aggregate_Bonded_V1 == type) {
-							AddAggregateConfigs<model::AggregateTransactionRawDescriptor>(configs, blockElement.Block.Height, transaction);
+							AddAggregateConfigs<model::AggregateTransactionRawDescriptor>(configs, blockElement.Block.Height, transaction, immutableConfig);
 						}
 						else if (model::Entity_Type_Aggregate_Complete_V2 == type || model::Entity_Type_Aggregate_Bonded_V2 == type) {
-							AddAggregateConfigs<model::AggregateTransactionExtendedDescriptor>(configs, blockElement.Block.Height, transaction);
+							AddAggregateConfigs<model::AggregateTransactionExtendedDescriptor>(configs, blockElement.Block.Height, transaction, immutableConfig);
 						}
 					}
 				}
@@ -226,7 +226,7 @@ namespace catapult { namespace consumers {
 					return Abort(Failure_Consumer_Remote_Chain_Too_Far_Behind);
 
 				model::NetworkConfigurations remoteConfigs;
-				if (!ExtractConfigs(elements, remoteConfigs))
+				if (!ExtractConfigs(elements, remoteConfigs, m_pConfigHolder->Config().Immutable))
 					return Abort(Failure_Consumer_Remote_Network_Config_Malformed);
 
 				// 3. check difficulties against difficulties in cache
@@ -291,7 +291,7 @@ namespace catapult { namespace consumers {
 				std::shared_ptr<const model::BlockElement> pChildBlockElement;
 				while (true) {
 					auto pParentBlockElement = storage.loadBlockElement(height);
-					ExtractConfigs({ *pParentBlockElement }, result.ConfigHeights);
+					ExtractConfigs({ *pParentBlockElement }, result.ConfigHeights, m_pConfigHolder->Config().Immutable);
 					if (pChildBlockElement) {
 						result.Score += model::ChainScore(chain::CalculateScore(pParentBlockElement->Block, pChildBlockElement->Block));
 

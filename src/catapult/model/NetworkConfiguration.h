@@ -23,6 +23,8 @@
 #include "PluginConfiguration.h"
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/FileSize.h"
+#include "catapult/config/ImmutableConfiguration.h"
+#include "catapult/utils/ConfigurationUtils.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/TimeSpan.h"
@@ -80,6 +82,9 @@ namespace catapult { namespace model {
 		/// Maximum atomic units (total-supply * 10 ^ divisibility) of a mosaic allowed in the network.
 		Amount MaxMosaicAtomicUnits;
 
+		/// Maximum atomic units (total-supply * 10 ^ divisibility) of the currency mosaic in the network. Regulates inflation
+		Amount MaxCurrencyMosaicAtomicUnits;
+
 		/// Total whole importance units available in the network.
 		Importance TotalChainImportance;
 
@@ -136,8 +141,9 @@ namespace catapult { namespace model {
 		static NetworkConfiguration Uninitialized();
 
 		/// Loads a block chain configuration from \a bag.
+		static NetworkConfiguration LoadFromBag(const utils::ConfigurationBag& bag, const config::ImmutableConfiguration& immutableConfig);
+		/// Loads a block chain configuration from \a bag.
 		static NetworkConfiguration LoadFromBag(const utils::ConfigurationBag& bag);
-
 		/// Loads plugin configuration for plugin.
 		template<typename T>
 		T LoadPluginConfiguration() const {
@@ -147,8 +153,9 @@ namespace catapult { namespace model {
 				return T::Uninitialized();
 			}
 
-			return T::LoadFromBag(iter->second);
+			return utils::ConfigurationBagLoaderResolver<T>::LoadFromBag(iter->second);
 		}
+
 
 		/// Sets \a config of plugin.
 		template<typename T>

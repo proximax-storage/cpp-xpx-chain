@@ -372,13 +372,14 @@ namespace catapult { namespace config {
 
 				model::InflationCalculator& calculator = holder->GetCalculator();
 				for (const auto& inflationEntry : inflationEntries)
-					calculator.add(inflationEntry.Height, inflationEntry.Amount);
+					calculator.add(inflationEntry.Height, inflationEntry.Amount, holder->Config().Network.MaxCurrencyMosaicAtomicUnits);
 
 				// Sanity:
 				EXPECT_EQ(inflationEntries.size(), calculator.size());
 
 				return holder;
 			}
+
 			void ValidateConfiguration(std::shared_ptr<inflation::TestBlockchainConfigurationHolder> holder) {
 				auto config = holder->Config();
 				auto totalInflation = holder->GetCalculator().sumAll();

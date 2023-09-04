@@ -22,6 +22,7 @@
 #include "ConfigurationBag.h"
 #include <unordered_set>
 #include <vector>
+#include "catapult/config/ImmutableConfiguration.h"
 
 namespace catapult { namespace utils {
 
@@ -61,4 +62,31 @@ namespace catapult { namespace utils {
 	/// Extracts all \a section properties from \a bag into an ordered vector.
 	/// \note All section properties are expected to be boolean and only ones with \c true values will be included.
 	std::pair<std::vector<std::string>, size_t> ExtractSectionAsOrderedVector(const ConfigurationBag& bag, const char* section);
+
+
+	/// Resolves which load from bag function is available in the given configuration type \a T
+	/// Works for configurations that do not require ImmutableConfiguration to be specified.
+	template<typename T, typename = void>
+	struct ConfigurationBagLoaderResolver {
+		static T LoadFromBag(const utils::ConfigurationBag& bag, const config::ImmutableConfiguration& immutableConfig) {
+			LoadFromBag(bag);
+		}
+
+		static T LoadFromBag(const utils::ConfigurationBag& bag) {
+			T::LoadFromBag(bag);
+		}
+	};
+
+	/// Resolves which load from bag function is available in the given configuration type \a T
+	/// Works for configurations that do require ImmutableConfiguration to be specified.
+	template<typename T>
+	struct ConfigurationBagLoaderResolver<T, std::void_t<decltype(std::declval<T>().LoadFromBag(std::declval<const utils::ConfigurationBag&>(), std::declval<const config::ImmutableConfiguration&>()))>> {
+		static T LoadFromBag(const utils::ConfigurationBag& bag, const config::ImmutableConfiguration& immutableConfig) {
+			LoadFromBag(bag, immutableConfig);
+		}
+
+		static T LoadFromBag(const utils::ConfigurationBag& bag) {
+			T::LoadFromBag(bag);
+		}
+	};
 }}

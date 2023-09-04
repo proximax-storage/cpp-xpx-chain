@@ -24,7 +24,7 @@ namespace catapult { namespace config {
 			ExtensionsConfiguration::Uninitialized(),
 			SupportedEntityVersions()
 		};
-		m_InflationCalculator = model::InflationCalculator();
+		m_InflationCalculator = model::InflationCalculator(config.Immutable.InitialCurrencyAtomicUnits);
 		m_configs.insert({ Height(0), config });
 	}
 
@@ -33,7 +33,7 @@ namespace catapult { namespace config {
 			, m_pluginInitializer([](auto&) {}){
 
 		m_configs.insert({ Height(0), config });
-		m_InflationCalculator = model::InflationCalculator();
+		m_InflationCalculator = model::InflationCalculator(config.Immutable.InitialCurrencyAtomicUnits);
 	}
 
 	BlockchainConfigurationHolder::BlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height)
@@ -42,9 +42,10 @@ namespace catapult { namespace config {
 
 
 		m_configs.insert({ height, config });
-		m_InflationCalculator = model::InflationCalculator();
+		m_InflationCalculator = model::InflationCalculator(config.Immutable.InitialCurrencyAtomicUnits);
 		if(height != Height())
 			m_InflationCalculator.add(height, config.Network.Inflation);
+			m_InflationCalculator.calculateExpiryHeight(config.Network.MaxMosaicAtomicUnits);
 	}
 
 	boost::filesystem::path BlockchainConfigurationHolder::GetResourcesPath(int argc, const char** argv) {
@@ -128,7 +129,7 @@ namespace catapult { namespace config {
 
 		try {
 			std::istringstream inputBlock(strConfig);
-			auto networkConfig = model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
+			auto networkConfig = model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock), m_configs.at(Height(0)).Immutable);
 			m_pluginInitializer(networkConfig);
 
 			std::istringstream inputVersions(supportedVersion);

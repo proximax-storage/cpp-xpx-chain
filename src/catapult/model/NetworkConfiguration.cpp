@@ -37,7 +37,7 @@ namespace catapult { namespace model {
 		return NetworkConfiguration();
 	}
 
-	NetworkConfiguration NetworkConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
+	NetworkConfiguration NetworkConfiguration::LoadFromBag(const utils::ConfigurationBag& bag, const config::ImmutableConfiguration& immutableConfig) {
 		NetworkConfiguration config;
 
 #define LOAD_NETWORK_PROPERTY(NAME) utils::LoadIniProperty(bag, "network", #NAME, config.Info.NAME)
@@ -76,6 +76,9 @@ namespace catapult { namespace model {
 
 		config.Inflation = Amount(0);
 		TRY_LOAD_CHAIN_PROPERTY(Inflation);
+
+		config.MaxCurrencyMosaicAtomicUnits = immutableConfig.InitialCurrencyAtomicUnits;
+		TRY_LOAD_CHAIN_PROPERTY(MaxCurrencyMosaicAtomicUnits);
 
 		config.EnableUnconfirmedTransactionMinFeeValidation = true;
 		TRY_LOAD_CHAIN_PROPERTY(EnableUnconfirmedTransactionMinFeeValidation);

@@ -68,7 +68,7 @@ namespace catapult { namespace local {
 				io::FileBlockStorage storage(m_dataDirectory.rootDir().str(), io::FileBlockStorageMode::Hash_Index);
 				//This is the first boot, so we must load the nemesis block network configuration
 				const auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
-				auto bundleConfig = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+				auto bundleConfig = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement, m_pluginManager.immutableConfig());
 				initSupportedEntities = std::make_unique<const config::SupportedEntityVersions>(std::get<1>(bundleConfig));
 				if(isFirstBoot) {
 					/// We set base config as the one in nemesis block.
@@ -79,7 +79,7 @@ namespace catapult { namespace local {
 					/// We must retrieve the configuration from the active config file if available
 					/// At this point the configurations for the plugins are still uninitialized
 					if(extensions::HasActiveNetworkConfig(stateDir)) {
-						auto config = extensions::LoadActiveNetworkConfig(stateDir);
+						auto config = extensions::LoadActiveNetworkConfig(stateDir, m_pluginManager.immutableConfig());
 						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(config);
 					} else {
 						/// Not first boot but no config was saved yet, so we will load the file from resources folder. This happens when first transitioning to this feature, but booting from an incomplete snapshot.

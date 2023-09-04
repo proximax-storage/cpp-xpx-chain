@@ -192,7 +192,7 @@ namespace catapult { namespace model {
 			properties.insert({ section, { { "foo", "1234" } } });
 
 			// Act + Assert: the load failed
-			EXPECT_THROW(Traits::ConfigurationType::LoadFromBag(std::move(properties)), catapult_invalid_argument);
+			EXPECT_THROW(Traits::ConfigurationType::LoadFromBag(std::move(properties), config::ImmutableConfiguration::Uninitialized()), catapult_invalid_argument);
 		}
 	}
 
@@ -213,7 +213,7 @@ namespace catapult { namespace model {
 			// Act: create the properties and add the desired section
 			auto properties = Traits::CreateProperties();
 			properties.insert({ std::string("plugin:") + pluginName, { { "foo", "1234" } } });
-			auto config = Traits::ConfigurationType::LoadFromBag(std::move(properties));
+			auto config = Traits::ConfigurationType::LoadFromBag(std::move(properties), config::ImmutableConfiguration::Uninitialized());
 
 			// Assert:
 			EXPECT_EQ(3u, config.Plugins.size());
@@ -315,7 +315,7 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, LoadPluginConfigurationSucceedsWhenPluginConfigurationIsPresent) {
 		// Arrange:
 		using Traits = NetworkConfigurationTraits;
-		auto config = Traits::ConfigurationType::LoadFromBag(Traits::CreateProperties());
+		auto config = Traits::ConfigurationType::LoadFromBag(Traits::CreateProperties(), config::ImmutableConfiguration::Uninitialized());
 
 		// Act:
 		auto betaConfig = LoadPluginConfiguration<BetaConfiguration>(config);
@@ -328,7 +328,7 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, LoadPluginConfigurationDefaultWhenPluginConfigurationIsNotPresent) {
 		// Arrange:
 		using Traits = NetworkConfigurationTraits;
-		auto config = Traits::ConfigurationType::LoadFromBag(Traits::CreateProperties());
+		auto config = Traits::ConfigurationType::LoadFromBag(Traits::CreateProperties(), config::ImmutableConfiguration::Uninitialized());
 
 		// Act + Assert:
 		auto loadedConfig = LoadPluginConfiguration<GammaConfiguration>(config);

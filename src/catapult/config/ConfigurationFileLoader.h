@@ -50,6 +50,14 @@ namespace catapult { namespace config {
 		});
 	}
 
+	/// Loads ini configuration from \a path.
+	template<typename TConfiguration>
+	TConfiguration LoadIniConfiguration(const boost::filesystem::path& path, const config::ImmutableConfiguration& immutableConfiguration) {
+		return LoadConfiguration(path, [&immutableConfiguration](const auto& filePath) {
+			return TConfiguration::LoadFromBag(utils::ConfigurationBag::FromPath(filePath), immutableConfiguration);
+		});
+	}
+
 	/// Loads peers configuration from \a path for network \a networkIdentifier.
 	inline std::vector<ionet::Node> LoadPeersConfiguration(
 			const boost::filesystem::path& path,

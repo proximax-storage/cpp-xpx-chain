@@ -469,8 +469,8 @@ namespace catapult { namespace extensions {
 			// Assert:
 
 			auto stream = std::istringstream(networkConfigStr());
-			auto originalConfig = model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(stream));
-			auto finalConfig = LoadActiveNetworkConfig(stateDirectory);
+			auto originalConfig = model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(stream), pluginManager.immutableConfig());
+			auto finalConfig = LoadActiveNetworkConfig(stateDirectory, pluginManager.immutableConfig());
 			ASSERT_EQ(originalConfig.Info.PublicKey, finalConfig.Info.PublicKey);
 			EXPECT_EQ(5u, test::CountFilesAndDirectories(stateDirectory.path()));
 			for (const auto* supplementalFilename : { "supplemental.dat", "activeconfig.dat", "NetworkConfigCache_summary.dat", "AccountStateCache_summary.dat", "BlockDifficultyCache.dat"})

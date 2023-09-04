@@ -192,7 +192,7 @@ namespace catapult { namespace extensions {
 		execute(stateRef.ConfigHolder, *pNemesisBlockElement, stateRef.State, stateHashVerification, Verbosity::On);
 	}
 
-	const std::tuple<const model::NetworkConfiguration, const config::SupportedEntityVersions> NemesisBlockLoader::ReadNetworkConfiguration(const std::shared_ptr<const model::BlockElement> nemesisBlock) {
+	const std::tuple<const model::NetworkConfiguration, const config::SupportedEntityVersions> NemesisBlockLoader::ReadNetworkConfiguration(const std::shared_ptr<const model::BlockElement> nemesisBlock, const config::ImmutableConfiguration& immutableConfiguration) {
 		// 2. the network configuration is embedded in the penultimate transaction
 		auto networkConfigTransaction = nemesisBlock->Transactions.end()-2;
 		auto& transaction = static_cast<const model::NetworkConfigTransaction&>(networkConfigTransaction->Transaction);
@@ -200,7 +200,7 @@ namespace catapult { namespace extensions {
 		auto nSupportedVersionsString = std::string(reinterpret_cast<const char*>(transaction.SupportedEntityVersionsPtr()), transaction.SupportedEntityVersionsSize);
 		std::istringstream inputBlock(nConfigString);
 		std::istringstream inputVersions(nSupportedVersionsString);
-		return std::make_tuple(model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock)), config::LoadSupportedEntityVersions(inputVersions));
+		return std::make_tuple(model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock), immutableConfiguration), config::LoadSupportedEntityVersions(inputVersions));
 	}
 
 	const std::tuple<const std::string, const std::string> NemesisBlockLoader::ReadNetworkConfigurationAsStrings(const std::shared_ptr<const model::BlockElement> nemesisBlock) {

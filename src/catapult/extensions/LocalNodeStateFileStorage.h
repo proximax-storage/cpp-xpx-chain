@@ -90,7 +90,7 @@ namespace catapult { namespace extensions {
 	const std::string LoadActiveNetworkConfigString(const config::CatapultDirectory& directory);
 
 	/// Loads the last active network configuration from a file
-	const model::NetworkConfiguration LoadActiveNetworkConfig(const config::CatapultDirectory& directory);
+	const model::NetworkConfiguration LoadActiveNetworkConfig(const config::CatapultDirectory& directory, const config::ImmutableConfiguration& immutableConfig);
 
 	/// Serializes state composed of \a cache, \a state and \a score with checkpointing to \a dataDirectory given \a nodeConfig.
 	void SaveStateToDirectoryWithCheckpointing(

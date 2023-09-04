@@ -65,9 +65,10 @@ namespace catapult { namespace config {
 	BlockchainConfiguration BlockchainConfiguration::LoadFromPath(
 			const boost::filesystem::path& resourcesPath,
 			const std::string& extensionsHost) {
+		auto immutableConfiguration = LoadIniConfiguration<ImmutableConfiguration>(resourcesPath / Qualify("immutable"));
 		return BlockchainConfiguration(
-				LoadIniConfiguration<ImmutableConfiguration>(resourcesPath / Qualify("immutable")),
-				LoadIniConfiguration<model::NetworkConfiguration>(resourcesPath / Qualify("network")),
+				immutableConfiguration,
+				LoadIniConfiguration<model::NetworkConfiguration>(resourcesPath / Qualify("network"), immutableConfiguration),
 				LoadIniConfiguration<NodeConfiguration>(resourcesPath / Qualify("node")),
 				LoadIniConfiguration<LoggingConfiguration>(resourcesPath / HostQualify("logging", extensionsHost)),
 				LoadIniConfiguration<UserConfiguration>(resourcesPath / Qualify("user")),

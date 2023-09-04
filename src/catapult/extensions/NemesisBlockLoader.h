@@ -60,7 +60,7 @@ namespace catapult { namespace extensions {
 		void execute(const LocalNodeStateRef& stateRef, StateHashVerification stateHashVerification);
 
 		/// Loads the nemesis block from storage, and reads the network configuration that's contained within it. The network configuration must be the penultimate transaction.
-		static const std::tuple<const model::NetworkConfiguration, const config::SupportedEntityVersions> ReadNetworkConfiguration(const std::shared_ptr<const model::BlockElement> nemesisBlock);
+		static const std::tuple<const model::NetworkConfiguration, const config::SupportedEntityVersions> ReadNetworkConfiguration(const std::shared_ptr<const model::BlockElement> nemesisBlock, const config::ImmutableConfiguration& immutableConfiguration);
 		/// Loads the nemesis block from storage, and reads the network configuration that's contained within it. The network configuration must be the penultimate transaction.
 		static const std::tuple<const std::string, const std::string> ReadNetworkConfigurationAsStrings(const std::shared_ptr<const model::BlockElement> nemesisBlock);
 
