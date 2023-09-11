@@ -172,8 +172,7 @@ namespace catapult { namespace fastfinality {
 				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
 				RegisterPullConfirmedBlockHandler(pFsmShared, state.packetHandlers());
-				RegisterPullRemoteNodeStateHandler(pFsmShared, state.packetHandlers(), pConfigHolder, blockElementGetter, lastBlockElementSupplier);
-				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), pConfigHolder, blockElementGetter, lastBlockElementSupplier);
+				RegisterPullRemoteNodeStateHandler(pFsmShared, state.packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
 				dbrb::RegisterPushNodesHandler(pFsmShared->dbrbProcess(), config.Immutable.NetworkIdentifier, state.packetHandlers());
 				dbrb::RegisterPullNodesHandler(pFsmShared->dbrbProcess(), state.packetHandlers());
 
