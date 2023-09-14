@@ -723,11 +723,16 @@ namespace catapult { namespace storage {
 			bootstrapReplicators.reserve(m_bootstrapReplicators.size());
 			for (const auto& node : m_bootstrapReplicators) {
 				const auto host = node.endpoint().Host;
+				if (host.empty()) {
+					CATAPULT_LOG(warning) << "skipping empty host for " << node.identityKey();
+					continue;
+				}
+
 				const auto port = std::to_string(node.endpoint().Port);
 
 				boost::system::error_code ec;
 				auto result = resolver.resolve(host, port, ec);
-				if (ec || result.empty() || host.empty()) {
+				if (ec) {
 					CATAPULT_LOG(warning) << "endpoint not resolved " << host << ":" << port << " " << ec.message();
 				} else {
 					auto endpoint = result.begin()->endpoint();
