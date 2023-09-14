@@ -175,7 +175,7 @@ namespace catapult { namespace test {
 	// endregion
 
 	std::vector<uint8_t> CreateRandomBlockBuffer(size_t numBlocks) {
-		constexpr auto Entity_Size = sizeof(model::BlockHeader);
+		constexpr auto Entity_Size = sizeof(model::BlockHeaderV4);
 		auto buffer = GenerateRandomVector(numBlocks * Entity_Size);
 		for (auto i = 0u; i < numBlocks; ++i) {
 			auto& block = reinterpret_cast<model::Block&>(buffer[i * Entity_Size]);
