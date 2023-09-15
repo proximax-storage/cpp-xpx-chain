@@ -87,7 +87,7 @@ namespace catapult { namespace contract {
 
 		const uint64_t getLatestConfigChange() const;
 
-		void updateConfig();
+		void updateConfig(const BlockDuration& delta);
 
 	private:
 		class Impl;

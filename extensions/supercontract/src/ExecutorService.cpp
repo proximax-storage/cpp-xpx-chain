@@ -94,7 +94,7 @@ namespace catapult::contract {
 
 	public:
 
-		void updateConfig() {
+		void updateConfig(const BlockDuration& delta) {
 			if(!m_pExecutor){
 				return;
 			}
@@ -115,7 +115,7 @@ namespace catapult::contract {
 					newMutableConfig.setMaxAutorunExecutableSize(it->second.Network.maxAutorunExecutableSize);
 					newMutableConfig.setMaxAutomaticExecutableSize(it->second.Network.maxAutomaticExecutableSize);
 					newMutableConfig.setMaxManualExecutableSize(it->second.Network.maxManualExecutableSize);
-					m_pExecutor->updateConfig(it->first.unwrap(), std::move(newMutableConfig));
+					m_pExecutor->updateConfig(it->first.unwrap() + delta.unwrap(), std::move(newMutableConfig));
 				}
 				m_latestConfigChange = latestHeight;
 			}
@@ -175,7 +175,7 @@ namespace catapult::contract {
 						std::move(messengerBuilder),
 						std::make_shared<sirius::logging::Logger>(std::make_unique<ContractLogger>(), "executor"));
 			}
-			updateConfig();
+			updateConfig((BlockDuration) 0);
 			pExecutorEventHandler->setExecutor(m_pExecutor);
 		}
 
@@ -580,11 +580,11 @@ namespace catapult::contract {
 		m_pImpl->synchronizeSinglePublished(contractKey, batchIndex);
 	}
 
-	void ExecutorService::updateConfig() {
+	void ExecutorService::updateConfig(const BlockDuration& delta) {
 		if (!m_pImpl) {
 			return;
 		}
-		m_pImpl->updateConfig();
+		m_pImpl->updateConfig(delta);
 	}
 
 	const uint64_t ExecutorService::getLatestConfigChange() const {
