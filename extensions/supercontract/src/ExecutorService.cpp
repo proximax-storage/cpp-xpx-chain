@@ -21,6 +21,7 @@
 #include "ContractLogger.h"
 #include <rpcExecutorServer/RPCExecutor.h>
 #include "StorageBlockchain.h"
+#include "cpp-xpx-supercontract-sdk/libs/executor/src/DefaultExecutor.h"
 
 #include <map>
 
@@ -92,6 +93,34 @@ namespace catapult::contract {
 			, m_pTransactionStatusHandler(std::move(pTransactionStatusHandler)) {}
 
 	public:
+
+		void updateConfig(const BlockDuration& delta) {
+			if(!m_pExecutor){
+				return;
+			}
+
+			const auto& configHolder = m_serviceState.pluginManager().configHolder();
+			Height latestHeight = configHolder->getConfigLastHeight();
+			if (!m_latestConfigChange || *m_latestConfigChange < latestHeight) {
+				auto configs = configHolder->getConfigs();
+				for(auto it = m_latestConfigChange ? configs.upper_bound(*m_latestConfigChange) : configs.begin(); it != configs.end(); it++) {
+					MutableConfig newMutableConfig;
+					newMutableConfig.setAutorunSCLimit(it->second.Network.autorunSCLimit);
+					newMutableConfig.setAutorunFile(it->second.Network.autorunFile);
+					newMutableConfig.setAutorunFunction(it->second.Network.autorunFunction);
+					newMutableConfig.setInternetBufferSize(it->second.Network.internetBufferSize);
+					newMutableConfig.setExecutionPaymentToGasMultiplier(it->second.Network.executionPaymentToGasMultiplier);
+					newMutableConfig.setDownloadPaymentToGasMultiplier(it->second.Network.downloadPaymentToGasMultiplier);
+					newMutableConfig.setStoragePathPrefix(it->second.Network.storagePathPrefix);
+					newMutableConfig.setMaxAutorunExecutableSize(it->second.Network.maxAutorunExecutableSize);
+					newMutableConfig.setMaxAutomaticExecutableSize(it->second.Network.maxAutomaticExecutableSize);
+					newMutableConfig.setMaxManualExecutableSize(it->second.Network.maxManualExecutableSize);
+					m_pExecutor->updateConfig(it->first.unwrap() + delta.unwrap(), std::move(newMutableConfig));
+				}
+				m_latestConfigChange = latestHeight;
+			}
+		}
+
 		void start() {
 			auto pool = m_serviceState.pool().pushIsolatedPool("ContractQuery", 1);
 			std::vector<uint8_t> privateKeyBuffer = { m_keyPair.privateKey().begin(), m_keyPair.privateKey().end() };
@@ -119,7 +148,7 @@ namespace catapult::contract {
 						m_config.MessengerRPCHost + ":" + m_config.MessengerRPCPort,
 						m_config.VirtualMachineRPCHost + ":" + m_config.VirtualMachineRPCPort,
 						m_config.ExecutorLogPath,
-						static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier));
+						static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier)); // add sirius::contract::ExecutorConfig config
 			} else {
 				std::unique_ptr<ServiceBuilder<blockchain::Blockchain>> blockchainBuilder =
 						std::make_unique<StorageBlockchainBuilder>(m_contractState);
@@ -136,8 +165,6 @@ namespace catapult::contract {
 						m_config.VirtualMachineRPCHost + ":" + m_config.VirtualMachineRPCPort);
 
 				sirius::contract::ExecutorConfig config;
-				config.setNetworkIdentifier(static_cast<uint8_t>(m_serviceState.config().Immutable.NetworkIdentifier));
-
 				m_pExecutor = sirius::contract::DefaultExecutorBuilder().build(
 						std::move(keyPair),
 						config,
@@ -148,7 +175,7 @@ namespace catapult::contract {
 						std::move(messengerBuilder),
 						std::make_shared<sirius::logging::Logger>(std::make_unique<ContractLogger>(), "executor"));
 			}
-
+			updateConfig((BlockDuration) 0);
 			pExecutorEventHandler->setExecutor(m_pExecutor);
 		}
 
@@ -272,8 +299,16 @@ namespace catapult::contract {
 			}
 		}
 
+		sirius::contract::ExecutorConfig& getExecutorConfig() {
+			return m_executorConfig;
+		}
+
 		bool contractExists(const Key& contractKey) {
 			return m_contractState.contractExists(contractKey);
+		}
+
+		const extensions::ServiceState& getServiceState() {
+			return m_serviceState;
 		}
 
 	private:
@@ -391,12 +426,12 @@ namespace catapult::contract {
 		extensions::ServiceState& m_serviceState;
 		const state::ContractState& m_contractState;
 		const ExecutorConfiguration& m_config;
-
 		std::shared_ptr<TransactionStatusHandler> m_pTransactionStatusHandler;
-
 		// The fields are needed to generate correct events
 		std::map<Key, Height> m_alreadyAddedContracts;
-
+		sirius::contract::ExecutorConfig m_executorConfig;
+	public:
+		std::optional <Height> m_latestConfigChange;
 		std::shared_ptr<sirius::contract::Executor> m_pExecutor;
 	};
 
@@ -543,6 +578,20 @@ namespace catapult::contract {
 			return;
 		}
 		m_pImpl->synchronizeSinglePublished(contractKey, batchIndex);
+	}
+
+	void ExecutorService::updateConfig(const BlockDuration& delta) {
+		if (!m_pImpl) {
+			return;
+		}
+		m_pImpl->updateConfig(delta);
+	}
+
+	const uint64_t ExecutorService::getLatestConfigChange() const {
+		if(m_pImpl->m_latestConfigChange.has_value()) {
+			return m_pImpl->m_latestConfigChange->unwrap();
+		}
+		return 0;
 	}
 
 	// endregion

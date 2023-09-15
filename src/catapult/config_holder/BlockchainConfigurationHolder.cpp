@@ -170,4 +170,20 @@ namespace catapult { namespace config {
 		for (const auto& [_, config] : m_configs)
 			config.Network.ClearPluginConfigurations();
 	}
+
+	std::map<Height, BlockchainConfiguration> BlockchainConfigurationHolder::getConfigs() const {
+		std::unique_lock lock(m_mutex);
+		return m_configs;
+	}
+
+	Height BlockchainConfigurationHolder::getConfigLastHeight() {
+		std::unique_lock lock(m_mutex);
+
+		if(m_configs.empty()) {
+			CATAPULT_THROW_RUNTIME_ERROR("Attempting to initialize configuration holder base config, but it's empty or has been initialized already.")
+		}
+
+		return (--m_configs.end())->first;
+	}
+
 }}

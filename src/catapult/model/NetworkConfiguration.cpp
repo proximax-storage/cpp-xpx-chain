@@ -40,6 +40,7 @@ namespace catapult { namespace model {
 	NetworkConfiguration NetworkConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
 		NetworkConfiguration config;
 
+
 #define LOAD_NETWORK_PROPERTY(NAME) utils::LoadIniProperty(bag, "network", #NAME, config.Info.NAME)
 
 		LOAD_NETWORK_PROPERTY(PublicKey);
@@ -120,6 +121,28 @@ namespace catapult { namespace model {
 		config.EnableHarvesterExpiration = false;
 		TRY_LOAD_CHAIN_PROPERTY(EnableHarvesterExpiration);
 
+		config.autorunSCLimit = 100000;
+		TRY_LOAD_CHAIN_PROPERTY(autorunSCLimit);
+		config.autorunFile = "autorun.wasm";
+		TRY_LOAD_CHAIN_PROPERTY(autorunFile);
+		config.autorunFunction = "run";
+		TRY_LOAD_CHAIN_PROPERTY(autorunFunction);
+
+		config.maxAutorunExecutableSize = 1024U;
+		TRY_LOAD_CHAIN_PROPERTY(maxAutorunExecutableSize);
+		config.maxAutomaticExecutableSize = 5U * 1024U * 1024U;
+		TRY_LOAD_CHAIN_PROPERTY(maxAutorunExecutableSize);
+		config.maxManualExecutableSize = 5U * 1024U * 1024U;
+		TRY_LOAD_CHAIN_PROPERTY(maxManualExecutableSize);
+		config.storagePathPrefix = "SC_DATA";
+		TRY_LOAD_CHAIN_PROPERTY(storagePathPrefix);
+		config.internetBufferSize = 16 * 1024;
+		TRY_LOAD_CHAIN_PROPERTY(internetBufferSize);
+		config.executionPaymentToGasMultiplier = 1000000000U;
+		TRY_LOAD_CHAIN_PROPERTY(executionPaymentToGasMultiplier);
+		config.downloadPaymentToGasMultiplier  = 1000000U;
+		TRY_LOAD_CHAIN_PROPERTY(downloadPaymentToGasMultiplier);
+
 #undef TRY_LOAD_CHAIN_PROPERTY
 
 		size_t numPluginProperties = 0;
@@ -177,5 +200,5 @@ namespace catapult { namespace model {
 		return config.MaxRollbackBlocks + config.MaxDifficultyBlocks;
 	}
 
-	// endregion
+// endregion
 }}

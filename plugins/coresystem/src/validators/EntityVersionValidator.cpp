@@ -27,12 +27,29 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(EntityVersion, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(EntityVersion, [](const auto& notification, const auto& context) {
 			const auto& supportedVersions = context.Config.SupportedEntityVersions;
+
+			CATAPULT_LOG(debug) << "context.Config.SupportedEntityVersions: ";
+			for (const auto& [entityType, versionSet] : supportedVersions) {
+				std::stringstream ss;
+				for (const auto& version : versionSet)
+					ss << version << ", ";
+
+				std::string versionsStr = ss.str();
+				if (versionsStr.size() >= 2)
+					versionsStr = versionsStr.substr(0, versionsStr.size() - 2);
+
+				CATAPULT_LOG(debug) << "- " << entityType << ": {" << versionsStr << "}";
+			}
+
+		  	CATAPULT_LOG(debug) << "notification.EntityType: " << notification.EntityType;
 			auto entityIter = supportedVersions.find(notification.EntityType);
 
 			if (entityIter == supportedVersions.end()) {
+				CATAPULT_LOG(debug) << "EntityType not found.";
 				return Failure_Core_Invalid_Version;
 			}
 			auto iter = entityIter->second.find(notification.EntityVersion);
+		  	CATAPULT_LOG(debug) << "EntityVersion is at end()? " << (iter == entityIter->second.end());
 			return (iter == entityIter->second.end())
 				   ? Failure_Core_Invalid_Version
 				   : ValidationResult::Success;

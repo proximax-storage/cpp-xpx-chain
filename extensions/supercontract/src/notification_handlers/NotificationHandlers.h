@@ -8,6 +8,7 @@
 #include "catapult/model/SupercontractNotifications.h"
 #include "catapult/notification_handlers/HandlerContext.h"
 #include "catapult/notification_handlers/NotificationHandlerTypes.h"
+#include "plugins/txes/config/src/model/NetworkConfigNotifications.h"
 #include "../ExecutorService.h"
 
 namespace catapult { namespace notification_handlers {
@@ -27,4 +28,6 @@ namespace catapult { namespace notification_handlers {
 	DECLARE_HANDLER(AutomaticExecutionsBlock, model::BlockNotification<1>)(const std::weak_ptr<contract::ExecutorService>& pExecutorService);
 
 	DECLARE_HANDLER(ContractsUpdate, model::BlockNotification<1>)(const std::weak_ptr<contract::ExecutorService>& pExecutorService);
+
+	DECLARE_HANDLER(ConfigUpdate, model::NetworkConfigNotification<1>)(const std::weak_ptr<contract::ExecutorService>& pExecutorService);
 }}

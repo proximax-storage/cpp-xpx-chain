@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 			if(context.Config.ActivationHeight == context.Height && context.Config.PreviousConfiguration != nullptr) {
 				//This is the block at which this configuration becomes active. Let's verify if the addon plugin list has changed.
 				//Retrieve boot configuration
-				auto bootConfig = pluginManager.configHolder()->Config(Height(0));
+				auto bootConfig = pluginManager.configHolder()->Config();
 
 				// Make sure that the boot config plugins match the config that's about to be used
 				auto matches = 0;
@@ -31,7 +31,11 @@ namespace catapult { namespace validators {
 						}
 					}
 				}
-				if(matches == bootConfig.Network.Plugins.size() && matches == context.Config.Network.Plugins.size()) return ValidationResult::Success;
+				if(matches == bootConfig.Network.Plugins.size() && matches == context.Config.Network.Plugins.size()) {
+					CATAPULT_LOG(debug) << "Returning success";
+					return ValidationResult::Success;
+				}
+				CATAPULT_LOG(debug) << "Returning Failure_NetworkConfig_Required_Plugins_Not_Matching";
 				return Failure_NetworkConfig_Required_Plugins_Not_Matching;
 			}
 			return ValidationResult::Success;

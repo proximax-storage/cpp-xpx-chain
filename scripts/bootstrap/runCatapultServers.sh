@@ -82,5 +82,12 @@ generate_nem "peer-node-4"
 echo "You can kill all catapult servers 'killall $WORK_DIR/bin/sirius.bc'"
 echo "multitail -i $WORK_DIR/data/api-node-0/catapult_server0000.log -i $WORK_DIR/data/peer-node-0/catapult_server0000.log -i $WORK_DIR/data/peer-node-1/catapult_server0000.log -i $WORK_DIR/data/peer-node-2/catapult_server0000.log -i $WORK_DIR/data/peer-node-3/catapult_server0000.log -i $WORK_DIR/data/peer-node-4/catapult_server0000.log"
 echo "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+#drop_db_output=$(mongo catapult --eval "printjson(db.dropDatabase())")
+#if [ $(echo "$drop_db_output" | tail -1 | jq -r ".ok") = 1 ]; then
+#  echo "Catapult database dropped successfully.";
+#else
+#  echo -e "\aFailed to drop Catapult database! Mongo produced the following output:";
+#  echo "$drop_db_output"
+#fi
 # echo "tail -f $WORK_DIR/data/api-node-0/catapult_server0000.log $WORK_DIR/data/peer-node-1/catapult_server0000.log $WORK_DIR/data/peer-node-1/catapult_server0000.log"
 # tail -f $WORK_DIR/api-node-0.log $WORK_DIR/peer-node-0.log $WORK_DIR/peer-node-1.log

@@ -58,6 +58,11 @@ namespace catapult { namespace config {
 		void RemoveConfig(const Height& height);
 
 		const model::InflationCalculator& InflationCalculator();
+
+		std::map<Height, BlockchainConfiguration> getConfigs() const;
+
+		Height getConfigLastHeight();
+
 	private:
 		/// Must be used with a locked m_mutex
 		const BlockchainConfiguration* LastConfigOrNull(const Height& height) const;

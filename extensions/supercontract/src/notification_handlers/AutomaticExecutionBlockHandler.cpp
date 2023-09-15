@@ -17,6 +17,7 @@ namespace catapult { namespace notification_handlers {
 				return;
 			}
 			try {
+//				pExecutorService->updateConfig();
 				pExecutorService->automaticExecutionsBlockPublished(context.Height);
 			}
 			catch (...) {
