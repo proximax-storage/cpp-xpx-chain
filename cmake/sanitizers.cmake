@@ -40,7 +40,7 @@ elseif(SANITIZE_THREAD)
     add_cache_flag(CMAKE_EXE_LINKER_FLAGS "-fsanitize=thread")
     add_cache_flag(CMAKE_SHARED_LINKER_FLAGS "-fsanitize=thread")
 
-    set(_ENV "verbosity=1 exitcode=32 suppressions=${CMAKE_CURRENT_LIST_DIR}/tsan_suppressions.txt")
+    set(_ENV "verbosity=1:exitcode=32:suppressions=${CMAKE_CURRENT_LIST_DIR}/tsan_suppressions.txt")
     set(ENV{TSAN_OPTIONS} "${_ENV}")
     message(STATUS "
     [Warning] Define TSAN_OPTIONS ENV var:
@@ -67,4 +67,35 @@ elseif(SANITIZE_UNDEFINED)
 
     export UBSAN_OPTIONS=\"${_ENV}\"
     ")
+elseif(SANITIZE_MEMORY)
+    message(STATUS "SANITIZE_MEMORY enabled")
+
+    set(_ENV "halt_on_error=1:report_umrs=1:suppressions=${CMAKE_CURRENT_LIST_DIR}/msan_suppression.txt")
+    set(ENV{MSAN_OPTIONS} "${_ENV}")
+#    set(MSAN_OPTIONS "suppressions=${CMAKE_CURRENT_LIST_DIR}/msan_suppression.txt:halt_on_error=1:report_umrs=1")
+    set(FLAGS
+        -fsanitize=memory
+        -fPIE
+        -pie
+        -fno-omit-frame-pointer
+        -g
+        -fno-optimize-sibling-calls
+        -O1
+        -fsanitize-memory-track-origins=2a
+        -fsanitize-memory-track-origins=${MSAN_OPTIONS}
+        )
+    foreach(FLAG IN LISTS FLAGS)
+        add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
+        add_cache_flag(CMAKE_C_FLAGS ${FLAG})
+    endforeach()
+
+#    set(_ENV "print_stacktrace=1 suppressions=${CMAKE_CURRENT_LIST_DIR}/msan_suppression.txt")
+#    set(ENV{MSAN_OPTIONS} "${_ENV}")
+
+    message(STATUS "
+    [Warning] Define MSAN_OPTIONS ENV var:
+
+    export MSAN_OPTIONS=\"${_ENV}\"
+    ")
+#    message("MSAN_OPTIONS: ${MSAN_OPTIONS}")
 endif()

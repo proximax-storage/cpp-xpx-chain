@@ -1,0 +1,3 @@
+# Ignore uninitialized value errors
+uninitialized:*
+warning:*use-of-uninitialized-value*
