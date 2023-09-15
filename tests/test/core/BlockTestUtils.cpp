@@ -176,14 +176,15 @@ namespace catapult { namespace test {
 
 	std::vector<uint8_t> CreateRandomBlockBuffer(size_t numBlocks) {
 		constexpr auto Entity_Size = sizeof(model::BlockHeaderV4);
-		auto buffer = GenerateRandomVector(numBlocks * Entity_Size);
+        auto byteVector = std::make_unique<std::vector<uint8_t>>(GenerateRandomVector(numBlocks * Entity_Size));
 		for (auto i = 0u; i < numBlocks; ++i) {
-			auto& block = reinterpret_cast<model::Block&>(buffer[i * Entity_Size]);
-			block.Size = Entity_Size;
-			block.Type = model::Entity_Type_Block;
+			auto& block = reinterpret_cast<model::BlockHeaderV4&>((*byteVector)[i * Entity_Size]);
+            block.Size = Entity_Size;
+            block.Type = model::Entity_Type_Block;
+            block.TransactionPayloadSize = 0;
 		}
 
-		return buffer;
+		return *byteVector;
 	}
 
 	model::BlockRange CreateEntityRange(const std::vector<const model::Block*>& blocks) {
