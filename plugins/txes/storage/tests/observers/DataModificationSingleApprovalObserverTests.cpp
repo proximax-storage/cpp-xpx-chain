@@ -142,7 +142,7 @@ namespace catapult { namespace observers {
 		values.InitialBcDriveEntry = CreateExpectedBcDriveEntry(values.ExpectedBcDriveEntry);
 		values.InitialReplicatorEntry = CreateExpectedReplicatorEntry(
 				values.ExpectedReplicatorEntry,
-				values.ExpectedBcDriveEntry.completedDataModifications().end()->Id
+                values.ExpectedBcDriveEntry.completedDataModifications().begin()->Id
 		);
 
         // Assert
