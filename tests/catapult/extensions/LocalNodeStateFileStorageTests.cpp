@@ -373,7 +373,7 @@ namespace catapult { namespace extensions {
 			config.Network.ImportanceGrouping = 1;
 			config.Network.MaxDifficultyBlocks = 111;
 			config.Network.AccountVersion = 1;
-			return config::CreateMockConfigurationHolder(config.ToConst());
+			return config::CreateMockConfigurationHolderWithNemesisConfig(config.ToConst());
 		}
 
 		cache::CatapultCache CreateCacheWithRealCoreSystemPlugins(const std::string& databaseDirectory) {

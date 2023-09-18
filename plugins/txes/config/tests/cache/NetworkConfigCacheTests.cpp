@@ -21,7 +21,7 @@ namespace catapult { namespace cache {
 		struct NetworkConfigCacheMixinTraits {
 			class CacheType : public NetworkConfigCache {
 			public:
-				CacheType() : NetworkConfigCache(CacheConfiguration(), config::CreateMockConfigurationHolder())
+				CacheType() : NetworkConfigCache(CacheConfiguration(), config::CreateMockConfigurationHolderWithNemesisConfig())
 				{}
 
 				CacheType(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder) : NetworkConfigCache(CacheConfiguration(), pConfigHolder)
@@ -109,7 +109,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CommitUpdatesConfigHolder) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolderWithNemesisConfig();
 		NetworkConfigCacheMixinTraits::CacheType cache(pConfigHolder);
 
 		// Act:

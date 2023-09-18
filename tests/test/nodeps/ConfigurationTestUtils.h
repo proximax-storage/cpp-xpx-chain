@@ -20,11 +20,38 @@
 
 #pragma once
 #include "catapult/utils/ConfigurationBag.h"
+#include "catapult/config/ImmutableConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace model { struct NetworkConfiguration; } }
 
 namespace catapult { namespace test {
+
+	/// Resolves which load from bag function is available in the given configuration type \a T
+	/// Works for configurations that do not require ImmutableConfiguration to be specified.
+	template<typename T, typename = void>
+	struct TestConfigurationBagLoaderResolver {
+		static T LoadFromBag(const utils::ConfigurationBag& bag, const config::ImmutableConfiguration& immutableConfig) {
+			return LoadFromBag(bag);
+		}
+
+		static T LoadFromBag(const utils::ConfigurationBag& bag) {
+			return T::LoadFromBag(bag);
+		}
+	};
+
+	/// Resolves which load from bag function is available in the given configuration type \a T
+	/// Works for configurations that do require ImmutableConfiguration to be specified.
+	template<typename T>
+	struct TestConfigurationBagLoaderResolver<T, std::void_t<decltype(std::declval<T>().LoadFromBag(std::declval<const utils::ConfigurationBag&>(), std::declval<const config::ImmutableConfiguration&>()))>> {
+		static T LoadFromBag(const utils::ConfigurationBag& bag, const config::ImmutableConfiguration& immutableConfig) {
+			return T::LoadFromBag(bag, immutableConfig);
+		}
+
+		static T LoadFromBag(const utils::ConfigurationBag& bag) {
+			return LoadFromBag(bag, config::ImmutableConfiguration::Uninitialized());
+		}
+	};
 
 	// region value parsing
 
@@ -98,7 +125,7 @@ namespace catapult { namespace test {
 		auto bag = utils::ConfigurationBag(utils::ConfigurationBag::ValuesContainer());
 
 		// Act + Assert:
-		EXPECT_THROW(TTraits::ConfigurationType::LoadFromBag(bag), utils::property_not_found_error);
+		EXPECT_THROW(TestConfigurationBagLoaderResolver<typename TTraits::ConfigurationType>::LoadFromBag(bag), utils::property_not_found_error);
 	}
 
 	/// Asserts that a configuration cannot be loaded from a bag that contains a missing property.
@@ -126,9 +153,9 @@ namespace catapult { namespace test {
 
 				// Act + Assert:
 				if (TTraits::IsPropertyOptional(name)) {
-					TTraits::AssertCustom(TTraits::ConfigurationType::LoadFromBag(std::move(propertiesCopy)));
+					TTraits::AssertCustom(TestConfigurationBagLoaderResolver<typename TTraits::ConfigurationType>::LoadFromBag(std::move(propertiesCopy)));
 				} else {
-					EXPECT_THROW(TTraits::ConfigurationType::LoadFromBag(std::move(propertiesCopy)), utils::property_not_found_error);
+					EXPECT_THROW(TestConfigurationBagLoaderResolver<typename TTraits::ConfigurationType>::LoadFromBag(std::move(propertiesCopy)), utils::property_not_found_error);
 				}
 			}
 		}
@@ -153,9 +180,9 @@ namespace catapult { namespace test {
 
 			// Act + Assert:
 			if (TTraits::SupportsUnknownProperties()) {
-				TTraits::AssertCustom(TTraits::ConfigurationType::LoadFromBag(std::move(propertiesCopy)));
+				TTraits::AssertCustom(TestConfigurationBagLoaderResolver<typename TTraits::ConfigurationType>::LoadFromBag(std::move(propertiesCopy)));
 			} else {
-				EXPECT_THROW(TTraits::ConfigurationType::LoadFromBag(std::move(propertiesCopy)), catapult_invalid_argument);
+				EXPECT_THROW(TestConfigurationBagLoaderResolver<typename TTraits::ConfigurationType>::LoadFromBag(std::move(propertiesCopy)), catapult_invalid_argument);
 			}
 		}
 	}
@@ -170,9 +197,9 @@ namespace catapult { namespace test {
 
 		// Act + Assert:
 		if (TTraits::SupportsUnknownProperties()) {
-			TTraits::AssertCustom(TTraits::ConfigurationType::LoadFromBag(bag));
+			TTraits::AssertCustom(TestConfigurationBagLoaderResolver<typename TTraits::ConfigurationType>::LoadFromBag(bag));
 		} else {
-			EXPECT_THROW(TTraits::ConfigurationType::LoadFromBag(bag), catapult_invalid_argument);
+			EXPECT_THROW(TestConfigurationBagLoaderResolver<typename TTraits::ConfigurationType>::LoadFromBag(bag), catapult_invalid_argument);
 		}
 	}
 
@@ -181,7 +208,7 @@ namespace catapult { namespace test {
 	void AssertCanLoadCustomConfigurationFromBag() {
 		// Act:
 		auto bag = utils::ConfigurationBag(TTraits::CreateProperties());
-		auto config = TTraits::ConfigurationType::LoadFromBag(bag);
+		auto config = TestConfigurationBagLoaderResolver<typename TTraits::ConfigurationType>::LoadFromBag(bag);
 
 		// Assert:
 		TTraits::AssertCustom(config);

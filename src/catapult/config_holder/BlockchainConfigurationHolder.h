@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/config/BlockchainConfiguration.h"
+#include "catapult/model/InflationCalculator.h"
 #include <mutex>  // For std::unique_lock
 #include <shared_mutex>
 #include <thread>
@@ -58,7 +59,7 @@ using namespace std::chrono_literals;
 
 		void InsertConfig(const Height& height, const std::string& strConfig, const std::string& supportedVersion);
 
-		void InsertConfig(const Height& height, const model::NetworkConfiguration& networkConfig, const config::SupportedEntityVersions& supportedEntities);
+
 		void RemoveConfig(const Height& height);
 
 		const model::InflationCalculator& InflationCalculator();
@@ -67,10 +68,12 @@ using namespace std::chrono_literals;
 		const BlockchainConfiguration* LastConfigOrNull(const Height& height) const;
 
 	protected:
+		void InsertConfig(const Height& height, const model::NetworkConfiguration& networkConfig, const config::SupportedEntityVersions& supportedEntities);
+	protected:
 		std::map<Height, BlockchainConfiguration> m_configs;
 		cache::CatapultCache* m_pCache;
 		PluginInitializer m_pluginInitializer;
-		model::InflationCalculator m_InflationCalculator;
+		std::unique_ptr<model::InflationCalculator> m_pInflationCalculator;
 		mutable std::shared_mutex m_mutex;
 	};
 }}

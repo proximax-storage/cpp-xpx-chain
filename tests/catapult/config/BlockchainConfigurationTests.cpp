@@ -199,13 +199,6 @@ namespace catapult { namespace config {
 			EXPECT_EQ(expectedExtensions, config.Names);
 		}
 
-		void AssertDefaultInflationConfiguration(const InflationConfiguration& config) {
-			// Assert:
-			EXPECT_EQ(2u, config.InflationCalculator.size());
-			EXPECT_TRUE(config.InflationCalculator.contains(Height(1), Amount(100)));
-			EXPECT_TRUE(config.InflationCalculator.contains(Height(10000), Amount()));
-		}
-
 		void AssertDefaultSupportedEntityVersions(const SupportedEntityVersions& config) {
 			// Assert:
 			EXPECT_EQ(62u, config.size());

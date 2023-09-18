@@ -22,7 +22,6 @@
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
-#include "catapult/config/InflationConfiguration.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/model/ExtractorContext.h"

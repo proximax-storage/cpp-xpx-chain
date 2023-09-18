@@ -75,13 +75,14 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxSupportedEntityVersionsSize = utils::FileSize::FromMegabytes(maxSupportedEntityVersionsSizeMb);
 			config.Network.SetPluginConfiguration(pluginConfig);
 			config.Network.Plugins.emplace(PLUGIN_NAME(config), utils::ConfigurationBag({}));
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config.ToConst());
+			auto pConfigHolder = config::CreateMockConfigurationHolderWithNemesisConfig(config.ToConst());
 			return std::make_shared<plugins::PluginManager>(pConfigHolder, plugins::StorageConfiguration());
 		}
 
-		std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(uint64_t maxBlockChainConfigSizeMb, uint64_t maxSupportedEntityVersionsSizeMb) {
+		std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(uint64_t maxBlockChainConfigSizeMb, uint64_t maxSupportedEntityVersionsSizeMb, const std::string& networkConfig = networkConfigWithPlugin) {
 			test::MutableBlockchainConfiguration config;
-			std::istringstream input(networkConfigWithPlugin);
+			config.Immutable.InitialCurrencyAtomicUnits = Amount(100);
+			std::istringstream input(networkConfig);
 			config.Network = model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(input), config.Immutable);
 			auto pluginConfig = config::NetworkConfigConfiguration::Uninitialized();
 			pluginConfig.MaxBlockChainConfigSize = utils::FileSize::FromMegabytes(maxBlockChainConfigSizeMb);
@@ -177,8 +178,10 @@ namespace catapult { namespace validators {
 				const std::string& supportedEntityVersions,
 				model::NetworkUpdateType type,
 				uint64_t maxBlockChainConfigSizeMb = 1,
-				uint64_t maxSupportedEntityVersionsSizeMb = 1) {
-			auto pPluginManager = CreatePluginManagerWithRealPlugins(maxBlockChainConfigSizeMb, maxSupportedEntityVersionsSizeMb);
+				uint64_t maxSupportedEntityVersionsSizeMb = 1,
+				const std::string& networkConfigWithPlugins = networkConfigWithPlugin) {
+			auto pPluginManager = CreatePluginManagerWithRealPlugins(maxBlockChainConfigSizeMb, maxSupportedEntityVersionsSizeMb, networkConfigWithPlugins);
+			pPluginManager->configHolder()->InsertConfig(Height(1), networkConfigWithPlugins, supportedEntityVersions);
 			auto cache = pPluginManager->createCache();
 			if constexpr(TVersion == 1)
 				AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache);
@@ -186,6 +189,12 @@ namespace catapult { namespace validators {
 				AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache, type);
 		}
 	}
+
+#define TRAITS_BASED_TEST_V2(TEST_NAME) \
+		template<uint32_t TVersion, model::NetworkUpdateType TType = model::NetworkUpdateType::Delta> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+		TEST(TEST_CLASS, TEST_NAME##_V2_Delta) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<2>(); } \
+		TEST(TEST_CLASS, TEST_NAME##_V2_Absolute) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<2, model::NetworkUpdateType::Absolute>(); } \
+		template<uint32_t TVersion, model::NetworkUpdateType TType> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 #define TRAITS_BASED_TEST(TEST_NAME) \
 	template<uint32_t TVersion, model::NetworkUpdateType TType = model::NetworkUpdateType::Delta> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
 	TEST(TEST_CLASS, TEST_NAME##_V1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<1>(); } \
@@ -307,6 +316,7 @@ namespace catapult { namespace validators {
 			TType);
 	}
 
+
 	TRAITS_BASED_TEST(FailureWhenBlockChainConfigInvalid) {
 		// Assert:
 		RunTest<TVersion>(
@@ -380,5 +390,17 @@ namespace catapult { namespace validators {
 			networkConfigWithPlugin,
 			test::GetSupportedEntityVersionsString(),
 			TType);
+	}
+
+	TRAITS_BASED_TEST_V2(FailureWhenNetworkConfigInvalidMaxMosaicUnits) {
+		// Assert:
+		auto networkConfig = networkConfigWithPlugin;
+		boost::algorithm::replace_first(networkConfig, "maxMosaicAtomicUnits = 9'000'000'000'000'000\n", "maxMosaicAtomicUnits = 9'000'000'000'000'000\nmaxCurrencyMosaicAtomicUnits = 9'000'000'000'000'001\n");
+		// Assert:
+		RunTest<TVersion>(
+				Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid,
+				networkConfig,
+				test::GetSupportedEntityVersionsString(),
+				TType);
 	}
 }}

@@ -72,7 +72,7 @@ namespace catapult { namespace plugins {
 					}
 
 					// 3. registration
-					sub.notify(MosaicNonceNotification<1>(transaction.Signer, transaction.MosaicNonce, transaction.MosaicId));
+					sub.notify(MosaicNonceNotification<2>(transaction.Signer, transaction.MosaicNonce, transaction.MosaicId));
 					sub.notify(MosaicPropertiesNotification<2>(transaction.PropertiesHeader, transaction.PropertiesPtr()));
 					sub.notify(MosaicDefinitionNotification<1>(
 							transaction.Signer,

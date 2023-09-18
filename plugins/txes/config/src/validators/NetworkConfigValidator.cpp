@@ -80,6 +80,11 @@ namespace catapult { namespace validators {
 						return Failure_NetworkConfig_MinimumAccountVersion_Less_Than_Current;
 					if (100u < networkConfig.HarvestBeneficiaryPercentage)
 						return Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hundred;
+					auto totalInflationUpToConfigActivation = pluginManager.configHolder()->InflationCalculator().getCumulativeAmount(height);
+					auto totalCurrency = context.Config.Immutable.InitialCurrencyAtomicUnits + totalInflationUpToConfigActivation;
+					/// totalCurrency at height of validation must not be higher than the new maxmosaicatomicunits
+					if (totalCurrency > networkConfig.MaxMosaicAtomicUnits)
+						return Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid;
 					if constexpr(std::is_same_v<TNotification, model::NetworkConfigNotification<2>>)
 					{
 						if(networkConfig.MaxCurrencyMosaicAtomicUnits > networkConfig.MaxMosaicAtomicUnits) {

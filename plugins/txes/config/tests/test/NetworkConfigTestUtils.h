@@ -23,7 +23,7 @@ namespace catapult { namespace test {
 	private:
 		static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cache::BlockDifficultyCache::Id + 1);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolderWithNemesisConfig(config);
 			subCaches[cache::NetworkConfigCache::Id] = test::MakeSubCachePlugin<cache::NetworkConfigCache, cache::NetworkConfigCacheStorage>(pConfigHolder);
 			return subCaches;
 		}

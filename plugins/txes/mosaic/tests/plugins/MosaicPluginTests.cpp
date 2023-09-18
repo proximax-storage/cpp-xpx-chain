@@ -97,6 +97,7 @@ namespace catapult { namespace plugins {
 					"ProperMosaicV2Validator",
 					"MosaicPropertiesV1Validator",
 					"MosaicPropertiesV2Validator",
+					"MosaicIdV2Validator",
 					"MosaicTransferValidator",
 					"MaxMosaicsBalanceTransferValidator",
 					"LevyTransferValidator",

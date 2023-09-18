@@ -28,16 +28,19 @@ namespace catapult { namespace model {
 	}
 
 	bool InflationCalculator::contains(Height height, Amount amount) const {
-		if(m_dirty)
+		if(!size())
 			CATAPULT_THROW_RUNTIME_ERROR("attempt to modify dirty inflation calculator");
 		auto iter = m_inflationMap.find(height);
 		return m_inflationMap.cend() != iter && iter->second.Inflation == amount;
 	}
 
 	Amount InflationCalculator::getSpotAmount(Height height) const {
-		if(m_dirty)
-			CATAPULT_THROW_RUNTIME_ERROR("attempt to modify dirty inflation calculator");
-		auto amount = Amount();
+		/// If nemesis has not been processed yet
+		if(!size()) {
+			if(height == Height(1))
+				return m_startInflation;
+			CATAPULT_THROW_RUNTIME_ERROR("attempting to retrieve amount with empty map");
+		}
 		std::pair<Height, InflationPair> correspondingPair;
 		/// Find the interval in which this inflation reward belongs.
 		for (const auto& pair : m_inflationMap) {
@@ -50,12 +53,12 @@ namespace catapult { namespace model {
 		if(correspondingPair.second.Inflation != Amount(0) && height >= expiryInfo.Height) {
 			return height == expiryInfo.Height ? expiryInfo.Inflation : Amount(0);
 		}
-		return amount;
+		return correspondingPair.second.Inflation;
 	}
 
 	Amount InflationCalculator::sumAll() const {
-		if(m_dirty)
-			CATAPULT_THROW_RUNTIME_ERROR("attempt to modify dirty inflation calculator");
+		if(!size())
+			CATAPULT_THROW_RUNTIME_ERROR("inflation calculator is empty");
 		Amount totalAmountRaw = Amount(0);
 		for (const auto& pair : m_intervalMetadata) {
 			totalAmountRaw = totalAmountRaw + pair.second.TotalInflationWithinInterval;
@@ -68,23 +71,20 @@ namespace catapult { namespace model {
 		}
 
 		IntervalMetadata calculateExpiryPairForInterval(Height startHeight, InflationPair inflationValue, Amount totalUsedInflationSupply, Amount initialCurrencyAtomicUnits) {
+			if(inflationValue.Inflation == Amount())
+				return IntervalMetadata{Amount(0), Height(UINT64_MAX), totalUsedInflationSupply, Amount()};
 			auto remainingSupply = inflationValue.MaxMosaicSupply - totalUsedInflationSupply - initialCurrencyAtomicUnits;
 			auto remainingBlocks = remainingSupply.unwrap() / inflationValue.Inflation.unwrap();
 			auto remainderInflation = remainingSupply.unwrap() % inflationValue.Inflation.unwrap();
-			return IntervalMetadata {Amount(remainderInflation), startHeight + Height(remainingBlocks) - Height(1)  + (remainderInflation > 0 ? Height(1) : Height(0)), totalUsedInflationSupply};
+			return IntervalMetadata {Amount(remainderInflation), startHeight + Height(remainingBlocks) - Height(1)  + (remainderInflation > 0 ? Height(1) : Height(0)), totalUsedInflationSupply, Amount()};
 		}
 	}
 
-	void InflationCalculator::init(Amount initialCurrencyAtomicUnits) {
-		m_initialCurrencyAtomicUnits = initialCurrencyAtomicUnits;
-		m_dirty = false;
-	}
-
 	Amount InflationCalculator::getCumulativeAmount(Height height) const {
-		if(m_dirty)
-			CATAPULT_THROW_RUNTIME_ERROR("attempt to modify dirty inflation calculator");
-		if (Height() == height)
+		if(height <= Height(1))
 			return Amount();
+		if(!size())
+			CATAPULT_THROW_RUNTIME_ERROR("trying to retrieve cumulative amount without data");
 
 		/// Calculate available inflation supply
 		Amount totalUsedInflationSupply = Amount(0);
@@ -112,6 +112,7 @@ namespace catapult { namespace model {
 				break;
 			} else { /// What we need is not in this interval yet
 				totalUsedInflationSupply = totalUsedInflationSupply + metadataForThisInterval->second.TotalInflationWithinInterval;
+				currentActiveInflationAmount = *nextActiveInflationIterator++;
 			}
 		}
 		return totalUsedInflationSupply;
@@ -122,6 +123,9 @@ namespace catapult { namespace model {
 
 		/// Clear expiry map for intervals as it's going to be rebuilt.
 		m_intervalMetadata.clear();
+		/// In the event that we cleared all the data
+		if(!size())
+			return;
 		auto activeInflationIterator = m_inflationMap.cbegin();
 		std::pair<Height, InflationPair> currentActiveInflationAmount = *activeInflationIterator;
 		auto nextActiveInflationIterator = ++activeInflationIterator;
@@ -157,20 +161,22 @@ namespace catapult { namespace model {
 		}
 	}
 	void InflationCalculator::add(Height height, Amount amount, Amount maxMosaicSupply) {
-		if(m_dirty)
-			CATAPULT_THROW_RUNTIME_ERROR("attempt to modify dirty inflation calculator");
+		if(!size() && height != Height(1))
+			CATAPULT_THROW_INVALID_ARGUMENT_1("adding entries while nemesis entry is missing from calculator", height)
 
+		/// Height entries must be sequential
 		if (Height() == height || (!m_inflationMap.empty() && (--m_inflationMap.cend())->first >= height))
 			CATAPULT_THROW_INVALID_ARGUMENT_1("cannot add inflation entry (height)", height);
-
+		/// Prevent duplicates
+		if(!m_inflationMap.empty() && m_inflationMap.rbegin()->second == InflationPair{amount, maxMosaicSupply}) {
+			return;
+		}
 		m_inflationMap.emplace(height, InflationPair{amount, maxMosaicSupply});
 		updateExpiryData();
 
 	}
 
 	void InflationCalculator::remove(Height height) {
-		if(m_dirty)
-			CATAPULT_THROW_RUNTIME_ERROR("attempt to modify dirty inflation calculator");
 		m_inflationMap.erase(height);
 		updateExpiryData();
 	}

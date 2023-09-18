@@ -22,6 +22,8 @@
 #pragma once
 #include "catapult/functions.h"
 #include "catapult/types.h"
+#include "AccountStateCacheDelta.h"
+#include "AccountStateCacheView.h"
 #include <optional>
 #include <memory>
 namespace catapult {
@@ -55,5 +57,26 @@ namespace catapult { namespace cache {
 
 	/// Get the currently active key used by an originally upgraded account. Does no validation in case the account contains no public key record.
 	const Key GetCurrentlyActiveAccountKey(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey);
+
+	template<typename TPredicate>
+	const bool FindActiveAccountKeyMatchForward(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey, TPredicate predicate) {
+		auto trackedState = cache.find(accountKey).get();
+		while(trackedState.SupplementalPublicKeys.upgrade()){
+			if(predicate(trackedState.PublicKey))
+				return true;
+			trackedState = cache.find(trackedState.SupplementalPublicKeys.upgrade().get()).get();
+		}
+		return false;
+	}
+	template<typename TPredicate>
+	const bool FindActiveAccountKeyMatchBackwards(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey, TPredicate predicate) {
+		auto trackedState = cache.find(accountKey).get();
+		while(trackedState.OldState){
+			if(predicate(trackedState.PublicKey))
+				return true;
+			trackedState = cache.find(trackedState.OldState->PublicKey).get();
+		}
+		return false;
+	}
 
 }}

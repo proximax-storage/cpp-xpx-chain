@@ -209,6 +209,13 @@ namespace catapult { namespace test {
 				, m_locator(m_keyPair)
 		{}
 
+		/// Creates the test context around \a cache and \a timeSupplier.
+		explicit ServiceLocatorTestContext(cache::CatapultCache&& cache, const std::shared_ptr<config::BlockchainConfigurationHolder> config)
+			: m_keyPair(GenerateKeyPair())
+			, m_testState(std::move(cache), config, &utils::NetworkTime)
+			, m_locator(m_keyPair)
+		{}
+
 		virtual ~ServiceLocatorTestContext() {
 			shutdown();
 		}

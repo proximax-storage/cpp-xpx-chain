@@ -54,6 +54,10 @@ namespace catapult { namespace validators {
 	/// - mosaic id is the expected id generated from signer and nonce
 	DECLARE_STATELESS_VALIDATOR(MosaicId, model::MosaicNonceNotification<1>)();
 
+	/// A validator implementation that applies to mosaic nonce notifications and validates that:
+	/// - mosaic id is the expected id generated from the legacy signer or upgraded iterations and nonce
+	DECLARE_STATEFUL_VALIDATOR(MosaicIdV2, model::MosaicNonceNotification<2>)();
+
 	/// A validator implementation that applies to mosaic definition notifications and validates that:
 	/// - the mosaic is available and can be created or modified
 	DECLARE_STATEFUL_VALIDATOR(MosaicAvailability, model::MosaicDefinitionNotification<1>)();

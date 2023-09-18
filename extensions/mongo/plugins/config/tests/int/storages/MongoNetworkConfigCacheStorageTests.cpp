@@ -31,7 +31,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static ModelType GenerateRandomElement(uint32_t id) {
-				auto height = Height{id};
+				auto height = Height{id+2};
 
 				state::NetworkConfigEntry entry(height, test::networkConfig(), test::supportedVersions());
 

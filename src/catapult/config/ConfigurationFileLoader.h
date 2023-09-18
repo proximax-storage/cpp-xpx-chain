@@ -21,6 +21,7 @@
 #pragma once
 #include "PeersConfiguration.h"
 #include "catapult/utils/ConfigurationBag.h"
+#include "catapult/config/ImmutableConfiguration.h"
 #include <boost/filesystem.hpp>
 #include <iostream>
 

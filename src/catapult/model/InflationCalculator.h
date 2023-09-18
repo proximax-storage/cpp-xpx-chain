@@ -27,6 +27,9 @@ namespace catapult { namespace model {
 	struct InflationPair {
 		Amount Inflation;
 		Amount MaxMosaicSupply;
+		bool operator==(const InflationPair& other) const {
+			return Inflation == other.Inflation && MaxMosaicSupply == other.MaxMosaicSupply;
+		}
 	};
 
 	struct IntervalMetadata {
@@ -38,8 +41,7 @@ namespace catapult { namespace model {
 	/// Calculator for calculating the inflation at a given height and the total inflation up to a given height.
 	class InflationCalculator {
 	public:
-		InflationCalculator() : m_dirty(true){}
-		InflationCalculator(Amount initialCurrencyAtomicUnits) : m_initialCurrencyAtomicUnits(initialCurrencyAtomicUnits), m_dirty(false) {}
+		InflationCalculator(Amount initialCurrencyAtomicUnits, Amount startInflation) : m_initialCurrencyAtomicUnits(initialCurrencyAtomicUnits), m_startInflation(startInflation) {}
 	public:
 		/// Gets the number of inflation entries.
 		size_t size() const;
@@ -63,17 +65,14 @@ namespace catapult { namespace model {
 		/// Removes inflation of \a amount starting at \a height.
 		void remove(Height height);
 
-		/// Initializes the calculator with \a initialCurrencyAtomicUnits.
-		void init(Amount initialCurrencyAtomicUnits);
-
 	private:
 		/// Updates the height at which balance available for inflation is depleted.
 		void updateExpiryData();
 	private:
 		std::map<Height, InflationPair> m_inflationMap;
-		Amount m_initialCurrencyAtomicUnits;
-		bool m_dirty;
 	protected:
 		std::map<Height, IntervalMetadata> m_intervalMetadata;
+		Amount m_initialCurrencyAtomicUnits;
+		Amount m_startInflation;
 	};
 }}

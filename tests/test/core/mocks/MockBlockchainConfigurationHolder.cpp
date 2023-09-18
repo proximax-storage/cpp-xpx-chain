@@ -22,31 +22,37 @@ namespace catapult { namespace config {
 
 	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const model::NetworkConfiguration& networkConfig)
 			: BlockchainConfigurationHolder(GetMockNetworkConfig(networkConfig)) {
-		m_InflationCalculator.add(Height(1), networkConfig.Inflation);
 	}
 
 	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const BlockchainConfiguration& config)
 			: BlockchainConfigurationHolder(config) {
-		m_InflationCalculator.add(Height(1), config.Network.Inflation);
+	}
+	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height)
+		: BlockchainConfigurationHolder(config, pCache, height) {
 	}
 
 	const BlockchainConfiguration& MockBlockchainConfigurationHolder::Config(const Height& height) const {
 		if(m_configs.find(height) != m_configs.end()) {
 			return m_configs.at(height);
 		}
-		return m_configs.at(Height{0});
+		return m_configs.cbegin()->second;
 	}
 
 	const BlockchainConfiguration& MockBlockchainConfigurationHolder::Config() const {
-		return m_configs.at(Height{0});
+		return m_configs.cbegin()->second;
 	}
 
 	const BlockchainConfiguration& MockBlockchainConfigurationHolder::ConfigAtHeightOrLatest(const Height&) const {
-		return m_configs.at(Height{0});
+		return m_configs.cbegin()->second;
 	}
 
 	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder() {
 		return std::make_shared<MockBlockchainConfigurationHolder>();
+	}
+	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolderWithNemesisConfig() {
+		auto holder = std::make_shared<MockBlockchainConfigurationHolder>();
+		holder->InsertConfig(Height(1), holder->Config().Network, holder->Config().SupportedEntityVersions);
+		return holder;
 	}
 
 	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder(const model::NetworkConfiguration& config) {
@@ -56,11 +62,23 @@ namespace catapult { namespace config {
 	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder(const BlockchainConfiguration& config) {
 		return std::make_shared<MockBlockchainConfigurationHolder>(config);
 	}
+	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolderWithNemesisConfig(const BlockchainConfiguration& config) {
+		auto holder = std::make_shared<MockBlockchainConfigurationHolder>(config);
+		holder->InsertConfig(Height(1), config.Network, config.SupportedEntityVersions);
+		return holder;
+	}
+
 	std::shared_ptr<MockBlockchainConfigurationHolder> CreateRealMockConfigurationHolder(const BlockchainConfiguration& config) {
 		return std::make_shared<MockBlockchainConfigurationHolder>(config);
 	}
 
+	std::shared_ptr<MockBlockchainConfigurationHolder> CreateRealMockConfigurationHolderWithNemesisConfig(const BlockchainConfiguration& config) {
+		auto holder = std::make_shared<MockBlockchainConfigurationHolder>(config);
+		holder->InsertConfig(Height(1), config.Network, config.SupportedEntityVersions);
+		return holder;
+	}
+
 	model::InflationCalculator& MockBlockchainConfigurationHolder::GetCalculator() {
-		return m_InflationCalculator;
+		return *m_pInflationCalculator;
 	}
 }}

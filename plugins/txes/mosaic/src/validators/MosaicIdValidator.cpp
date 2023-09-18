@@ -20,7 +20,8 @@
 
 #include "Validators.h"
 #include "src/model/MosaicIdGenerator.h"
-
+#include "catapult/cache_core/AccountStateCacheUtils.h"
+#include "catapult/cache_core/AccountStateCache.h"
 namespace catapult { namespace validators {
 
 	using Notification = model::MosaicNonceNotification<1>;
@@ -33,4 +34,21 @@ namespace catapult { namespace validators {
 				? ValidationResult::Success
 				: Failure_Mosaic_Id_Mismatch;
 	})
+
+	DECLARE_STATEFUL_VALIDATOR(MosaicIdV2, model::MosaicNonceNotification<2>)() {
+		return MAKE_STATEFUL_VALIDATOR_WITH_TYPE(MosaicIdV2, model::MosaicNonceNotification<2>, [](const auto& notification, const ValidatorContext& context) {
+			if (MosaicId() == notification.MosaicId)
+				return Failure_Mosaic_Invalid_Id;
+
+			auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
+			auto isFound = cache::FindActiveAccountKeyMatchBackwards(accountStateCache, notification.Signer, [nonce = notification.MosaicNonce, mosaicId = notification.MosaicId](Key relatedKey) {
+				if(model::GenerateMosaicId(relatedKey, nonce) == mosaicId)
+					return true;
+				return false;
+			});
+			return isFound
+						   ? ValidationResult::Success
+						   : Failure_Mosaic_Id_Mismatch;
+		});
+	}
 }}

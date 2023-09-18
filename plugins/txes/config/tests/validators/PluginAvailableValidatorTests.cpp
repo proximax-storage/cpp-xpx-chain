@@ -53,8 +53,8 @@ namespace catapult { namespace validators {
 			// Take care as this will become an invalid pointer.
 			newConfig.PreviousConfiguration = &oldConfig;
 			preparer(config, newConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(oldConfig);
-			pConfigHolder->InsertConfig(newConfig.ActivationHeight, newConfig.Network, newConfig.SupportedEntityVersions);
+			auto pConfigHolder = config::CreateMockConfigurationHolderWithNemesisConfig(oldConfig);
+			std::dynamic_pointer_cast<config::MockBlockchainConfigurationHolder>(pConfigHolder)->InsertConfig(newConfig.ActivationHeight, newConfig.Network, newConfig.SupportedEntityVersions);
 			return std::make_shared<plugins::PluginManager>(pConfigHolder, plugins::StorageConfiguration());
 		}
 

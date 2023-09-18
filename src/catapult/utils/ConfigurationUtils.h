@@ -69,11 +69,11 @@ namespace catapult { namespace utils {
 	template<typename T, typename = void>
 	struct ConfigurationBagLoaderResolver {
 		static T LoadFromBag(const utils::ConfigurationBag& bag, const config::ImmutableConfiguration& immutableConfig) {
-			LoadFromBag(bag);
+			return LoadFromBag(bag);
 		}
 
 		static T LoadFromBag(const utils::ConfigurationBag& bag) {
-			T::LoadFromBag(bag);
+			return T::LoadFromBag(bag);
 		}
 	};
 
@@ -82,11 +82,11 @@ namespace catapult { namespace utils {
 	template<typename T>
 	struct ConfigurationBagLoaderResolver<T, std::void_t<decltype(std::declval<T>().LoadFromBag(std::declval<const utils::ConfigurationBag&>(), std::declval<const config::ImmutableConfiguration&>()))>> {
 		static T LoadFromBag(const utils::ConfigurationBag& bag, const config::ImmutableConfiguration& immutableConfig) {
-			LoadFromBag(bag, immutableConfig);
+			return T::LoadFromBag(bag, immutableConfig);
 		}
 
 		static T LoadFromBag(const utils::ConfigurationBag& bag) {
-			T::LoadFromBag(bag);
+			return T::LoadFromBag(bag);
 		}
 	};
 }}

@@ -102,7 +102,7 @@ namespace catapult { namespace sync {
 
 		public:
 			TestContext(const config::BlockchainConfiguration& config, uint64_t initialBalance)
-				: BaseType(test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config), config) {
+				: BaseType(test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config), config::CreateMockConfigurationHolderWithNemesisConfig(config)) {
 
 				testState().loadPluginByName("", "catapult.coresystem");
 				for (const auto& pair : config.Network.Plugins)
@@ -117,7 +117,6 @@ namespace catapult { namespace sync {
 
 			void initializeCache(uint64_t initialBalance) {
 				auto delta = testState().state().cache().createDelta();
-
 				auto& accountCache = delta.sub<cache::AccountStateCache>();
 				accountCache.addAccount(Special_Account_Key_Pair.publicKey(), Height{1});
 				auto& specialAccountState = accountCache.find(Special_Account_Key_Pair.publicKey()).get();

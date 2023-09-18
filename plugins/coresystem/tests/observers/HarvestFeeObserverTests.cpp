@@ -115,7 +115,7 @@ namespace catapult { namespace observers {
 		}
 
 		auto DefaultHolderCreator(test::MutableBlockchainConfiguration& config) {
-			return config::CreateRealMockConfigurationHolder(config.ToConst());
+			return config::CreateRealMockConfigurationHolderWithNemesisConfig(config.ToConst());
 		}
 		template<typename TAction, typename TConfigHolderCreator = decltype(DefaultHolderCreator)>
 		void RunHarvestFeeObserverTest(NotifyMode notifyMode, uint8_t harvestBeneficiaryPercentage, TAction action, TConfigHolderCreator holderCreator = DefaultHolderCreator) {
@@ -438,9 +438,9 @@ namespace catapult { namespace observers {
 
 	namespace {
 		void PrepareInflationCalculator(model::InflationCalculator& calculator) {
-			calculator.add(Height(123), Amount(100));
-			calculator.add(Height(444), Amount(200));
-			calculator.add(Height(567), Amount(300));
+			calculator.add(Height(123), Amount(100), Amount(10000000));
+			calculator.add(Height(444), Amount(200), Amount(10000000));
+			calculator.add(Height(567), Amount(300), Amount(10000000));
 		}
 	}
 
@@ -454,7 +454,7 @@ namespace catapult { namespace observers {
 		AssertHarvesterSharesFees(NotifyMode::Commit, signer, Key(), 20, Amount(500), Amount(0), finalBalances, {
 			{ signer, Amount(700) }, { Key(), Amount(200) }
 		}, [](test::MutableBlockchainConfiguration& config) {
-			auto holder = config::CreateRealMockConfigurationHolder(config.ToConst());
+			auto holder = config::CreateRealMockConfigurationHolderWithNemesisConfig(config.ToConst());
 			PrepareInflationCalculator(holder->GetCalculator());
 			return holder;
 	    });
@@ -467,7 +467,7 @@ namespace catapult { namespace observers {
 
 		// Act + Assert:
 		AssertHarvesterSharesFees(NotifyMode::Rollback, signer, Key(), 20, Amount(500), Amount(0), finalBalances, {}, [](test::MutableBlockchainConfiguration& config) {
-			auto holder = config::CreateRealMockConfigurationHolder(config.ToConst());
+			auto holder = config::CreateRealMockConfigurationHolderWithNemesisConfig(config.ToConst());
 			PrepareInflationCalculator(holder->GetCalculator());
 			return holder;
 		});
@@ -483,7 +483,7 @@ namespace catapult { namespace observers {
 		AssertHarvesterSharesFees(NotifyMode::Commit, signer, beneficiary, 20, Amount(500), Amount(0), finalBalances, {
 			{ signer, Amount(560) }, { beneficiary, Amount(140) }, { Key(), Amount(200) }
 		}, [](test::MutableBlockchainConfiguration& config) {
-									  auto holder = config::CreateRealMockConfigurationHolder(config.ToConst());
+									  auto holder = config::CreateRealMockConfigurationHolderWithNemesisConfig(config.ToConst());
 									  PrepareInflationCalculator(holder->GetCalculator());
 									  return holder;
 								  });
@@ -497,7 +497,7 @@ namespace catapult { namespace observers {
 
 		// Act + Assert:
 		AssertHarvesterSharesFees(NotifyMode::Rollback, signer, beneficiary, 20, Amount(500), Amount(0), finalBalances, {}, [](test::MutableBlockchainConfiguration& config) {
-			auto holder = config::CreateRealMockConfigurationHolder(config.ToConst());
+			auto holder = config::CreateRealMockConfigurationHolderWithNemesisConfig(config.ToConst());
 			PrepareInflationCalculator(holder->GetCalculator());
 			return holder;
 		});

@@ -21,7 +21,6 @@
 #pragma once
 #include "ExtensionsConfiguration.h"
 #include "ImmutableConfiguration.h"
-#include "InflationConfiguration.h"
 #include "LoggingConfiguration.h"
 #include "NodeConfiguration.h"
 #include "PeersConfiguration.h"

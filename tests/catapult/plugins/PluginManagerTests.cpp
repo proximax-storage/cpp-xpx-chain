@@ -59,8 +59,8 @@ namespace catapult { namespace plugins {
 		//         because the manager copies the configs
 		EXPECT_EQ(15u, manager.config().BlockPruneInterval);
 		EXPECT_EQ("abc", manager.storageConfig().CacheDatabaseDirectory);
-		EXPECT_EQ(1u, manager.configHolder()->InflationCalculator().size());
-		EXPECT_TRUE(manager.configHolder()->InflationCalculator().contains(Height(1), Amount(234)));
+		EXPECT_EQ(0u, manager.configHolder()->InflationCalculator().size());
+		EXPECT_EQ(manager.configHolder()->InflationCalculator().getSpotAmount(Height(1)), Amount(234));
 	}
 
 	TEST(TEST_CLASS, CanCreateCacheConfiguration) {

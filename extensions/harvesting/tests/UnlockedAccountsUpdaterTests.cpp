@@ -29,6 +29,7 @@
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/KeyTestUtils.h"
 #include "tests/TestHarness.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include <filesystem>
 namespace catapult { namespace harvesting {
 
@@ -265,7 +266,8 @@ namespace catapult { namespace harvesting {
 				return config;
 			}
 			static std::shared_ptr<config::BlockchainConfigurationHolder>  CreateBlockChainConfigurationHolder(const Height& height, cache::CatapultCache* cache, const config::BlockchainConfiguration& config) {
-				return std::make_shared<config::BlockchainConfigurationHolder>(config, cache, height);
+				auto holder = std::make_shared<config::MockBlockchainConfigurationHolder>(config, cache, height);
+				return holder;
 			}
 
 		private:

@@ -20,8 +20,6 @@
 **/
 
 #include "AccountStateCacheUtils.h"
-#include "AccountStateCacheDelta.h"
-#include "AccountStateCacheView.h"
 #include "catapult/model/Address.h"
 
 namespace catapult { namespace cache {

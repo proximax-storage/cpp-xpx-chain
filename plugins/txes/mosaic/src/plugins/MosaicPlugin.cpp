@@ -89,6 +89,7 @@ namespace catapult { namespace plugins {
 		auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(manager.immutableConfig());
 		manager.addStatefulValidatorHook([currencyMosaicId](auto& builder) {
 			builder
+				.add(validators::CreateMosaicIdV2Validator())
 				.add(validators::CreateMosaicPropertiesV1Validator())
 				.add(validators::CreateMosaicPropertiesV2Validator())
 				.add(validators::CreateProperMosaicV1Validator())

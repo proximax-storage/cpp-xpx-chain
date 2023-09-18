@@ -44,6 +44,9 @@ namespace catapult { namespace model {
 	/// Mosaic nonce and id were provided.
 	DEFINE_MOSAIC_NOTIFICATION(Nonce_v1, 0x0014, Validator);
 
+	/// Mosaic nonce and id were provided.
+	DEFINE_MOSAIC_NOTIFICATION(Nonce_v2, 0x0016, Validator);
+
 	/// Mosaic supply was changed.
 	DEFINE_MOSAIC_NOTIFICATION(Supply_Change_v1, 0x0022, All);
 
@@ -175,6 +178,16 @@ namespace catapult { namespace model {
 		catapult::MosaicId MosaicId;
 	};
 
+	template<>
+	struct MosaicNonceNotification<2> : public MosaicNonceNotification<1> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Mosaic_Nonce_v2_Notification;
+
+	public:
+		using MosaicNonceNotification<1>::MosaicNonceNotification;
+
+	};
 	// endregion
 
 	// region change

@@ -99,7 +99,7 @@ namespace catapult { namespace test {
 			using StorageMapType = std::map<std::pair<std::string, unsigned int>, ElementType>;
 			using MemoryMapType = std::unordered_map<std::pair<std::string, unsigned int>, ElementType, MapKeyHasher>;
 			using RealStorageMapType = cache::RdbTypedColumnContainer<RealColumnDescriptor>;
-			using RealMemoryMapType = std::unordered_map<std::string, RealColumnDescriptor::ValueType, MapKeyHasher>;
+			using RealMemoryMapType = std::unordered_map<test::StringKey, RealColumnDescriptor::ValueType, MapKeyHasher>;
 			// to emulate storage virtualization, use two separate sets (ordered and unordered)
 			using StorageTraits = deltaset::MapStorageTraits<StorageMapType, TestElementToKeyConverter<ElementType>, MemoryMapType>;
 			// to emulate true storage, use two separate sets (ordered and unordered)

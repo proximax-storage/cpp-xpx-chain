@@ -83,7 +83,7 @@ namespace catapult { namespace local {
 						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(config);
 					} else {
 						/// Not first boot but no config was saved yet, so we will load the file from resources folder. This happens when first transitioning to this feature, but booting from an incomplete snapshot.
-						initNetworkConfig = std::make_unique<model::NetworkConfiguration>(config::LoadIniConfiguration<model::NetworkConfiguration>(boost::filesystem::path(m_pBootstrapper->resourcesPath()) / config::Qualify("network")));
+						initNetworkConfig = std::make_unique<model::NetworkConfiguration>(config::LoadIniConfiguration<model::NetworkConfiguration>(boost::filesystem::path(m_pBootstrapper->resourcesPath()) / config::Qualify("network"), m_pluginManager.immutableConfig()));
 					}
 				}
 

@@ -24,7 +24,7 @@ namespace catapult { namespace config {
 			ExtensionsConfiguration::Uninitialized(),
 			SupportedEntityVersions()
 		};
-		m_InflationCalculator = model::InflationCalculator(config.Immutable.InitialCurrencyAtomicUnits);
+		m_pInflationCalculator = std::make_unique<model::InflationCalculator>(config.Immutable.InitialCurrencyAtomicUnits, Amount(0));
 		m_configs.insert({ Height(0), config });
 	}
 
@@ -33,7 +33,7 @@ namespace catapult { namespace config {
 			, m_pluginInitializer([](auto&) {}){
 
 		m_configs.insert({ Height(0), config });
-		m_InflationCalculator = model::InflationCalculator(config.Immutable.InitialCurrencyAtomicUnits);
+		m_pInflationCalculator = std::make_unique<model::InflationCalculator>(config.Immutable.InitialCurrencyAtomicUnits, config.Network.Inflation);
 	}
 
 	BlockchainConfigurationHolder::BlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height)
@@ -42,10 +42,10 @@ namespace catapult { namespace config {
 
 
 		m_configs.insert({ height, config });
-		m_InflationCalculator = model::InflationCalculator(config.Immutable.InitialCurrencyAtomicUnits);
-		if(height != Height())
-			m_InflationCalculator.add(height, config.Network.Inflation);
-			m_InflationCalculator.calculateExpiryHeight(config.Network.MaxMosaicAtomicUnits);
+		m_pInflationCalculator = std::make_unique<model::InflationCalculator>(config.Immutable.InitialCurrencyAtomicUnits, config.Network.Inflation);
+		if(height != Height(1))
+			m_pInflationCalculator->add(Height(1), config.Network.Inflation, config.Network.MaxMosaicAtomicUnits);
+		m_pInflationCalculator->add(height, config.Network.Inflation, config.Network.MaxMosaicAtomicUnits);
 	}
 
 	boost::filesystem::path BlockchainConfigurationHolder::GetResourcesPath(int argc, const char** argv) {
@@ -72,10 +72,12 @@ namespace catapult { namespace config {
 	}
 
 	const BlockchainConfiguration& BlockchainConfigurationHolder::Config() const {
+		std::shared_lock lock(m_mutex);
 		return Config(m_pCache != nullptr ? m_pCache->configHeight() : Height(0));
 	}
 
 	const BlockchainConfiguration& BlockchainConfigurationHolder::ConfigAtHeightOrLatest(const Height& height) const {
+		std::shared_lock lock(m_mutex);
 		if (height == HEIGHT_OF_LATEST_CONFIG)
 			return Config();
 		return Config(height);
@@ -105,9 +107,9 @@ namespace catapult { namespace config {
 	}
 
 	void BlockchainConfigurationHolder::InitializeNetworkConfiguration(const model::NetworkConfiguration& networkConfiguration, const config::SupportedEntityVersions& supportedEntities) {
+		std::unique_lock lock(m_mutex);
 		if(m_configs.empty() || m_configs.size() > 1)
 			CATAPULT_THROW_RUNTIME_ERROR("Attempting to initialize configuration holder base config, but it's empty or has been initialized already.")
-		std::unique_lock lock(m_mutex);
 		const auto& baseConfig = m_configs.at(Height(0));
 		auto config = BlockchainConfiguration(
 			baseConfig.Immutable,
@@ -157,18 +159,20 @@ namespace catapult { namespace config {
 				LastConfigOrNull(height-Height(1))
 		);
 
-		m_configs.erase(height);
+		if(height != Height())
+			m_pInflationCalculator->remove(height);  /// TODO: Why is this needed?
+			m_pInflationCalculator->add(height, config.Network.Inflation, config.Network.MaxMosaicAtomicUnits);
+
+		m_configs.erase(height); /// TODO: Why is this needed?
 		m_configs.insert({ height, config });
-		if(height != Height() && config.Network.Inflation != m_InflationCalculator.getSpotAmount(height-Height(1)))
-			m_InflationCalculator.add(height, config.Network.Inflation);
 	}
 	const model::InflationCalculator& BlockchainConfigurationHolder::InflationCalculator() {
-		return m_InflationCalculator;
+		return *m_pInflationCalculator;
 	}
 
 	void BlockchainConfigurationHolder::RemoveConfig(const Height& height){
 		std::unique_lock lock(m_mutex);
-		m_InflationCalculator.remove(height);
+		m_pInflationCalculator->remove(height);
 		m_configs.erase(height);
 	}
 }}

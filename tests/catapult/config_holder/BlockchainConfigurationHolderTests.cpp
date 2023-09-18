@@ -328,7 +328,7 @@ namespace catapult { namespace config {
 					: BlockchainConfigurationHolder(config)
 				{}
 				model::InflationCalculator& GetCalculator() {
-					return m_InflationCalculator;
+					return *m_pInflationCalculator;
 				}
 
 
@@ -364,10 +364,12 @@ namespace catapult { namespace config {
 				return config;
 			}
 
-			auto CreateBlockchainConfigurationHolder(uint64_t initialCurrencyAtomicUnits, const std::vector<InflationEntry>& inflationEntries) {
+			auto CreateBlockchainConfigurationHolder(uint64_t initialCurrencyAtomicUnits, uint64_t maxMosaicAtomicUnits, uint64_t maxCurrencyAtomicUnits, const std::vector<InflationEntry>& inflationEntries) {
 				auto mutableConfig = CreateMutableBlockchainConfiguration();
 
 				mutableConfig.Immutable.InitialCurrencyAtomicUnits = Amount(initialCurrencyAtomicUnits);
+				mutableConfig.Network.MaxMosaicAtomicUnits = Amount(maxMosaicAtomicUnits);
+				mutableConfig.Network.MaxCurrencyMosaicAtomicUnits = Amount(maxCurrencyAtomicUnits);
 				auto holder = std::make_shared<inflation::TestBlockchainConfigurationHolder>(mutableConfig.ToConst());
 
 				model::InflationCalculator& calculator = holder->GetCalculator();
@@ -382,37 +384,30 @@ namespace catapult { namespace config {
 
 			void ValidateConfiguration(std::shared_ptr<inflation::TestBlockchainConfigurationHolder> holder) {
 				auto config = holder->Config();
-				auto totalInflation = holder->GetCalculator().sumAll();
-				if (!totalInflation.second)
-					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "total currency inflation could not be calculated");
-
-				auto totalCurrency = config.Immutable.InitialCurrencyAtomicUnits + totalInflation.first;
+				auto totalInflationUpToConfigActivation = holder->InflationCalculator().getCumulativeAmount(config.ActivationHeight);
+				auto totalCurrency = holder->Config().Immutable.InitialCurrencyAtomicUnits + totalInflationUpToConfigActivation;
+				/// totalCurrency at height of validation must not be higher than the new maxmosaicatomicunits
 				if (config.Immutable.InitialCurrencyAtomicUnits > totalCurrency || totalCurrency > config.Network.MaxMosaicAtomicUnits)
 					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "sum of InitialCurrencyAtomicUnits and inflation must not exceed MaxMosaicAtomicUnits");
+				if(config.Network.MaxCurrencyMosaicAtomicUnits > config.Network.MaxMosaicAtomicUnits) {
+					CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "maxMosaicCurrencyAtomicUnits must not exceed maxMosaicAtomicUnits");;
+				}
 			}
 		}
 	}
 
 	TEST(TEST_CLASS, SuccessfulValidationWhenConfigIsValid) {
 		// Arrange: MaxMosaicAtomicUnits is 1000
-		auto holder = CreateBlockchainConfigurationHolder(123, { { Height(1), Amount(1) }, { Height(234), Amount(0) } });
+		auto holder = CreateBlockchainConfigurationHolder(123, 1000, 1000, { { Height(1), Amount(1) }, { Height(234), Amount(0) } });
 
 		// Act:
 		EXPECT_NO_THROW(ValidateConfiguration(holder));
 	}
 
-	TEST(TEST_CLASS, InitialTotalCurrenyPlusInflationMustNotExceedMaxMosaicAtomicUnits) {
-		// Arrange: MaxMosaicAtomicUnits is 1000
-		auto holder = CreateBlockchainConfigurationHolder(600, { { Height(1), Amount(1) }, { Height(500), Amount(0) } });
 
-		// Act:
-		EXPECT_THROW(ValidateConfiguration(holder), utils::property_malformed_error);
-	}
-
-	TEST(TEST_CLASS, InitialTotalCurrenyPlusInflationMustNotOverflow) {
+	TEST(TEST_CLASS, ValidationFailWhenConfigInvalidDueToTotalCurrencyOverflows) {
 		// Arrange:
-		auto numBlocks = std::numeric_limits<uint64_t>::max();
-		auto holder = CreateBlockchainConfigurationHolder(2, { { Height(1), Amount(1) }, { Height(numBlocks), Amount(0) } });
+		auto holder = CreateBlockchainConfigurationHolder(1005, 1000, 1000, { { Height(1), Amount(5) }, { Height(10), Amount(2) } });
 
 		// Act:
 		EXPECT_THROW(ValidateConfiguration(holder), utils::property_malformed_error);
@@ -420,7 +415,7 @@ namespace catapult { namespace config {
 
 	TEST(TEST_CLASS, TerminalInflationMustBeZero) {
 		// Arrange:
-		auto holder = CreateBlockchainConfigurationHolder(0, { { Height(3), Amount(5) }, { Height(10), Amount(2) } });
+		auto holder = CreateBlockchainConfigurationHolder(100, 1000, 1200, { { Height(1), Amount(5) }, { Height(10), Amount(2) } });
 
 		// Act:
 		EXPECT_THROW(ValidateConfiguration(holder), utils::property_malformed_error);
