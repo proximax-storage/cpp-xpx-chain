@@ -31,6 +31,7 @@
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace extensions {
 
@@ -74,6 +75,7 @@ namespace catapult { namespace extensions {
 				// register mock transaction plugin so that BalanceTransferNotifications are produced and observed
 				// (MockTransaction Publish XORs recipient address, so XOR address resolver is required
 				// for proper roundtripping or else test will fail)
+				std::dynamic_pointer_cast<config::MockBlockchainConfigurationHolder>(m_pPluginManager->configHolder())->InsertConfig(Height(1), m_pPluginManager->configHolder()->Config().Network,m_pPluginManager->configHolder()->Config().SupportedEntityVersions);
 				m_pPluginManager->addTransactionSupport(mocks::CreateMockTransactionPlugin(mocks::PluginOptionFlags::Publish_Transfers));
 
 				initNemesisCache(m_cache, numAccounts);
