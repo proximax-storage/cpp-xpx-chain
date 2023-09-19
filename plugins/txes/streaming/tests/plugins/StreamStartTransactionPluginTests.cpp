@@ -49,7 +49,8 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		const auto& config = CreateConfiguration();
+		auto pPlugin = TTraits::CreatePlugin(config);
 		auto pTransaction = CreateTransaction<TTraits>();
 		pTransaction->FolderNameSize = Folder_Name_Size;
 
@@ -65,7 +66,8 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		const auto& config = CreateConfiguration();
+		auto pPlugin = TTraits::CreatePlugin(config);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = sizeof(transaction);
@@ -82,7 +84,8 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pTransaction = CreateTransaction<TTraits>();
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		const auto& config = CreateConfiguration();
+		auto pPlugin = TTraits::CreatePlugin(config);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
@@ -104,7 +107,8 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishSDriveNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<DriveNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		const auto& config = CreateConfiguration();
+		auto pPlugin = TTraits::CreatePlugin(config);
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
@@ -124,7 +128,8 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishStreamStartNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<StreamStartNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		const auto& config = CreateConfiguration();
+		auto pPlugin = TTraits::CreatePlugin(config);
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
@@ -144,7 +149,8 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishStreamStartFolderName) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<StreamStartFolderNameNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		const auto& config = CreateConfiguration();
+		auto pPlugin = TTraits::CreatePlugin(config);
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
