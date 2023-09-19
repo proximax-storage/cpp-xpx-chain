@@ -60,7 +60,8 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+        const auto& config = CreateConfiguration();
+		auto pPlugin = TTraits::CreatePlugin(config);
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
@@ -75,7 +76,8 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		const auto& config = CreateConfiguration();
+		auto pPlugin = TTraits::CreatePlugin(config);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
@@ -92,7 +94,8 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pTransaction = CreateTransaction<TTraits>();
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		const auto& config = CreateConfiguration();
+		auto pPlugin = TTraits::CreatePlugin(config);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
@@ -113,7 +116,8 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishReplicatorOnboardingNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<ReplicatorOnboardingNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		const auto& config = CreateConfiguration();
+		auto pPlugin = TTraits::CreatePlugin(config);
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:

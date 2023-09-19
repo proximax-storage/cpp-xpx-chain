@@ -128,9 +128,9 @@ namespace catapult { namespace validators {
         auto driveKey = test::GenerateRandomByteArray<Key>();
         auto owner = test::GenerateRandomByteArray<Key>();
         auto dataModificationId = test::GenerateRandomByteArray<Hash256>();
-        std::vector<Key> ownerPublicKey{test::GenerateRandomByteArray<Key>()};
-        std::vector<Hash256> downloadDataCdi{test::GenerateRandomByteArray<Hash256>()};
-        std::vector<uint64_t> uploadSize{test::Random()};
+        std::vector<Key> ownerPublicKey{test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>()};
+        std::vector<Hash256> downloadDataCdi{test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>()};
+        std::vector<uint64_t> uploadSize{test::Random(), test::Random()};
         state::BcDriveEntry entry(driveKey);
         entry.setOwner(owner);
         entry.activeDataModifications().emplace_back(
