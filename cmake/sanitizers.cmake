@@ -54,6 +54,7 @@ elseif(SANITIZE_UNDEFINED)
         -fsanitize=undefined
         -fno-omit-frame-pointer
         -g
+        -O1
         )
     foreach(FLAG IN LISTS FLAGS)
         add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
@@ -81,7 +82,7 @@ elseif(SANITIZE_MEMORY)
         -g
         -fno-optimize-sibling-calls
         -O1
-        -fsanitize-memory-track-origins=2a
+        -fsanitize-memory-track-origins=2
         -fsanitize-memory-track-origins=${MSAN_OPTIONS}
         )
     foreach(FLAG IN LISTS FLAGS)
