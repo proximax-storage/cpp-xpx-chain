@@ -19,7 +19,7 @@ namespace catapult { namespace dbrb {
 
 		/// Overloaded methods for updating respective counters.
 		/// Returns whether the quorum has just been collected on this update.
-		bool update(const AcknowledgedMessage&);
-		bool update(const DeliverMessage&);
+		bool update(const AcknowledgedMessage& message, ionet::PacketType payloadType);
+		bool update(const DeliverMessage& message, ionet::PacketType payloadType);
 	};
 }}

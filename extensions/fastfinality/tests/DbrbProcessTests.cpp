@@ -6,7 +6,7 @@
 
 #include "fastfinality/src/WeightedVotingFsm.h"
 #include "src/catapult/ionet/Packet.h"
-#include "tests/test/core/mocks/MockDbrbProcess.h"
+#include "mocks/MockDbrbProcess.h"
 #include "tests/test/core/mocks/MockDbrbViewFetcher.h"
 #include "tests/TestHarness.h"
 

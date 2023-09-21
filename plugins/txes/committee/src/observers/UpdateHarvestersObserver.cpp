@@ -51,6 +51,7 @@ namespace catapult { namespace observers {
 			while (pCommitteeManager->committee().Round < notification.Round)
 				pCommitteeManager->selectCommittee(networkConfig);
 			CATAPULT_LOG(debug) << "selected committee for round " << notification.Round;
+			pCommitteeManager->logCommittee();
 
 			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
 			const auto& committee = pCommitteeManager->committee();

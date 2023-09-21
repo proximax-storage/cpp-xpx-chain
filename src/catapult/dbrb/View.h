@@ -25,10 +25,7 @@ namespace catapult { namespace dbrb {
 		size_t packedSize() const;
 
 		/// Merge other view into this view.
-		View& merge(const View& other);
-
-		/// Remove from this view's \a Data all changes that appear in the other view.
-		View& difference(const View& other);
+		View& merge(View& other);
 
 		/// Comparison operators; if view A is less recent than view B, then A < B.
 		bool operator==(const View& other) const;
@@ -40,9 +37,6 @@ namespace catapult { namespace dbrb {
 
 		/// Check if two views are comparable.
 		static bool areComparable(const View& a, const View& b);
-
-		/// Merge two views into one.
-		static View merge(const View& a, const View& b);
 
 		/// Insertion operator for outputting \a view to \a out.
 		friend std::ostream& operator<<(std::ostream& out, const View& view) {

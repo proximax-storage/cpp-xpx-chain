@@ -40,6 +40,11 @@ namespace catapult { namespace fastfinality {
 		}
 
 		const auto& committee = pluginManager.getCommitteeManager().committee();
+		if (committee.Round < 0) {
+			CATAPULT_LOG(warning) << "rejecting proposal, committee is not yet selected";
+			return;
+		}
+
 		if (pBlock->Signer != committee.BlockProposer) {
 			CATAPULT_LOG(warning) << "rejecting proposal, signer " << pBlock->Signer << " invalid, expected " << committee.BlockProposer;
 			return;

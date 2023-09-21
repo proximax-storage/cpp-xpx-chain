@@ -5,6 +5,7 @@
 **/
 
 #include "src/WeightedVotingService.h"
+#include "src/dbrb/TransactionSender.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "catapult/harvesting_core/ValidateHarvestingConfiguration.h"
 
@@ -16,7 +17,9 @@ namespace catapult { namespace fastfinality {
 			ValidateHarvestingConfiguration(harvestingConfig);
 			auto dbrbConfig = dbrb::DbrbConfiguration::LoadFromPath(bootstrapper.resourcesPath());
 
-			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingServiceRegistrar(harvestingConfig, dbrbConfig, bootstrapper.resourcesPath()));
+			auto pTransactionSender = std::make_shared<dbrb::TransactionSender>();
+			bootstrapper.subscriptionManager().addPostBlockCommitSubscriber(std::make_unique<dbrb::BlockSubscriber>(pTransactionSender));
+			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingServiceRegistrar(harvestingConfig, dbrbConfig, pTransactionSender));
 		}
 	}
 }}

@@ -91,23 +91,11 @@ namespace catapult { namespace cache {
 		}
 
 		void updateDbrbView(DbrbViewFetcherImpl& dbrbViewFetcher) const {
-			auto deltas = m_pDeltaProcessIds->deltas();
-			auto added = deltas.Added;
-			added.insert(deltas.Copied.begin(), deltas.Copied.end());
-			auto removed = deltas.Removed;
-
-			for (const auto& processId : added) {
-				if (removed.find(processId) != removed.end()) {
-					removed.erase(processId);
-				} else {
-					auto iter = m_pDbrbProcessEntries->find(processId);
-					auto pEntry = iter.get();
-					dbrbViewFetcher.addOrUpdateDbrbProcess(*pEntry);
-				}
-			}
-
-			for (const auto& processId : removed) {
-				dbrbViewFetcher.removeDbrbProcess(processId);
+			dbrbViewFetcher.clear();
+			for (const auto& processId : processIds()) {
+				auto iter = m_pDbrbProcessEntries->find(processId);
+				auto pEntry = iter.get();
+				dbrbViewFetcher.addDbrbProcess(*pEntry);
 			}
 		}
 
