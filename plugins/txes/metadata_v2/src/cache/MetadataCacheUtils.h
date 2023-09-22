@@ -15,9 +15,9 @@
 
 namespace catapult { namespace cache {
 
-	const std::pair<state::MetadataKey, std::optional<state::MetadataEntry>> GetMetadataEntryForStates(const cache::ReadOnlyAccountStateCache& accountStateCache, const cache::MetadataCacheView& metadataCache, uint64_t scopedKey, const model::MetadataTarget& target,  const state::AccountState& sourceState, const state::AccountState& targetState);
+	const std::pair<state::MetadataKey, std::optional<state::MetadataEntry>> GetMetadataEntryForStates(const cache::ReadOnlyAccountStateCache& accountStateCache, const cache::ReadOnlyMetadataCache& metadataCache, uint64_t scopedKey, const model::MetadataTarget& target,  const state::AccountState& sourceState, const state::AccountState& targetState);
 
-	const std::pair<state::MetadataKey, std::optional<state::MetadataEntry>> FindEntryKeyIfParticipantsHaveBeenUpgradedByCrawlingHistory(const cache::ReadOnlyAccountStateCache& accountStateCache, const cache::MetadataCacheView metadataCache, const state::MetadataKey& key);
+	const std::pair<state::MetadataKey, std::optional<state::MetadataEntry>> FindEntryKeyIfParticipantsHaveBeenUpgradedByCrawlingHistory(const cache::ReadOnlyAccountStateCache& accountStateCache, const cache::ReadOnlyMetadataCache& metadataCache, const state::MetadataKey& key);
 
 	const std::pair<state::MetadataKey, state::MetadataEntry*> GetMetadataEntryForStates(const cache::ReadOnlyAccountStateCache& accountStateCache, const cache::MetadataCacheDelta& metadataCache, uint64_t scopedKey, const model::MetadataTarget& target,  const state::AccountState& sourceState, const state::AccountState& targetState);
 

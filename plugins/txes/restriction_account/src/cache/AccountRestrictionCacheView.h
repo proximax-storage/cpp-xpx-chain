@@ -25,6 +25,7 @@
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
+#include "plugins/txes/restriction_account/src/config/AccountRestrictionConfiguration.h"
 
 namespace catapult { namespace cache {
 

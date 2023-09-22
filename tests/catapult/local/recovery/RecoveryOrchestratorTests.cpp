@@ -49,6 +49,7 @@
 #include "plugins/services/globalstore/src/config/GlobalStoreConfiguration.h"
 #include "plugins/txes/config/src/config/NetworkConfigConfiguration.h"
 #include "plugins/txes/transfer/src/config/TransferConfiguration.h"
+#include "plugins/txes/restriction_account/src/config/AccountRestrictionConfiguration.h"
 
 namespace catapult { namespace local {
 
@@ -260,6 +261,7 @@ namespace catapult { namespace local {
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::LockFundConfiguration>();
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::GlobalStoreConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::AccountRestrictionConfiguration>();
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NetworkConfigConfiguration>();
 
 				// prepare storage

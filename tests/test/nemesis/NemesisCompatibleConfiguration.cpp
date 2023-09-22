@@ -29,6 +29,7 @@
 #include "catapult/crypto/KeyUtils.h"
 #include "plugins/txes/lock_fund/src/config/LockFundConfiguration.h"
 #include "plugins/services/globalstore/src/config/GlobalStoreConfiguration.h"
+#include "plugins/txes/restriction_account/src/config/AccountRestrictionConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -76,6 +77,10 @@ namespace catapult { namespace test {
 		config.Plugins.emplace(PLUGIN_NAME(globalstore), utils::ConfigurationBag({ { "", {
 			{ "enabled", "true" },
 		} } }));
+		config.Plugins.emplace(PLUGIN_NAME(restrictionaccount), utils::ConfigurationBag({ { "", {
+				 { "enabled", "false" },
+				{ "maxAccountRestrictionValues", "512"},
+		 } } }));
 		config.Plugins.emplace(PLUGIN_NAME(upgrade), utils::ConfigurationBag({ { "", {
 			{ "minUpgradePeriod", "360" },
 		} } }));
@@ -86,6 +91,7 @@ namespace catapult { namespace test {
 		config.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 		config.template InitPluginConfiguration<config::LockFundConfiguration>();
 		config.template InitPluginConfiguration<config::GlobalStoreConfiguration>();
+		config.template InitPluginConfiguration<config::AccountRestrictionConfiguration>();
 		config.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
 	}
 

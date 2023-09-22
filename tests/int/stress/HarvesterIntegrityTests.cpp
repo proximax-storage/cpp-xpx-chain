@@ -87,7 +87,7 @@ namespace catapult { namespace harvesting {
 					, m_cache(CreateCatapultCache(m_dbDirGuard.name(), m_pPluginManager->configHolder()))
 					, m_unlockedAccounts(100, [](const auto&) { return 0; }) {
 				// create the harvester
-				std::dynamic_pointer_cast<config::MockBlockchainConfigurationHolder>(m_pPluginManager->configHolder())->InsertConfig(Height(1), m_pPluginManager->configHolder()->Config().Network,m_pPluginManager->configHolder()->Config().SupportedEntityVersions);
+				std::dynamic_pointer_cast<config::TestBlockchainConfigurationHolder>(m_pPluginManager->configHolder())->InsertConfig(Height(1), m_pPluginManager->configHolder()->Config().Network,m_pPluginManager->configHolder()->Config().SupportedEntityVersions);
 				auto executionConfig = extensions::CreateExecutionConfiguration(*m_pPluginManager);
 				HarvestingUtFacadeFactory utFacadeFactory(m_cache, executionConfig);
 

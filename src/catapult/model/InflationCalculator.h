@@ -33,8 +33,8 @@ namespace catapult { namespace model {
 	};
 
 	struct IntervalMetadata {
-		Amount Inflation;
-		Height Height;
+		Amount InflationRemainder;
+		Height LastRewardHeight;
 		Amount StartTotalInflation;
 		Amount TotalInflationWithinInterval;
 	};

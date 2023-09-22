@@ -47,6 +47,7 @@
 #include "plugins/txes/supercontract/src/config/SuperContractConfiguration.h"
 #include "plugins/txes/operation/src/config/OperationConfiguration.h"
 #include "plugins/txes/metadata_v2/src/config/MetadataConfiguration.h"
+#include "plugins/txes/restriction_account/src/config/AccountRestrictionConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -156,6 +157,7 @@ namespace catapult { namespace test {
 			mConfig.Network.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 			mConfig.Network.template InitPluginConfiguration<config::LockFundConfiguration>();
 			mConfig.Network.template InitPluginConfiguration<config::GlobalStoreConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::AccountRestrictionConfiguration>();
 			mConfig.Network.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
 
 			nemesisBlock.StateHash = CalculateNemesisStateHash(nemesisBlockElement, mConfig.ToConst());

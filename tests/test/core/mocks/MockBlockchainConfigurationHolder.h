@@ -11,6 +11,14 @@ namespace catapult { namespace cache { class CatapultCache; } }
 
 namespace catapult { namespace config {
 
+
+	class TestBlockchainConfigurationHolder : public BlockchainConfigurationHolder {
+	public:
+		using BlockchainConfigurationHolder::BlockchainConfigurationHolder;
+	public:
+		using BlockchainConfigurationHolder::InsertConfig;
+	};
+
 	class MockBlockchainConfigurationHolder : public BlockchainConfigurationHolder {
 	public:
 		MockBlockchainConfigurationHolder();
@@ -18,12 +26,14 @@ namespace catapult { namespace config {
 		MockBlockchainConfigurationHolder(const BlockchainConfiguration& config);
 		MockBlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height);
 
-	public:
+
 		const BlockchainConfiguration& Config(const Height&) const override;
 		const BlockchainConfiguration& Config() const override;
 		const BlockchainConfiguration& ConfigAtHeightOrLatest(const Height&) const override;
 		model::InflationCalculator& GetCalculator();
+	public:
 		using BlockchainConfigurationHolder::InsertConfig;
+
 	};
 
 	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder();

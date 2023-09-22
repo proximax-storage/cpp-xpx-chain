@@ -9,6 +9,7 @@ target_link_libraries(tests.catapult.test.nemesis
 	catapult.plugins.upgrade
 	catapult.plugins.config
 	catapult.plugins.lockfund
+	catapult.plugins.restrictionaccount
 	catapult.plugins.globalstore) # shared lib dependencies allow tests to create real transaction plugins
 
 include_directories(../../../plugins/txes/mosaic)

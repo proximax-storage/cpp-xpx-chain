@@ -22,6 +22,7 @@
 #include "Validators.h"
 #include "src/cache/MetadataCache.h"
 #include "catapult/validators/ValidatorContext.h"
+#include "src/cache/MetadataCacheUtils.h"
 
 namespace catapult { namespace validators {
 
@@ -31,14 +32,15 @@ namespace catapult { namespace validators {
 		auto& cache = context.Cache.sub<cache::MetadataCache>();
 
 		auto metadataKey = state::ResolveMetadataKey(notification.PartialMetadataKey, notification.MetadataTarget, context.Resolvers);
-		auto metadataIter = cache.find(metadataKey.uniqueKey());
-		if (!metadataIter.tryGet()) {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto metadataIter = cache::FindEntryKeyIfParticipantsHaveBeenUpgradedByCrawlingHistory(accountStateCache, cache, metadataKey);
+		if (!metadataIter.second.has_value()) {
 			return notification.ValueSizeDelta == notification.ValueSize
 					? ValidationResult::Success
 					: Failure_Metadata_v2_Value_Size_Delta_Mismatch;
 		}
 
-		const auto& metadataValue = metadataIter.get().value();
+		const auto& metadataValue = metadataIter.second.value().value();
 		auto expectedCacheValueSize = notification.ValueSize;
 		if (notification.ValueSizeDelta > 0)
 			expectedCacheValueSize = static_cast<uint16_t>(expectedCacheValueSize - notification.ValueSizeDelta);

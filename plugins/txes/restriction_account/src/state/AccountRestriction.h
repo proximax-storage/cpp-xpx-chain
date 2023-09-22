@@ -21,7 +21,7 @@
 
 #pragma once
 #include "AccountRestrictionDescriptor.h"
-#include "src/model/AccountRestrictionModification.h"
+#include "plugins/txes/restriction_account/src/model/AccountRestrictionModification.h"
 #include <set>
 
 namespace catapult { namespace state {

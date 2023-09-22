@@ -39,6 +39,7 @@
 #include "plugins/txes/upgrade/src/config/BlockchainUpgradeConfiguration.h"
 #include "plugins/txes/lock_fund/src/config/LockFundConfiguration.h"
 #include "plugins/txes/config/src/config/NetworkConfigConfiguration.h"
+#include "plugins/txes/restriction_account/src/config/AccountRestrictionConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -112,6 +113,7 @@ namespace catapult { namespace test {
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::LockFundConfiguration>();
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::GlobalStoreConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::AccountRestrictionConfiguration>();
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NetworkConfigConfiguration>();
 				m_pLocalPartnerNode = BootLocalPartnerNode(std::move(config), m_partnerServerKeyPair, nodeFlag);
 			}
@@ -198,6 +200,7 @@ namespace catapult { namespace test {
 			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::LockFundConfiguration>();
 			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::GlobalStoreConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::AccountRestrictionConfiguration>();
 			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NetworkConfigConfiguration>();
 
 			return config;

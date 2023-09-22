@@ -88,9 +88,9 @@ namespace catapult { namespace model {
 
 		auto metadata = calculator.getIntervalMetadata(Height(1));
 
-		EXPECT_EQ(metadata.Height, Height(4));
+		EXPECT_EQ(metadata.LastRewardHeight, Height(4));
 		EXPECT_EQ(metadata.TotalInflationWithinInterval, Amount(200));
-		EXPECT_EQ(metadata.Inflation, Amount(0));
+		EXPECT_EQ(metadata.InflationRemainder, Amount(0));
 		EXPECT_EQ(metadata.StartTotalInflation, Amount(0));
 	}
 
@@ -124,23 +124,23 @@ namespace catapult { namespace model {
 
 		auto metadata = calculator.getIntervalMetadata(Height(1));
 
-		EXPECT_EQ(metadata.Height, Height(15));
+		EXPECT_EQ(metadata.LastRewardHeight, Height(15));
 		EXPECT_EQ(metadata.TotalInflationWithinInterval, Amount(4830));
-		EXPECT_EQ(metadata.Inflation, Amount(0));
+		EXPECT_EQ(metadata.InflationRemainder, Amount(0));
 		EXPECT_EQ(metadata.StartTotalInflation, Amount(0));
 
 		metadata = calculator.getIntervalMetadata(Height(15));
 
-		EXPECT_EQ(metadata.Height, Height(15));
+		EXPECT_EQ(metadata.LastRewardHeight, Height(15));
 		EXPECT_EQ(metadata.TotalInflationWithinInterval, Amount(170));
-		EXPECT_EQ(metadata.Inflation, Amount(170));
+		EXPECT_EQ(metadata.InflationRemainder, Amount(170));
 		EXPECT_EQ(metadata.StartTotalInflation, Amount(4830));
 
 		metadata = calculator.getIntervalMetadata(Height(25));
 
-		EXPECT_EQ(metadata.Height, Height(431));
+		EXPECT_EQ(metadata.LastRewardHeight, Height(431));
 		EXPECT_EQ(metadata.TotalInflationWithinInterval, Amount(50000));
-		EXPECT_EQ(metadata.Inflation, Amount(62));
+		EXPECT_EQ(metadata.InflationRemainder, Amount(62));
 		EXPECT_EQ(metadata.StartTotalInflation, Amount(5000));
 	}
 

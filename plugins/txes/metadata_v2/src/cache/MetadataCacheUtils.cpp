@@ -17,7 +17,7 @@ namespace catapult { namespace cache {
 
 
 
-	const std::pair<state::MetadataKey, std::optional<state::MetadataEntry>> GetMetadataEntryForStates(const cache::ReadOnlyAccountStateCache& accountStateCache, const cache::MetadataCacheView& metadataCache, uint64_t scopedKey, const model::MetadataTarget& target,  const state::AccountState& sourceState, const state::AccountState& targetState) {
+	const std::pair<state::MetadataKey, std::optional<state::MetadataEntry>> GetMetadataEntryForStates(const cache::ReadOnlyAccountStateCache& accountStateCache, const cache::ReadOnlyMetadataCache& metadataCache, uint64_t scopedKey, const model::MetadataTarget& target,  const state::AccountState& sourceState, const state::AccountState& targetState) {
 		const state::AccountState* targetPtr = &targetState;
 		while(targetPtr) {
 			auto key = state::CreateMetadataKey(model::PartialMetadataKey{sourceState.Address, targetPtr->PublicKey, scopedKey}, target);
@@ -37,7 +37,7 @@ namespace catapult { namespace cache {
 		return std::make_pair(state::CreateMetadataKey(model::PartialMetadataKey{sourceState.Address, targetState.PublicKey, scopedKey}, target), std::nullopt);
 	}
 
-	const std::pair<state::MetadataKey, std::optional<state::MetadataEntry>> FindEntryKeyIfParticipantsHaveBeenUpgradedByCrawlingHistory(const cache::ReadOnlyAccountStateCache& accountStateCache, const cache::MetadataCacheView& metadataCache, const state::MetadataKey& key) {
+	const std::pair<state::MetadataKey, std::optional<state::MetadataEntry>> FindEntryKeyIfParticipantsHaveBeenUpgradedByCrawlingHistory(const cache::ReadOnlyAccountStateCache& accountStateCache, const cache::ReadOnlyMetadataCache& metadataCache, const state::MetadataKey& key) {
 		auto sourceAcc = accountStateCache.find(key.sourceAddress()).get();
 		auto targetAcc = accountStateCache.find(key.targetKey()).get();
 		return GetMetadataEntryForStates(accountStateCache, metadataCache, key.scopedMetadataKey(), key.metadataTarget(), sourceAcc, targetAcc);

@@ -39,6 +39,8 @@ namespace catapult {
 
 		template<typename TCache, typename TCacheDelta, typename TCacheKey, typename TGetResult>
 		class ReadOnlyArtifactCache;
+
+
 	}
 }
 
@@ -78,4 +80,6 @@ namespace catapult { namespace cache {
 		using BaseSetDeltaPointers = MetadataBaseSetDeltaPointers;
 		using BaseSets = MetadataBaseSets;
 	};
+
+	using ReadOnlyMetadataCache = MetadataCacheTypes::CacheReadOnlyType;
 }}

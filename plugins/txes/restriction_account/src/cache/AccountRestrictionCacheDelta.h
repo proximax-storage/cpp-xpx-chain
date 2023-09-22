@@ -20,13 +20,14 @@
 **/
 
 #pragma once
-#include <src/config/AccountRestrictionConfiguration.h>
+
 #include "AccountRestrictionBaseSets.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/deltaset/BaseSetDelta.h"
 #include "catapult/model/NetworkInfo.h"
+#include "plugins/txes/restriction_account/src/config/AccountRestrictionConfiguration.h"
 
 namespace catapult { namespace cache {
 
