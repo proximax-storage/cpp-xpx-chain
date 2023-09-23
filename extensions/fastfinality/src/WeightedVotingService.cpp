@@ -219,11 +219,7 @@ namespace catapult { namespace fastfinality {
 					pConfigHolder,
 					CreateHarvesterBlockGenerator(state),
 					lastBlockElementSupplier);
-				actions.ValidateProposal = CreateDefaultValidateProposalAction(
-					pFsmShared,
-					state,
-					lastBlockElementSupplier,
-					pValidatorPool);
+				actions.ValidateProposal = CreateDefaultValidateProposalAction(pFsmShared, state, lastBlockElementSupplier, pValidatorPool);
 				actions.WaitForProposal = CreateDefaultWaitForProposalAction(pFsmShared);
 				actions.WaitForPrevotePhaseEnd = CreateDefaultWaitForPrevotePhaseEndAction(pFsmShared, pluginManager.getCommitteeManager(), pConfigHolder);
 				actions.AddPrevote = CreateDefaultAddPrevoteAction(pFsmShared);
@@ -231,11 +227,7 @@ namespace catapult { namespace fastfinality {
 				actions.WaitForPrecommitPhaseEnd = CreateDefaultWaitForPrecommitPhaseEndAction(pFsmShared, pluginManager.getCommitteeManager(), pConfigHolder);
 				actions.UpdateConfirmedBlock = CreateDefaultUpdateConfirmedBlockAction(pFsmShared, pluginManager.getCommitteeManager());
 				actions.RequestConfirmedBlock = CreateDefaultRequestConfirmedBlockAction(pFsmShared, state, lastBlockElementSupplier);
-				actions.CommitConfirmedBlock = CreateDefaultCommitConfirmedBlockAction(
-					pFsmShared,
-					blockRangeConsumer,
-					pConfigHolder,
-					pluginManager.getCommitteeManager());
+				actions.CommitConfirmedBlock = CreateDefaultCommitConfirmedBlockAction(pFsmShared, blockRangeConsumer, state);
 				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsmShared, pConfigHolder);
 				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, pConfigHolder, pluginManager.getCommitteeManager());
 

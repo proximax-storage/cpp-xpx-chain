@@ -337,17 +337,17 @@
 		},
 		{
 			"name": "streamStart",
-			"type": "16743",
+			"type": "16742",
 			"supportedVersions": [1]
 		},
 		{
 			"name": "streamFinish",
-			"type": "16999",
+			"type": "16998",
 			"supportedVersions": [1]
 		},
 		{
 			"name": "streamPayment",
-			"type": "17255",
+			"type": "17254",
 			"supportedVersions": [1]
 		},
 		{

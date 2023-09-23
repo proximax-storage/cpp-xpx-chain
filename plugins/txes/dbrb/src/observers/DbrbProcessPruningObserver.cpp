@@ -14,11 +14,11 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(DbrbProcessPruning, Notification)(const std::shared_ptr<cache::DbrbViewFetcherImpl>& pDbrbViewFetcher) {
 		return MAKE_OBSERVER(DbrbProcessPruning, Notification, [pDbrbViewFetcher](const Notification&, ObserverContext& context) {
-			if (NotifyMode::Rollback == context.Mode)
+			auto& cache = context.Cache.sub<cache::DbrbViewCache>();
+			auto expiredProcesses = pDbrbViewFetcher->getExpiredDbrbProcesses(context.Timestamp);
+			if (NotifyMode::Rollback == context.Mode && !expiredProcesses.empty())
 			  	CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DbrbProcessPruning)");
 
-            auto& cache = context.Cache.sub<cache::DbrbViewCache>();
-			auto expiredProcesses = pDbrbViewFetcher->getExpiredDbrbProcesses(context.Timestamp);
 			for (const auto& processId : expiredProcesses)
 				cache.remove(processId);
         })

@@ -29,7 +29,7 @@
 
 namespace catapult { namespace plugins {
 
-	void RegisterMetadataSubsystem(PluginManager& manager) {
+	void RegisterMetadataV2Subsystem(PluginManager& manager) {
 		manager.addPluginInitializer([](auto& config) {
 			config.template InitPluginConfiguration<config::MetadataConfiguration>();
 		});
@@ -65,5 +65,5 @@ namespace catapult { namespace plugins {
 
 extern "C" PLUGIN_API
 void RegisterSubsystem(catapult::plugins::PluginManager& manager) {
-	catapult::plugins::RegisterMetadataSubsystem(manager);
+	catapult::plugins::RegisterMetadataV2Subsystem(manager);
 }

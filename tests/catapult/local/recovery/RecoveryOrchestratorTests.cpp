@@ -47,6 +47,7 @@
 #include "plugins/txes/config/src/config/NetworkConfigConfiguration.h"
 #include "plugins/txes/transfer/src/config/TransferConfiguration.h"
 #include "plugins/txes/committee/src/config/CommitteeConfiguration.h"
+#include "plugins/txes/dbrb/src/config/DbrbConfiguration.h"
 
 namespace catapult { namespace local {
 
@@ -259,6 +260,7 @@ namespace catapult { namespace local {
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NetworkConfigConfiguration>();
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::CommitteeConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::DbrbConfiguration>();
 
 				// prepare storage
 				prepareSavedStorage(config);

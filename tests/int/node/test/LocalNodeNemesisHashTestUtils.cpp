@@ -43,6 +43,7 @@
 #include "plugins/txes/operation/src/config/OperationConfiguration.h"
 #include "plugins/txes/metadata_v2/src/config/MetadataConfiguration.h"
 #include "plugins/txes/committee/src/config/CommitteeConfiguration.h"
+#include "plugins/txes/dbrb/src/config/DbrbConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -145,6 +146,7 @@ namespace catapult { namespace test {
 			mConfig.Network.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 			mConfig.Network.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
 			mConfig.Network.template InitPluginConfiguration<config::CommitteeConfiguration>();
+			mConfig.Network.template InitPluginConfiguration<config::DbrbConfiguration>();
 
 			nemesisBlock.StateHash = CalculateNemesisStateHash(nemesisBlockElement, mConfig.ToConst());
 		});

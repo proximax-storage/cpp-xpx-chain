@@ -52,6 +52,10 @@ namespace catapult { namespace model {
 		// Arrange:
 		ManualCallTransaction transaction;
 		transaction.Size = 0;
+        transaction.FileNameSize = 0;
+        transaction.FunctionNameSize = 0;
+		transaction.ActualArgumentsSize = 0;
+		transaction.ServicePaymentsCount = 0;
 
 		// Act:
 		auto realSize = ManualCallTransaction::CalculateRealSize(transaction);

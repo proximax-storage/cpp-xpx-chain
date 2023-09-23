@@ -11,4 +11,4 @@ virtualMachineRPCPort = 50051
 useRPCExecutor = false
 executorRPCHost = 127.0.0.1
 executorRPCPort = {{executor_rpc_port}}
-executorLogPath = /tmp/executor/executor.log
+executorLogPath = data/peer-node-{{node_index}}/data/logs/executor/executor.log

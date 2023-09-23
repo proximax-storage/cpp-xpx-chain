@@ -9,4 +9,5 @@ target_link_libraries(${TARGET_NAME}
     catapult.plugins.config
     catapult.plugins.upgrade
     catapult.plugins.committee
+    catapult.plugins.dbrb
     catapult.plugins.metadata_v2)

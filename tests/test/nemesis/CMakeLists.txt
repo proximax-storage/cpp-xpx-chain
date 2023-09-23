@@ -8,6 +8,7 @@ target_link_libraries(tests.catapult.test.nemesis
 	catapult.plugins.transfer
 	catapult.plugins.upgrade
 	catapult.plugins.config
+	catapult.plugins.dbrb
 	catapult.plugins.committee) # shared lib dependencies allow tests to create real transaction plugins
 
 include_directories(../../../plugins/txes/mosaic)

@@ -37,6 +37,7 @@
 #include "plugins/txes/upgrade/src/config/BlockchainUpgradeConfiguration.h"
 #include "plugins/txes/config/src/config/NetworkConfigConfiguration.h"
 #include "plugins/txes/committee/src/config/CommitteeConfiguration.h"
+#include "plugins/txes/dbrb/src/config/DbrbConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -97,7 +98,7 @@ namespace catapult { namespace test {
 				const_cast<model::NetworkConfiguration&>(config.Network) = std::get<0>(conf);
 				const_cast<config::SupportedEntityVersions&>(config.SupportedEntityVersions) = std::get<1>(conf);
 
-				// Preload plugin configuraitons for nemesis required plugins
+				// Preload plugin configurations for nemesis required plugins
 
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::TransferConfiguration>();
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::MosaicConfiguration>();
@@ -105,6 +106,7 @@ namespace catapult { namespace test {
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NetworkConfigConfiguration>();
 				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::CommitteeConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::DbrbConfiguration>();
 				m_pLocalPartnerNode = BootLocalPartnerNode(std::move(config), m_partnerServerKeyPair, nodeFlag);
 			}
 
@@ -124,11 +126,6 @@ namespace catapult { namespace test {
 				auto config = CreatePrototypicalBlockchainConfiguration(directory);
 				prepareNetworkConfiguration(config);
 
-			if (HasFlag(NodeFlag::Verify_Receipts, m_nodeFlag))
-				SetNemesisReceiptsHash(directory);
-
-
-			if (HasFlag(NodeFlag::Verify_State, m_nodeFlag))
 				SetNemesisStateHash(directory, config);
 			}
 		}
@@ -195,6 +192,7 @@ namespace catapult { namespace test {
 			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NetworkConfigConfiguration>();
 			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::CommitteeConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::DbrbConfiguration>();
 
 			return config;
 		}
@@ -210,8 +208,7 @@ namespace catapult { namespace test {
 		}
 
 		/// Get the config holder that was created when the node was booted.
-		std::shared_ptr<config::BlockchainConfigurationHolder> configHolder()
-		{
+		std::shared_ptr<config::BlockchainConfigurationHolder> configHolder() {
 			return m_pConfigHolder;
 		}
 

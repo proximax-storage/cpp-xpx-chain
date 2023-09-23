@@ -141,7 +141,7 @@ namespace catapult::observers {
 		if ( debtorAccount.Balances.get(resolvedMosaicId) < mosaicAmount ) {
 			CATAPULT_LOG( error ) << "Debtor Not Enough Mosaics "
 								<< mosaicDebtor << " "
-								<< resolvedMosaicId << ""
+								<< resolvedMosaicId << " "
 								<< debtorAccount.Balances.get(resolvedMosaicId) << " "
 								<< mosaicAmount;
 			return;

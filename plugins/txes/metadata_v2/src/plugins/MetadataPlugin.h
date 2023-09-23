@@ -28,5 +28,5 @@ namespace catapult { namespace plugins {
 
 	/// Registers metadata support with \a manager.
 	PLUGIN_API
-	void RegisterMetadataSubsystem(PluginManager& manager);
+	void RegisterMetadataV2Subsystem(PluginManager& manager);
 }}

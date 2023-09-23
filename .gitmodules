@@ -1,7 +1,7 @@
 [submodule "cpp-xpx-storage-sdk"]
 	path = cpp-xpx-storage-sdk
 	url = https://github.com/proximax-storage/cpp-xpx-storage-sdk
-	branch = contract-v3
+	branch = develop
 [submodule "cpp-xpx-supercontract-sdk"]
 	path = cpp-xpx-supercontract-sdk
 	url = https://github.com/proximax-storage/cpp-xpx-supercontract-sdk
