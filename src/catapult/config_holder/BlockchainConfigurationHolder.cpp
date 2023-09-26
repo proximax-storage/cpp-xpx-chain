@@ -44,8 +44,8 @@ namespace catapult { namespace config {
 		m_configs.insert({ height, config });
 		m_pInflationCalculator = std::make_unique<model::InflationCalculator>(config.Immutable.InitialCurrencyAtomicUnits, config.Network.Inflation);
 		if(height != Height(1))
-			m_pInflationCalculator->add(Height(1), config.Network.Inflation, config.Network.MaxMosaicAtomicUnits);
-		m_pInflationCalculator->add(height, config.Network.Inflation, config.Network.MaxMosaicAtomicUnits);
+			m_pInflationCalculator->add(Height(1), config.Network.Inflation, config.Network.MaxCurrencyMosaicAtomicUnits);
+		m_pInflationCalculator->add(height, config.Network.Inflation, config.Network.MaxCurrencyMosaicAtomicUnits);
 	}
 
 	boost::filesystem::path BlockchainConfigurationHolder::GetResourcesPath(int argc, const char** argv) {
@@ -161,7 +161,7 @@ namespace catapult { namespace config {
 
 		if(height != Height())
 			m_pInflationCalculator->remove(height);  /// TODO: Why is this needed?
-			m_pInflationCalculator->add(height, config.Network.Inflation, config.Network.MaxMosaicAtomicUnits);
+			m_pInflationCalculator->add(height, config.Network.Inflation, config.Network.MaxCurrencyMosaicAtomicUnits);
 
 		m_configs.erase(height); /// TODO: Why is this needed?
 		m_configs.insert({ height, config });
