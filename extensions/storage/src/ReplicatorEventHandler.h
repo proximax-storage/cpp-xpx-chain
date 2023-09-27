@@ -32,7 +32,6 @@ namespace catapult { namespace storage {
 	};
 
     std::unique_ptr<ReplicatorEventHandler> CreateReplicatorEventHandler(
-		std::shared_ptr<thread::IoThreadPool>&& pool,
 		TransactionSender&& transactionSender,
 		state::StorageState& storageState,
 		TransactionStatusHandler& m_transactionStatusHandler,
