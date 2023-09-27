@@ -51,7 +51,7 @@ namespace catapult { namespace model {
 		auto expiryInfo = m_intervalMetadata.find(correspondingPair.first)->second;
 		/// If inflation is non zero(optimization), check whether more currency can be created.
 		if(correspondingPair.second.Inflation != Amount(0) && height >= expiryInfo.LastRewardHeight) {
-			return height == expiryInfo.LastRewardHeight ? expiryInfo.InflationRemainder : Amount(0);
+			return height == expiryInfo.LastRewardHeight ? (expiryInfo.InflationRemainder != Amount(0) ? expiryInfo.InflationRemainder : correspondingPair.second.Inflation) : Amount(0);
 		}
 		return correspondingPair.second.Inflation;
 	}

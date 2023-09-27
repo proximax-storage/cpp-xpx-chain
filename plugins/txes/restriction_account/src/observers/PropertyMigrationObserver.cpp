@@ -131,12 +131,14 @@ namespace catapult { namespace observers {
 					{
 						state::GlobalEntry installedRecord(config::AccountRestrictionPluginInstalled_GlobalKey, context.Height.unwrap(), state::PluginInstallConverter());
 						globalStore.insert(installedRecord);
-						auto view = propertyCache.tryMakeBroadIterableView();
-						for(const auto& val : *view) {
+						auto pIterableView = propertyCache.tryMakeBroadIterableView();
+						for(auto iter = pIterableView->begin(); iter != pIterableView->end();) {
+							auto val = *iter;
 							state::AccountRestrictions restrictions(val.first);
 							MoveRestrictions(val.second, restrictions);
 							accountRestrictionCache.insert(restrictions);
 							propertyCache.remove(val.first);
+							++iter;
 						}
 
 					}
@@ -144,12 +146,14 @@ namespace catapult { namespace observers {
 					if(recordIter.tryGet() && recordIter.get().Get<state::PluginInstallConverter>() == context.Height.unwrap())
 					{
 						globalStore.remove(config::AccountRestrictionPluginInstalled_GlobalKey);
-						auto view = accountRestrictionCache.tryMakeBroadIterableView();
-						for(const auto& val : *view) {
+						auto pIterableView = accountRestrictionCache.tryMakeBroadIterableView();
+						for(auto iter = pIterableView->begin(); iter != pIterableView->end();) {
+							auto val = *iter;
 							state::AccountProperties restrictions(val.first);
 							MoveRestrictions(val.second, restrictions);
 							propertyCache.insert(restrictions);
 							accountRestrictionCache.remove(val.first);
+							++iter;
 						}
 					}
 
