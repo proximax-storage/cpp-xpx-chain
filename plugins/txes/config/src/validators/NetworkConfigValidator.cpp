@@ -87,9 +87,12 @@ namespace catapult { namespace validators {
 						return Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid;
 					if constexpr(std::is_same_v<TNotification, model::NetworkConfigNotification<2>>)
 					{
-						if(networkConfig.MaxCurrencyMosaicAtomicUnits > networkConfig.MaxMosaicAtomicUnits) {
+						if(networkConfig.MaxCurrencyMosaicAtomicUnits > networkConfig.MaxMosaicAtomicUnits
+							|| networkConfig.MaxCurrencyMosaicAtomicUnits < currentNetworkConfig.MaxCurrencyMosaicAtomicUnits
+							|| networkConfig.MaxMosaicAtomicUnits < currentNetworkConfig.MaxMosaicAtomicUnits) {
 							return Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid;
 						}
+
 					}
 				} catch (...) {
 					return Failure_NetworkConfig_BlockChain_Config_Malformed;

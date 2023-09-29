@@ -227,7 +227,9 @@ namespace catapult { namespace local {
 	TEST(TEST_CLASS, CanMigratePropertiesToAccountRestrictions) {
 		// Arrange:
 		test::Accounts accounts(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key, 1), 10, 1, 1);
-		test::StateHashDisabledTestContext context([](const auto&) {});
+		test::StateHashDisabledTestContext context([](config::BlockchainConfiguration& config ) {
+			const_cast<config::NodeConfiguration&>(config.Node).ShouldUseCacheDatabaseStorage = true;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunMigratePropertiesTest<test::StateHashDisabledTestContext>(context, accounts));
