@@ -86,6 +86,8 @@ namespace catapult { namespace cache {
 
 	const Key GetCurrentlyActiveAccountKey(const cache::ReadOnlyAccountStateCache& cache, const state::AccountState& state) {
 		auto trackedState = state;
+		if(trackedState.GetVersion() == 1)
+			CATAPULT_THROW_RUNTIME_ERROR("Forward crawling account iterations not supported for V1 accounts.");
 		while(trackedState.SupplementalPublicKeys.upgrade()){
 			trackedState = cache.find(trackedState.SupplementalPublicKeys.upgrade().get()).get();
 		}
@@ -94,6 +96,8 @@ namespace catapult { namespace cache {
 
 	const Key GetCurrentlyActiveAccountKey(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey) {
 		auto trackedState = cache.find(accountKey).get();
+		if(trackedState.GetVersion() == 1)
+			CATAPULT_THROW_RUNTIME_ERROR("Forward crawling account iterations not supported for V1 accounts.");
 		while(trackedState.SupplementalPublicKeys.upgrade()){
 			trackedState = cache.find(trackedState.SupplementalPublicKeys.upgrade().get()).get();
 		}

@@ -30,7 +30,12 @@ namespace catapult { namespace observers {
 	namespace {
 		bool IsRenewal(const cache::ReadOnlyAccountStateCache& cache, const state::RootNamespace& root, const model::RootNamespaceNotification<1>& notification, Height height) {
 
-			return root.lifetime().isActiveOrGracePeriod(height) && cache::GetCurrentlyActiveAccountKey(cache, root.owner()) == notification.Signer;
+
+			return root.lifetime().isActiveOrGracePeriod(height) && cache::FindActiveAccountKeyMatchBackwards(cache, notification.Signer, [owner = root.owner()](Key relatedAddress) {
+				   if(owner == relatedAddress)
+					   return true;
+				   return false;
+			   });
 		}
 
 		Height LifetimeEnd(const Height& height, const BlockDuration& duration) {

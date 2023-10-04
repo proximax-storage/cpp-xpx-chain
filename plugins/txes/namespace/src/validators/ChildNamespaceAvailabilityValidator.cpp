@@ -49,7 +49,12 @@ namespace catapult { namespace validators {
 		if (!root.lifetime().isActiveAndUnlocked(height))
 			return Failure_Namespace_Expired;
 
-		if (cache::GetCurrentlyActiveAccountKey(accountStateCache, root.owner()) != notification.Signer)
+
+		if (!cache::FindActiveAccountKeyMatchBackwards(accountStateCache, notification.Signer, [mosaicOwner = root.owner()](Key relatedKey) {
+				if(mosaicOwner == relatedKey)
+					return true;
+				return false;
+			}))
 			return Failure_Namespace_Owner_Conflict;
 
 		return ValidationResult::Success;

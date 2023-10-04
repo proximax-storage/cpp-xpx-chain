@@ -45,6 +45,10 @@ namespace catapult { namespace validators {
 		else if (model::AliasAction::Unlink == notification.AliasAction && state::AliasType::None == aliasType)
 			return Failure_Namespace_Alias_Does_Not_Exist;
 
-		return cache::GetCurrentlyActiveAccountKey(accountStateCache, root.owner()) == notification.Owner ? ValidationResult::Success : Failure_Namespace_Alias_Owner_Conflict;
+		return cache::FindActiveAccountKeyMatchBackwards(accountStateCache, notification.Owner, [mosaicOwner = root.owner()](Key relatedKey) {
+			if(mosaicOwner == relatedKey)
+				return true;
+			return false;
+		})  ? ValidationResult::Success : Failure_Namespace_Alias_Owner_Conflict;
 	});
 }}

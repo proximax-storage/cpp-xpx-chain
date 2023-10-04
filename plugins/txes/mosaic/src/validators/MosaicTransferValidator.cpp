@@ -36,13 +36,23 @@ namespace catapult { namespace validators {
 				const Key& owner,
 				const Notification& notification,
 				const model::ResolverContext& resolvers) {
-			if (owner == notification.Sender)
+			const auto& accountStateCache = cache.sub<cache::AccountStateCache>();
+			/// IF owner is the same as the sender.
+			if(cache::FindActiveAccountKeyMatchBackwards(accountStateCache, notification.Sender, [mosaicOwner = owner](Key relatedKey) {
+				if(mosaicOwner == relatedKey)
+					return true;
+				return false;
+			}))
 				return true;
 
 			// the owner must exist if the mosaic lookup succeeded
-			const auto& accountStateCache = cache.sub<cache::AccountStateCache>();
+
 			auto ownerAccountStateIter = accountStateCache.find(owner);
-			return ownerAccountStateIter.get().Address == resolvers.resolve(notification.Recipient);
+			return cache::FindActiveAccountAddressMatchBackwards(accountStateCache, resolvers.resolve(notification.Recipient), [address = ownerAccountStateIter.get().Address](Address relatedAddress) {
+				if(address == relatedAddress)
+					return true;
+				return false;
+			});
 		}
 	}
 
@@ -66,7 +76,9 @@ namespace catapult { namespace validators {
 
 			const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
 			// 3. if it's NOT transferable then owner must be either sender or recipient
-			if (!IsMosaicOwnerParticipant(context.Cache, cache::GetCurrentlyActiveAccountKey(accountStateCache, entry.definition().owner()), notification, context.Resolvers))
+
+
+			if (!IsMosaicOwnerParticipant(context.Cache, entry.definition().owner(), notification, context.Resolvers))
 				return Failure_Mosaic_Non_Transferable;
 
 			return ValidationResult::Success;

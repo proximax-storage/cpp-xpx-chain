@@ -18,8 +18,15 @@ namespace catapult { namespace validators {
 		const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
 		auto superContractCacheIter = superContractCache.find(notification.SuperContract);
 		auto& superContractEntry = superContractCacheIter.get();
-
-		if (cache::GetCurrentlyActiveAccountKey(accountStateCache, superContractEntry.owner()) != notification.Signer && cache::GetCurrentlyActiveAccountKey(accountStateCache, superContractEntry.owner()) != notification.Signer)
+		if(!cache::FindActiveAccountKeyMatchBackwards(accountStateCache, notification.Signer, [owner = superContractEntry.owner()](Key relatedKey) {
+			if(owner == relatedKey)
+				return true;
+			return false;
+		}) && !cache::FindActiveAccountKeyMatchBackwards(accountStateCache, notification.Signer, [owner = superContractEntry.mainDriveKey()](Key relatedKey) {
+			if(owner == relatedKey)
+				return true;
+			return false;
+		}))
 			return Failure_SuperContract_Operation_Is_Not_Permitted;
 
 		if (superContractEntry.mainDriveKey() != notification.DriveKey)

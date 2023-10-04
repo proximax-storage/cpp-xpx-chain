@@ -45,6 +45,11 @@ namespace catapult { namespace validators {
 			return result;
 
 		auto& accountStateCache = m_cache.sub<cache::AccountStateCache>();
-		return cache::GetCurrentlyActiveAccountKey(accountStateCache, iter.get().definition().owner()) != owner ? Failure_Mosaic_Owner_Conflict : ValidationResult::Success;
+
+		return !cache::FindActiveAccountKeyMatchBackwards(accountStateCache, owner, [mosaicOwner = iter.get().definition().owner()](Key relatedKey) {
+				   if(mosaicOwner == relatedKey)
+					   return true;
+				   return false;
+			   }) ? Failure_Mosaic_Owner_Conflict : ValidationResult::Success;
 	}
 }}

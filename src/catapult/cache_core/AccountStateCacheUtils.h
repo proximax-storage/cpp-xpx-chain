@@ -61,22 +61,38 @@ namespace catapult { namespace cache {
 	template<typename TPredicate>
 	const bool FindActiveAccountKeyMatchForward(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey, TPredicate predicate) {
 		auto trackedState = cache.find(accountKey).get();
-		while(trackedState.SupplementalPublicKeys.upgrade()){
+		if(trackedState.GetVersion() == 1)
+			CATAPULT_THROW_RUNTIME_ERROR("Forward crawling account iterations not supported for V1 accounts.");
+		for(;;){
 			if(predicate(trackedState.PublicKey))
 				return true;
+			if(!trackedState.SupplementalPublicKeys.upgrade())
+				return false;
 			trackedState = cache.find(trackedState.SupplementalPublicKeys.upgrade().get()).get();
 		}
-		return false;
 	}
 	template<typename TPredicate>
 	const bool FindActiveAccountKeyMatchBackwards(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey, TPredicate predicate) {
 		auto trackedState = cache.find(accountKey).get();
-		while(trackedState.OldState){
+		for(;;){
 			if(predicate(trackedState.PublicKey))
 				return true;
+			if(!trackedState.OldState)
+				return false;
 			trackedState = cache.find(trackedState.OldState->PublicKey).get();
 		}
-		return false;
+	}
+
+	template<typename TPredicate>
+	const bool FindActiveAccountAddressMatchBackwards(const cache::ReadOnlyAccountStateCache& cache, const Address& address, TPredicate predicate) {
+		auto trackedState = cache.find(address).get();
+		for(;;){
+			if(predicate(trackedState.Address))
+				return true;
+			if(!trackedState.OldState)
+				return false;
+			trackedState = cache.find(trackedState.OldState->PublicKey).get();
+		}
 	}
 
 }}

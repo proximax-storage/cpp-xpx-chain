@@ -27,7 +27,11 @@ namespace catapult { namespace validators {
 		if (!it.tryGet())
 			return Failure_Metadata_Mosaic_Not_Found;
 
-		if (cache::GetCurrentlyActiveAccountKey(accountStateCache, it.get().definition().owner()) != notification.Signer)
+		if (!cache::FindActiveAccountKeyMatchBackwards(accountStateCache, notification.Signer, [owner = it.get().definition().owner()](Key relatedKey) {
+				if(owner == relatedKey)
+					return true;
+				return false;
+			}))
 			return Failure_Metadata_Mosaic_Modification_Not_Permitted;
 
 		return ValidationResult::Success;

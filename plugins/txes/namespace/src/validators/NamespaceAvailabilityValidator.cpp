@@ -65,8 +65,11 @@ namespace catapult { namespace validators {
 			// if grace period after expiration has passed, any signer can claim the namespace
 			if (!root.lifetime().isActiveOrGracePeriod(height))
 				return ValidationResult::Success;
-
-			return cache::GetCurrentlyActiveAccountKey(accountStateCache, root.owner()) == notification.Signer ? ValidationResult::Success : Failure_Namespace_Owner_Conflict;
+			return cache::FindActiveAccountKeyMatchBackwards(accountStateCache, notification.Signer, [owner = root.owner()](Key relatedAddress) {
+				if(owner == relatedAddress)
+					return true;
+				return false;
+			}) ? ValidationResult::Success : Failure_Namespace_Owner_Conflict;
 		});
 	}
 }}

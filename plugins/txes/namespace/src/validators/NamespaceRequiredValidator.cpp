@@ -42,8 +42,11 @@ namespace catapult { namespace validators {
 		if (!root.lifetime().isActiveOrGracePeriod(context.Height))
 			return Failure_Namespace_Expired;
 
-		return cache::GetCurrentlyActiveAccountKey(accountStateCache, root.owner()) == notification.Owner
-				? ValidationResult::Success
+		return cache::FindActiveAccountKeyMatchBackwards(accountStateCache, notification.Owner, [owner = root.owner()](Key relatedAddress) {
+			if(owner == relatedAddress)
+				return true;
+			return false;
+		})	? ValidationResult::Success
 				: Failure_Namespace_Owner_Conflict;
 	})
 }}

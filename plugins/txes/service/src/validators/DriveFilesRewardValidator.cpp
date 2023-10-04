@@ -37,7 +37,11 @@ namespace catapult { namespace validators {
 				if (pInfo->Uploaded == 0)
 					return Failure_Service_Zero_Upload_Info;
 
-				if (!driveEntry.hasReplicator(pInfo->Participant) && cache::GetCurrentlyActiveAccountKey(accountStateCache, driveEntry.owner()) != pInfo->Participant)
+				if (!driveEntry.hasReplicator(pInfo->Participant) && !cache::FindActiveAccountKeyMatchBackwards(accountStateCache, pInfo->Participant, [owner = driveEntry.owner()](Key relatedAddress) {
+																		 if(owner == relatedAddress)
+																			 return true;
+																		 return false;
+																	 }))
 					return Failure_Service_Participant_Is_Not_Registered_To_Drive;
 
 				if (driveEntry.hasReplicator(pInfo->Participant)) {

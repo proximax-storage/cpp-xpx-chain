@@ -59,7 +59,11 @@ namespace catapult {
 
             /// 0. check if signer allowed to modify levy
             auto &entry = mosaicIter.get();
-            if (cache::GetCurrentlyActiveAccountKey(accountStateCache, entry.definition().owner()) != signer)
+            if (!cache::FindActiveAccountKeyMatchBackwards(accountStateCache, signer, [owner = entry.definition().owner()](Key relatedKey) {
+					if(owner == relatedKey)
+						return true;
+					return false;
+				}))
                 return validators::Failure_Mosaic_Ineligible_Signer;
 
             return validators::ValidationResult::Success;
