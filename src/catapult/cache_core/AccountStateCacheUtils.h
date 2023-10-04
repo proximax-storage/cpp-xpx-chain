@@ -60,7 +60,10 @@ namespace catapult { namespace cache {
 
 	template<typename TPredicate>
 	const bool FindActiveAccountKeyMatchForward(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey, TPredicate predicate) {
-		auto trackedState = cache.find(accountKey).get();
+		auto iterator = cache.find(accountKey).tryGet();
+		if(!iterator)
+			return false;
+		auto trackedState = *iterator;
 		if(trackedState.GetVersion() == 1)
 			CATAPULT_THROW_RUNTIME_ERROR("Forward crawling account iterations not supported for V1 accounts.");
 		for(;;){
@@ -73,7 +76,10 @@ namespace catapult { namespace cache {
 	}
 	template<typename TPredicate>
 	const bool FindActiveAccountKeyMatchBackwards(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey, TPredicate predicate) {
-		auto trackedState = cache.find(accountKey).get();
+		auto iterator = cache.find(accountKey).tryGet();
+		if(!iterator)
+			return false;
+		auto trackedState = *iterator;
 		for(;;){
 			if(predicate(trackedState.PublicKey))
 				return true;
@@ -85,7 +91,10 @@ namespace catapult { namespace cache {
 
 	template<typename TPredicate>
 	const bool FindActiveAccountAddressMatchBackwards(const cache::ReadOnlyAccountStateCache& cache, const Address& address, TPredicate predicate) {
-		auto trackedState = cache.find(address).get();
+		auto iterator = cache.find(address).tryGet();
+		if(!iterator)
+			return false;
+		auto trackedState = *iterator;
 		for(;;){
 			if(predicate(trackedState.Address))
 				return true;

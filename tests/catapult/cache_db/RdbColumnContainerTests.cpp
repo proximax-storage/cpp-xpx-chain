@@ -22,6 +22,7 @@
 #include "catapult/cache_db/RocksInclude.h"
 #include "tests/test/cache/RdbTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/cache_db/RdbPropertyNames.h"
 
 namespace catapult { namespace cache {
 
@@ -172,23 +173,18 @@ namespace catapult { namespace cache {
 
 		// Act + Assert:
 		PropType value;
-		EXPECT_FALSE(container.prop("amazing", value));
+		EXPECT_FALSE(container.prop(cache::property_names::SIZE_PROPERTY, value));
 	}
 
-	TEST(TEST_CLASS, CanSetCustomProperty) {
+	TEST(TEST_CLASS, ThrowsWhenGettingCustomProperty) {
+		// Arrange:
 		// Arrange:
 		test::RdbTestContext context(DefaultSettings());
 		RdbColumnContainer container(context.database(), 0);
-		PropType originalProperty;
-		test::FillWithRandomData(originalProperty);
 
-		// Act:
-		container.setProp("amazing", originalProperty);
-
-		// Assert:
+		// Act + Assert:
 		PropType value;
-		EXPECT_TRUE(container.prop("amazing", value));
-		EXPECT_EQ(originalProperty, value);
+		EXPECT_THROW(container.prop("amazing", value), catapult_invalid_argument);
 	}
 
 	TEST(TEST_CLASS, PropFailsWhenPropertyNameIsTooLong) {

@@ -48,6 +48,7 @@ namespace catapult { namespace validators {
 			"maxBlockFutureTime = 10s\n"
 			"\n"
 			"maxMosaicAtomicUnits = 9'000'000'000'000'000\n"
+			"maxCurrencyMosaicAtomicUnits = 9'000'000'000'000'000\n"
 			"\n"
 			"totalChainImportance = 8'999'999'998'000'000\n"
 			"minHarvesterBalance = 1'000'000'000'000\n"
@@ -395,7 +396,7 @@ namespace catapult { namespace validators {
 	TRAITS_BASED_TEST_V2(FailureWhenNetworkConfigInvalidMaxMosaicUnits) {
 		// Assert:
 		auto networkConfig = networkConfigWithPlugin;
-		boost::algorithm::replace_first(networkConfig, "maxMosaicAtomicUnits = 9'000'000'000'000'000\n", "maxMosaicAtomicUnits = 9'000'000'000'000'000\nmaxCurrencyMosaicAtomicUnits = 9'000'000'000'000'001\n");
+		boost::algorithm::replace_first(networkConfig, "maxMosaicAtomicUnits = 9'000'000'000'000'000\nmaxCurrencyMosaicAtomicUnits = 9'000'000'000'000'000\n", "maxMosaicAtomicUnits = 9'000'000'000'000'000\nmaxCurrencyMosaicAtomicUnits = 9'000'000'000'000'001\n");
 		// Assert:
 		RunTest<TVersion>(
 				Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid,
