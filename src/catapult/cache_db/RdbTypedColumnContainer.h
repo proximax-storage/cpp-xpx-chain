@@ -52,6 +52,7 @@ namespace catapult { namespace cache {
 			const_iterator& operator++()
 			{
 				m_iterator = m_iterator.next();
+				m_pStorage.reset();
 				return *this;
 			}
 
@@ -65,6 +66,7 @@ namespace catapult { namespace cache {
 			const_iterator& operator--()
 			{
 				m_iterator = m_iterator.prev();
+				m_pStorage.reset();
 				return *this;
 			}
 
