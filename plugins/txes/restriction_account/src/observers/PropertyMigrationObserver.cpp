@@ -128,7 +128,8 @@ namespace catapult { namespace observers {
 					if (recordIter.tryGet() && recordIter.get().Get<state::PluginInstallConverter>() == context.Height.unwrap()) {
 						globalStore.remove(config::AccountRestrictionPluginInstalled_GlobalKey);
 						auto pIterableView = accountRestrictionCache.tryMakeBroadIterableView();
-						for(auto iter = pIterableView->begin(); iter != pIterableView->end(); ++iter) {
+						auto end = pIterableView->end();
+						for(auto iter = pIterableView->begin(); iter != end; ++iter) {
 							auto val = *iter;
 							state::AccountProperties restrictions(val.first);
 							MoveRestrictions(val.second, restrictions);

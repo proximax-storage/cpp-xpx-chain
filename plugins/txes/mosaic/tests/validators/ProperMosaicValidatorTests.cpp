@@ -155,7 +155,9 @@ namespace catapult { namespace validators {
 		AssertValidationResult<TTestTraits>(ValidationResult::Success, TTraits::Default_Id, Height(100), signer, artifactOwner, [&](cache::CatapultCacheDelta& cache){
 			auto& accountStateCache = cache.template sub<cache::AccountStateCache>();
 			accountStateCache.addAccount(signer, Height(1));
+			auto& signerAccount = accountStateCache.find(signer).get();
 			auto& owner = accountStateCache.find(artifactOwner).get();
+			signerAccount.OldState = std::make_shared<state::AccountState>(owner);
 			owner.SupplementalPublicKeys.upgrade().set(signer);
 		});
 	}

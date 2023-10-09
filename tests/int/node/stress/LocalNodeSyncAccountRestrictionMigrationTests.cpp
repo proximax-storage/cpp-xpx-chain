@@ -33,7 +33,7 @@
 
 namespace catapult { namespace local {
 
-#define TEST_CLASS LocalNodeSyncPropertyIntegrityTests
+#define TEST_CLASS LocalNodeSyncAccountRestrictionMigrationTests
 
 	namespace {
 		using BlockChainBuilder = test::BlockChainBuilder;
