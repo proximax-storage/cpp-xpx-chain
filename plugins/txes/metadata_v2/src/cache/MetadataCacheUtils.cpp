@@ -38,9 +38,12 @@ namespace catapult { namespace cache {
 	}
 
 	const std::pair<state::MetadataKey, std::optional<state::MetadataEntry>> FindEntryKeyIfParticipantsHaveBeenUpgradedByCrawlingHistory(const cache::ReadOnlyAccountStateCache& accountStateCache, const cache::ReadOnlyMetadataCache& metadataCache, const state::MetadataKey& key) {
-		auto sourceAcc = accountStateCache.find(key.sourceAddress()).get();
-		auto targetAcc = accountStateCache.find(key.targetKey()).get();
-		return GetMetadataEntryForStates(accountStateCache, metadataCache, key.scopedMetadataKey(), key.metadataTarget(), sourceAcc, targetAcc);
+		auto sourceAcc = accountStateCache.find(key.sourceAddress()).tryGet();
+		auto targetAcc = accountStateCache.find(key.targetKey()).tryGet();
+		if(!sourceAcc || !targetAcc) {
+			return std::make_pair(key, std::nullopt);
+		}
+		return GetMetadataEntryForStates(accountStateCache, metadataCache, key.scopedMetadataKey(), key.metadataTarget(), *sourceAcc, *targetAcc);
 	}
 
 	const std::pair<state::MetadataKey, state::MetadataEntry*> GetMetadataEntryForStates(const cache::ReadOnlyAccountStateCache& accountStateCache, cache::MetadataCacheDelta& metadataCache, uint64_t scopedKey, const model::MetadataTarget& target,  const state::AccountState& sourceState, const state::AccountState& targetState) {
@@ -63,8 +66,11 @@ namespace catapult { namespace cache {
 		return std::make_pair(state::CreateMetadataKey(model::PartialMetadataKey{sourceState.Address, targetState.PublicKey, scopedKey}, target), nullptr);
 	}
 	const std::pair<state::MetadataKey, state::MetadataEntry*> FindEntryKeyIfParticipantsHaveBeenUpgradedByCrawlingHistory(const cache::ReadOnlyAccountStateCache& accountStateCache, cache::MetadataCacheDelta& metadataCache, const state::MetadataKey& key){
-		auto sourceAcc = accountStateCache.find(key.sourceAddress()).get();
-		auto targetAcc = accountStateCache.find(key.targetKey()).get();
-		return GetMetadataEntryForStates(accountStateCache, metadataCache, key.scopedMetadataKey(), key.metadataTarget(), sourceAcc, targetAcc);
+		auto sourceAcc = accountStateCache.find(key.sourceAddress()).tryGet();
+		auto targetAcc = accountStateCache.find(key.targetKey()).tryGet();
+		if(!sourceAcc || !targetAcc) {
+			return std::make_pair(key, nullptr);
+		}
+		return GetMetadataEntryForStates(accountStateCache, metadataCache, key.scopedMetadataKey(), key.metadataTarget(), *sourceAcc, *targetAcc);
 	}
 }}
