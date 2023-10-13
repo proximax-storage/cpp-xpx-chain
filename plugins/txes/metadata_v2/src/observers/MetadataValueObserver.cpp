@@ -42,9 +42,10 @@ namespace catapult { namespace observers {
 				if(metadataIter.first.uniqueKey() == metadataKey.uniqueKey())
 					metadataIter.second->value().update(valueBuffer);
 				else {
-					cache.remove(metadataIter.first.uniqueKey());
-					auto metadataEntry = state::MetadataEntry(metadataIter.first);
+					auto metadataEntry = state::MetadataEntry(metadataKey);
+					metadataEntry.value().update(metadataIter.second->value());
 					metadataEntry.value().update(valueBuffer);
+					cache.remove(metadataIter.first.uniqueKey());
 					cache.insert(metadataEntry);
 				}
 

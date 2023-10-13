@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 					(BlockDuration() == currentDuration && BlockDuration() != delta) ||
 					(BlockDuration() != currentDuration && BlockDuration() == delta);
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MosaicConfiguration>();
-			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(context.Config. Network.BlockGenerationTargetTime);
+			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(context.Config.Network.BlockGenerationTargetTime);
 			return isIncompatibleChange || maxMosaicDuration < resultingDuration || resultingDuration < currentDuration
 					? Failure_Mosaic_Invalid_Duration
 					: ValidationResult::Success;
