@@ -66,6 +66,8 @@ namespace catapult { namespace fastfinality {
 		const std::set<Hash256> expectedPayloads{ payloadHash };
 		for (const auto& pProcess : MockDbrbProcess::DbrbProcessPool)
 			AssertDeliveredPayloads(pProcess, expectedPayloads);
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	// region PrepareMessage
@@ -89,6 +91,8 @@ namespace catapult { namespace fastfinality {
 
 		// Assert:
 		ASSERT_TRUE(pReceiver->disseminationHistory().empty());
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, PrepareMessageSenderIsNotInSuppliedView) {
@@ -109,6 +113,8 @@ namespace catapult { namespace fastfinality {
 
 		// Assert:
 		ASSERT_TRUE(pReceiver->disseminationHistory().empty());
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, PrepareMessageSuppliedViewIsNotCurrent) {
@@ -130,6 +136,8 @@ namespace catapult { namespace fastfinality {
 
 		// Assert:
 		ASSERT_TRUE(pReceiver->disseminationHistory().empty());
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, PrepareMessageDuplicatePayloadHash) {
@@ -153,6 +161,8 @@ namespace catapult { namespace fastfinality {
 
 		// Assert:
 		ASSERT_TRUE(pReceiver->disseminationHistory().empty());
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, PrepareMessageSuccess) {
@@ -171,6 +181,8 @@ namespace catapult { namespace fastfinality {
 
 		// Assert:
 		ASSERT_EQ(pReceiver->disseminationHistory().size(), 1u);
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	// endregion
@@ -201,6 +213,8 @@ namespace catapult { namespace fastfinality {
 		// Assert:
 		const auto& acknowledgedPayloads = pReceiver->getQuorumManager(payloadHash).AcknowledgedPayloads;
 		ASSERT_TRUE(acknowledgedPayloads.empty());
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, AcknowledgedMessageNoPayload) {
@@ -226,6 +240,8 @@ namespace catapult { namespace fastfinality {
 		// Assert:
 		const auto& acknowledgedPayloads = pReceiver->getQuorumManager(payloadHash).AcknowledgedPayloads;
 		ASSERT_TRUE(acknowledgedPayloads.empty());
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, AcknowledgedMessageSuccess) {
@@ -253,6 +269,8 @@ namespace catapult { namespace fastfinality {
 		const auto& acknowledgedPayloads = pReceiver->getQuorumManager(payloadHash).AcknowledgedPayloads;
 		const auto& currentView = pReceiver->currentView();
 		ASSERT_EQ(acknowledgedPayloads.count(currentView), 1u);
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, AcknowledgedMessageSuccessWithQuorumCollected) {
@@ -287,6 +305,8 @@ namespace catapult { namespace fastfinality {
 		// Assert:
 		ASSERT_EQ(acknowledgedPayloads[currentView].size(), 2u);	// Sender's message is added to AcknowledgedPayloads.
 		ASSERT_EQ(pReceiver->disseminationHistory().size(), 1u);	// Commit message is disseminated to all processes.
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	// endregion
@@ -317,6 +337,8 @@ namespace catapult { namespace fastfinality {
 
 		// Assert:
 		ASSERT_TRUE(pReceiver->disseminationHistory().empty());
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, CommitMessageNoPayload) {
@@ -341,6 +363,8 @@ namespace catapult { namespace fastfinality {
 
 		// Assert:
 		ASSERT_TRUE(pReceiver->disseminationHistory().empty());
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, CommitMessageSuccess) {
@@ -367,6 +391,8 @@ namespace catapult { namespace fastfinality {
 		// Assert:
 		// Disseminating Commit message to all processes and sending one Deliver message back to the Sender.
 		ASSERT_EQ(pReceiver->disseminationHistory().size(), 2u);
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, CommitMessageSuccessWithCommitReceived) {
@@ -395,6 +421,8 @@ namespace catapult { namespace fastfinality {
 		// Assert:
 		// Only sending one Deliver message back to the Sender.
 		ASSERT_EQ(pReceiver->disseminationHistory().size(), 1u);
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	// endregion
@@ -424,6 +452,8 @@ namespace catapult { namespace fastfinality {
 		// Assert:
 		const auto& deliveredProcesses = pReceiver->getQuorumManager(payloadHash).DeliveredProcesses;
 		ASSERT_TRUE(deliveredProcesses.empty());
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, DeliverMessageSenderIsNotInSuppliedView) {
@@ -448,6 +478,8 @@ namespace catapult { namespace fastfinality {
 		// Assert:
 		const auto& deliveredProcesses = pReceiver->getQuorumManager(payloadHash).DeliveredProcesses;
 		ASSERT_TRUE(deliveredProcesses.empty());
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, DeliverMessageSenderNoPayload) {
@@ -471,6 +503,8 @@ namespace catapult { namespace fastfinality {
 		// Assert:
 		const auto& deliveredProcesses = pReceiver->getQuorumManager(payloadHash).DeliveredProcesses;
 		ASSERT_TRUE(deliveredProcesses.empty());
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, DeliverMessageSenderSuccess) {
@@ -496,6 +530,8 @@ namespace catapult { namespace fastfinality {
 		const auto& deliveredProcesses = pReceiver->getQuorumManager(payloadHash).DeliveredProcesses;
 		const auto& currentView = pReceiver->currentView();
 		ASSERT_EQ(deliveredProcesses.count(currentView), 1u);
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, DeliverMessageSenderSuccessWithQuorumCollected) {
@@ -525,6 +561,8 @@ namespace catapult { namespace fastfinality {
 		// Assert:
 		ASSERT_EQ(deliveredProcesses[currentView].size(), 2u);	// Sender's message is added to DeliveredProcesses.
 		ASSERT_EQ(pReceiver->deliveredPayloads().count(payloadHash), 1u);	// Payload is delivered.
+
+		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	// endregion
