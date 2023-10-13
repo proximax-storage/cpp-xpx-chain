@@ -129,6 +129,8 @@ namespace catapult { namespace fastfinality {
 					CATAPULT_THROW_RUNTIME_ERROR("weighted voting is not enabled")
 
 				auto pValidatorPool = state.pool().pushIsolatedPool("proposal validator");
+				auto pDbrbPool = state.pool().pushIsolatedPool("dbrb");
+				auto pWeightedVotingFsmPool = state.pool().pushIsolatedPool("weighted voting fsm");
 				auto pServiceGroup = state.pool().pushServiceGroup("weighted voting");
 
 				auto connectionSettings = extensions::GetConnectionSettings(config);
@@ -136,11 +138,20 @@ namespace catapult { namespace fastfinality {
 				locator.registerService(Writers_Service_Name, pWriters);
 
 				auto pUnlockedAccounts = CreateUnlockedAccounts(m_harvestingConfig);
-				auto pFsmShared = pServiceGroup->pushService([pWritersWeak = std::weak_ptr<net::PacketWriters>(pWriters), &config, &keyPair = locator.keyPair(), &state, &dbrbConfig = m_dbrbConfig, pUnlockedAccounts, pTransactionSender = m_pTransactionSender](const std::shared_ptr<thread::IoThreadPool>& pPool) {
+				auto pFsmShared = pServiceGroup->pushService([
+						pWritersWeak = std::weak_ptr<net::PacketWriters>(pWriters),
+						&config,
+						&keyPair = locator.keyPair(),
+						&state,
+						&dbrbConfig = m_dbrbConfig,
+						pUnlockedAccounts,
+						pTransactionSender = m_pTransactionSender,
+						pDbrbPool,
+						pWeightedVotingFsmPool](const std::shared_ptr<thread::IoThreadPool>&) {
 					pTransactionSender->init(&keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local), pUnlockedAccounts);
 					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWritersWeak, state.packetIoPickers(), config::ToLocalDbrbNode(config),
-						keyPair, pPool, pTransactionSender, state.pluginManager().dbrbViewFetcher());
-					return std::make_shared<WeightedVotingFsm>(pPool, config, pDbrbProcess);
+						keyPair, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher());
+					return std::make_shared<WeightedVotingFsm>(pWeightedVotingFsmPool, config, pDbrbProcess);
 				});
 				locator.registerService(Fsm_Service_Name, pFsmShared);
 

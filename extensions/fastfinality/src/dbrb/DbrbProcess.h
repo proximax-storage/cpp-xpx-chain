@@ -30,7 +30,7 @@ namespace catapult { namespace dbrb {
 			const net::PacketIoPickerContainer& packetIoPickers,
 			const ionet::Node& thisNode,
 			const crypto::KeyPair& keyPair,
-			const std::shared_ptr<thread::IoThreadPool>& pPool,
+			std::shared_ptr<thread::IoThreadPool> pPool,
 			std::shared_ptr<TransactionSender> pTransactionSender,
 			const dbrb::DbrbViewFetcher& dbrbViewFetcher);
 
@@ -55,6 +55,8 @@ namespace catapult { namespace dbrb {
 		NodeRetreiver m_nodeRetreiver;
 
 		std::shared_ptr<MessageSender> m_pMessageSender;
+
+		std::shared_ptr<thread::IoThreadPool> m_pPool;
 
 		boost::asio::io_context::strand m_strand;
 

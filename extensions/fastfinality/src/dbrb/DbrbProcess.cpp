@@ -21,14 +21,15 @@ namespace catapult { namespace dbrb {
 		const net::PacketIoPickerContainer& packetIoPickers,
 		const ionet::Node& thisNode,
 		const crypto::KeyPair& keyPair,
-		const std::shared_ptr<thread::IoThreadPool>& pPool,
+		std::shared_ptr<thread::IoThreadPool> pPool,
 		std::shared_ptr<TransactionSender> pTransactionSender,
 		const dbrb::DbrbViewFetcher& dbrbViewFetcher)
 			: m_id(thisNode.identityKey())
 			, m_keyPair(keyPair)
 			, m_nodeRetreiver(packetIoPickers, thisNode.metadata().NetworkIdentifier, pWriters)
 			, m_pMessageSender(std::make_shared<MessageSender>(pWriters, m_nodeRetreiver))
-			, m_strand(pPool->ioContext())
+			, m_pPool(std::move(pPool))
+			, m_strand(m_pPool->ioContext())
 			, m_pTransactionSender(std::move(pTransactionSender))
 			, m_dbrbViewFetcher(dbrbViewFetcher) {
 		m_node.Node = thisNode;
