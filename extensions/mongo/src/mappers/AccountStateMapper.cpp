@@ -97,6 +97,9 @@ namespace catapult { namespace mongo { namespace mappers {
 				<< "publicKey" << ToBinary(accountState.PublicKey)
 				<< "publicKeyHeight" << ToInt64(accountState.PublicKeyHeight)
 				<< "accountType" << utils::to_underlying_type(accountState.AccountType);
+		if(accountState.OldState) {
+			builder << "upgradedFrom" << ToBinary(accountState.OldState->PublicKey);
+		}
 		StreamAccountPublicKeys(builder, accountState.SupplementalPublicKeys, accountState.GetVersion());
 		StreamAccountBalances(builder, accountState.Balances);
 		builder << bson_stream::close_document;

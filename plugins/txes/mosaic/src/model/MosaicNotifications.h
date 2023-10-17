@@ -150,13 +150,24 @@ namespace catapult { namespace model {
 
 	/// Notification of a mosaic nonce and id.
 	template<VersionType version>
-	struct MosaicNonceNotification;
+	struct MosaicNonceNotificationTypes {
+
+	};
+	template<>
+	struct MosaicNonceNotificationTypes<1> {
+		static constexpr auto Notification_Type = Mosaic_Nonce_v1_Notification;
+	};
 
 	template<>
-	struct MosaicNonceNotification<1> : public Notification {
+	struct MosaicNonceNotificationTypes<2> {
+		static constexpr auto Notification_Type = Mosaic_Nonce_v2_Notification;
+	};
+
+	template<VersionType version>
+	struct MosaicNonceNotification : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Nonce_v1_Notification;
+		static constexpr auto Notification_Type = MosaicNonceNotificationTypes<version>::Notification_Type;
 
 	public:
 		/// Creates a notification around \a signer, \a mosaicNonce and \a mosaicId.
@@ -176,17 +187,6 @@ namespace catapult { namespace model {
 
 		/// Mosaic id.
 		catapult::MosaicId MosaicId;
-	};
-
-	template<>
-	struct MosaicNonceNotification<2> : public MosaicNonceNotification<1> {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Nonce_v2_Notification;
-
-	public:
-		using MosaicNonceNotification<1>::MosaicNonceNotification;
-
 	};
 	// endregion
 
