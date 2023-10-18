@@ -12,6 +12,10 @@ if (SIRIUS_DRIVE_MULTI)
 	add_definitions(-DSIRIUS_DRIVE_MULTI)
 endif()
 
+if(POLICY CMP0058)
+	cmake_policy(SET CMP0058 NEW)
+endif()
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -DDEADLOCK_THRESHOLD_MILLISECONDS=600000 -w")
@@ -66,7 +70,7 @@ endfunction()
 add_subdirectory(external)
 
 if(NOT APPLE)
-	set(DO_NOT_SKIP_BUILD_TESTS TRUE)
+	set(DO_NOT_SKIP_BUILD_TESTS FALSE)
 endif()
 
 # run catapult tests first
