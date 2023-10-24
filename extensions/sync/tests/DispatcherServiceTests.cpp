@@ -831,7 +831,9 @@ namespace catapult { namespace sync {
 		// Assert:
 		ValidationResults transactionValidationResults;
 		transactionValidationResults.Stateless = ValidationResult::Failure;
-		AssertCanConsumeTransactionRange(transactionValidationResults, test::CreateTransactionEntityRange(1), [](const auto& context) {
+
+		auto pTransaction = test::GenerateRandomTransaction();
+		AssertCanConsumeTransactionRange(transactionValidationResults, std::move(test::CreateEntityRange({ pTransaction.get() })), [](const auto& context) {
 			WAIT_FOR_ONE_EXPR(context.numTransactionStatuses());
 
 			// - the transaction was not forwarded to the sink
@@ -845,7 +847,9 @@ namespace catapult { namespace sync {
 		// Assert:
 		ValidationResults transactionValidationResults;
 		transactionValidationResults.Stateful = ValidationResult::Failure;
-		AssertCanConsumeTransactionRange(transactionValidationResults, test::CreateTransactionEntityRange(1), [](const auto& context) {
+
+		auto pTransaction = test::GenerateRandomTransaction();
+		AssertCanConsumeTransactionRange(transactionValidationResults, std::move(test::CreateEntityRange({ pTransaction.get() })), [](const auto& context) {
 			WAIT_FOR_ONE_EXPR(context.numNewTransactionsSinkCalls());
 			WAIT_FOR_ONE_EXPR(context.numTransactionStatuses());
 
@@ -897,7 +901,8 @@ namespace catapult { namespace sync {
 		// Arrange: notice that flush should be called even (especially) if transaction failed validation
 		ValidationResults transactionValidationResults;
 		transactionValidationResults.Stateless = ValidationResult::Failure;
-		AssertCanConsumeTransactionRange(transactionValidationResults, test::CreateTransactionEntityRange(1), [](const auto& context) {
+		auto pTransaction = test::GenerateRandomTransaction();
+		AssertCanConsumeTransactionRange(transactionValidationResults, std::move(test::CreateEntityRange({ pTransaction.get() })), [](const auto& context) {
 			const auto& subscriber = context.testState().transactionStatusSubscriber();
 			WAIT_FOR_ONE_EXPR(subscriber.numFlushes());
 
@@ -928,7 +933,15 @@ namespace catapult { namespace sync {
 			auto factory = context.testState().state().hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local);
 
 			// Act: try to fill the ut cache with transactions
-			factory(test::CreateTransactionEntityRange(maxCacheSize));
+			std::vector<const model::Transaction*> transactionsPtrs;
+			std::vector<std::shared_ptr<model::Transaction>> transactions;
+			for (auto i = 0; i < maxCacheSize; i++) {
+				auto tx = utils::UniqueToShared(test::GenerateRandomTransaction());
+				transactions.emplace_back(tx);
+				transactionsPtrs.push_back(tx.get());
+			}
+
+			factory(test::CreateEntityRange(transactionsPtrs));
 			context.testState().state().tasks()[0].Callback(); // forward all batched transactions to the dispatcher
 
 			// - wait for the transactions to flow through the consumers
