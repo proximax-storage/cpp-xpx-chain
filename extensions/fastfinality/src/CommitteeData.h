@@ -173,6 +173,18 @@ namespace catapult { namespace fastfinality {
 			return m_sumOfPrevotesSufficient;
 		}
 
+		void setCurrentBlockHeight(const Height& value) {
+			m_currentBlockHeight = value;
+		}
+
+		void incrementCurrentBlockHeight() {
+			m_currentBlockHeight = m_currentBlockHeight + Height(1);
+		}
+
+		auto currentBlockHeight() const {
+			return m_currentBlockHeight;
+		}
+
 	private:
 		Key m_beneficiary;
 		std::shared_ptr<harvesting::UnlockedAccounts> m_pUnlockedAccounts;
@@ -193,5 +205,7 @@ namespace catapult { namespace fastfinality {
 		bool m_sumOfPrevotesSufficient;
 
 		mutable std::mutex m_mutex;
+
+		Height m_currentBlockHeight;
 	};
 }}

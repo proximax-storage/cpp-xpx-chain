@@ -30,7 +30,7 @@ namespace catapult { namespace cache {
 
 	// region custom tests
 
-	TEST(TEST_CLASS, DbrbViewAndExpiredProcessesAreSelectedCorrectly) {
+	TEST(TEST_CLASS, DbrbViewIsSelectedCorrectly) {
 		// Arrange:
 		auto pDbrbViewFetcher = std::make_shared<DbrbViewFetcherImpl>();
 		DbrbViewCacheMixinTraits::CacheType cache(pDbrbViewFetcher);
@@ -89,22 +89,6 @@ namespace catapult { namespace cache {
 			expectedView.emplace(processes[6].ProcessId);
 			actualView = pDbrbViewFetcher->getView(now - Timestamp(2000));
 			EXPECT_EQ(expectedView, actualView);
-
-			dbrb::ViewData expectedExpiredProcesses{
-				processes[5].ProcessId,
-				processes[6].ProcessId,
-				processes[7].ProcessId,
-				processes[8].ProcessId,
-				processes[9].ProcessId,
-				processes[10].ProcessId,
-			};
-			auto actualExpiredProcesses = pDbrbViewFetcher->getExpiredDbrbProcesses(now);
-			EXPECT_EQ(expectedExpiredProcesses, actualExpiredProcesses);
-
-			expectedExpiredProcesses.erase(processes[5].ProcessId);
-			expectedExpiredProcesses.erase(processes[6].ProcessId);
-			actualExpiredProcesses = pDbrbViewFetcher->getExpiredDbrbProcesses(now - Timestamp(2000));
-			EXPECT_EQ(expectedExpiredProcesses, actualExpiredProcesses);
 		}
 
 		// Removing processes.
@@ -132,14 +116,6 @@ namespace catapult { namespace cache {
 			};
 			auto actualView = pDbrbViewFetcher->getView(now);
 			EXPECT_EQ(expectedView, actualView);
-
-			dbrb::ViewData expectedExpiredProcesses{
-				processes[5].ProcessId,
-				processes[7].ProcessId,
-				processes[9].ProcessId
-			};
-			auto actualExpiredProcesses = pDbrbViewFetcher->getExpiredDbrbProcesses(now);
-			EXPECT_EQ(expectedExpiredProcesses, actualExpiredProcesses);
 		}
 	}
 

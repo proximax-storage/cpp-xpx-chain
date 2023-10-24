@@ -23,12 +23,8 @@ namespace catapult { namespace cache {
 		Timestamp getExpirationTime(const dbrb::ProcessId& processId) const override;
 
 	public:
-		void addOrUpdateDbrbProcess(const state::DbrbProcessEntry& entry);
-		void removeDbrbProcess(const dbrb::ProcessId& processId);
-		dbrb::ViewData getExpiredDbrbProcesses(Timestamp timestamp);
-
-	private:
-		void removeExpirationTime(const dbrb::ProcessId& processId);
+		void addDbrbProcess(const state::DbrbProcessEntry& entry);
+		void clear();
 
 	private:
 		std::map<dbrb::ProcessId, Timestamp> m_processes;

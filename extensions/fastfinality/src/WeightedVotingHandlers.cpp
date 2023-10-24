@@ -40,6 +40,11 @@ namespace catapult { namespace fastfinality {
 		}
 
 		const auto& committee = pluginManager.getCommitteeManager().committee();
+		if (committee.Round < 0) {
+			CATAPULT_LOG(warning) << "rejecting proposal, committee is not yet selected";
+			return;
+		}
+
 		if (pBlock->Signer != committee.BlockProposer) {
 			CATAPULT_LOG(warning) << "rejecting proposal, signer " << pBlock->Signer << " invalid, expected " << committee.BlockProposer;
 			return;
@@ -132,10 +137,10 @@ namespace catapult { namespace fastfinality {
 	void RegisterPullRemoteNodeStateHandler(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			ionet::ServerPacketHandlers& handlers,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+			const Key& bootPublicKey,
 			const std::function<std::shared_ptr<const model::BlockElement> (const Height&)>& blockElementGetter,
 			const model::BlockElementSupplier& lastBlockElementSupplier) {
-		handlers.registerHandler(ionet::PacketType::Pull_Remote_Node_State, [pFsmWeak, pConfigHolder, blockElementGetter, lastBlockElementSupplier](
+		handlers.registerHandler(ionet::PacketType::Pull_Remote_Node_State, [pFsmWeak, bootPublicKey, blockElementGetter, lastBlockElementSupplier](
 				const auto& packet,
 				auto& context) {
 			const auto pRequest = ionet::CoercePacket<RemoteNodeStatePacket>(&packet);
@@ -161,7 +166,7 @@ namespace catapult { namespace fastfinality {
 			pResponsePacket->HarvesterKeysCount = harvesterKeysCount;
 
 			auto* pResponsePacketData = reinterpret_cast<Key*>(pResponsePacket.get() + 1);
-			pResponsePacketData[0] = crypto::ParseKey(pConfigHolder->Config().User.BootKey);
+			pResponsePacketData[0] = bootPublicKey;
 			{
 				auto iter = view.begin();
 				auto index = 1;

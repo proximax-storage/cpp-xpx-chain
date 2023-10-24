@@ -130,7 +130,7 @@ namespace catapult { namespace plugins {
 		SuperContractCacheHandlersService::Register<model::FacilityCode::SuperContract_v2>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("SUPER CONTRACT C"), [&cache]() {
+			counters.emplace_back(utils::DiagnosticCounterId("CONTRACT C"), [&cache]() {
 				return cache.sub<cache::SuperContractCache>().createView(cache.height())->size();
 			});
 		});
@@ -142,7 +142,7 @@ namespace catapult { namespace plugins {
 		DriveContractCacheHandlersService::Register<model::FacilityCode::DriveContract>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("DRIVE CONTRACT C"), [&cache]() {
+			counters.emplace_back(utils::DiagnosticCounterId("DR CONTRACT C"), [&cache]() {
 				return cache.sub<cache::DriveContractCache>().createView(cache.height())->size();
 			});
 		});

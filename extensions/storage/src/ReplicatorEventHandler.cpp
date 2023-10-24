@@ -336,11 +336,11 @@ namespace catapult { namespace storage {
 			}
 
 		private:
-        	
+
         	boost::asio::io_context m_context;
             boost::asio::executor_work_guard<boost::asio::io_context::executor_type> m_work;
             std::thread m_thread;
-			
+
             TransactionSender m_transactionSender;
             state::StorageState& m_storageState;
             TransactionStatusHandler& m_transactionStatusHandler;

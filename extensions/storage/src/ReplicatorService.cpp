@@ -106,13 +106,6 @@ namespace catapult { namespace storage {
 				m_transactionStatusHandler,
 				m_keyPair);
 
-			std::vector<sirius::drive::ReplicatorInfo> bootstrapReplicators;
-			bootstrapReplicators.reserve(m_bootstrapReplicators.size());
-			for (const auto& node : m_bootstrapReplicators) {
-				boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(node.endpoint().Host), node.endpoint().Port);
-				bootstrapReplicators.emplace_back(sirius::drive::ReplicatorInfo{ endpoint, node.identityKey().array() });
-			}
-
 			if (storageConfig.UseRpcReplicator) {
 				gHandleLostConnection = storageConfig.RpcHandleLostConnection;
 				gDbgRpcChildCrash = storageConfig.RpcDbgChildCrash;
@@ -124,7 +117,7 @@ namespace catapult { namespace storage {
 						std::string(storageConfig.Port), // TODO: do not use move semantics.
 						std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
 						std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
-						bootstrapReplicators,
+						resolveBootstrapAddresses(),
 						storageConfig.UseTcpSocket,
 						*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
 						nullptr,
@@ -137,7 +130,7 @@ namespace catapult { namespace storage {
 						std::string(storageConfig.Port), // TODO: do not use move semantics.
 						std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
 						std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
-						bootstrapReplicators,
+						resolveBootstrapAddresses(),
 						storageConfig.UseTcpSocket,
 						*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
 						nullptr,
@@ -720,6 +713,39 @@ namespace catapult { namespace storage {
 																 flattenShards}));
 				}
 			}
+		}
+
+		std::vector<sirius::drive::ReplicatorInfo> resolveBootstrapAddresses() {
+			boost::asio::io_context ctx;
+			boost::asio::ip::tcp::resolver resolver(ctx);
+
+			std::vector<sirius::drive::ReplicatorInfo> bootstrapReplicators;
+			bootstrapReplicators.reserve(m_bootstrapReplicators.size());
+			for (const auto& node : m_bootstrapReplicators) {
+				const auto host = node.endpoint().Host;
+				if (host.empty()) {
+					CATAPULT_LOG(warning) << "skipping empty host for " << node.identityKey();
+					continue;
+				}
+
+				const auto port = std::to_string(node.endpoint().Port);
+
+				boost::system::error_code ec;
+				auto result = resolver.resolve(host, port, ec);
+				if (ec) {
+					CATAPULT_LOG(warning) << "endpoint not resolved " << host << ":" << port << " " << ec.message();
+				} else {
+					auto endpoint = result.begin()->endpoint();
+					auto publicKey = node.identityKey().array();
+					bootstrapReplicators.emplace_back(sirius::drive::ReplicatorInfo{ endpoint, publicKey });
+				}
+			}
+
+			if (bootstrapReplicators.empty()) {
+				CATAPULT_THROW_RUNTIME_ERROR("bootstrap replicators cannot be empty")
+			}
+
+			return bootstrapReplicators;
 		}
 
 		template<class T>

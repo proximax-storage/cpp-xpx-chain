@@ -90,7 +90,6 @@ namespace catapult { namespace local {
 		public:
 			void boot() {
 				auto pConfigHolder = m_pluginManager.configHolder();
-				auto configHeight = Height(0);
 
 				/// Initially we start by loading system requirements
 				CATAPULT_LOG(info) << "registering system plugins";
@@ -122,8 +121,10 @@ namespace catapult { namespace local {
 
 						loadStateFromDisk();
 
-						configHeight = m_cacheHolder.cache().configHeight() + Height(1);
+						auto configHeight = m_cacheHolder.cache().configHeight() + Height(1);
 						pConfigHolder->SetCache(nullptr);
+						const auto& config = pConfigHolder->Config(configHeight);
+						pConfigHolder->InsertConfig(Height(0), config.Network, config.SupportedEntityVersions);
 						m_cacheHolder.cache() = m_pluginManager.createCache();
 						m_pluginManager.reset();
 						m_pluginModules.clear();
@@ -134,7 +135,8 @@ namespace catapult { namespace local {
 
 				/// Load non system plugins
 				CATAPULT_LOG(debug) << "registering addon plugins";
-				auto addonPlugins = LoadConfigurablePlugins(*m_pBootstrapper, pConfigHolder->Config(configHeight).Network);
+				const auto& networkConfig = pConfigHolder->Config(Height(0)).Network;
+				auto addonPlugins = LoadConfigurablePlugins(*m_pBootstrapper, networkConfig);
 				m_pluginModules.insert(m_pluginModules.cend(), addonPlugins.begin(), addonPlugins.end());
 
 				/// We can now create the cache with all available plugins.
@@ -151,7 +153,7 @@ namespace catapult { namespace local {
 				/// Finally we can build and run the plugin initializers to manipulate the config.
 
 				auto initializers = m_pluginManager.createPluginInitializer();
-				initializers(const_cast<model::NetworkConfiguration&>(pConfigHolder->Config(configHeight).Network));
+				initializers(const_cast<model::NetworkConfiguration&>(networkConfig));
 				pConfigHolder->SetPluginInitializer(std::move(initializers));
 
 				CATAPULT_LOG(debug) << "registering counters";

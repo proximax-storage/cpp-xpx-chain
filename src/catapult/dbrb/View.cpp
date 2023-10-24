@@ -22,16 +22,8 @@ namespace catapult { namespace dbrb {
 		return sizeof(uint32_t) + Data.size() * ProcessId_Size;
 	}
 
-	View& View::merge(const View& other) {
-		Data.insert(other.Data.begin(), other.Data.end());
-		return *this;
-	}
-
-	View& View::difference(const View& other) {
-		const auto& otherData = other.Data;
-		ViewData newData;
-		std::set_difference(Data.begin(), Data.end(), otherData.begin(), otherData.end(), std::inserter(newData, newData.begin()));
-		Data = std::move(newData);
+	View& View::merge(View& other) {
+		Data.merge(other.Data);
 		return *this;
 	}
 
@@ -65,14 +57,5 @@ namespace catapult { namespace dbrb {
 
 	bool View::areComparable(const View& a, const View& b) {
 		return (a == b || a < b || a > b);
-	}
-
-	View View::merge(const View& a, const View& b) {
-		ViewData newData;
-		for (const auto& change : a.Data)
-			newData.insert(change);
-		for (const auto& change : b.Data)
-			newData.insert(change);
-		return View { std::move(newData) };
 	}
 }}
