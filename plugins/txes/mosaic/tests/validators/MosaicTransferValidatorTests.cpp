@@ -137,10 +137,10 @@ namespace catapult { namespace validators {
 			// - notice that BalanceTransferNotification holds references to sender + recipient
 			Key sender;
 			auto mosaicId = test::UnresolveXor(Valid_Mosaic_Id);
-			auto notification = model::BalanceTransferNotification<1>(sender, UnresolvedAddress(), mosaicId, Amount(123));
-
 			if (notificationFlags & Owner_Is_Sender)
 				sender = owner;
+
+			auto notification = model::BalanceTransferNotification<1>(sender, UnresolvedAddress(), mosaicId, Amount(123));
 
 			if (notificationFlags & Owner_Is_Recipient) {
 				const auto& recipient = cache.createView().sub<cache::AccountStateCache>().find(owner).get().Address;
