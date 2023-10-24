@@ -23,6 +23,7 @@
 #include "catapult/model/ExtractorContext.h"
 #include "catapult/model/Statement.h"
 #include "catapult/functions.h"
+#include "MessagingConfiguration.h"
 #include <zmq_addon.hpp>
 
 namespace catapult {
@@ -56,7 +57,10 @@ namespace catapult { namespace zeromq {
 		Public_Key_Statements_Marker = 0x62, // 'b'
 
 		/// A receipt.
-	  	Blockchain_State_Statements_Marker = 0x63, // 'c'
+	  	Blockchain_State_Statements_Marker = 0x41, // 'A'
+
+		/// A receipt.
+		Blockchain_Transaction_Statements_Marker = 0x42, // 'B'
 
 		/// An added unconfirmed transaction.
 		Unconfirmed_Transaction_Add_Marker = 0x75, // 'u'
@@ -84,7 +88,7 @@ namespace catapult { namespace zeromq {
 	class ZeroMqEntityPublisher {
 	public:
 		/// Creates a zeromq entity publisher around \a port, \a pNotificationPublisher and \a contextFactory.
-		explicit ZeroMqEntityPublisher(unsigned short port,
+		explicit ZeroMqEntityPublisher(const MessagingConfiguration& configuration,
 				std::unique_ptr<model::NotificationPublisher>&& pNotificationPublisher, const model::ExtractorContextFactoryFunc& contextFactory);
 
 		~ZeroMqEntityPublisher();
@@ -120,7 +124,8 @@ namespace catapult { namespace zeromq {
 		void publishTransaction(TransactionMarker topicMarker, const WeakTransactionInfo& transactionInfo);
 		void publishStatement(const model::PublicKeyStatement& statement, const Height& height);
 		void publishStatement(const model::BlockchainStateStatement& statement, const Height& height);
-		void publish(
+		void publishStatement(const model::TransactionStatement & statement, const Height& height);
+				void publish(
 				const std::string& topicName,
 				TransactionMarker topicMarker,
 				const WeakTransactionInfo& transactionInfo,
@@ -129,6 +134,7 @@ namespace catapult { namespace zeromq {
 	private:
 		class SynchronizedPublisher;
 		std::unique_ptr<model::NotificationPublisher> m_pNotificationPublisher;
+		MessagingConfiguration m_messagingConfiguration;
 		std::unique_ptr<SynchronizedPublisher> m_pSynchronizedPublisher;
 		model::ExtractorContextFactoryFunc m_extractorContextFactory;
 	};

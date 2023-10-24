@@ -35,8 +35,11 @@ namespace catapult { namespace zeromq {
 		MessagingConfiguration config;
 
 		LOAD_PROPERTY(SubscriberPort);
+		LOAD_PROPERTY(EnableTransactionStatements);
+		LOAD_PROPERTY(EnablePublicKeyStatements);
+		LOAD_PROPERTY(EnableBlockchainStateStatements);
 
-		utils::VerifyBagSizeLte(bag, 1);
+		utils::VerifyBagSizeLte(bag, 4);
 		return config;
 	}
 

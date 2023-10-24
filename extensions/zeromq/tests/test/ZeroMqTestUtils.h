@@ -132,7 +132,7 @@ namespace catapult { namespace test {
 		MqContext()
 				: m_registry(mocks::CreateDefaultTransactionRegistry())
 				, m_pZeroMqEntityPublisher(std::make_shared<zeromq::ZeroMqEntityPublisher>(
-						GetDefaultLocalHostZmqPort(),
+						zeromq::MessagingConfiguration({GetDefaultLocalHostZmqPort(), true, true, true}),
 						model::CreateNotificationPublisher(m_registry, UnresolvedMosaicId()),
 						[](){ return model::ExtractorContext(); }))
 				, m_zmqSocket(m_zmqContext, ZMQ_SUB) {

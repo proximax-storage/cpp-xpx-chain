@@ -35,12 +35,14 @@ namespace catapult { namespace zeromq {
 					{
 						"messaging",
 						{
-							{ "subscriberPort", "9753" }
+							{ "subscriberPort", "9753" },
+							{ "enableTransactionStatements", "true" },
+							{ "enablePublicKeyStatements", "true" },
+							{ "enableBlockchainStateStatements", "true" }
 						}
 					}
 				};
 			}
-
 			static bool SupportsUnknownProperties() {
 				return false;
 			}
@@ -80,6 +82,9 @@ namespace catapult { namespace zeromq {
 
 		// Assert:
 		EXPECT_EQ(7902u, config.SubscriberPort);
+		EXPECT_EQ(true, config.EnableBlockchainStateStatements);
+		EXPECT_EQ(true, config.EnablePublicKeyStatements);
+		EXPECT_EQ(true, config.EnableTransactionStatements);
 	}
 
 	// endregion

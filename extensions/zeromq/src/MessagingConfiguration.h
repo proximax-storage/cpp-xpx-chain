@@ -31,6 +31,15 @@ namespace catapult { namespace zeromq {
 		/// Subscriber port.
 		unsigned short SubscriberPort;
 
+		/// Subscriber port.
+		bool EnableTransactionStatements;
+
+		/// Subscriber port.
+		bool EnablePublicKeyStatements;
+
+		/// Subscriber port.
+		bool EnableBlockchainStateStatements;
+
 	private:
 		MessagingConfiguration() = default;
 

@@ -147,11 +147,15 @@ namespace catapult { namespace state {
 	}
 
 	RootNamespace RootNamespace::renew(const NamespaceLifetime& newLifetime) const {
-		return RootNamespace(m_id, m_owner, newLifetime, m_pChildren);
+		RootNamespace rn(m_id, m_owner, newLifetime, m_pChildren);
+		rn.setAlias(m_id, m_alias);
+		return rn;
 	}
 
 	RootNamespace RootNamespace::renew(const Key& newOwner, const NamespaceLifetime& newLifetime) const {
-		return RootNamespace(m_id, newOwner, newLifetime, m_pChildren);
+		RootNamespace rn(m_id, newOwner, newLifetime, m_pChildren);
+		rn.setAlias(m_id, m_alias);
+		return rn;
 	}
 
 	RootNamespace::OrderedChildPaths RootNamespace::sortedChildPaths() const {
