@@ -136,16 +136,16 @@ RUN cd /catapult \
     connection \
     drive \
     grpc \
-    ionet \\
-    messenger-server \\
-    model \\
-    net \\
-    nodediscovery \\
-    sdk_external \\
-    storage-crypto \\
-    supercontract-server \\
-    torrent-sirius \\
-    utils \\
+    ionet \
+    messenger-server \
+    model \
+    net \
+    nodediscovery \
+    sdk_external \
+    storage-crypto \
+    supercontract-server \
+    torrent-sirius \
+    utils \
     -j$(nproc)
 
 RUN cd /catapult/_build && make \
