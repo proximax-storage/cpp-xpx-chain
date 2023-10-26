@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libmongoc-dev \
   libzstd-dev \
   googletest \
-  libzmq3-dev \\
+  libzmq3-dev \
   cppzmq-dev
 
 WORKDIR /usr/local/src
