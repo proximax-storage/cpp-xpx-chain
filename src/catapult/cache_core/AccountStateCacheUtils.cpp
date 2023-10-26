@@ -88,19 +88,27 @@ namespace catapult { namespace cache {
 		auto trackedState = state;
 		if(trackedState.GetVersion() == 1)
 			CATAPULT_THROW_RUNTIME_ERROR("Forward crawling account iterations not supported for V1 accounts.");
-		while(trackedState.SupplementalPublicKeys.upgrade()){
-			trackedState = cache.find(trackedState.SupplementalPublicKeys.upgrade().get()).get();
+
+		decltype(cache.find(Key())) iterator;
+		while (trackedState.SupplementalPublicKeys.upgrade()) {
+			iterator = cache.find(trackedState.SupplementalPublicKeys.upgrade().get());
+			trackedState = iterator.get();
 		}
+
 		return trackedState.PublicKey;
 	}
 
 	const Key GetCurrentlyActiveAccountKey(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey) {
-		auto trackedState = cache.find(accountKey).get();
+		auto iterator = cache.find(accountKey);
+		auto trackedState = iterator.get();
 		if(trackedState.GetVersion() == 1)
 			CATAPULT_THROW_RUNTIME_ERROR("Forward crawling account iterations not supported for V1 accounts.");
-		while(trackedState.SupplementalPublicKeys.upgrade()){
-			trackedState = cache.find(trackedState.SupplementalPublicKeys.upgrade().get()).get();
+
+		while (trackedState.SupplementalPublicKeys.upgrade()) {
+			iterator = cache.find(trackedState.SupplementalPublicKeys.upgrade().get());
+			trackedState = iterator.get();
 		}
+
 		return trackedState.PublicKey;
 	}
 }}

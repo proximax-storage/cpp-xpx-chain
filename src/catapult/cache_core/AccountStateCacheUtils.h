@@ -60,47 +60,55 @@ namespace catapult { namespace cache {
 
 	template<typename TPredicate>
 	const bool FindActiveAccountKeyMatchForward(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey, TPredicate predicate) {
-		auto iterator = cache.find(accountKey).tryGet();
-		if(!iterator)
+		auto iterator = cache.find(accountKey);
+		auto pTrackedState = iterator.tryGet();
+		if(!pTrackedState)
 			return false;
-		auto trackedState = *iterator;
-		if(trackedState.GetVersion() == 1)
+		
+		if(pTrackedState->GetVersion() == 1)
 			CATAPULT_THROW_RUNTIME_ERROR("Forward crawling account iterations not supported for V1 accounts.");
-		for(;;){
-			if(predicate(trackedState.PublicKey))
+		
+		for(;;) {
+			if(predicate(pTrackedState->PublicKey))
 				return true;
-			if(!trackedState.SupplementalPublicKeys.upgrade())
+			if(!pTrackedState->SupplementalPublicKeys.upgrade())
 				return false;
-			trackedState = cache.find(trackedState.SupplementalPublicKeys.upgrade().get()).get();
+			iterator = cache.find(pTrackedState->OldState->PublicKey);
+			pTrackedState = iterator.tryGet();
 		}
 	}
 	template<typename TPredicate>
 	const bool FindActiveAccountKeyMatchBackwards(const cache::ReadOnlyAccountStateCache& cache, const Key& accountKey, TPredicate predicate) {
-		auto iterator = cache.find(accountKey).tryGet();
-		if(!iterator)
+		auto iterator = cache.find(accountKey);
+		auto pTrackedState = iterator.tryGet();
+		if(!pTrackedState)
 			return false;
-		auto trackedState = *iterator;
-		for(;;){
-			if(predicate(trackedState.PublicKey))
+		
+		for(;;) {
+			if(predicate(pTrackedState->PublicKey))
 				return true;
-			if(!trackedState.OldState)
+			if(!pTrackedState->OldState)
 				return false;
-			trackedState = cache.find(trackedState.OldState->PublicKey).get();
+			iterator = cache.find(pTrackedState->OldState->PublicKey);
+			pTrackedState = iterator.tryGet();
 		}
 	}
 
 	template<typename TPredicate>
 	const bool FindActiveAccountAddressMatchBackwards(const cache::ReadOnlyAccountStateCache& cache, const Address& address, TPredicate predicate) {
-		auto iterator = cache.find(address).tryGet();
-		if(!iterator)
+		auto addressIterator = cache.find(address);
+		auto pTrackedState = addressIterator.tryGet();
+		if(!pTrackedState)
 			return false;
-		auto trackedState = *iterator;
-		for(;;){
-			if(predicate(trackedState.Address))
+		
+		decltype(cache.find(Key())) publicKeyIterator;
+		for(;;) {
+			if(predicate(pTrackedState->Address))
 				return true;
-			if(!trackedState.OldState)
+			if(!pTrackedState->OldState)
 				return false;
-			trackedState = cache.find(trackedState.OldState->PublicKey).get();
+			publicKeyIterator = cache.find(pTrackedState->OldState->PublicKey);
+			pTrackedState = publicKeyIterator.tryGet();
 		}
 	}
 
