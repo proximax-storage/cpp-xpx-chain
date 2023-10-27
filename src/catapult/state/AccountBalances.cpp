@@ -94,19 +94,16 @@ namespace catapult { namespace state {
 		m_optimizedMosaicId = accountBalances.optimizedMosaicId();
 		m_trackedMosaicId = accountBalances.trackedMosaicId();
 		m_balances.optimize(m_optimizedMosaicId);
-		if (!m_accountState) {
+
+		if (!m_accountState)
 			m_accountState = accountBalances.m_accountState;
-		}
 
 		for (const auto& pair : accountBalances.m_balances)
-		{
 			m_balances.insert(pair);
-		}
 
 		for (const auto& pair : accountBalances.m_lockedBalances)
-		{
 			m_lockedBalances.insert(pair);
-		}
+
 		for (const auto& snapshot : accountBalances.m_localSnapshots)
 			pushSnapshot(snapshot, true /* committed */);
 

@@ -111,9 +111,9 @@ namespace catapult { namespace state {
 
 		/// Copy constructor that makes a deep copy of \a accountState.
 		AccountState(const AccountState& accountState)
-		: Balances(this),
-			OldState(nullptr),
-		  VersionableState(accountState){
+				: Balances(this)
+				, OldState(nullptr)
+				, VersionableState(accountState) {
 			*this = accountState;
 		}
 
