@@ -53,7 +53,7 @@ namespace catapult { namespace dbrb {
 	{}
 
 	void MessageSender::send(const std::shared_ptr<MessagePacket>& pPacket, const std::set<ProcessId>& recipients) {
-		CATAPULT_LOG(debug) << "[DBRB] disseminating " << *pPacket << " to " << recipients.size() << " node(s)";
+		CATAPULT_LOG(trace) << "[DBRB] disseminating " << *pPacket << " to " << recipients.size() << " node(s)";
 		std::set<ProcessId> notFoundNodes;
 		for (const auto& recipient : recipients) {
 			auto signedNode = m_nodeRetreiver.getNode(recipient);
@@ -77,7 +77,7 @@ namespace catapult { namespace dbrb {
 				}
 
 				if (pPacketIoPair) {
-					CATAPULT_LOG(debug) << "[DBRB] sending " << *pPacket << " to " << node;
+					CATAPULT_LOG(trace) << "[DBRB] sending " << *pPacket << " to " << node;
 					pPacketIoPair->io()->write(ionet::PacketPayload(pPacket), [pThisWeak = weak_from_this(), node, pPacket](ionet::SocketOperationCode code) {
 						if (code != ionet::SocketOperationCode::Success) {
 							CATAPULT_LOG(error) << "[DBRB] sending " << *pPacket << " to " << node << " completed with " << code;

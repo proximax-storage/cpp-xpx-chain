@@ -17,5 +17,5 @@ namespace catapult { namespace observers {
 		DECLARE_OBSERVER(AddDbrbProcess, model::AddDbrbProcessNotification<1>)();
 
 		/// Observes changes triggered by block notifications.
-		DECLARE_OBSERVER(DbrbProcessPruning, model::BlockNotification<1>)(const std::shared_ptr<cache::DbrbViewFetcherImpl>& pDbrbViewFetcher);
+		DECLARE_OBSERVER(DbrbProcessPruning, model::BlockNotification<1>)();
 }}

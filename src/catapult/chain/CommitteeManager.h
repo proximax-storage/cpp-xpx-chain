@@ -59,6 +59,8 @@ namespace catapult { namespace chain {
 		/// Returns the weight of the account by \a accountKey.
 		virtual double weight(const Key& accountKey) const = 0;
 
+		virtual void logCommittee() const = 0;
+
 	protected:
 		model::BlockElementSupplier m_lastBlockElementSupplier;
 		Committee m_committee;

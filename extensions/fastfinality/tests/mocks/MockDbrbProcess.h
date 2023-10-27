@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "MockDbrbViewFetcher.h"
+#include "tests/test/core/mocks/MockDbrbViewFetcher.h"
 #include "extensions/fastfinality/src/dbrb/DbrbProcess.h"
 #include "plugins/txes/dbrb/src/cache/DbrbViewFetcherImpl.h"
 #include "src/catapult/crypto/KeyPair.h"
@@ -27,15 +27,11 @@ namespace catapult { namespace mocks {
 		explicit MockDbrbProcess(
 				const dbrb::ProcessId& processId,
 				bool fakeDissemination = false,
-				const dbrb::DbrbConfiguration& dbrbConfig = dbrb::DbrbConfiguration::Uninitialized(),
 				std::weak_ptr<net::PacketWriters> pWriters = std::weak_ptr<mocks::MockPacketWriters>(),
 				const net::PacketIoPickerContainer& packetIoPickers = {},
 				const crypto::KeyPair& keyPair = Key_Pair,
-				const config::ImmutableConfiguration& immutableConfig = config::ImmutableConfiguration::Uninitialized(),
 				const std::shared_ptr<thread::IoThreadPool>& pPool = test::CreateStartedIoThreadPool(1),
-				const dbrb::DbrbViewFetcher& dbrbViewFetcher = MockDbrbViewFetcher(),
-				chain::TimeSupplier timeSupplier = []() { return Timestamp(); },
-				const supplier<Height>& chainHeightSupplier = []() { return Height(); });
+				const dbrb::DbrbViewFetcher& dbrbViewFetcher = MockDbrbViewFetcher());
 
 		void setCurrentView(const dbrb::View& view);
 

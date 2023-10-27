@@ -6,8 +6,34 @@
 
 #include "DbrbViewFetcherImpl.h"
 #include "src/cache/DbrbViewCache.h"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace cache {
+
+	namespace {
+		void LogProcess(const char* prefix, const Key& process, const Timestamp& timestamp, std::ostringstream& out) {
+			auto time = std::chrono::system_clock::to_time_t(utils::ToTimePoint(timestamp));
+			char buffer[40];
+			std::strftime(buffer, 40 ,"%F %T", std::localtime(&time));
+			out << std::endl << prefix << process << " expires at: " << buffer;
+		}
+
+		void LogAllProcesses(const std::map<dbrb::ProcessId, Timestamp>& processes) {
+			std::ostringstream out;
+			out << std::endl << "DBRB processes (" << processes.size() << "):";
+			for (const auto& pair : processes)
+				LogProcess("DBRB process: ", pair.first, pair.second, out);
+			CATAPULT_LOG(trace) << out.str();
+		}
+
+		void LogCurrentView(const dbrb::ViewData& view, const std::map<dbrb::ProcessId, Timestamp>& processes) {
+			std::ostringstream out;
+			out << std::endl << "current DBRB view (" << view.size() << "):";
+			for (const auto& processId : view)
+				LogProcess("DBRB view member: ", processId, processes.at(processId), out);
+			CATAPULT_LOG(trace) << out.str();
+		}
+	}
 
 	dbrb::ViewData DbrbViewFetcherImpl::getView(Timestamp timestamp) const {
 		dbrb::ViewData view;
@@ -18,20 +44,11 @@ namespace catapult { namespace cache {
 			view.insert(iter->second.begin(), iter->second.end());
 		}
 
+		LogAllProcesses(m_processes);
+		LogCurrentView(view, m_processes);
+
     	return view;
     }
-
-	dbrb::ViewData DbrbViewFetcherImpl::getExpiredDbrbProcesses(Timestamp timestamp) {
-		dbrb::ViewData expiredProcesses;
-		for (auto iter = m_expirationTimes.begin(); iter != m_expirationTimes.end(); ++iter) {
-			if (iter->first > timestamp)
-				break;
-
-			expiredProcesses.insert(iter->second.begin(), iter->second.end());
-		}
-
-		return expiredProcesses;
-	}
 
 	Timestamp DbrbViewFetcherImpl::getExpirationTime(const dbrb::ProcessId& processId) const {
 		auto iter = m_processes.find(processId);
@@ -41,24 +58,13 @@ namespace catapult { namespace cache {
 		return Timestamp();
     }
 
-	void DbrbViewFetcherImpl::addOrUpdateDbrbProcess(const state::DbrbProcessEntry& entry) {
-		removeExpirationTime(entry.processId());
+	void DbrbViewFetcherImpl::addDbrbProcess(const state::DbrbProcessEntry& entry) {
 		m_processes[entry.processId()] = entry.expirationTime();
 		m_expirationTimes[entry.expirationTime()].emplace(entry.processId());
     }
 
-	void DbrbViewFetcherImpl::removeDbrbProcess(const dbrb::ProcessId& processId) {
-		removeExpirationTime(processId);
-		m_processes.erase(processId);
-    }
-
-	void DbrbViewFetcherImpl::removeExpirationTime(const dbrb::ProcessId& processId) {
-		auto processIter = m_processes.find(processId);
-		if (processIter != m_processes.end()) {
-			auto expirationTimeIter = m_expirationTimes.find(processIter->second);
-			expirationTimeIter->second.erase(processId);
-			if (expirationTimeIter->second.empty())
-				m_expirationTimes.erase(expirationTimeIter);
-		}
+	void DbrbViewFetcherImpl::clear() {
+		m_processes.clear();
+		m_expirationTimes.clear();
     }
 }}

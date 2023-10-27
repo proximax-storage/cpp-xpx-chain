@@ -25,7 +25,7 @@ namespace catapult { namespace chain {
 	class WeightedVotingCommitteeManager : public CommitteeManager {
 	public:
 		/// Creates a weighted voting committee manager around \a pAccountCollector.
-		explicit WeightedVotingCommitteeManager(const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector);
+		explicit WeightedVotingCommitteeManager(std::shared_ptr<cache::CommitteeAccountCollector> pAccountCollector);
 
 	public:
 		const Committee& selectCommittee(const model::NetworkConfiguration& config) override;
@@ -33,6 +33,8 @@ namespace catapult { namespace chain {
 		void reset() override;
 
 		double weight(const Key& accountKey) const override;
+
+		void logCommittee() const override;
 
 	public:
 		cache::AccountMap& accounts() {
