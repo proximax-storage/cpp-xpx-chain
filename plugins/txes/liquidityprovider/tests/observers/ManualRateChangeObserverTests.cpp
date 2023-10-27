@@ -166,13 +166,14 @@ namespace catapult { namespace observers {
 		CacheValues values(CreateInitialLInfo(), Amount {test::Random() / 16}, Amount {test::Random() / 16});
 
 		// Assert
+		unsigned long long minValue = 0ULL;
 		for (int i = 0; i < 10000; i++) {
 			RunTest(NotifyMode::Commit,
 					values,
 					test::RandomByte() % 2,
-					Amount{test::RandomInRange(0UL, values.CurrencyBalance.unwrap())},
+					Amount{test::RandomInRange(minValue, values.CurrencyBalance.unwrap())},
 					test::RandomByte() % 2,
-					Amount{test::RandomInRange(0UL, values.MosaicBalance.unwrap())});
+					Amount{test::RandomInRange(minValue, values.MosaicBalance.unwrap())});
 		}
 	}
 

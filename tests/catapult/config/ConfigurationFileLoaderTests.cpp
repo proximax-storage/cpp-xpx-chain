@@ -22,6 +22,7 @@
 #include "catapult/utils/ConfigurationUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
+#include <fstream>
 
 namespace catapult { namespace config {
 
