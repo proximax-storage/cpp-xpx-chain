@@ -260,7 +260,8 @@ namespace catapult { namespace cache {
 			EXPECT_EQ(delta->size(), 1);
 			EXPECT_EQ(delta->secondarySize(), 3);
 
-			auto value = delta->find(recordGroup.Identifier).get();
+			auto valueIter = delta->find(recordGroup.Identifier);
+			auto value = valueIter.get();
 			EXPECT_EQ(value.LockFundRecords.size(), 3);
 			cache.commit();
 		}
@@ -293,7 +294,8 @@ namespace catapult { namespace cache {
 			EXPECT_EQ(delta->size(), 3);
 			EXPECT_EQ(delta->secondarySize(), 1);
 
-			auto value = delta->find(recordGroup.Identifier).get();
+			auto valueIter = delta->find(recordGroup.Identifier);
+			auto value = valueIter.get();
 			EXPECT_EQ(value.LockFundRecords.size(), 3);
 			cache.commit();
 		}
@@ -343,7 +345,8 @@ namespace catapult { namespace cache {
 
 			for(auto& record : records)
 			{
-				auto value = delta->find(record.Identifier).get();
+				auto valueIter = delta->find(record.Identifier);
+				auto value = valueIter.get();
 				EXPECT_EQ(value.LockFundRecords.size(), record.LockFundRecords.size());
 				for(auto lockFundRecord : value.LockFundRecords)
 				{
@@ -395,9 +398,12 @@ namespace catapult { namespace cache {
 	DELTA_VIEW_BASED_TEST(GetReturnsExpectedHeightRecords) {
 		// Act:
 		TTraits::RunTest([](auto& view, const std::vector<state::LockFundRecordGroup<state::LockFundHeightIndexDescriptor>>& records) {
-			auto& entry = view->find(Height(10)).get();
-			auto& entry2 = view->find(Height(11)).get();
-			auto& entry3 = view->find(Height(12)).get();
+			auto entryIter = view->find(Height(10));
+			auto entryIter2 = view->find(Height(11));
+			auto entryIter3 = view->find(Height(12));
+			auto& entry = entryIter.get();
+			auto& entry2 = entryIter2.get();
+			auto& entry3 = entryIter3.get();
 			// Assert:
 			test::AssertEqual(records[0], entry);
 			test::AssertEqual(records[1], entry2);
@@ -412,7 +418,8 @@ namespace catapult { namespace cache {
 			{
 				for(auto& record : recordGroup.LockFundRecords)
 				{
-					auto& cacheRecord = view->find(record.first).get();
+					auto cacheRecordIter = view->find(record.first);
+					auto& cacheRecord = cacheRecordIter.get();
 					test::AssertEqual(cacheRecord.LockFundRecords.begin()->second, record.second);
 				}
 			}
@@ -530,7 +537,8 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(delta->secondarySize(), 8);
 		EXPECT_FALSE(delta->contains(removeKey));
 
-		auto recordGroup = delta->find(Height(10)).get();
+		auto recordGroupIter = delta->find(Height(10));
+		auto recordGroup = recordGroupIter.get();
 
 		EXPECT_EQ(recordGroup.LockFundRecords.size(), 2);
 		EXPECT_EQ(recordGroup.LockFundRecords.find(removeKey), recordGroup.LockFundRecords.end());
@@ -556,7 +564,8 @@ namespace catapult { namespace cache {
 		}
 
 		EXPECT_EQ(delta->size(), 2);
-		auto recordGroup = delta->find(Height(10)).tryGet();
+		auto recordGroupIter =  delta->find(Height(10));
+		auto recordGroup = recordGroupIter.tryGet();
 		EXPECT_FALSE(recordGroup);
 	}
 
@@ -568,7 +577,8 @@ namespace catapult { namespace cache {
 		DefaultPopulateCache<KeySupplierRecordGroupGeneratorTraits>(delta, records, 3);
 
 		auto firstKey = records[0].LockFundRecords.begin()->first;
-		auto keyRecord = delta->find(firstKey).get();
+		auto keyRecordIter = delta->find(firstKey);
+		auto keyRecord = keyRecordIter.get();
 
 		// Sanity:
 		EXPECT_EQ(delta->secondarySize(), 3);
@@ -581,14 +591,16 @@ namespace catapult { namespace cache {
 			delta->remove(firstKey, innerRecord.Identifier);
 			count--;
 			// Sanity:
-			auto cacheRecord = delta->find(innerRecord.Identifier).get();
+			auto cacheRecordIter = delta->find(innerRecord.Identifier);
+			auto cacheRecord = cacheRecordIter.get();
 			EXPECT_EQ(cacheRecord.LockFundRecords.size(), 2);
 		}
 
 
 		EXPECT_EQ(delta->size(), 3);
 		EXPECT_EQ(delta->secondarySize(), 2);
-		auto recordGroup = delta->find(firstKey).tryGet();
+		auto recordGroupIter =  delta->find(firstKey);
+		auto recordGroup = recordGroupIter.tryGet();
 		EXPECT_FALSE(recordGroup);
 	}
 
@@ -607,12 +619,14 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(delta->secondarySize(), 9);
 		EXPECT_TRUE(delta->contains(removeKey));
 
-		auto firstKeyRecord = delta->find(removeKey).get().LockFundRecords.begin()->second;
+		auto firstKeyRecordIter = delta->find(removeKey);
+		auto firstKeyRecord = firstKeyRecordIter.get().LockFundRecords.begin()->second;
 
 		EXPECT_FALSE(firstKeyRecord.Active());
 		EXPECT_EQ(firstKeyRecord.InactiveRecords.size(), 3);
 
-		auto firstHeightRecord = delta->find(Height(10)).get().LockFundRecords.find(removeKey)->second;
+		auto firstHeightRecordIter = delta->find(Height(10));
+		auto firstHeightRecord = firstHeightRecordIter.get().LockFundRecords.find(removeKey)->second;
 
 		EXPECT_FALSE(firstHeightRecord.Active());
 		EXPECT_EQ(firstHeightRecord.InactiveRecords.size(), 3);
@@ -633,7 +647,8 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(delta->secondarySize(), 9);
 		EXPECT_TRUE(delta->contains(removeKey));
 
-		auto firstRecord = delta->find(removeKey).get().LockFundRecords.begin()->second;
+		auto firstRecordIter = delta->find(removeKey);
+		auto firstRecord = firstRecordIter.get().LockFundRecords.begin()->second;
 
 		EXPECT_TRUE(firstRecord.Active());
 		EXPECT_EQ(firstRecord.InactiveRecords.size(), 1);
@@ -656,7 +671,8 @@ namespace catapult { namespace cache {
 
 		for(auto& innerRecord : records[0].LockFundRecords)
 		{
-			auto recordKeyGroup = delta->find(innerRecord.first).tryGet();
+			auto recordKeyGroupIter = delta->find(innerRecord.first);
+			auto recordKeyGroup = recordKeyGroupIter.tryGet();
 			EXPECT_FALSE(recordKeyGroup);
 			EXPECT_FALSE(delta->contains(innerRecord.first));
 		}
@@ -675,7 +691,8 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(delta->secondarySize(), 9);
 		EXPECT_TRUE(delta->contains(Height(10)));
 
-		auto recordHeightGroup = delta->find(Height(10)).get();
+		auto recordHeightGroupIter = delta->find(Height(10));
+		auto recordHeightGroup = recordHeightGroupIter.get();
 
 		EXPECT_EQ(recordHeightGroup.LockFundRecords.size(), 3);
 		for(auto innerCacheRecord : recordHeightGroup.LockFundRecords)
@@ -685,7 +702,8 @@ namespace catapult { namespace cache {
 		}
 		for(auto& innerRecord : records[0].LockFundRecords)
 		{
-			auto recordKeyGroup = delta->find(innerRecord.first).get();
+			auto recordKeyGroupIter = delta->find(innerRecord.first);
+			auto recordKeyGroup = recordKeyGroupIter.get();
 			EXPECT_EQ(recordKeyGroup.LockFundRecords.begin()->second.Size(), 3);
 			EXPECT_FALSE(recordKeyGroup.LockFundRecords.begin()->second.Active());
 		}
@@ -705,7 +723,8 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(delta->secondarySize(), 9);
 		EXPECT_TRUE(delta->contains(Height(10)));
 
-		auto recordHeightGroup = delta->find(Height(10)).get();
+		auto recordHeightGroupIter = delta->find(Height(10));
+		auto recordHeightGroup = recordHeightGroupIter.get();
 
 		EXPECT_EQ(recordHeightGroup.LockFundRecords.size(), 3);
 		for(auto innerCacheRecord : recordHeightGroup.LockFundRecords)
@@ -715,7 +734,8 @@ namespace catapult { namespace cache {
 		}
 		for(auto& innerRecord : records[0].LockFundRecords)
 		{
-			auto recordKeyGroup = delta->find(innerRecord.first).get();
+			auto recordKeyGroupIter = delta->find(innerRecord.first);
+			auto recordKeyGroup = recordKeyGroupIter.get();
 			EXPECT_EQ(recordKeyGroup.LockFundRecords.begin()->second.Size(), 1);
 			EXPECT_TRUE(recordKeyGroup.LockFundRecords.begin()->second.Active());
 		}
@@ -735,7 +755,8 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(delta->secondarySize(), 9);
 		EXPECT_TRUE(delta->contains(Height(10)));
 
-		auto recordHeightGroup = delta->find(Height(10)).get();
+		auto recordHeightGroupIter = delta->find(Height(10));
+		auto recordHeightGroup = recordHeightGroupIter.get();
 
 		EXPECT_EQ(recordHeightGroup.LockFundRecords.size(), 3);
 		for(auto innerCacheRecord : recordHeightGroup.LockFundRecords)
@@ -745,7 +766,8 @@ namespace catapult { namespace cache {
 		}
 		for(auto& innerRecord : records[0].LockFundRecords)
 		{
-			auto recordKeyGroup = delta->find(innerRecord.first).get();
+			auto recordKeyGroupIter = delta->find(innerRecord.first);
+			auto recordKeyGroup = recordKeyGroupIter.get();
 			EXPECT_EQ(recordKeyGroup.LockFundRecords.begin()->second.Size(), 3);
 			EXPECT_FALSE(recordKeyGroup.LockFundRecords.begin()->second.Active());
 		}
@@ -765,7 +787,8 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(delta->secondarySize(), 9);
 		EXPECT_TRUE(delta->contains(Height(10)));
 
-		auto recordHeightGroup = delta->find(Height(10)).get();
+		auto recordHeightGroupIter = delta->find(Height(10));
+		auto recordHeightGroup = recordHeightGroupIter.get();
 
 		EXPECT_EQ(recordHeightGroup.LockFundRecords.size(), 3);
 		for(auto innerCacheRecord : recordHeightGroup.LockFundRecords)
@@ -775,7 +798,8 @@ namespace catapult { namespace cache {
 		}
 		for(auto& innerRecord : records[0].LockFundRecords)
 		{
-			auto recordKeyGroup = delta->find(innerRecord.first).get();
+			auto recordKeyGroupIter = delta->find(innerRecord.first);
+			auto recordKeyGroup = recordKeyGroupIter.get();
 			EXPECT_EQ(recordKeyGroup.LockFundRecords.begin()->second.Size(), 1);
 			EXPECT_TRUE(recordKeyGroup.LockFundRecords.begin()->second.Active());
 		}

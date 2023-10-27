@@ -116,7 +116,8 @@ namespace catapult { namespace observers {
 			[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 			  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 			  auto account = accountStateCacheDelta.find(signer).get();
-			  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
+			  auto lockFundRecordIter = lockFundCacheDelta.find(signer);
+			  auto lockFundKeyRecord = lockFundRecordIter.tryGet();
 			  EXPECT_TRUE(lockFundKeyRecord);
 			  EXPECT_EQ(1u, account.Balances.size());
 			  EXPECT_EQ(0u, account.Balances.lockedBalances().size());
@@ -142,7 +143,8 @@ namespace catapult { namespace observers {
 				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 				  auto account = accountStateCacheDelta.find(signer).get();
-				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
+				  auto lockFundRecordIter = lockFundCacheDelta.find(signer);
+				  auto lockFundKeyRecord = lockFundRecordIter.tryGet();
 				  EXPECT_FALSE(lockFundKeyRecord);
 				  EXPECT_EQ(1u, account.Balances.size());
 				  EXPECT_EQ(1u, account.Balances.lockedBalances().size());
@@ -169,7 +171,8 @@ namespace catapult { namespace observers {
 				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 				  auto account = accountStateCacheDelta.find(signer).get();
-				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
+				  auto lockFundRecordIter = lockFundCacheDelta.find(signer);
+				  auto lockFundKeyRecord = lockFundRecordIter.tryGet();
 				  EXPECT_TRUE(lockFundKeyRecord);
 				  EXPECT_EQ(1u, account.Balances.size());
 				  EXPECT_EQ(1u, account.Balances.lockedBalances().size());

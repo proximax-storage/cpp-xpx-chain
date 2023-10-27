@@ -144,7 +144,8 @@ namespace catapult { namespace validators {
 				sender = owner;
 
 			if (notificationFlags & Owner_Is_Recipient) {
-				const auto& recipient = cache.createView().sub<cache::AccountStateCache>().find(owner).get().Address;
+				auto recipientIter = cache.createView().sub<cache::AccountStateCache>().find(owner);
+				const auto& recipient = recipientIter.get().Address;
 				notification.Recipient = test::UnresolveXor(recipient);
 			}
 

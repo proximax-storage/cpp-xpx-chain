@@ -61,13 +61,15 @@ namespace catapult { namespace test {
 	void AddMosaicOwner(cache::CatapultCacheDelta& cache, MosaicId id, const Key& owner, Amount amount) {
 		auto& accountStateCacheDelta = cache.sub<cache::AccountStateCache>();
 		accountStateCacheDelta.addAccount(owner, Height(1));
-		accountStateCacheDelta.find(owner).get().Balances.credit(id, amount);
+		auto iterator = accountStateCacheDelta.find(owner);
+		iterator.get().Balances.credit(id, amount);
 	}
 	
 	void AddMosaicOwner(cache::CatapultCacheDelta& cache, MosaicId id, Address& owner, Amount amount) {
 		auto& accountStateCacheDelta = cache.sub<cache::AccountStateCache>();
 		accountStateCacheDelta.addAccount(owner, Height(1));
-		accountStateCacheDelta.find(owner).get().Balances.credit(id, amount);
+		auto iterator = accountStateCacheDelta.find(owner);
+		iterator.get().Balances.credit(id, amount);
 	}
 
 	namespace {

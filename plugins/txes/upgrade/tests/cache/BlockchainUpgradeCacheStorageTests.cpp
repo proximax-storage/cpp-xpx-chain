@@ -26,7 +26,8 @@ namespace catapult { namespace cache {
 		auto view = cache.createView(Height{1});
 		EXPECT_EQ(1u, view->size());
 		ASSERT_TRUE(view->contains(originalEntry.height()));
-		const auto& loadedEntry = view->find(originalEntry.height()).get();
+		auto loadedEntryIter = view->find(originalEntry.height());
+		const auto& loadedEntry = loadedEntryIter.get();
 
 		// - the loaded cache value is correct
 		EXPECT_EQ(originalEntry.height(), loadedEntry.height());

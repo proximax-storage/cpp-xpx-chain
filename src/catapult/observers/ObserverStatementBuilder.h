@@ -45,7 +45,7 @@ namespace catapult { namespace observers {
 		void addTransactionReceipt(const model::Receipt& receipt);
 
 		/// Adds a public key \a receipt to this builder.
-		void addPublicKeyReceipt(const model::Receipt& receipt);
+		void addPublicKeyReceipt(const model::PublicKeyReceipt& receipt);
 
 		/// Adds a blockchain state \a receipt to this builder.
 		void addBlockchainStateReceipt(const model::Receipt& receipt);

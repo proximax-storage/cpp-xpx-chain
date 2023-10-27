@@ -35,7 +35,8 @@ namespace catapult { namespace cache {
 		auto view = cache.createView(Height{0});
 		EXPECT_EQ(1u, view->size());
 		ASSERT_TRUE(view->contains(originalMetadataEntry.metadataId()));
-		const auto& loadedMetadataEntry = view->find(originalMetadataEntry.metadataId()).get();
+		auto loadedMetadataEntryIter = view->find(originalMetadataEntry.metadataId());
+		const auto& loadedMetadataEntry = loadedMetadataEntryIter.get();
 
 		// - the loaded cache value is correct
 		test::AssertEqual(originalMetadataEntry, loadedMetadataEntry);

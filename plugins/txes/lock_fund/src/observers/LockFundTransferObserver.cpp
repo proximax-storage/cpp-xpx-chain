@@ -23,7 +23,8 @@ namespace catapult { namespace observers {
 				{
 					accountState.Balances.lock(mosaic.first, mosaic.second, height);
 					if(mosaic.first == harvestingMosaicId){
-						auto& record = globalStore.find(config::TotalStaked_GlobalKey).get();
+						auto recordIter = globalStore.find(config::TotalStaked_GlobalKey);
+						auto& record = recordIter.get();
 						auto& refData = record.GetRef<state::Uint64Converter>();
 						refData += mosaic.second.unwrap();
 					}
@@ -37,7 +38,8 @@ namespace catapult { namespace observers {
 				{
 					accountState.Balances.unlock(mosaic.first, mosaic.second, height);
 					if(mosaic.first == harvestingMosaicId){
-						auto& record = globalStore.find(config::TotalStaked_GlobalKey).get();
+						auto recordIter = globalStore.find(config::TotalStaked_GlobalKey);
+						auto& record = recordIter.get();
 						auto& refData = record.GetRef<state::Uint64Converter>();
 						refData -= mosaic.second.unwrap();
 					}

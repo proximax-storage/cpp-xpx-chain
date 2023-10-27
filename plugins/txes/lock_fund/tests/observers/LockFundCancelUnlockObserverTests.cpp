@@ -114,13 +114,15 @@ namespace catapult { namespace observers {
 						heightCount[descriptor.height]++;
 					}
 					for (auto& key : keyCount) {
-						auto lockFundKeyRecord = lockFundCacheDelta.find(key.first).tryGet();
+						auto lockFundKeyRecordIter = lockFundCacheDelta.find(key.first);
+						auto lockFundKeyRecord = lockFundKeyRecordIter.tryGet();
 						EXPECT_TRUE(lockFundKeyRecord);
 						EXPECT_EQ(lockFundKeyRecord->LockFundRecords.size(), key.second);
 					}
 
 					for (auto& height : heightCount) {
-						auto lockFundHeightRecord = lockFundCacheDelta.find(height.first).tryGet();
+						auto lockFundHeightRecordIter = lockFundCacheDelta.find(height.first);
+						auto lockFundHeightRecord = lockFundHeightRecordIter.tryGet();
 						EXPECT_TRUE(lockFundHeightRecord);
 						EXPECT_EQ(lockFundHeightRecord->LockFundRecords.size(), height.second);
 					}
@@ -163,8 +165,10 @@ namespace catapult { namespace observers {
 					[&descriptors](cache::LockFundCacheDelta& lockFundCacheDelta) {
 						// Assert
 						auto& descriptor = descriptors[0];
-						auto lockFundKeyRecord = lockFundCacheDelta.find(descriptor.key).tryGet();
-						auto lockFundHeightRecord = lockFundCacheDelta.find(descriptor.height).tryGet();
+						auto lockFundKeyRecordIter = lockFundCacheDelta.find(descriptor.key);
+						auto lockFundHeightRecordIter = lockFundCacheDelta.find(descriptor.height);
+						auto lockFundKeyRecord = lockFundKeyRecordIter.tryGet();
+						auto lockFundHeightRecord = lockFundHeightRecordIter.tryGet();
 						// Validate unlocking records
 						EXPECT_TRUE(lockFundKeyRecord);
 						EXPECT_TRUE(lockFundHeightRecord);
@@ -218,8 +222,10 @@ namespace catapult { namespace observers {
 					[&descriptors](cache::LockFundCacheDelta& lockFundCacheDelta) {
 					  // Assert
 					  auto& descriptor = descriptors[0];
-					  auto lockFundKeyRecord = lockFundCacheDelta.find(descriptor.key).tryGet();
-					  auto lockFundHeightRecord = lockFundCacheDelta.find(descriptor.height).tryGet();
+					  auto lockFundKeyRecordIter = lockFundCacheDelta.find(descriptor.key);
+					  auto lockFundHeightRecordIter = lockFundCacheDelta.find(descriptor.height);
+					  auto lockFundKeyRecord = lockFundKeyRecordIter.tryGet();
+					  auto lockFundHeightRecord = lockFundHeightRecordIter.tryGet();
 					  // Validate unlocking records
 					  EXPECT_TRUE(lockFundKeyRecord);
 					  EXPECT_TRUE(lockFundHeightRecord);

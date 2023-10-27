@@ -35,7 +35,8 @@ namespace catapult { namespace observers {
 				if(!multisigCache.contains(notification.Signer))
 					return;
 
-				const auto entry = multisigCache.find(notification.Signer).get();
+				auto entryIter = multisigCache.find(notification.Signer);
+				const auto entry = entryIter.get();
 				/// Check if there are multisig accounts that this account cosigns for
 				for(auto account : entry.multisigAccounts())
 				{
@@ -45,7 +46,8 @@ namespace catapult { namespace observers {
 				}
 				/// If account is multisig we transfer the cosignatories.
 				if(!entry.cosignatories().empty()) {
-					auto& originalAccount = multisigCache.find(notification.Signer).get();
+					auto originalAccountIter = multisigCache.find(notification.Signer);
+					auto& originalAccount = originalAccountIter.get();
 					MultisigAccountFacade multisigAccountFacadeOld(multisigCache, notification.Signer);
 					MultisigAccountFacade multisigAccountFacadeNew(multisigCache, notification.NewAccountPublicKey);
 					for(auto account : entry.cosignatories())
@@ -53,7 +55,8 @@ namespace catapult { namespace observers {
 						multisigAccountFacadeOld.removeCosignatory(account);
 						multisigAccountFacadeNew.addCosignatory(account);
 					}
-					auto& newAccount = multisigCache.find(notification.NewAccountPublicKey).get();
+					auto newAccountIter = multisigCache.find(notification.NewAccountPublicKey);
+					auto& newAccount = newAccountIter.get();
 					newAccount.setMinApproval(originalAccount.minApproval());
 					newAccount.setMinRemoval(originalAccount.minRemoval());
 				}
@@ -63,7 +66,8 @@ namespace catapult { namespace observers {
 				if(!multisigCache.contains(notification.NewAccountPublicKey))
 					return;
 
-				const auto entry = multisigCache.find(notification.NewAccountPublicKey).get();
+				auto entryIter = multisigCache.find(notification.NewAccountPublicKey);
+				const auto entry = entryIter.get();
 				/// Check if there are multisig accounts that this account cosigns for
 				for(auto account : entry.multisigAccounts())
 				{
@@ -73,7 +77,8 @@ namespace catapult { namespace observers {
 				}
 				/// If account is multisig we transfer the cosignatories.
 				if(!entry.cosignatories().empty()) {
-					auto& originalAccount = multisigCache.find(notification.NewAccountPublicKey).get();
+					auto originalAccountIter = multisigCache.find(notification.NewAccountPublicKey);
+					auto& originalAccount = originalAccountIter.get();
 					MultisigAccountFacade multisigAccountFacadeOld(multisigCache, notification.NewAccountPublicKey);
 					MultisigAccountFacade multisigAccountFacadeNew(multisigCache, notification.Signer);
 					for(auto account : entry.cosignatories())
@@ -81,7 +86,8 @@ namespace catapult { namespace observers {
 						multisigAccountFacadeOld.removeCosignatory(account);
 						multisigAccountFacadeNew.addCosignatory(account);
 					}
-					auto& newAccount = multisigCache.find(notification.Signer).get();
+					auto newAccountIter = multisigCache.find(notification.Signer);
+					auto& newAccount = newAccountIter.get();
 					newAccount.setMinApproval(originalAccount.minApproval());
 					newAccount.setMinRemoval(originalAccount.minRemoval());
 				}

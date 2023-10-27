@@ -311,8 +311,10 @@ namespace catapult { namespace test {
 			auto view = TViewAccessor::CreateView(cache);
 
 			// Act + Assert:
-			EXPECT_THROW(TAccessor::Get(*view).find(TTraits::MakeId(0)).get(), catapult_invalid_argument);
-			EXPECT_THROW(TAccessor::Get(*view).find(TTraits::MakeId(36)).get(), catapult_invalid_argument);
+			auto iter1 = TAccessor::Get(*view).find(TTraits::MakeId(0));
+			auto iter2 = TAccessor::Get(*view).find(TTraits::MakeId(36));
+			EXPECT_THROW(iter1.get(), catapult_invalid_argument);
+			EXPECT_THROW(iter2.get(), catapult_invalid_argument);
 		}
 
 		static void AssertGetReturnsValuesForKeysInCache() {
@@ -322,8 +324,10 @@ namespace catapult { namespace test {
 			auto view = TViewAccessor::CreateView(cache);
 
 			// Act:
-			const auto& value1 = TAccessor::Get(*view).find(TTraits::MakeId(9)).get();
-			const auto& value2 = TAccessor::Get(*view).find(TTraits::MakeId(25)).get();
+			auto iter1 = TAccessor::Get(*view).find(TTraits::MakeId(9));
+			auto iter2 = TAccessor::Get(*view).find(TTraits::MakeId(25));
+			const auto& value1 = iter1.get();
+			const auto& value2 = iter2.get();
 
 			// Act + Assert:
 			EXPECT_EQ(TTraits::MakeId(9), TTraits::GetId(value1));
@@ -337,8 +341,11 @@ namespace catapult { namespace test {
 			auto view = TViewAccessor::CreateView(cache);
 
 			// Act:
-			const auto* pValue1 = TAccessor::Get(*view).find(TTraits::MakeId(0)).tryGet();
-			const auto* pValue2 = TAccessor::Get(*view).find(TTraits::MakeId(36)).tryGet();
+
+			auto iter1 = TAccessor::Get(*view).find(TTraits::MakeId(0));
+			auto iter2 = TAccessor::Get(*view).find(TTraits::MakeId(36));
+			const auto* pValue1 = iter1.tryGet();
+			const auto* pValue2 = iter2.tryGet();
 
 			// Assert:
 			EXPECT_FALSE(!!pValue1);
@@ -352,8 +359,10 @@ namespace catapult { namespace test {
 			auto view = TViewAccessor::CreateView(cache);
 
 			// Act:
-			const auto* pValue1 = TAccessor::Get(*view).find(TTraits::MakeId(9)).tryGet();
-			const auto* pValue2 = TAccessor::Get(*view).find(TTraits::MakeId(25)).tryGet();
+			auto iter1 = TAccessor::Get(*view).find(TTraits::MakeId(9));
+			auto iter2 = TAccessor::Get(*view).find(TTraits::MakeId(25));
+			const auto* pValue1 = iter1.tryGet();
+			const auto* pValue2 = iter2.tryGet();
 
 			// Assert:
 			ASSERT_TRUE(!!pValue1);

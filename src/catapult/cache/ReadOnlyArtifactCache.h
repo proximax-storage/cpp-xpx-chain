@@ -50,14 +50,20 @@ namespace catapult { namespace cache {
 
 		public:
 			/// Gets a const value.
-			const TValue& get() const {
+			const TValue& get() const &{
 				return m_hasCacheIter ? m_cacheIter.get() : m_cacheDeltaIter.get();
 			}
 
 			/// Tries to get a const value.
-			const TValue* tryGet() const {
+			const TValue* tryGet() const &{
 				return m_hasCacheIter ? m_cacheIter.tryGet() : m_cacheDeltaIter.tryGet();
 			}
+
+			/// Gets a const value.
+			const TValue& get() && = delete;
+
+			/// Tries to get a const value.
+			const TValue* tryGet() && = delete;
 
 		private:
 			bool m_hasCacheIter;

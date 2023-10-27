@@ -129,4 +129,5 @@ namespace catapult { namespace utils {
 if constexpr(IS_STATIC_SUPPORTED(METHOD_NAME, __VA_ARGS__))                     \
 	SUPPORTS_STATIC(METHOD_NAME)<__VA_ARGS__>::Call
 
+
 }}

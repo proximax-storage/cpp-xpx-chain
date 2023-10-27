@@ -47,7 +47,8 @@ namespace catapult { namespace validators {
 						height = Height(notification.ApplyHeight);
 					}
 				}
-				if (cache.find(height).tryGet())
+				auto networkConfigIter = cache.find(height);
+				if (networkConfigIter.tryGet())
 					return Failure_NetworkConfig_Config_Redundant;
 
 				auto networkConfig = model::NetworkConfiguration::Uninitialized();

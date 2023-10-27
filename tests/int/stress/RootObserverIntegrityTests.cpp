@@ -103,7 +103,8 @@ namespace catapult { namespace extensions {
 
 				auto accountStateCacheView = m_cache.sub<cache::AccountStateCache>().createView(Height{0});
 				for (uint8_t i = startAccountId; i < startAccountId + numAccounts; ++i) {
-					const auto& accountState = accountStateCacheView->find(Key{ { i } }).get();
+					auto accountStateIter = accountStateCacheView->find(Key{ { i } });
+					const auto& accountState = accountStateIter.get();
 					auto pTransaction = mocks::CreateTransactionWithFeeAndTransfers(Amount(), {
 						{ test::UnresolveXor(Harvesting_Mosaic_Id), accountState.Balances.get(Harvesting_Mosaic_Id) }
 					});
@@ -118,7 +119,8 @@ namespace catapult { namespace extensions {
 				auto& transactions = m_heightToTransactions[height];
 
 				auto accountStateCacheView = m_cache.sub<cache::AccountStateCache>().createView(Height{0});
-				const auto& accountState1 = accountStateCacheView->find(Key{ { accountId1 } }).get();
+				auto accountStateIter = accountStateCacheView->find(Key{ { accountId1 } });
+				const auto& accountState1 = accountStateIter.get();
 				auto pTransaction = mocks::CreateTransactionWithFeeAndTransfers(Amount(), {
 					{ test::UnresolveXor(Harvesting_Mosaic_Id), accountState1.Balances.get(Harvesting_Mosaic_Id) }
 				});

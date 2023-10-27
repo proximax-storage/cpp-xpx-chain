@@ -52,7 +52,8 @@ namespace catapult { namespace observers {
 					const auto& key = TTraits::ToKey(notification);
 					ASSERT_TRUE(lockInfoCacheDelta.contains(key));
 
-					const auto& lockInfo = lockInfoCacheDelta.find(key).get();
+					auto lockInfoIter = lockInfoCacheDelta.find(key);
+					const auto& lockInfo = lockInfoIter.get();
 					EXPECT_EQ(notification.Signer, lockInfo.Account);
 					EXPECT_EQ(notification.MosaicCount, lockInfo.Mosaics.size());
 					auto pMosaic = notification.MosaicsPtr;

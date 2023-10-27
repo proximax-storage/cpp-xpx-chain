@@ -30,4 +30,7 @@ namespace catapult { namespace zeromq {
 
 	/// Creates a topic around \a marker and \a transaction type.
 	std::vector<uint8_t> CreateTopic(TransactionMarker marker, const model::EntityType& entityType);
+
+	/// Creates a topic around \a marker and \a public key.
+	std::vector<uint8_t> CreateTopic(TransactionMarker marker, const Key& publicKey);
 }}

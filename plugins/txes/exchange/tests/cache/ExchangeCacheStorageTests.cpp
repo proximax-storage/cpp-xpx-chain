@@ -27,7 +27,8 @@ namespace catapult { namespace cache {
 		auto view = cache.createView(Height{1});
 		EXPECT_EQ(1u, view->size());
 		ASSERT_TRUE(view->contains(originalEntry.owner()));
-		const auto& loadedEntry = view->find(originalEntry.owner()).get();
+		auto loadedEntryIter = view->find(originalEntry.owner());
+		const auto& loadedEntry = loadedEntryIter.get();
 
 		// - the loaded cache value is correct
 		test::AssertEqualExchangeData(originalEntry, loadedEntry);

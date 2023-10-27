@@ -79,11 +79,14 @@ namespace catapult { namespace observers {
 
 			// Assert:
 			const auto& mosaicCacheDelta = context.cache().sub<cache::MosaicCache>();
-			EXPECT_EQ(finalSupply, mosaicCacheDelta.find(Default_Mosaic_Id).get().supply());
+			auto mosaicIter = mosaicCacheDelta.find(Default_Mosaic_Id);
+			EXPECT_EQ(finalSupply, mosaicIter.get().supply());
 
 			const auto& accountStateCacheDelta = context.cache().sub<cache::AccountStateCache>();
-			auto signerAddress = accountStateCacheDelta.find(signer).get().Address;
-			EXPECT_EQ(finalOwnerSupply, accountStateCacheDelta.find(signerAddress).get().Balances.get(Default_Mosaic_Id));
+			auto signerAddressIter = accountStateCacheDelta.find(signer);
+			auto signerAddress = signerAddressIter.get().Address;
+			auto accountStateIter = accountStateCacheDelta.find(signerAddress);
+			EXPECT_EQ(finalOwnerSupply, accountStateIter.get().Balances.get(Default_Mosaic_Id));
 		}
 
 		template<typename TTestTraits>

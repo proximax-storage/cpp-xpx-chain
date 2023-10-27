@@ -595,7 +595,8 @@ namespace catapult { namespace extensions {
 		RunLoadNemesisBlockTest<TTraits>(nemesisBlockSignerPair, Importance(1234), [&nemesisBlock](const auto& accountStateCache) {
 			const auto& publicKey = nemesisBlock.Signer;
 			auto address = model::PublicKeyToAddress(publicKey, Network_Identifier);
-			const auto& accountState = accountStateCache.find(address).get();
+			auto accountStateIter = accountStateCache.find(address);
+			const auto& accountState = accountStateIter.get();
 
 			// Assert:
 			EXPECT_EQ(Height(1), accountState.AddressHeight);
@@ -614,7 +615,8 @@ namespace catapult { namespace extensions {
 		RunLoadNemesisBlockTest<TTraits>(nemesisBlockSignerPair, Importance(1234), [&nemesisBlock](const auto& accountStateCache) {
 			const auto& publicKey = GetTransactionRecipient(nemesisBlock, 0);
 			auto address = model::PublicKeyToAddress(publicKey, Network_Identifier);
-			const auto& accountState = accountStateCache.find(address).get();
+			auto accountStateIter = accountStateCache.find(address);
+			const auto& accountState = accountStateIter.get();
 
 			// Assert:
 			EXPECT_EQ(Height(1), accountState.AddressHeight);

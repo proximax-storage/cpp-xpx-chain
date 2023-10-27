@@ -102,26 +102,34 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, ReadOnlyViewCanAccessCommittedElementsViaGet) {
 		// Assert:
 		RunReadOnlyViewTest([](const auto& readOnlyCache) {
-			EXPECT_EQ(1u, readOnlyCache.find(1).get());
-			EXPECT_EQ(4u, readOnlyCache.find(2).get());
+			auto iter1 = readOnlyCache.find(1);
+			auto iter2 = readOnlyCache.find(2);
+			EXPECT_EQ(1u, iter1.get());
+			EXPECT_EQ(4u, iter2.get());
 		});
 	}
 
 	TEST(TEST_CLASS, ReadOnlyViewCannotAccessUncommittedElementsViaGet) {
 		// Act + Assert:
 		RunReadOnlyViewTest([](const auto& readOnlyCache) {
-			EXPECT_THROW(readOnlyCache.find(3).get(), catapult_out_of_range);
-			EXPECT_THROW(readOnlyCache.find(4).get(), catapult_out_of_range);
+			auto iter1 = readOnlyCache.find(3);
+			auto iter2 = readOnlyCache.find(4);
+			EXPECT_THROW(iter1.get(), catapult_out_of_range);
+			EXPECT_THROW(iter2.get(), catapult_out_of_range);
 		});
 	}
 
 	TEST(TEST_CLASS, ReadOnlyDeltaCanAccessBothCommittedAndUncommittedElementsViaGet) {
 		// Assert:
 		RunReadOnlyDeltaTest([](const auto& readOnlyCache) {
-			EXPECT_EQ(1u, readOnlyCache.find(1).get());
-			EXPECT_EQ(4u, readOnlyCache.find(2).get());
-			EXPECT_EQ(9u, readOnlyCache.find(3).get());
-			EXPECT_EQ(16u, readOnlyCache.find(4).get());
+			auto iter1 = readOnlyCache.find(1);
+			auto iter2 = readOnlyCache.find(2);
+			auto iter3 = readOnlyCache.find(3);
+			auto iter4 = readOnlyCache.find(4);
+			EXPECT_EQ(1u, iter1.get());
+			EXPECT_EQ(4u, iter2.get());
+			EXPECT_EQ(9u, iter3.get());
+			EXPECT_EQ(16u, iter4.get());
 		});
 	}
 

@@ -107,7 +107,7 @@ namespace catapult { namespace test {
 			blockStatementBuilder.addTransactionReceipt(receipt);
 
 			model::SignerBalanceReceipt signerBalanceReceipt(model::Receipt_Type_Block_Signer_Importance, Amount(0), Amount(0));
-			blockStatementBuilder.addPublicKeyReceipt(signerBalanceReceipt);
+			blockStatementBuilder.addBlockchainStateReceipt(signerBalanceReceipt);
 
 			model::TotalStakedReceipt totalStakedReceipt(model::Receipt_Type_Total_Staked, Amount(0));
 			blockStatementBuilder.addBlockchainStateReceipt(totalStakedReceipt);

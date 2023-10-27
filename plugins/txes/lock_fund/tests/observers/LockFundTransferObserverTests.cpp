@@ -95,9 +95,11 @@ namespace catapult { namespace observers {
 			[&signer, &mosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 			  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 			  auto account = accountStateCacheDelta.find(signer).get();
-			  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
+			  auto lockFundKeyRecordIter = lockFundCacheDelta.find(signer);
+			  auto lockFundKeyRecord = lockFundKeyRecordIter.tryGet();
 			  EXPECT_FALSE(lockFundKeyRecord);
-			  auto lockFundHeightRecord = lockFundCacheDelta.find(Height(10)).tryGet();
+			  auto lockFundHeightRecordIter = lockFundCacheDelta.find(Height(10));
+			  auto lockFundHeightRecord = lockFundHeightRecordIter.tryGet();
 			  EXPECT_FALSE(lockFundHeightRecord);
 			  EXPECT_EQ(mosaics.size(), account.Balances.size());
 			  EXPECT_EQ(0u, account.Balances.lockedBalances().size());
@@ -128,7 +130,8 @@ namespace catapult { namespace observers {
 				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 				  auto account = accountStateCacheDelta.find(signer).get();
-				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
+				  auto lockFundKeyRecordIter = lockFundCacheDelta.find(signer);
+				  auto lockFundKeyRecord = lockFundKeyRecordIter.tryGet();
 				  EXPECT_FALSE(lockFundKeyRecord);
 				  EXPECT_EQ(1u, account.Balances.size());
 				  EXPECT_EQ(1u, account.Balances.lockedBalances().size());
@@ -164,7 +167,8 @@ namespace catapult { namespace observers {
 				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 				  auto account = accountStateCacheDelta.find(signer).get();
-				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
+				  auto lockFundKeyRecordIter = lockFundCacheDelta.find(signer);
+				  auto lockFundKeyRecord = lockFundKeyRecordIter.tryGet();
 				  EXPECT_FALSE(lockFundKeyRecord);
 				  EXPECT_EQ(3u, account.Balances.size());
 				  EXPECT_EQ(3u, account.Balances.lockedBalances().size());
@@ -197,7 +201,8 @@ namespace catapult { namespace observers {
 				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.All funds are no locked so regular balance is empty.
 				  auto account = accountStateCacheDelta.find(signer).get();
-				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
+				  auto lockFundKeyRecordIter = lockFundCacheDelta.find(signer);
+				  auto lockFundKeyRecord = lockFundKeyRecordIter.tryGet();
 				  EXPECT_FALSE(lockFundKeyRecord);
 				  EXPECT_EQ(1u, account.Balances.size());
 				  EXPECT_EQ(1u, account.Balances.lockedBalances().size());
@@ -232,7 +237,8 @@ namespace catapult { namespace observers {
 				[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.Some balance still persists in the regular balance and the remainder is now locked
 				  auto account = accountStateCacheDelta.find(signer).get();
-				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
+				  auto lockFundKeyRecordIter = lockFundCacheDelta.find(signer);
+				  auto lockFundKeyRecord = lockFundKeyRecordIter.tryGet();
 				  EXPECT_FALSE(lockFundKeyRecord);
 				  EXPECT_EQ(3u, account.Balances.size());
 				  EXPECT_EQ(3u, account.Balances.lockedBalances().size());
@@ -266,8 +272,10 @@ namespace catapult { namespace observers {
 		[&signer](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 		  // Assert: balances was locked but no unlocking record was added.All funds are no locked so regular balance is empty.
 		  auto account = accountStateCacheDelta.find(signer).get();
-		  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
-		  auto lockFundHeightRecord = lockFundCacheDelta.find(Height(20)).tryGet();
+		  auto lockFundKeyRecordIter = lockFundCacheDelta.find(signer);
+		  auto lockFundKeyRecord = lockFundKeyRecordIter.tryGet();
+		  auto lockFundHeightRecordIter = lockFundCacheDelta.find(Height(20));
+		  auto lockFundHeightRecord = lockFundHeightRecordIter.tryGet();
 
 		  //Validate unlocking records
 		  EXPECT_TRUE(lockFundKeyRecord);
@@ -323,8 +331,10 @@ namespace catapult { namespace observers {
 				[&signer, &initialMosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.All funds are no locked so regular balance is empty.
 				  auto account = accountStateCacheDelta.find(signer).get();
-				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
-				  auto lockFundHeightRecord = lockFundCacheDelta.find(Height(20)).tryGet();
+				  auto lockFundKeyRecordIter = lockFundCacheDelta.find(signer);
+				  auto lockFundKeyRecord = lockFundKeyRecordIter.tryGet();
+				  auto lockFundHeightRecordIter = lockFundCacheDelta.find(Height(20));
+				  auto lockFundHeightRecord = lockFundHeightRecordIter.tryGet();
 
 				  //Validate unlocking records
 				  EXPECT_TRUE(lockFundKeyRecord);
@@ -391,8 +401,10 @@ namespace catapult { namespace observers {
 				[&signer, &initialMosaics](cache::LockFundCacheDelta& lockFundCacheDelta, cache::AccountStateCacheDelta& accountStateCacheDelta, uint64_t totalStaked) {
 				  // Assert: balances was locked but no unlocking record was added.All funds are no locked so regular balance is empty.
 				  auto account = accountStateCacheDelta.find(signer).get();
-				  auto lockFundKeyRecord = lockFundCacheDelta.find(signer).tryGet();
-				  auto lockFundHeightRecord = lockFundCacheDelta.find(Height(20)).tryGet();
+				  auto lockFundKeyRecordIter = lockFundCacheDelta.find(signer);
+				  auto lockFundKeyRecord = lockFundKeyRecordIter.tryGet();
+				  auto lockFundHeightRecordIter = lockFundCacheDelta.find(Height(20));
+				  auto lockFundHeightRecord = lockFundHeightRecordIter.tryGet();
 
 				  //Validate unlocking records
 				  EXPECT_TRUE(lockFundKeyRecord);

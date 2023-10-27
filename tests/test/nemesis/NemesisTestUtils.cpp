@@ -133,23 +133,24 @@ namespace catapult { namespace test {
 			EXPECT_EQ(5u, view.size());
 
 			// - check for known mosaics
+			auto mosaicIter = view.find(Default_Currency_Mosaic_Id);
 			ASSERT_TRUE(view.contains(Default_Currency_Mosaic_Id));
-			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Currency_Mosaic_Id).get().supply());
-
+			EXPECT_EQ(Amount(8'999'999'998'000'000), mosaicIter.get().supply());
+			mosaicIter = view.find(Default_Harvesting_Mosaic_Id);
 			ASSERT_TRUE(view.contains(Default_Harvesting_Mosaic_Id));
-			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Harvesting_Mosaic_Id).get().supply());
-
+			EXPECT_EQ(Amount(8'999'999'998'000'000), mosaicIter.get().supply());
+			mosaicIter = view.find(Default_Storage_Mosaic_Id);
 			ASSERT_TRUE(view.contains(Default_Storage_Mosaic_Id));
-			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Storage_Mosaic_Id).get().supply());
-
+			EXPECT_EQ(Amount(8'999'999'998'000'000), mosaicIter.get().supply());
+			mosaicIter = view.find(Default_Streamin_Mosaic_Id);
 			ASSERT_TRUE(view.contains(Default_Streamin_Mosaic_Id));
-			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Streamin_Mosaic_Id).get().supply());
-
+			EXPECT_EQ(Amount(8'999'999'998'000'000), mosaicIter.get().supply());
+			mosaicIter = view.find(Default_SuperContract_Mosaic_Id);
 			ASSERT_TRUE(view.contains(Default_SuperContract_Mosaic_Id));
-			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_SuperContract_Mosaic_Id).get().supply());
-
+			EXPECT_EQ(Amount(8'999'999'998'000'000), mosaicIter.get().supply());
+			mosaicIter = view.find(Default_Review_Mosaic_Id);
 			ASSERT_TRUE(view.contains(Default_Review_Mosaic_Id));
-			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Review_Mosaic_Id).get().supply());
+			EXPECT_EQ(Amount(8'999'999'998'000'000), mosaicIter.get().supply());
 		}
 	}
 

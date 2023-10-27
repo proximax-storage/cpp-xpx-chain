@@ -23,7 +23,8 @@ namespace catapult { namespace validators {
 
 			const auto& cache = context.Cache.sub<cache::BlockchainUpgradeCache>();
 			auto height = Height{context.Height.unwrap() + upgradePeriod};
-			if (cache.find(height).tryGet())
+			auto versionIterator = cache.find(height);
+			if (versionIterator.tryGet())
 				return Failure_BlockchainUpgrade_Redundant;
 
 			return ValidationResult::Success;

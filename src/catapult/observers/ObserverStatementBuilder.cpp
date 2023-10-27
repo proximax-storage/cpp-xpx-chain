@@ -47,7 +47,7 @@ namespace catapult { namespace observers {
 		m_pStatementBuilder->addTransactionReceipt(receipt);
 	}
 
-	void ObserverStatementBuilder::addPublicKeyReceipt(const model::Receipt& receipt) {
+	void ObserverStatementBuilder::addPublicKeyReceipt(const model::PublicKeyReceipt& receipt) {
 		if (!m_pStatementBuilder)
 			return;
 

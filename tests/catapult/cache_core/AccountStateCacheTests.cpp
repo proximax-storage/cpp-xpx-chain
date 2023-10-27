@@ -471,7 +471,8 @@ namespace catapult { namespace cache {
 
 		// Act:
 		delta->addAccount(address, Height(1235));
-		const auto& addedAccountState = const_cast<const decltype(delta)&>(delta)->find(address).get();
+		auto addedAccountStateIter = const_cast<const decltype(delta)&>(delta)->find(address);
+		const auto& addedAccountState = addedAccountStateIter.get();
 
 		// Sanity:
 		EXPECT_EQ(Height(1230), addedAccountState.AddressHeight);
@@ -493,7 +494,8 @@ namespace catapult { namespace cache {
 
 		// Act:
 		delta->addAccount(publicKey, Height(1235));
-		const auto& addedAccountState = const_cast<const decltype(delta)&>(delta)->find(publicKey).get();
+		auto addedAccountStateIter = const_cast<const decltype(delta)&>(delta)->find(publicKey);
+		const auto& addedAccountState = addedAccountStateIter.get();
 
 		// Sanity:
 		EXPECT_EQ(Height(1230), addedAccountState.AddressHeight);
@@ -516,7 +518,8 @@ namespace catapult { namespace cache {
 
 		// Act:
 		delta->addAccount(publicKey, Height(1235));
-		const auto& addedAccountState = const_cast<const decltype(delta)&>(delta)->find(address).get();
+		auto addedAccountStateIter = const_cast<const decltype(delta)&>(delta)->find(address);
+		const auto& addedAccountState = addedAccountStateIter.get();
 
 		// Sanity:
 		EXPECT_EQ(Height(1230), addedAccountState.AddressHeight);
@@ -540,7 +543,8 @@ namespace catapult { namespace cache {
 		auto accountState = CreateAccountStateWithMismatchedAddressAndPublicKey();
 		accountState.Address = address;
 		delta->addAccount(accountState);
-		const auto& addedAccountState = const_cast<const decltype(delta)&>(delta)->find(address).get();
+		auto addedAccountStateIter = const_cast<const decltype(delta)&>(delta)->find(address);
+		const auto& addedAccountState = addedAccountStateIter.get();
 
 		// Sanity:
 		EXPECT_EQ(Height(1230), addedAccountState.AddressHeight);
@@ -686,7 +690,8 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(0u, delta->size());
-		EXPECT_FALSE(!!utils::as_const(delta)->find(accountId).tryGet());
+		auto accountIter = utils::as_const(delta)->find(accountId);
+		EXPECT_FALSE(!!accountIter.tryGet());
 	}
 
 	ID_BASED_TEST(Remove_DoesNotRemovesExistingAccountWhenHeightDoesNotMatch) {
@@ -815,7 +820,8 @@ namespace catapult { namespace cache {
 			// Act:
 			delta->queueRemove(publicKey, removalHeight);
 			delta->commitRemovals();
-			const auto* pAccountState = PublicKeyTraits::Find(utils::as_const(*delta), publicKey).tryGet();
+			auto accountStateIter = PublicKeyTraits::Find(utils::as_const(*delta), publicKey);
+			const auto* pAccountState = accountStateIter.tryGet();
 
 			// Assert:
 			if (PublicKeyTraits::Default_Height != removalHeight)
@@ -837,7 +843,8 @@ namespace catapult { namespace cache {
 			// Act:
 			delta->queueRemove(address, removalHeight);
 			delta->commitRemovals();
-			const auto* pAccountState = AddressTraits::Find(utils::as_const(*delta), address).tryGet();
+			auto accountStateIter = AddressTraits::Find(utils::as_const(*delta), address);
+			const auto* pAccountState = accountStateIter.tryGet();
 
 			if (AddressTraits::Default_Height == removalHeight) {
 				EXPECT_EQ(0u, delta->size());
@@ -884,7 +891,8 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(0u, delta->size());
-		EXPECT_FALSE(!!utils::as_const(delta)->find(address).tryGet());
+		auto accountIter = utils::as_const(delta)->find(address);
+		EXPECT_FALSE(!!accountIter.tryGet());
 	}
 
 	namespace {
@@ -912,14 +920,19 @@ namespace catapult { namespace cache {
 
 			// Act + Assert:
 			auto& qualifiedCache = *qualifier(cache);
-			EXPECT_TRUE(!!qualifiedCache.find(address1).tryGet());
+			auto addressIter1 = qualifiedCache.find(address1);
+			auto addressIter3 = qualifiedCache.find(address3);
+			auto addressIter5 = qualifiedCache.find(address5);
+			auto addressIter6 = qualifiedCache.find(accountState6.Address);
+			auto addressIter7 = qualifiedCache.find(accountState7.Address);
+			EXPECT_TRUE(!!addressIter1.tryGet());
 			EXPECT_FALSE(qualifiedCache.contains(address2));
-			EXPECT_TRUE(!!qualifiedCache.find(address3).tryGet());
+			EXPECT_TRUE(!!addressIter3.tryGet());
 			EXPECT_FALSE(qualifiedCache.contains(address4));
-			EXPECT_TRUE(!!qualifiedCache.find(address5).tryGet()); // added by key but accessible via address
+			EXPECT_TRUE(!!addressIter5.tryGet()); // added by key but accessible via address
 
-			EXPECT_TRUE(!!qualifiedCache.find(accountState6.Address).tryGet());
-			EXPECT_TRUE(!!qualifiedCache.find(accountState7.Address).tryGet());
+			EXPECT_TRUE(!!addressIter6.tryGet());
+			EXPECT_TRUE(!!addressIter7.tryGet());
 			EXPECT_FALSE(qualifiedCache.contains(accountState8.Address));
 			EXPECT_FALSE(qualifiedCache.contains(accountState9.Address));
 		}
@@ -948,13 +961,18 @@ namespace catapult { namespace cache {
 
 			// Act + Assert:
 			auto& qualifiedCache = *qualifier(cache);
-			EXPECT_TRUE(!!qualifiedCache.find(key1).tryGet());
+
+			auto keyIter1 = qualifiedCache.find(key1);
+			auto keyIter3 = qualifiedCache.find(key3);
+			auto keyIter6 = qualifiedCache.find(accountState6.PublicKey);
+
+			EXPECT_TRUE(!!keyIter1.tryGet());
 			EXPECT_FALSE(qualifiedCache.contains(key2));
-			EXPECT_TRUE(!!qualifiedCache.find(key3).tryGet());
+			EXPECT_TRUE(!!keyIter3.tryGet());
 			EXPECT_FALSE(qualifiedCache.contains(key4));
 			EXPECT_FALSE(qualifiedCache.contains(key5)); // only added via address
 
-			EXPECT_TRUE(!!qualifiedCache.find(accountState6.PublicKey).tryGet());
+			EXPECT_TRUE(!!keyIter6.tryGet());
 			EXPECT_FALSE(qualifiedCache.contains(accountState7.PublicKey)); // only added via address
 			EXPECT_FALSE(qualifiedCache.contains(accountState8.PublicKey));
 			EXPECT_FALSE(qualifiedCache.contains(accountState9.PublicKey));

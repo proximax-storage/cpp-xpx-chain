@@ -17,18 +17,18 @@ namespace catapult { namespace observers {
 	using Notification = model::ModifyContractNotification<1>;
 
 	namespace {
-		auto GetContractEntry(cache::ContractCacheDelta& contractCache, const Key& key) {
+		auto& GetContractEntry(cache::ContractCacheDelta& contractCache, const Key& key) {
 			if (!contractCache.contains(key))
 				contractCache.insert(state::ContractEntry(key));
-
-			return contractCache.find(key);
+			auto contractEntryIter = contractCache.find(key);
+			return contractEntryIter.get();
 		}
 
 		class ContractFacade {
 		public:
 			explicit ContractFacade(cache::ContractCacheDelta& contractCache, const Key& contractMultisigKey)
 					: m_contractCache(contractCache)
-					, m_contractEntry(GetContractEntry(m_contractCache, contractMultisigKey).get())
+					, m_contractEntry(GetContractEntry(m_contractCache, contractMultisigKey))
 			{}
 
 		public:

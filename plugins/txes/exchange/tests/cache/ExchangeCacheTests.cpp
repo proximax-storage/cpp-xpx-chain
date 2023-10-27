@@ -102,7 +102,8 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		auto view = cache.createView(Height{0});
-		const auto& entry = view->find(key).get();
+		auto entryIter = view->find(key);
+		const auto& entry = entryIter.get();
 		EXPECT_EQ(1, entry.buyOffers().size());
 		test::AssertOffer(offer, dynamic_cast<const state::OfferBase&>(entry.buyOffers().at(MosaicId(1))));
 		EXPECT_EQ(Amount(100), entry.buyOffers().at(MosaicId(1)).ResidualCost);

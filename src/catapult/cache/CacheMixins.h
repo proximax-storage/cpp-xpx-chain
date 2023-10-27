@@ -200,7 +200,7 @@ namespace catapult { namespace cache {
 		public:
 			/// Gets a const value.
 			/// \throws catapult_invalid_argument if this iterator does not point to a value.
-			TValue& get() const {
+			TValue& get() const &{
 				auto* pValue = tryGet();
 				if (!pValue)
 					detail::ThrowInvalidKeyError<TCacheDescriptor>("not", m_key);
@@ -209,10 +209,18 @@ namespace catapult { namespace cache {
 			}
 
 			/// Tries to get a const value.
-			TValue* tryGet() const {
+			TValue* tryGet() const &{
 				auto pValue = m_iter.get(); // can be raw or shared_ptr
 				return pValue ? &TValueAdapter::Adapt(*pValue) : nullptr;
 			}
+
+			template <typename TEnable = TValue,
+					 typename std::enable_if<std::is_const<TEnable>::value, int>::type = 0>
+			TValue& get() && = delete;
+
+			template <typename TEnable = TValue,
+					 typename std::enable_if<std::is_const<TEnable>::value, int>::type = 0>
+			TValue& tryGet() && = delete;
 
 			/// Tries to get a const (unadapted) value.
 			const auto* tryGetUnadapted() const {

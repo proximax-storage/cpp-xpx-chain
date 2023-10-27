@@ -165,9 +165,12 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(1u, readOnlyCache.size());
-		EXPECT_EQ(TTraits::CreateKey(1), TTraits::GetKey(readOnlyCache.find(TTraits::CreateKey(1)).get()));
-		EXPECT_THROW(readOnlyCache.find(TTraits::CreateKey(2)).get(), catapult_invalid_argument);
-		EXPECT_THROW(readOnlyCache.find(TTraits::CreateKey(3)).get(), catapult_invalid_argument);
+		auto keyIter1 = readOnlyCache.find(TTraits::CreateKey(1));
+		auto keyIter2 = readOnlyCache.find(TTraits::CreateKey(2));
+		auto keyIter3 = readOnlyCache.find(TTraits::CreateKey(3));
+		EXPECT_EQ(TTraits::CreateKey(1), TTraits::GetKey(keyIter1.get()));
+		EXPECT_THROW(keyIter2.get(), catapult_invalid_argument);
+		EXPECT_THROW(keyIter3.get(), catapult_invalid_argument);
 	}
 
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyDeltaCanAccessBothCommittedAndUncommittedElementsViaGet) {
@@ -183,9 +186,12 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(2u, readOnlyCache.size());
-		EXPECT_EQ(TTraits::CreateKey(1), TTraits::GetKey(readOnlyCache.find(TTraits::CreateKey(1)).get()));
-		EXPECT_EQ(TTraits::CreateKey(2), TTraits::GetKey(readOnlyCache.find(TTraits::CreateKey(2)).get()));
-		EXPECT_THROW(readOnlyCache.find(TTraits::CreateKey(3)).get(), catapult_invalid_argument);
+		auto keyIter1 = readOnlyCache.find(TTraits::CreateKey(1));
+		auto keyIter2 = readOnlyCache.find(TTraits::CreateKey(2));
+		auto keyIter3 = readOnlyCache.find(TTraits::CreateKey(3));
+		EXPECT_EQ(TTraits::CreateKey(1), TTraits::GetKey(keyIter1.get()));
+		EXPECT_EQ(TTraits::CreateKey(2), TTraits::GetKey(keyIter2.get()));
+		EXPECT_THROW(keyIter3.get(), catapult_invalid_argument);
 	}
 
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyViewOnlyCanAccessCommittedElementsViaTryGet) {
@@ -204,9 +210,12 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(1u, readOnlyCache.size());
-		EXPECT_EQ(TTraits::CreateKey(1), TTraits::GetKey(*readOnlyCache.find(TTraits::CreateKey(1)).tryGet()));
-		EXPECT_FALSE(!!readOnlyCache.find(TTraits::CreateKey(2)).tryGet());
-		EXPECT_FALSE(!!readOnlyCache.find(TTraits::CreateKey(3)).tryGet());
+		auto keyIter1 = readOnlyCache.find(TTraits::CreateKey(1));
+		auto keyIter2 = readOnlyCache.find(TTraits::CreateKey(2));
+		auto keyIter3 = readOnlyCache.find(TTraits::CreateKey(3));
+		EXPECT_EQ(TTraits::CreateKey(1), TTraits::GetKey(*keyIter1.tryGet()));
+		EXPECT_FALSE(!!keyIter2.tryGet());
+		EXPECT_FALSE(!!keyIter3.tryGet());
 	}
 
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyDeltaCanAccessBothCommittedAndUncommittedElementsViaTryGet) {
@@ -222,8 +231,11 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		EXPECT_EQ(2u, readOnlyCache.size());
-		EXPECT_EQ(TTraits::CreateKey(1), TTraits::GetKey(*readOnlyCache.find(TTraits::CreateKey(1)).tryGet()));
-		EXPECT_EQ(TTraits::CreateKey(2), TTraits::GetKey(*readOnlyCache.find(TTraits::CreateKey(2)).tryGet()));
-		EXPECT_FALSE(!!readOnlyCache.find(TTraits::CreateKey(3)).tryGet());
+		auto keyIter1 = readOnlyCache.find(TTraits::CreateKey(1));
+		auto keyIter2 = readOnlyCache.find(TTraits::CreateKey(2));
+		auto keyIter3 = readOnlyCache.find(TTraits::CreateKey(3));
+		EXPECT_EQ(TTraits::CreateKey(1), TTraits::GetKey(*keyIter1.tryGet()));
+		EXPECT_EQ(TTraits::CreateKey(2), TTraits::GetKey(*keyIter2.tryGet()));
+		EXPECT_FALSE(!!keyIter3.tryGet());
 	}
 }}

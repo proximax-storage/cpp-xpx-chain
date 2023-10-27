@@ -33,7 +33,8 @@ namespace catapult { namespace validators {
 			const auto& cache = context.Cache.sub<cache::AccountStateCache>();
 			for (const auto& address : notification.ParticipantsByAddress) {
 				auto participant = context.Resolvers.resolve(address);
-				const auto& account = cache.find(participant).tryGet();
+				auto iterator = cache.find(participant);
+				const auto& account = iterator.tryGet();
 				if(account && account->IsLocked()) {
 					return Failure_Core_Participant_Is_Locked;
 				}

@@ -36,11 +36,13 @@ namespace catapult { namespace cache {
 			ASSERT_TRUE(view->contains(keyRecord.first));
 		}
 
-		const auto& loadedHeightRecord = view->find(originalRecord.Identifier).get();
+		auto loadedHeightRecordIter = view->find(originalRecord.Identifier);
+		const auto& loadedHeightRecord = loadedHeightRecordIter.get();
 		auto records = test::DeriveKeyRecordsFromHeightRecord(originalRecord);
 		for(auto& record : records)
 		{
-			const auto& loadedKeyRecord = view->find(record.first).get();
+			auto loadedKeyRecordIter = view->find(record.first);
+			const auto& loadedKeyRecord = loadedKeyRecordIter.get();
 			test::AssertEqual(loadedKeyRecord, record.second);
 		}
 		// - the loaded cache value is correct

@@ -122,6 +122,7 @@ namespace catapult { namespace zeromq {
 		using MessagePayloadBuilder = consumer<zmq::multipart_t&>;
 
 		void publishTransaction(TransactionMarker topicMarker, const WeakTransactionInfo& transactionInfo);
+
 		void publishStatement(const model::PublicKeyStatement& statement, const Height& height);
 		void publishStatement(const model::BlockchainStateStatement& statement, const Height& height);
 		void publishStatement(const model::TransactionStatement & statement, const Height& height);

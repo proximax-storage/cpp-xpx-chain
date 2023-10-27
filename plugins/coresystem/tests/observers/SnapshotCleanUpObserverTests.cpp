@@ -62,8 +62,8 @@ namespace catapult { namespace observers {
 				// Act:
 				test::ObserveNotification(*pObserver, notification, context);
 
-				account = context.find(signer);
-				EXPECT_EQ(expectedSizeOfSnapshots, account->Balances.snapshots().size());
+				auto account2 = context.find(signer);
+				EXPECT_EQ(expectedSizeOfSnapshots, account2->Balances.snapshots().size());
 			}
 		}
 

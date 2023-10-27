@@ -84,7 +84,8 @@ namespace catapult { namespace observers {
 			ASSERT_TRUE(mosaicCacheDelta.contains(Default_Mosaic_Id));
 
 			// - entry
-			const auto& entry = mosaicCacheDelta.find(Default_Mosaic_Id).get();
+			auto entryIter = mosaicCacheDelta.find(Default_Mosaic_Id);
+			const auto& entry = entryIter.get();
 			EXPECT_EQ(Default_Mosaic_Id, entry.mosaicId());
 
 			// - definition

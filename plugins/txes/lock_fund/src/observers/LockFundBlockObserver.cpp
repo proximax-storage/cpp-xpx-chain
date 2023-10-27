@@ -21,7 +21,8 @@ namespace catapult { namespace observers {
 			auto& lockFundCache = context.Cache.sub<cache::LockFundCache>();
 			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto& globalStore = context.Cache.sub<cache::GlobalStoreCache>();
-			auto& totalStakedRecord = globalStore.find(config::TotalStaked_GlobalKey).get();
+			auto totalStakedRecordIter = globalStore.find(config::TotalStaked_GlobalKey);
+			auto& totalStakedRecord = totalStakedRecordIter.get();
 			auto& totalStakedRefData = totalStakedRecord.GetRef<state::Uint64Converter>();
 			if (context.Mode == NotifyMode::Commit)
 			{
@@ -34,7 +35,8 @@ namespace catapult { namespace observers {
 					{
 						if(irecord.second.Active())
 						{
-							auto &account = accountStateCache.find(irecord.first).get();
+							auto accountIter = accountStateCache.find(irecord.first);
+							auto &account = accountIter.get();
 							for(auto& mosaic : irecord.second.Get())
 							{
 								if(mosaic.first == context.Config.Immutable.HarvestingMosaicId)
@@ -74,7 +76,8 @@ namespace catapult { namespace observers {
 					// Unlock amounts
 					for(auto& irecord : record->LockFundRecords)
 					{
-						auto& account = accountStateCache.find(irecord.first).get();
+						auto accountIter = accountStateCache.find(irecord.first);
+						auto& account = accountIter.get();
 						if(irecord.second.Active()) //Redundant
 						{
 							for(auto& mosaic : irecord.second.Get())

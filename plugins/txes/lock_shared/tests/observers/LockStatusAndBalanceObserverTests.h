@@ -45,7 +45,8 @@ namespace catapult { namespace observers {
 					[&lockInfo, initialAmount](const auto& lockInfoCache, const auto& accountState, auto& observerContext) {
 						// Assert: status and balance
 						const auto& key = TTraits::BasicTraits::ToKey(lockInfo);
-						const auto& result = lockInfoCache.find(key).get();
+						auto resultIter = lockInfoCache.find(key);
+						const auto& result = resultIter.get();
 						EXPECT_EQ(state::LockStatus::Used, result.Status);
 						auto expectedBalance = lockInfo.Mosaics.begin()->second + initialAmount;
 						EXPECT_EQ(expectedBalance, accountState.Balances.get(result.Mosaics.begin()->first));
@@ -91,7 +92,8 @@ namespace catapult { namespace observers {
 					[&lockInfo](const auto& lockInfoCache, const auto& accountState, auto& observerContext) {
 						// Assert: status and balance
 						const auto& key = TTraits::BasicTraits::ToKey(lockInfo);
-						const auto& result = lockInfoCache.find(key).get();
+						auto resultIter = lockInfoCache.find(key);
+						const auto& result = resultIter.get();
 						EXPECT_EQ(state::LockStatus::Unused, result.Status);
 						EXPECT_EQ(Amount(100), accountState.Balances.get(lockInfo.Mosaics.begin()->first));
 

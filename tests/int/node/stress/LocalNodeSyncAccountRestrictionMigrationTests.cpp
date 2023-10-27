@@ -239,7 +239,8 @@ namespace catapult { namespace local {
 		auto catapultCache = context.localNode().cache().createView();
 		auto& accountRestrictionCache = catapultCache.sub<cache::AccountRestrictionCache>();
 		for(size_t i = 2; i < 9; i++) {
-			auto restrictionBase = accountRestrictionCache.find(accounts.getAddress(i)).get();
+			auto restrictionBaseIter = accountRestrictionCache.find(accounts.getAddress(i));
+			auto restrictionBase = restrictionBaseIter.get();
 			auto targetAddress = accounts.getAddress(i+1);
 			auto vectorAddress = std::vector<uint8_t>(targetAddress.cbegin(), targetAddress.cend());
 			auto restrictions = restrictionBase.restriction(model::AccountRestrictionFlags::Block | model::AccountRestrictionFlags::Address);

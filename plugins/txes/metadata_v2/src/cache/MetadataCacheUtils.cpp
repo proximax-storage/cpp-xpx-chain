@@ -23,7 +23,8 @@ namespace catapult { namespace cache {
 			auto key = state::CreateMetadataKey(model::PartialMetadataKey{sourceState.Address, targetPtr->PublicKey, scopedKey}, target);
 			auto metadataKey = key.uniqueKey();
 			if(metadataCache.contains(metadataKey)) {
-				return std::make_pair(key, std::make_optional(metadataCache.find(metadataKey).get()));
+				auto metadataIter = metadataCache.find(metadataKey);
+				return std::make_pair(key, std::make_optional(metadataIter.get()));
 			}
 			if(targetPtr->OldState) {
 				targetPtr = &*targetPtr->OldState;
@@ -38,8 +39,10 @@ namespace catapult { namespace cache {
 	}
 
 	const std::pair<state::MetadataKey, std::optional<state::MetadataEntry>> FindEntryKeyIfParticipantsHaveBeenUpgradedByCrawlingHistory(const cache::ReadOnlyAccountStateCache& accountStateCache, const cache::ReadOnlyMetadataCache& metadataCache, const state::MetadataKey& key) {
-		auto sourceAcc = accountStateCache.find(key.sourceAddress()).tryGet();
-		auto targetAcc = accountStateCache.find(key.targetKey()).tryGet();
+		auto sourceAccIter = accountStateCache.find(key.sourceAddress());
+		auto targetAccIter = accountStateCache.find(key.targetKey());
+		auto sourceAcc = sourceAccIter.tryGet();
+		auto targetAcc = targetAccIter.tryGet();
 		if(!sourceAcc || !targetAcc) {
 			return std::make_pair(key, std::nullopt);
 		}
@@ -52,7 +55,9 @@ namespace catapult { namespace cache {
 			auto key = state::CreateMetadataKey(model::PartialMetadataKey{sourceState.Address, targetPtr->PublicKey, scopedKey}, target);
 			auto metadataKey = key.uniqueKey();
 			if(metadataCache.contains(metadataKey)) {
-				return std::make_pair(key, &metadataCache.find(metadataKey).get());
+				auto metadataIter = metadataCache.find(metadataKey);
+				/// Pointer to data expires when cache delta expires
+				return std::make_pair(key, &metadataIter.get());
 			}
 			if(targetPtr->OldState) {
 				targetPtr = &*targetPtr->OldState;
@@ -66,8 +71,10 @@ namespace catapult { namespace cache {
 		return std::make_pair(state::CreateMetadataKey(model::PartialMetadataKey{sourceState.Address, targetState.PublicKey, scopedKey}, target), nullptr);
 	}
 	const std::pair<state::MetadataKey, state::MetadataEntry*> FindEntryKeyIfParticipantsHaveBeenUpgradedByCrawlingHistory(const cache::ReadOnlyAccountStateCache& accountStateCache, cache::MetadataCacheDelta& metadataCache, const state::MetadataKey& key){
-		auto sourceAcc = accountStateCache.find(key.sourceAddress()).tryGet();
-		auto targetAcc = accountStateCache.find(key.targetKey()).tryGet();
+		auto sourceAccIter = accountStateCache.find(key.sourceAddress());
+		auto targetAccIter = accountStateCache.find(key.targetKey());
+		auto sourceAcc = sourceAccIter.tryGet();
+		auto targetAcc = targetAccIter.tryGet();
 		if(!sourceAcc || !targetAcc) {
 			return std::make_pair(key, nullptr);
 		}

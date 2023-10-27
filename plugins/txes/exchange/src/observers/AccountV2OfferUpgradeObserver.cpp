@@ -24,7 +24,8 @@ namespace {
 
 		if(NotifyMode::Commit == context.Mode)
 		{
-			auto accountEntry = cache.find(notification.Signer).tryGet();
+			auto accountEntryIter = cache.find(notification.Signer);
+			auto accountEntry = accountEntryIter.tryGet();
 			if(accountEntry) {
 				auto newEntry = accountEntry->upgrade(notification.NewAccountPublicKey);
 				cache.insert(newEntry);
@@ -33,7 +34,8 @@ namespace {
 		}
 		else
 		{
-			auto accountEntry = cache.find(notification.NewAccountPublicKey).tryGet();
+			auto accountEntryIter = cache.find(notification.NewAccountPublicKey);
+			auto accountEntry = accountEntryIter.tryGet();
 			if(accountEntry) {
 				auto newEntry = accountEntry->upgrade(notification.Signer);
 				cache.insert(newEntry);

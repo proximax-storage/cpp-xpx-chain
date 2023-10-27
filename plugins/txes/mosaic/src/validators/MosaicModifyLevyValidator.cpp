@@ -44,7 +44,8 @@ namespace catapult { namespace validators {
 
         /// 6. check if mosaicId is transferable
         auto &mosaicCache = context.Cache.sub<cache::MosaicCache>();
-        auto entry = mosaicCache.find(levyMosaicId).get();
+		auto entryIter = mosaicCache.find(levyMosaicId);
+        auto entry = entryIter.get();
         if (!entry.definition().properties().is(model::MosaicFlags::Transferable))
             return Failure_Mosaic_Non_Transferable;
 

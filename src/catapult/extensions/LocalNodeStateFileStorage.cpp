@@ -216,8 +216,8 @@ namespace catapult { namespace extensions {
 			auto networkConfigCacheView = networkConfigCache.createView(height+Height(1));
 			auto nextBlockConfig = networkConfigCacheView->FindConfigHeightAt(height+Height(1));
 			if(nextBlockConfig != Height(0)) {
-				auto configIter = networkConfigCacheView->find(nextBlockConfig).get();
-				config = std::make_optional(configIter);
+				auto configIter = networkConfigCacheView->find(nextBlockConfig);
+				config = std::make_optional(configIter.get());
 			}
 		}
 		SaveStateToDirectory(m_directory, cacheStorages, state, score, height, config, [&cacheView](const auto& storage, auto& outputStream) {
@@ -239,8 +239,8 @@ namespace catapult { namespace extensions {
 			auto networkConfigCacheView = networkConfigCache.createView(height+Height(1));
 			auto nextBlockConfig = networkConfigCacheView->FindConfigHeightAt(height+Height(1));
 			if(nextBlockConfig != Height(0)) {
-				auto configIter = networkConfigCacheView->find(nextBlockConfig).get();
-				config = std::make_optional(configIter);
+				auto configIter = networkConfigCacheView->find(nextBlockConfig);
+				config = std::make_optional(configIter.get());
 			}
 		}
 		SaveStateToDirectory(m_directory, cacheStorages, state, score, height, config, [&cacheDelta](const auto& storage, auto& outputStream) {

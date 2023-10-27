@@ -97,7 +97,8 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		auto view = cache.createView(Height{0});
-		const auto& entry = view->find(key).get();
+		auto entryIter = view->find(key);
+		const auto& entry = entryIter.get();
 		EXPECT_EQ(BlockchainVersion{10}, entry.blockChainVersion());
 	}
 

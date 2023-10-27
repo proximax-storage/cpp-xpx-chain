@@ -236,7 +236,8 @@ namespace catapult { namespace harvesting {
 				const auto& accountStateCache = Cache.template sub<cache::AccountStateCache>();
 				auto view = accountStateCache.createView(Height{0});
 				cache::ReadOnlyAccountStateCache readOnlyCache(*view);
-				auto account = readOnlyCache.find(publicKey).get();
+				auto accountIter = readOnlyCache.find(publicKey);
+				auto account = accountIter.get();
 				cache::ImportanceView importanceView(readOnlyCache);
 				GenerationHash genHash;
 				if(account.GetVersion() > 1)

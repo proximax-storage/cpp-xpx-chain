@@ -197,6 +197,21 @@ namespace catapult { namespace zeromq {
 				return out.str();
 			};
 		}
+		template<typename TStatementType, typename TTopicIdentifierTypeRetriever, typename TQueueMethod>
+		void PublishStatementImpl(const TStatementType& statement, const Height& height, const TransactionMarker& marker, TTopicIdentifierTypeRetriever identifierRetriever, TQueueMethod queue) {
+
+			for (auto i = 0u; i < statement.size(); ++i){
+				auto pMessageGroup = std::make_unique<MessageGroup>(CreateHeightMessageGenerator("publish statement", height));
+				const auto& receipt = statement.receiptAt(i);
+				zmq::multipart_t multipart;
+				auto typeTopic = CreateTopic(marker, identifierRetriever(receipt));
+				multipart.addmem(typeTopic.data(), typeTopic.size());
+				multipart.addmem(&height, sizeof(Height));
+				multipart.addmem(&receipt, receipt.Size);
+				pMessageGroup->add(std::move(multipart));
+				queue(std::move(pMessageGroup));
+			}
+		}
 	}
 
 	void ZeroMqEntityPublisher::publishTransaction(
@@ -263,45 +278,16 @@ namespace catapult { namespace zeromq {
 	}
 
 	void ZeroMqEntityPublisher::publishStatement(const model::PublicKeyStatement& statement, const Height& height) {
-		TransactionMarker topic = TransactionMarker::Public_Key_Statements_Marker;
-		for (auto i = 0u; i < statement.size(); ++i){
-			auto pMessageGroup = std::make_unique<MessageGroup>(CreateHeightMessageGenerator("publish statement", height));
-			const auto& receipt = statement.receiptAt(i);
-			zmq::multipart_t multipart;
-			multipart.addmem(&topic, sizeof(TransactionMarker));
-			multipart.addmem(&height, sizeof(Height));
-			multipart.addmem(&receipt, receipt.Size);
-			pMessageGroup->add(std::move(multipart));
-			m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
-		}
+		PublishStatementImpl(statement, height, TransactionMarker::Public_Key_Statements_Marker, [](const model::Receipt& receipt){return model::EntityType(receipt.Type);}, [&](std::unique_ptr<MessageGroup> pMessageGroup){ m_pSynchronizedPublisher->queue(std::move(pMessageGroup));});
+		PublishStatementImpl(statement, height, TransactionMarker::Public_Key_Statements_Marker, [](const model::Receipt& receipt){return model::PublicKeyReceipt::ExtractKey(&receipt);}, [&](std::unique_ptr<MessageGroup> pMessageGroup){ m_pSynchronizedPublisher->queue(std::move(pMessageGroup));});
 	}
 
 	void ZeroMqEntityPublisher::publishStatement(const model::BlockchainStateStatement & statement, const Height& height) {
-		TransactionMarker topic = TransactionMarker::Blockchain_State_Statements_Marker;
-		for (auto i = 0u; i < statement.size(); ++i){
-			auto pMessageGroup = std::make_unique<MessageGroup>(CreateHeightMessageGenerator("publish statement", height));
-			const auto& receipt = statement.receiptAt(i);
-			zmq::multipart_t multipart;
-			multipart.addmem(&topic, sizeof(TransactionMarker));
-			multipart.addmem(&height, sizeof(Height));
-			multipart.addmem(&receipt, receipt.Size);
-			pMessageGroup->add(std::move(multipart));
-			m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
-		}
+		PublishStatementImpl(statement, height, TransactionMarker::Blockchain_State_Statements_Marker, [](const model::Receipt& receipt){return model::EntityType(receipt.Type);}, [&](std::unique_ptr<MessageGroup> pMessageGroup){ m_pSynchronizedPublisher->queue(std::move(pMessageGroup));});
 	}
 
 	void ZeroMqEntityPublisher::publishStatement(const model::TransactionStatement & statement, const Height& height) {
-		TransactionMarker topic = TransactionMarker::Blockchain_Transaction_Statements_Marker;
-		for (auto i = 0u; i < statement.size(); ++i){
-			auto pMessageGroup = std::make_unique<MessageGroup>(CreateHeightMessageGenerator("publish statement", height));
-			const auto& receipt = statement.receiptAt(i);
-			zmq::multipart_t multipart;
-			multipart.addmem(&topic, sizeof(TransactionMarker));
-			multipart.addmem(&height, sizeof(Height));
-			multipart.addmem(&receipt, receipt.Size);
-			pMessageGroup->add(std::move(multipart));
-			m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
-		}
+		PublishStatementImpl(statement, height, TransactionMarker::Blockchain_Transaction_Statements_Marker, [](const model::Receipt& receipt){return model::EntityType(receipt.Type);}, [&](std::unique_ptr<MessageGroup> pMessageGroup){ m_pSynchronizedPublisher->queue(std::move(pMessageGroup));});
 	}
 
 	void ZeroMqEntityPublisher::publish(

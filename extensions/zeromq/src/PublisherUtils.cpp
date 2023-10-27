@@ -35,4 +35,11 @@ namespace catapult { namespace zeromq {
 		std::memcpy(topic.data() + sizeof(TransactionMarker), &entityType, sizeof(model::EntityType));
 		return topic;
 	}
+
+	std::vector<uint8_t> CreateTopic(TransactionMarker marker, const Key& publicKey) {
+		std::vector<uint8_t> topic(sizeof(TransactionMarker) + sizeof(model::EntityType));
+		std::memcpy(topic.data(), &marker, sizeof(TransactionMarker));
+		std::memcpy(topic.data() + sizeof(TransactionMarker), publicKey.data(), publicKey.size());
+		return topic;
+	}
 }}

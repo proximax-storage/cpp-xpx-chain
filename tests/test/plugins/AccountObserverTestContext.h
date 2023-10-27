@@ -33,13 +33,15 @@ namespace catapult { namespace test {
 
 	public:
 		/// Finds the account identified by \a address.
-		const state::AccountState* find(const Address& address) const {
-			return cache().sub<cache::AccountStateCache>().find(address).tryGet();
+		const std::unique_ptr<state::AccountState> find(const Address& address) const {
+			auto iterator = cache().sub<cache::AccountStateCache>().find(address);
+			return std::make_unique<state::AccountState>(*iterator.tryGet());
 		}
 
 		/// Finds the account identified by \a publicKey.
-		const state::AccountState* find(const Key& publicKey) const {
-			return cache().sub<cache::AccountStateCache>().find(publicKey).tryGet();
+		const std::unique_ptr<state::AccountState> find(const Key& publicKey) const {
+			auto iterator = cache().sub<cache::AccountStateCache>().find(publicKey);
+			return std::make_unique<state::AccountState>(*iterator.tryGet());
 		}
 
 	private:

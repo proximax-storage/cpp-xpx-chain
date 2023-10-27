@@ -37,6 +37,19 @@ namespace catapult { namespace model {
 		ReceiptType Type;
 	};
 
+	/// Binary layout for a public key receipt entity.
+	/// IMPORTANT: First member of this receipt type must be the identifying public key!
+	struct PublicKeyReceipt : public Receipt {
+
+		Key GetAssociatedKey() const{
+			return *reinterpret_cast<const Key*>(this);
+		}
+		template<typename T>
+		static Key ExtractKey(const T* Data) {
+			return reinterpret_cast<const PublicKeyReceipt*>(Data)->GetAssociatedKey();
+		}
+	};
+
 	/// Binary layout for a balance transfer receipt.
 	struct BalanceTransferReceipt : public Receipt {
 	public:
@@ -172,7 +185,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Binary layout for a drive receipt.
-	struct DriveStateReceipt : public Receipt {
+	struct DriveStateReceipt : public PublicKeyReceipt {
 	public:
 		/// Creates a receipt around \a receiptType, \a sender, \a recipient, \a mosaicId and \a amount.
 		DriveStateReceipt(
