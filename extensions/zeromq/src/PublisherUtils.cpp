@@ -32,7 +32,12 @@ namespace catapult { namespace zeromq {
 	std::vector<uint8_t> CreateTopic(TransactionMarker marker, const model::EntityType& entityType) {
 		std::vector<uint8_t> topic(sizeof(TransactionMarker) + sizeof(model::EntityType));
 		std::memcpy(topic.data(), &marker, sizeof(TransactionMarker));
+#ifdef IS_BIG_ENDIAN
 		std::memcpy(topic.data() + sizeof(TransactionMarker), &entityType, sizeof(model::EntityType));
+#else
+		topic.data()[sizeof(TransactionMarker)] = (static_cast<uint16_t>(entityType) >> 8) & 0xFF;
+		topic.data()[sizeof(TransactionMarker)+1] = static_cast<uint16_t>(entityType) & 0xFF;
+#endif
 		return topic;
 	}
 
