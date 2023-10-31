@@ -101,10 +101,12 @@ namespace catapult { namespace observers {
 
 		// Act:
 		test::ObserveNotification(*pObserver, TTraits::CreateNotification(key), context);
-		auto pStateBefore = context.find(key);
+		auto pStateBeforeIter = context.findIterator(key);
+		auto pStateBefore = pStateBeforeIter.tryGet();
 
 		test::ObserveNotification(*pObserver, TTraits::CreateNotification(key), context);
-		auto pStateAfter = context.find(key);
+		auto pStateAfterIter = context.findIterator(key);
+		auto pStateAfter = pStateBeforeIter.tryGet();
 
 		// Assert:
 		// - accounts added to the cache by first notify were not invalidated/overwritten

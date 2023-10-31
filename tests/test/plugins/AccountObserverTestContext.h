@@ -44,6 +44,16 @@ namespace catapult { namespace test {
 			return std::make_unique<state::AccountState>(*iterator.tryGet());
 		}
 
+		/// Finds the account identified by \a address.
+		const auto findIterator(const Address& address) const {
+			return cache().sub<cache::AccountStateCache>().find(address);
+		}
+
+		/// Finds the account identified by \a publicKey.
+		const auto findIterator(const Key& publicKey) const {
+			return cache().sub<cache::AccountStateCache>().find(publicKey);
+		}
+
 	private:
 		state::AccountState& addAccount(const Address& address) {
 			auto& accountStateCache = cache().sub<cache::AccountStateCache>();
