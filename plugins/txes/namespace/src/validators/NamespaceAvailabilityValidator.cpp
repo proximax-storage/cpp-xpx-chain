@@ -38,18 +38,13 @@ namespace catapult { namespace validators {
 		constexpr Height ToHeight(BlockDuration duration) {
 			return Height(duration.unwrap());
 		}
-	}
-
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(RootNamespaceAvailability, [](
-				const auto& notification,
-				const ValidatorContext& context) {
+		ValidationResult Validate(const Notification& notification, const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::NamespaceCache>();
 			const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();
 			auto height = context.Height;
 			const auto& networkConfig = context.Config.Network;
 			bool isEternalDurationSignedByNotNetworkPublicKey =
-				(Eternal_Artifact_Duration == notification.Duration && notification.Signer != networkConfig.Info.PublicKey);
+					(Eternal_Artifact_Duration == notification.Duration && notification.Signer != networkConfig.Info.PublicKey);
 
 			if (Height(1) != height && isEternalDurationSignedByNotNetworkPublicKey)
 				return Failure_Namespace_Eternal_After_Nemesis_Block;
@@ -70,6 +65,10 @@ namespace catapult { namespace validators {
 					return true;
 				return false;
 			}) ? ValidationResult::Success : Failure_Namespace_Owner_Conflict;
-		});
+		}
+	}
+
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Validate);
 	}
 }}

@@ -77,6 +77,9 @@ namespace catapult { namespace state {
 			output.write(root.owner());
 			io::Write(output, root.lifetime().Start);
 			io::Write(output, root.lifetime().End);
+			if(version == 2) {
+				io::Write(output, root.lifetime().GracePeriodEnd-root.lifetime().End);
+			}
 			SaveAlias(output, root.alias(root.id()), version);
 
 			if (pLastOwner && *pLastOwner == root.owner())
@@ -89,7 +92,7 @@ namespace catapult { namespace state {
 	}
 
 	void RootNamespaceHistoryNonHistoricalSerializer::Save(const RootNamespaceHistory& history, io::OutputStream& output) {
-		VersionType version{1};
+		VersionType version{2};
 		SaveHeader(output, history, HeaderMode::Exclude_History_Depth, version);
 		if (0 == history.historyDepth())
 			CATAPULT_THROW_RUNTIME_ERROR_1("cannot save empty namespace history", history.id());
@@ -165,7 +168,11 @@ namespace catapult { namespace state {
 			input.read(owner);
 			auto lifetimeStart = io::Read<Height>(input);
 			auto lifetimeEnd = io::Read<Height>(input);
-			history.push_back(owner, NamespaceLifetime(lifetimeStart, lifetimeEnd));
+			auto gracePeriod = BlockDuration(0);
+			if(version == 2) {
+				gracePeriod = io::Read<BlockDuration>(input);
+			}
+			history.push_back(owner, NamespaceLifetime(lifetimeStart, lifetimeEnd, gracePeriod));
 
 			auto alias = LoadAlias(input, version);
 			history.back().setAlias(history.id(), alias);
@@ -195,7 +202,7 @@ namespace catapult { namespace state {
 	// region RootNamespaceHistorySerializer
 
 	void RootNamespaceHistorySerializer::Save(const RootNamespaceHistory& history, io::OutputStream& output) {
-		VersionType version{1};
+		VersionType version{2};
 		SaveHeader(output, history, HeaderMode::Include_History_Depth, version);
 
 		const Key* pLastOwner = nullptr;
