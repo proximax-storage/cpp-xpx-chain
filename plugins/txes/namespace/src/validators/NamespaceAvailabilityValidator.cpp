@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
 			auto height = context.Height;
 			const auto& networkConfig = context.Config.Network;
 			bool isEternalDurationSignedByNotNetworkPublicKey =
-					(Eternal_Artifact_Duration == notification.Duration && notification.Signer != networkConfig.Info.PublicKey);
+				(Eternal_Artifact_Duration == notification.Duration && notification.Signer != networkConfig.Info.PublicKey);
 
 			if (Height(1) != height && isEternalDurationSignedByNotNetworkPublicKey)
 				return Failure_Namespace_Eternal_After_Nemesis_Block;

@@ -53,7 +53,7 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateAccountRestrictionFlagsValidator())
-
+				.add(validators::CreateAccountRestrictionModificationPresentValidator())
 				.add(validators::CreateAccountOperationRestrictionModificationValuesValidator());
 		});
 
