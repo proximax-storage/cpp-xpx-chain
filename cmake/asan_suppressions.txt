@@ -1,0 +1,8 @@
+interceptor_via_lib:libcatapult.plugins.service.sdk.a
+interceptor_via_lib:libtests.catapult.test.plugins.service.a
+interceptor_via_lib:libcatapult.mongo.plugins.service.deps.a
+interceptor_via_lib:libtests.catapult.test.mongo.plugins.service.a
+interceptor_via_lib:libcatapult.plugins.service.deps.a
+
+src:plugins/txes/service/src/StartDriveVerificationTransactionPlugin.cpp
+src:plugins/txes/service/tests/plugins/StartDriveVerificationTransactionPluginTests.cpp
