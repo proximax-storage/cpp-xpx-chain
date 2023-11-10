@@ -7,14 +7,14 @@ if(SANITIZE_ADDRESS)
         -g
         -O1
         -DNDEBUG
-        -fsanitize-blacklist=${CMAKE_CURRENT_LIST_DIR}/asan_suppressions.txt
+        -fsanitize-ignorelist=${CMAKE_CURRENT_LIST_DIR}/asan_suppressions.txt
         )
     foreach(FLAG IN LISTS FLAGS)
         add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
         add_cache_flag(CMAKE_C_FLAGS ${FLAG})
     endforeach()
 
-    set(_ENV "suppressions=${CMAKE_CURRENT_LIST_DIR}/asan_suppressions.txt:verbosity=1:debug=1:detect_leaks=1:check_initialization_order=1:alloc_dealloc_mismatch=true:use_odr_indicator=true")
+    set(_ENV "verbosity=1:debug=1:detect_leaks=1:check_initialization_order=1:alloc_dealloc_mismatch=true:use_odr_indicator=true")
 
     set(ENV{ASAN_OPTIONS} "${_ENV}")
     message(STATUS "
