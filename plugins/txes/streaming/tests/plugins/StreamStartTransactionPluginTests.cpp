@@ -139,7 +139,8 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
-		EXPECT_EQ(pTransaction->ExpectedUploadSizeMegabytes, notification.ExpectedUploadSize);
+		auto expectedUploadSize = pTransaction->ExpectedUploadSizeMegabytes;
+		EXPECT_EQ(expectedUploadSize, notification.ExpectedUploadSize);
 		EXPECT_EQ(pTransaction->FolderNameSize, notification.FolderName.size());
 		EXPECT_EQ_MEMORY(pTransaction->FolderNamePtr(), notification.FolderName.data(), notification.FolderName.size());
 	}
@@ -216,7 +217,8 @@ namespace catapult { namespace plugins {
 
 		auto pActualAmount = (model::StreamingWork *) notification.MosaicAmount.DataPtr;
 		EXPECT_EQ(pTransaction->DriveKey, pActualAmount->DriveKey);
-		EXPECT_EQ(pTransaction->ExpectedUploadSizeMegabytes, pActualAmount->UploadSize);
+		auto expectedUploadSize = pTransaction->ExpectedUploadSizeMegabytes;
+		EXPECT_EQ(expectedUploadSize, pActualAmount->UploadSize);
 	}
 
 	// endregion
