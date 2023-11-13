@@ -77,8 +77,15 @@ namespace catapult { namespace harvesting {
 			for (const auto& transaction : pBlock->Transactions()) {
 				auto surplus = transaction.MaxFee - model::CalculateTransactionFee(
 					blockHeader.FeeMultiplier, transaction, pBlock->FeeInterest, pBlock->FeeInterestDenominator);
-				if (Amount(0) != surplus)
-					accountStateCache.find(transaction.Signer).get().Balances.credit(config.Immutable.CurrencyMosaicId, surplus, blockHeader.Height);
+				std::map<Key, Amount> upgradedSurplusBank;
+				if (Amount(0) != surplus) {
+					auto* accountPtr = &accountStateCache.find(transaction.Signer).get();
+					while(accountPtr->IsLocked()) {
+						accountPtr = &accountStateCache.find(accountPtr->SupplementalPublicKeys.upgrade().get()).get();
+					}
+					accountPtr->Balances.credit(config.Immutable.CurrencyMosaicId, surplus, blockHeader.Height);
+				}
+
 			}
 
 			// 3. execute block (using zero hash)
