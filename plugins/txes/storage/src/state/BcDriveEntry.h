@@ -38,7 +38,7 @@ namespace catapult { namespace state {
 				const Hash256& id,
 				const Key& owner,
 				const Hash256& downloadDataCdi,
-				const uint64_t& uploadSizeMegabytes)
+				const uint64_t uploadSizeMegabytes)
 			: ActiveDataModification(
 					  id,
 					  owner,
@@ -53,8 +53,8 @@ namespace catapult { namespace state {
 		ActiveDataModification(
 				const Hash256& id,
 				const Key& owner,
-				const uint64_t& expectedUploadSizeMegabytes,
-				const std::string& folderName)
+				const uint64_t expectedUploadSizeMegabytes,
+				const std::string folderName)
 			: ActiveDataModification(id, owner, Hash256(),
 					  expectedUploadSizeMegabytes,
 					  expectedUploadSizeMegabytes, folderName, false, true)
@@ -205,32 +205,32 @@ namespace catapult { namespace state {
 		}
 
 		/// Sets total size of the drive.
-		void setSize(const uint64_t& size) {
+		void setSize(const uint64_t size) {
 			m_size = size;
 		}
 
 		/// Gets total size of the drive.
-		const uint64_t& size() const {
+		const uint64_t size() const {
 			return m_size;
 		}
 
 		/// Sets used size of the drive.
-		void setUsedSizeBytes(const uint64_t& usedSize) {
+		void setUsedSizeBytes(const uint64_t usedSize) {
 			m_usedSizeBytes = usedSize;
 		}
 
 		/// Gets used size of the drive.
-		const uint64_t& usedSizeBytes() const {
+		const uint64_t usedSizeBytes() const {
 			return m_usedSizeBytes;
 		}
 
 		/// Sets the size of the drive metafiles.
-		void setMetaFilesSizeBytes(const uint64_t& metaFilesSize) {
+		void setMetaFilesSizeBytes(const uint64_t metaFilesSize) {
 			m_metaFilesSizeBytes = metaFilesSize;
 		}
 
 		/// Gets the size of the drive metafiles.
-		const uint64_t& metaFilesSizeBytes() const {
+		const uint64_t metaFilesSizeBytes() const {
 			return m_metaFilesSizeBytes;
 		}
 
