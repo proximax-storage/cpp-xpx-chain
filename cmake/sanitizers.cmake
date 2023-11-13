@@ -56,13 +56,14 @@ elseif(SANITIZE_UNDEFINED)
         -fno-omit-frame-pointer
         -g
         -O1
+        -fsanitize-ignorelist=${CMAKE_CURRENT_LIST_DIR}/ubsan_ignorelist.txt
         )
     foreach(FLAG IN LISTS FLAGS)
         add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
         add_cache_flag(CMAKE_C_FLAGS ${FLAG})
     endforeach()
 
-    set(_ENV "print_stacktrace=1")
+    set(_ENV "print_stacktrace=1:suppressions=${CMAKE_CURRENT_LIST_DIR}/ubsan_ignorelist.txt")
     set(ENV{UBSAN_OPTIONS} "${_ENV}")
     message(STATUS "
     [Warning] Define UBSAN_OPTIONS ENV var:
