@@ -1,3 +1,72 @@
+# Building on Ubuntu 22.04 (LTS)
+
+Use the script below:
+
+```
+set -e
+set -x
+
+cd /tmp
+
+apt-get update -y && apt-get upgrade -y && apt-get clean && \
+  DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
+  cmake \
+  git \
+  curl \
+  wget \
+  build-essential \
+  gcc-12 \
+  software-properties-common \
+  pkg-config \
+  libssl-dev \
+  libsasl2-dev \
+  libtool \
+  libboost-dev \
+  libboost-atomic-dev \
+  libboost-date-time-dev \
+  libboost-regex-dev \
+  libboost-system-dev \
+  libboost-timer-dev \
+  libboost-chrono-dev \
+  libboost-log-dev \
+  libboost-thread-dev \
+  libboost-filesystem-dev \
+  libboost-program-options-dev \
+  libboost-stacktrace-dev \
+  libboost-random-dev \
+  libgtest-dev \
+  libbenchmark-dev \
+  librocksdb-dev \
+  libzmq3-dev \
+  libmongoc-1.0-0 \
+  libmongoc-dev \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Replace gcc with gcc-12
+rm /usr/bin/gcc && ln -s /usr/bin/gcc-12 /usr/bin/gcc
+
+cd /usr/local/src
+
+curl -OL https://github.com/zeromq/cppzmq/archive/v4.9.0.tar.gz && \
+  tar xzf v4.9.0.tar.gz && \
+  cd cppzmq-4.9.0 && \
+  mkdir build && \
+  cd build && \
+  cmake -DCPPZMQ_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
+  make -j4 && \
+  make install
+
+# Install mongo-cxx
+curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.7.0/mongo-cxx-driver-r3.7.0.tar.gz  && \
+tar -xzf mongo-cxx-driver-r3.7.0.tar.gz  && \
+cd mongo-cxx-driver-r3.7.0/build && \
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBSONCXX_POLY_USE_BOOST=1 .. && \
+  make -j4 && \
+  make install
+
+# Clean Downloads
+rm v4.9.0.tar.gz mongo-cxx-driver-r3.7.0.tar.gz 
+```
 # Building on Ubuntu 18.04 (LTS)
 
 Instructions below are for gcc, but project compiles with clang 9 as well.
@@ -119,7 +188,7 @@ cd rocksdb.git
 git checkout v6.6.4
 
 mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DWITH_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
+cmake -DCMAKE_BUILD_TYPE=Release -DWITH_TESTS=OFF -DWITH_BENCHMARK_TOOLS=OFF -DWITH_TOOLS=OFF -DFAIL_ON_WARNINGS=OFF -DWITH_RUNTIME_DEBUG=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
 make
 sudo make install
 ```

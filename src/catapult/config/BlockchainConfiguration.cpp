@@ -77,20 +77,6 @@ namespace catapult { namespace config {
 				LoadSupportedEntityVersions(resourcesPath / "supported-entities.json"));
 	}
 
-	BlockchainConfiguration BlockchainConfiguration::LoadLocalFromPath(
-			const boost::filesystem::path& resourcesPath,
-			const std::string& extensionsHost) {
-		return BlockchainConfiguration(
-			LoadIniConfiguration<ImmutableConfiguration>(resourcesPath / Qualify("immutable")),
-			model::NetworkConfiguration::Uninitialized(),
-			LoadIniConfiguration<NodeConfiguration>(resourcesPath / Qualify("node")),
-			LoadIniConfiguration<LoggingConfiguration>(resourcesPath / HostQualify("logging", extensionsHost)),
-			LoadIniConfiguration<UserConfiguration>(resourcesPath / Qualify("user")),
-			LoadIniConfiguration<ExtensionsConfiguration>(resourcesPath / HostQualify("extensions", extensionsHost)),
-			LoadIniConfiguration<InflationConfiguration>(resourcesPath / Qualify("inflation")),
-			config::SupportedEntityVersions());
-	}
-
 	BlockchainConfiguration BlockchainConfiguration::Uninitialized() {
 		return BlockchainConfiguration(
 			ImmutableConfiguration::Uninitialized(),

@@ -64,10 +64,6 @@ namespace catapult { namespace fastfinality {
 			m_pDbrbProcess = nullptr;
 		}
 
-		auto& ioContext() {
-			return m_pPool->ioContext();
-		}
-
 		auto& timer() {
 			return m_timer;
 		}

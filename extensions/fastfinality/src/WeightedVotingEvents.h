@@ -28,6 +28,8 @@ namespace catapult { namespace fastfinality {
 		CommitteePhase Phase;
 	};
 
+	struct NotRegisteredInDbrbSystem{};
+
 	struct UnexpectedBlockHeight{};
 
 	struct BlockProposingFailed{};
@@ -52,4 +54,6 @@ namespace catapult { namespace fastfinality {
 	struct CommitBlockSucceeded{};
 
 	struct Stop{};
+
+	struct Hold{};
 }}

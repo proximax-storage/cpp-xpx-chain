@@ -96,7 +96,7 @@ namespace catapult { namespace config {
 
 	}
 
-	void BlockchainConfigurationHolder::InitializeNetworkConfiguration(const model::NetworkConfiguration& networkConfiguration, const config::SupportedEntityVersions& supportedEntities) {
+	void BlockchainConfigurationHolder::InitializeNetworkConfiguration(const model::NetworkConfiguration& networkConfiguration) {
 		if(m_configs.empty() || m_configs.size() > 1)
 			CATAPULT_THROW_RUNTIME_ERROR("Attempting to initialize configuration holder base config, but it's empty or has been initialized already.")
 		std::unique_lock lock(m_mutex);
@@ -109,7 +109,7 @@ namespace catapult { namespace config {
 			baseConfig.User,
 			baseConfig.Extensions,
 			baseConfig.Inflation,
-			supportedEntities,
+			baseConfig.SupportedEntityVersions,
 			Height(0),
 			nullptr
 		);

@@ -91,7 +91,7 @@ namespace catapult { namespace test {
 			// Assert:
 			EXPECT_EQ(Height(1), accountState.AddressHeight) << message;
 			EXPECT_EQ(address, accountState.Address) << message;
-			EXPECT_EQ(Height(0), accountState.PublicKeyHeight) << message;
+			EXPECT_EQ(Height(1), accountState.PublicKeyHeight) << message;
 			// recipient public key is unknown (public key height is zero)
 
 			EXPECT_EQ(Amount(409'090'909'000'000), accountState.Balances.get(Default_Currency_Mosaic_Id)) << message;
@@ -100,7 +100,7 @@ namespace catapult { namespace test {
 
 		void AssertNemesisState(const cache::AccountStateCacheView& view) {
 			// Assert:
-			EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys) + 22u, view.size());
+			EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys), view.size());
 
 			// - check nemesis account
 			AssertNemesisAccount(view);

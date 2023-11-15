@@ -17,17 +17,16 @@ namespace catapult { namespace storage {
         class DefaultReplicatorEventHandler : public ReplicatorEventHandler {
         public:
             explicit DefaultReplicatorEventHandler(
-            		std::shared_ptr<thread::IoThreadPool>&& pool,
                     TransactionSender&& transactionSender,
                     state::StorageState& storageState,
                     TransactionStatusHandler& transactionStatusHandler,
                     const crypto::KeyPair& keyPair)
-				: m_pool(std::move(pool))
+				: m_work(boost::asio::make_work_guard(m_context))
+				, m_thread(std::thread([this] { m_context.run(); }))
 				, m_transactionSender(std::move(transactionSender))
 				, m_storageState(storageState)
 				, m_transactionStatusHandler(transactionStatusHandler)
-				, m_keyPair(keyPair)
-			{}
+				, m_keyPair(keyPair) {}
 
         public:
             void modifyApprovalTransactionIsReady(
@@ -142,7 +141,7 @@ namespace catapult { namespace storage {
             void opinionHasBeenReceived(
                     sirius::drive::Replicator&,
                     const sirius::drive::ApprovalTransactionInfo& info) override {
-            	boost::asio::post(m_pool->ioContext(), [this, info] {
+            	boost::asio::post(m_context, [this, info] {
 				  CATAPULT_LOG(debug) << "modificationOpinionHasBeenReceived() " << int(info.m_opinions[0].m_replicatorKey[0]);
 				  auto pReplicator = m_pReplicator.lock();
 				  if (!pReplicator)
@@ -271,7 +270,7 @@ namespace catapult { namespace storage {
             void downloadOpinionHasBeenReceived(
                     sirius::drive::Replicator&,
                     const sirius::drive::DownloadApprovalTransactionInfo& info) override {
-            	boost::asio::post(m_pool->ioContext(), [this, info] {
+            	boost::asio::post(m_context, [this, info] {
 					auto pReplicator = m_pReplicator.lock();
 					if (!pReplicator)
 						return;
@@ -329,8 +328,19 @@ namespace catapult { namespace storage {
 				CATAPULT_THROW_RUNTIME_ERROR( error.c_str() );
 			}
 
+			~DefaultReplicatorEventHandler() override {
+				m_context.stop();
+				if (m_thread.joinable()) {
+					m_thread.join();
+				}
+			}
+
 		private:
-        	std::shared_ptr<thread::IoThreadPool> m_pool;
+
+        	boost::asio::io_context m_context;
+            boost::asio::executor_work_guard<boost::asio::io_context::executor_type> m_work;
+            std::thread m_thread;
+
             TransactionSender m_transactionSender;
             state::StorageState& m_storageState;
             TransactionStatusHandler& m_transactionStatusHandler;
@@ -339,12 +349,10 @@ namespace catapult { namespace storage {
     }
 
     std::unique_ptr<ReplicatorEventHandler> CreateReplicatorEventHandler(
-    		std::shared_ptr<thread::IoThreadPool>&& pool,
             TransactionSender&& transactionSender,
             state::StorageState& storageState,
             TransactionStatusHandler& operations,
 			const catapult::crypto::KeyPair& keyPair) {
-    	return std::make_unique<DefaultReplicatorEventHandler>(
-				std::move(pool), std::move(transactionSender), storageState, operations, keyPair);
+    	return std::make_unique<DefaultReplicatorEventHandler>(std::move(transactionSender), storageState, operations, keyPair);
     }
 }}

@@ -448,4 +448,25 @@ namespace catapult { namespace plugins {
 	}
 
 	// endregion
+
+	// region configure plugin manager
+
+	void PluginManager::reset() {
+		m_transactionRegistry.reset();
+		m_nonDiagnosticHandlerHooks.clear();
+		m_diagnosticHandlerHooks.clear();
+		m_diagnosticCounterHooks.clear();
+		m_statelessValidatorHooks.clear();
+		m_statefulValidatorHooks.clear();
+		m_observerHooks.clear();
+		m_transientObserverHooks.clear();
+		m_mosaicResolvers.clear();
+		m_addressResolvers.clear();
+		m_amountResolvers.clear();
+		m_addressesExtractors.clear();
+		m_publicKeysExtractors.clear();
+		m_pluginInitializers.clear();
+	}
+
+	// endregion
 }}

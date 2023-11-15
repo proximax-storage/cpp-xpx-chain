@@ -110,8 +110,7 @@ namespace catapult { namespace fastfinality {
 	action CreateDefaultCommitConfirmedBlockAction(
 		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 		const consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&>& rangeConsumer,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-		chain::CommitteeManager& committeeManager);
+		extensions::ServiceState& state);
 
 	action CreateDefaultIncrementRoundAction(
 		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,

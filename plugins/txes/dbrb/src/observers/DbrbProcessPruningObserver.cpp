@@ -7,20 +7,30 @@
 #include "Observers.h"
 #include "src/cache/DbrbViewCache.h"
 #include "src/cache/DbrbViewFetcherImpl.h"
+#include "catapult/chain/CommitteeManager.h"
 
 namespace catapult { namespace observers {
 
-	using Notification = model::BlockNotification<1>;
+	DEFINE_OBSERVER(DbrbProcessPruning, model::BlockNotification<1>, [](const auto& notification, const ObserverContext& context) {
+		if (NotifyMode::Rollback == context.Mode)
+			return;
 
-	DECLARE_OBSERVER(DbrbProcessPruning, Notification)(const std::shared_ptr<cache::DbrbViewFetcherImpl>& pDbrbViewFetcher) {
-		return MAKE_OBSERVER(DbrbProcessPruning, Notification, [pDbrbViewFetcher](const Notification&, ObserverContext& context) {
-			if (NotifyMode::Rollback == context.Mode)
-			  	CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DbrbProcessPruning)");
+		auto maxTransactionLifeTime = Timestamp(context.Config.Network.MaxTransactionLifetime.millis());
+		auto blockTargetTime = chain::CommitteePhaseCount * context.Config.Network.MinCommitteePhaseTime.millis();
+		uint64_t blockInterval = maxTransactionLifeTime.unwrap() / blockTargetTime;
+		if (context.Height.unwrap() % blockInterval != 0 || blockInterval < context.Height.unwrap() || context.Timestamp < maxTransactionLifeTime)
+			return;
 
-            auto& cache = context.Cache.sub<cache::DbrbViewCache>();
-			auto expiredProcesses = pDbrbViewFetcher->getExpiredDbrbProcesses(context.Timestamp);
-			for (const auto& processId : expiredProcesses)
+		auto& cache = context.Cache.sub<cache::DbrbViewCache>();
+		auto processIds = cache.processIds();
+		auto pruningBoundary = context.Timestamp - maxTransactionLifeTime;
+		for (const auto& processId : processIds) {
+			auto iter = cache.find(processId);
+			const auto& entry = iter.get();
+			if (entry.expirationTime() < pruningBoundary) {
+				CATAPULT_LOG(debug) << "removing DBRB process " << processId;
 				cache.remove(processId);
-        })
-	};
+			}
+		}
+	});
 }}

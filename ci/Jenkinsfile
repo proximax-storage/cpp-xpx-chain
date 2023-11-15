@@ -32,7 +32,10 @@ pipeline {
                                     make -j4 publish
                                 make -j4
                                 cd ..
-                                ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
+                                ./scripts/release-script/copyDeps.sh _build/bin ./deps
+                                mkdir -p ./deps/sirius
+                                cp -r _build/lib ./deps/sirius/
+                                rm -rf ./deps/home
                             """    
                         }
                     }

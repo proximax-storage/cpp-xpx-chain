@@ -41,6 +41,7 @@ namespace catapult { namespace fastfinality {
 				sml::state<LocalChainCheck> + sml::event<NetworkHeightLessThanLocal> = sml::state<InvalidLocalChain>,
 				sml::state<LocalChainCheck> + sml::event<NetworkHeightGreaterThanLocal> = sml::state<BlocksDownloading>,
 				sml::state<LocalChainCheck> + sml::event<NetworkHeightEqualToLocal> = sml::state<StageDetection>,
+				sml::state<LocalChainCheck> + sml::event<NotRegisteredInDbrbSystem> = sml::state<LocalChainCheck>,
 
 				sml::state<InvalidLocalChain> / ACTION(ResetLocalChain) = sml::X,
 
@@ -55,6 +56,7 @@ namespace catapult { namespace fastfinality {
 				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isPhaseProposeAndIsBlockProposer ] = sml::state<BlockProposing>,
 				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isPhaseProposeAndIsNotBlockProposer ] = sml::state<ProposalWaiting>,
 				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isNotPhasePropose ] = sml::state<ConfirmedBlockRequest>,
+				sml::state<CommitteeSelection> + sml::event<NotRegisteredInDbrbSystem> = sml::state<LocalChainCheck>,
 
 				sml::state<BlockProposing> + sml::on_entry<sml::_> / ACTION(ProposeBlock),
 				sml::state<BlockProposing> + sml::event<BlockProposingFailed> = sml::state<ConfirmedBlockRequest>,
@@ -84,7 +86,8 @@ namespace catapult { namespace fastfinality {
 
 				sml::state<Commit> + sml::on_entry<sml::_> / ACTION(CommitConfirmedBlock),
 				sml::state<Commit> + sml::event<CommitBlockFailed> / ACTION(IncrementRound) = sml::state<CommitteeSelection>,
-				sml::state<Commit> + sml::event<CommitBlockSucceeded> / ACTION(ResetRound) = sml::state<CommitteeSelection>
+				sml::state<Commit> + sml::event<CommitBlockSucceeded> / ACTION(ResetRound) = sml::state<CommitteeSelection>,
+				sml::state<Commit> + sml::event<Hold> = sml::state<OnHold>
 			);
 		}
 	};

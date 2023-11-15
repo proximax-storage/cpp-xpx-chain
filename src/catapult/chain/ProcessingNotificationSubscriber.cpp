@@ -71,6 +71,8 @@ namespace catapult { namespace chain {
 			return;
 
 		auto result = m_validator.validate(notification, m_validatorContext);
+		if (!IsValidationResultSuccess(result))
+			CATAPULT_LOG(warning) << "validation failed: " << result;
 		AggregateValidationResult(m_aggregateResult, result);
 	}
 

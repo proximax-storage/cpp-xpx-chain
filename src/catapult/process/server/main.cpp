@@ -30,7 +30,7 @@ namespace {
 int main(int argc, const char** argv) {
 	using namespace catapult;
 	return process::ProcessMain(argc, argv, Process_Name,  [](const boost::filesystem::path& path, const std::string& host){
-				auto config = config::BlockchainConfiguration::LoadLocalFromPath(path, host);
+				auto config = config::BlockchainConfiguration::LoadFromPath(path, host);
 				auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
 				config::ValidateLocalConfiguration(config);
 				return pConfigHolder;

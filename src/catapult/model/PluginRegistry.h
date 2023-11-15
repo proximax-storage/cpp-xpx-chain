@@ -52,6 +52,11 @@ namespace catapult { namespace model {
 			m_plugins.push_back(std::move(pPlugin));
 		}
 
+		/// Removes all plugins from the registry.
+		void reset() {
+			m_plugins.clear();
+		}
+
 	private:
 		std::vector<std::unique_ptr<const TPlugin>> m_plugins;
 	};
