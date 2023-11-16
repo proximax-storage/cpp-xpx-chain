@@ -44,48 +44,77 @@ namespace catapult { namespace fastfinality {
 		}
 
 		auto CreateRemoteNodeStateRetriever(
+				const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-				const model::BlockElementSupplier& lastBlockElementSupplier,
-				const net::PacketIoPickerContainer& packetIoPickers,
-				const dbrb::DbrbViewFetcher& dbrbViewFetcher) {
-			return [pConfigHolder, lastBlockElementSupplier, &packetIoPickers, &dbrbViewFetcher]() {
-				std::vector<thread::future<RemoteNodeState>> remoteNodeStateFutures;
-				auto timeout = utils::TimeSpan::FromSeconds(5);
+				const model::BlockElementSupplier& lastBlockElementSupplier) {
+			return [pFsmWeak, pConfigHolder, lastBlockElementSupplier]() {
+				auto pFsmShared = pFsmWeak.lock();
+				if (!pFsmShared || pFsmShared->stopped() || pFsmShared->dbrbProcess()->currentView().Data.empty())
+					return std::vector<RemoteNodeState>();
 
-				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
-				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling remote node states";
-				if (packetIoPairs.empty())
-					return thread::make_ready_future(std::vector<RemoteNodeState>());
+				auto pPromise = std::make_shared<thread::promise<std::vector<RemoteNodeState>>>();
 
-				auto chainHeight = lastBlockElementSupplier()->Block.Height;
-				const auto& config = pConfigHolder->Config(chainHeight);
-				const auto maxBlocksPerSyncAttempt = config.Node.MaxBlocksPerSyncAttempt;
-				const auto targetHeight = chainHeight + Height(maxBlocksPerSyncAttempt);
+				boost::asio::post(pFsmShared->dbrbProcess()->strand(), [pFsmWeak, pConfigHolder, lastBlockElementSupplier, pPromise]() {
+					auto pFsmShared = pFsmWeak.lock();
+					if (!pFsmShared || pFsmShared->stopped()) {
+						pPromise->set_value(std::vector<RemoteNodeState>());
+						return;
+					}
 
-				auto dbrbBootstrapProcesses = config.Network.DbrbBootstrapProcesses;
-				if (dbrbBootstrapProcesses.empty())
-					dbrbBootstrapProcesses = pConfigHolder->Config(chainHeight + Height(1)).Network.DbrbBootstrapProcesses;
-				auto view = dbrbViewFetcher.getView(utils::NetworkTime());
-				view.merge(dbrbBootstrapProcesses);
-				for (const auto& packetIoPair : packetIoPairs) {
-					if (view.find(packetIoPair.node().identityKey()) == view.end())
-						continue;
+					std::vector<thread::future<RemoteNodeState>> remoteNodeStateFutures;
 
-					auto pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(packetIoPair);
-					api::RemoteRequestDispatcher dispatcher{*pPacketIoPair->io()};
-					remoteNodeStateFutures.push_back(dispatcher.dispatch(RemoteNodeStateTraits{}, targetHeight).then([pPacketIoPair](auto&& stateFuture) {
-						auto remoteNodeState = stateFuture.get();
-						remoteNodeState.NodeKey = pPacketIoPair->node().identityKey();
-						return remoteNodeState;
-					}));
-				}
+					auto chainHeight = lastBlockElementSupplier()->Block.Height;
+					const auto& config = pConfigHolder->Config(chainHeight);
+					const auto maxBlocksPerSyncAttempt = config.Node.MaxBlocksPerSyncAttempt;
+					const auto targetHeight = chainHeight + Height(maxBlocksPerSyncAttempt);
 
-				if (remoteNodeStateFutures.empty())
-					return thread::make_ready_future(std::vector<RemoteNodeState>());
+					auto dbrbBootstrapProcesses = config.Network.DbrbBootstrapProcesses;
+					if (dbrbBootstrapProcesses.empty())
+						dbrbBootstrapProcesses = pConfigHolder->Config(chainHeight + Height(1)).Network.DbrbBootstrapProcesses;
+					auto minOpinionNumber = dbrb::View{dbrbBootstrapProcesses}.quorumSize() - 1;
 
-				return thread::when_all(std::move(remoteNodeStateFutures)).then([](auto&& completedFutures) {
-					return thread::get_all_ignore_exceptional(completedFutures.get());
+					const auto& view = pFsmShared->dbrbProcess()->currentView();
+					auto& packetIoPairMap = pFsmShared->dbrbProcess()->messageSender().getPacketIos(view.Data);
+					CATAPULT_LOG(debug) << "found " << packetIoPairMap.size() << " peer(s) for pulling remote node states, min opinion number " << minOpinionNumber;
+					if (packetIoPairMap.size() < minOpinionNumber) {
+						pPromise->set_value(std::vector<RemoteNodeState>());
+						return;
+					}
+
+					for (const auto& pair : packetIoPairMap) {
+						auto pPacketIoPair = pair.second;
+						api::RemoteRequestDispatcher dispatcher{*pPacketIoPair->io()};
+						remoteNodeStateFutures.push_back(dispatcher.dispatch(RemoteNodeStateTraits{}, targetHeight).then([pPacketIoPair](auto&& stateFuture) {
+							auto remoteNodeState = stateFuture.get();
+							remoteNodeState.NodeKey = pPacketIoPair->node().identityKey();
+							return remoteNodeState;
+						}));
+					}
+
+					auto nodeStates = thread::when_all(std::move(remoteNodeStateFutures)).then([](auto&& completedFutures) {
+						return thread::get_all_ignore_exceptional(completedFutures.get());
+					}).get();
+					CATAPULT_LOG(debug) << "retrieved " << nodeStates.size() << " node states, min opinion number " << minOpinionNumber;
+
+					if (nodeStates.empty()) {
+						packetIoPairMap.clear();
+					} else {
+						for (auto iter = packetIoPairMap.begin(); iter != packetIoPairMap.end();) {
+							if (std::find_if(nodeStates.begin(), nodeStates.end(), [&iter](const auto& nodeState) { return iter->first == nodeState.NodeKey; }) == nodeStates.end()) {
+								iter = packetIoPairMap.erase(iter);
+							} else {
+								iter++;
+							}
+						}
+					}
+
+					if (nodeStates.size() < minOpinionNumber)
+						nodeStates.clear();
+
+					pPromise->set_value(std::move(nodeStates));
 				});
+
+				return pPromise->get_future().get();
 			};
 		}
 
@@ -103,8 +132,8 @@ namespace catapult { namespace fastfinality {
 					const harvesting::HarvestingConfiguration& harvestingConfig,
 					const dbrb::DbrbConfiguration& dbrbConfig,
 					std::shared_ptr<dbrb::TransactionSender> pTransactionSender)
-				: m_harvestingConfig(std::move(harvestingConfig))
-				, m_dbrbConfig(std::move(dbrbConfig))
+				: m_harvestingConfig(harvestingConfig)
+				, m_dbrbConfig(dbrbConfig)
 				, m_pTransactionSender(std::move(pTransactionSender))
 			{}
 
@@ -197,7 +226,7 @@ namespace catapult { namespace fastfinality {
 				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
 				RegisterPullConfirmedBlockHandler(pFsmShared, state.packetHandlers());
-				RegisterPullRemoteNodeStateHandler(pFsmShared, state.packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
+				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
 				dbrb::RegisterPushNodesHandler(pFsmShared->dbrbProcess(), config.Immutable.NetworkIdentifier, state.packetHandlers());
 				dbrb::RegisterPullNodesHandler(pFsmShared->dbrbProcess(), state.packetHandlers());
 
@@ -216,7 +245,7 @@ namespace catapult { namespace fastfinality {
 
 				actions.CheckLocalChain = CreateDefaultCheckLocalChainAction(
 					pFsmShared,
-					CreateRemoteNodeStateRetriever(pConfigHolder, lastBlockElementSupplier, state.packetIoPickers(), state.pluginManager().dbrbViewFetcher()),
+					CreateRemoteNodeStateRetriever(pFsmShared, pConfigHolder, lastBlockElementSupplier),
 					pConfigHolder,
 					lastBlockElementSupplier,
 					importanceGetter,

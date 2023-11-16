@@ -26,7 +26,7 @@ namespace catapult { namespace dbrb {
 		const dbrb::DbrbViewFetcher& dbrbViewFetcher)
 			: m_id(thisNode.identityKey())
 			, m_keyPair(keyPair)
-			, m_nodeRetreiver(packetIoPickers, thisNode.metadata().NetworkIdentifier, pWriters)
+			, m_nodeRetreiver(packetIoPickers, thisNode.metadata().NetworkIdentifier, m_id, pWriters)
 			, m_pMessageSender(std::make_shared<MessageSender>(pWriters, m_nodeRetreiver))
 			, m_pPool(std::move(pPool))
 			, m_strand(m_pPool->ioContext())
@@ -70,6 +70,18 @@ namespace catapult { namespace dbrb {
 
 	NodeRetreiver& DbrbProcess::nodeRetreiver() {
 		return m_nodeRetreiver;
+	}
+
+	boost::asio::io_context::strand& DbrbProcess::strand() {
+		return m_strand;
+	}
+
+	MessageSender& DbrbProcess::messageSender() {
+		return *m_pMessageSender;
+	}
+
+	const View& DbrbProcess::currentView() {
+		return m_currentView;
 	}
 
 	// Basic operations:
@@ -345,7 +357,7 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	bool DbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) {
+	bool DbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) {
 		auto view = View{ m_dbrbViewFetcher.getView(now) };
 		auto isTemporaryProcess = view.isMember(m_id);
 
@@ -362,7 +374,7 @@ namespace catapult { namespace dbrb {
 		if (view.Data.empty())
 			CATAPULT_THROW_RUNTIME_ERROR("no DBRB processes")
 
-		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, view, isTemporaryProcess, isBootstrapProcess, gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis())]() {
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, view, isTemporaryProcess, isBootstrapProcess, gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis()), registerSelf]() {
 			auto pThis = pThisWeak.lock();
 			if (!pThis)
 				return;
@@ -373,26 +385,27 @@ namespace catapult { namespace dbrb {
 			pThis->m_currentView = view;
 			CATAPULT_LOG(debug) << "[DBRB] Current view is now set to " << pThis->m_currentView;
 
-			bool isRegistrationRequired = false;
-			if (!isTemporaryProcess && !isBootstrapProcess) {
-				CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
-				isRegistrationRequired = true;
-			} else if (isTemporaryProcess) {
-				auto expirationTime = pThis->m_dbrbViewFetcher.getExpirationTime(pThis->m_id);
-				LogTime("[DBRB] process expires at ", expirationTime);
-				if (expirationTime < gracePeriod)
-					CATAPULT_THROW_RUNTIME_ERROR_1("invalid expiration time", pThis->m_id)
-
-				auto gracePeriodStart = expirationTime - gracePeriod;
-				LogTime("[DBRB] process grace period starts at ", gracePeriodStart);
-				if (now >= gracePeriodStart) {
-					CATAPULT_LOG(debug) << "[DBRB] node registration in the DBRB system soon expires";
+			if (registerSelf) {
+				bool isRegistrationRequired = false;
+				if (!isTemporaryProcess && !isBootstrapProcess) {
+					CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
 					isRegistrationRequired = true;
-				}
-			}
+				} else if (isTemporaryProcess) {
+					auto expirationTime = pThis->m_dbrbViewFetcher.getExpirationTime(pThis->m_id);
+					LogTime("[DBRB] process expires at ", expirationTime);
+					if (expirationTime < gracePeriod)
+						CATAPULT_THROW_RUNTIME_ERROR_1("invalid expiration time", pThis->m_id)
 
-			if (isRegistrationRequired) {
-				pThis->m_pTransactionSender->sendAddDbrbProcessTransaction();
+					auto gracePeriodStart = expirationTime - gracePeriod;
+					LogTime("[DBRB] process grace period starts at ", gracePeriodStart);
+					if (now >= gracePeriodStart) {
+						CATAPULT_LOG(debug) << "[DBRB] node registration in the DBRB system soon expires";
+						isRegistrationRequired = true;
+					}
+				}
+
+				if (isRegistrationRequired)
+					pThis->m_pTransactionSender->sendAddDbrbProcessTransaction();
 			}
 
 			pThis->m_nodeRetreiver.broadcastNodes();

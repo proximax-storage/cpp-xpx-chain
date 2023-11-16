@@ -68,13 +68,17 @@ namespace catapult { namespace dbrb {
 		/// Broadcast arbitrary \c payload into the system.
 		virtual void broadcast(const Payload&);
 		virtual void processMessage(const Message& message);
-		virtual bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height);
+		virtual bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf);
 
 	public:
 		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers);
 		void setDeliverCallback(const DeliverCallback& callback);
 
+	public:
 		NodeRetreiver& nodeRetreiver();
+		boost::asio::io_context::strand& strand();
+		MessageSender& messageSender();
+		const View& currentView();
 
 	private:
 		virtual void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients);

@@ -85,7 +85,7 @@ namespace catapult { namespace chain {
 			for (const auto& pair : accounts) {
 				const auto& data = pair.second;
 				CATAPULT_LOG_LEVEL(utils::LogLevel::Trace) << "committee account " << pair.first << " data: "
-					<< CalculateWeight(data) << "|" << data.Activity << data.Greed << "|" << data.LastSigningBlockHeight << "|"
+					<< CalculateWeight(data) << "|" << data.Activity << "|" << data.Greed << "|" << data.LastSigningBlockHeight << "|"
 					<< data.CanHarvest << "|" << data.EffectiveBalance;
 			}
 		}
@@ -163,6 +163,8 @@ namespace catapult { namespace chain {
 		auto pLastBlockElement = lastBlockElementSupplier()();
 		if (previousRound < 0) {
 			m_phaseTime = pLastBlockElement->Block.committeePhaseTime();
+			if (!m_phaseTime)
+				m_phaseTime = networkConfig.CommitteePhaseTime.millis();
 			m_timestamp = pLastBlockElement->Block.Timestamp;
 			LogAccountData(m_accounts);
 		} else {

@@ -51,7 +51,7 @@ namespace catapult { namespace fastfinality {
 					mocks::MockDbrbViewFetcher())
 			{}
 
-			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) override { return true; }
+			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) override { return true; }
 
 			void broadcast(const dbrb::Payload& payload) override {}
 			void processMessage(const dbrb::Message& message) override {}
@@ -94,13 +94,13 @@ namespace catapult { namespace fastfinality {
 						pThis->m_counter++;
 						auto defaultCheckLocalChainAction = fastfinality::CreateDefaultCheckLocalChainAction(
 							pThis->m_pFsm,
-								[pThis]() -> thread::future<std::vector<RemoteNodeState>> {
-									auto states = pThis->m_states;
-									return thread::make_ready_future(std::move(states));
-								},
+							[pThis]() -> std::vector<RemoteNodeState> {
+								auto states = pThis->m_states;
+								return std::move(states);
+							},
 							pThis->m_pConfigHolder,
-								[pThis] { return pThis->m_pLastBlockElement; },
-								[pThis](const Key& key) -> uint64_t { return pThis->m_importances[key]; },
+							[pThis] { return pThis->m_pLastBlockElement; },
+							[pThis](const Key& key) -> uint64_t { return pThis->m_importances[key]; },
 							pThis->m_committeeManager);
 
 						defaultCheckLocalChainAction();
