@@ -73,9 +73,9 @@ elseif(SANITIZE_UNDEFINED)
 elseif(SANITIZE_MEMORY)
     message(STATUS "SANITIZE_MEMORY enabled")
 
-    set(_ENV "halt_on_error=1:report_umrs=1:suppressions=${CMAKE_CURRENT_LIST_DIR}/msan_ignorelist.txt")
-    set(ENV{MSAN_OPTIONS} "${_ENV}")
+    set(IGNORELIST -fsanitize-blacklist=${CMAKE_CURRENT_LIST_DIR}/msan_ignorelist.txt)
     set(FLAGS
+        ${IGNORELIST}
         -fsanitize=memory
         -fPIE
         -fno-omit-frame-pointer
@@ -83,13 +83,14 @@ elseif(SANITIZE_MEMORY)
         -fno-optimize-sibling-calls
         -O1
         -fsanitize-memory-track-origins=2
-        -fsanitize-memory-track-origins=${MSAN_OPTIONS}
         )
     foreach(FLAG IN LISTS FLAGS)
-        add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
-        add_cache_flag(CMAKE_C_FLAGS ${FLAG})
+        add_cache_flag(CMAKE_CXX_FLAGS ${IGNORELIST} ${FLAG})
+        add_cache_flag(CMAKE_C_FLAGS ${IGNORELIST} ${FLAG})
     endforeach()
 
+    set(_ENV "halt_on_error=1:report_umrs=1:suppressions=${CMAKE_CURRENT_LIST_DIR}/msan_ignorelist.txt")
+    set(ENV{MSAN_OPTIONS} "${_ENV}")
     message(STATUS "
     [Warning] Define MSAN_OPTIONS ENV var:
 
