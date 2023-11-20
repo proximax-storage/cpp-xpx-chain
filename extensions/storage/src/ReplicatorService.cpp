@@ -109,7 +109,7 @@ namespace catapult { namespace storage {
 			std::vector<sirius::drive::ReplicatorInfo> bootstrapReplicators;
 			bootstrapReplicators.reserve(m_bootstrapReplicators.size());
 			for (const auto& node : m_bootstrapReplicators) {
-				boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(node.endpoint().Host), node.endpoint().Port);
+				boost::asio::ip::udp::endpoint endpoint(boost::asio::ip::make_address(node.endpoint().Host), node.endpoint().Port);
 				bootstrapReplicators.emplace_back(sirius::drive::ReplicatorInfo{ endpoint, node.identityKey().array() });
 			}
 

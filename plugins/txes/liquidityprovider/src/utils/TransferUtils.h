@@ -21,7 +21,7 @@
 #pragma once
 
 #include "src/state/LiquidityProviderEntry.h"
-
+#include <optional>
 namespace catapult::utils {
 
 	using BigUint = boost::multiprecision::uint256_t;

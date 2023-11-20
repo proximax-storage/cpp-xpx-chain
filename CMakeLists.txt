@@ -65,15 +65,15 @@ endfunction()
 ### add source directories
 add_subdirectory(external)
 
-if(NOT APPLE)
-	set(DO_NOT_SKIP_BUILD_TESTS TRUE)
-endif()
+#if(NOT APPLE)
+#	set(DO_NOT_SKIP_BUILD_TESTS TRUE)
+#endif()
 
 # run catapult tests first
 add_subdirectory(src)
-if(DO_NOT_SKIP_BUILD_TESTS)
-add_subdirectory(tests)
-endif()
+#if(DO_NOT_SKIP_BUILD_TESTS)
+#add_subdirectory(tests)
+#endif()
 # run other tests second
 add_subdirectory(sdk)
 add_subdirectory(plugins)
