@@ -1,4 +1,4 @@
-FROM debian:bookworm
+FROM debian:bookworm AS basic
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
   software-properties-common \
@@ -30,7 +30,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libzstd-dev \
   googletest \
   libzmq3-dev \
-  cppzmq-dev
+  cppzmq-dev \
+  libsnappy-dev
 
 WORKDIR /usr/local/src
 
@@ -50,7 +51,7 @@ RUN git clone https://github.com/facebook/rocksdb.git && \
     cd rocksdb && \
     git checkout v6.6.4 && \
     mkdir _build && cd _build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DWITH_TESTS=OFF -DWITH_BENCHMARK_TOOLS=OFF -DWITH_TOOLS=OFF -DFAIL_ON_WARNINGS=OFF -DWITH_RUNTIME_DEBUG=OFF -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DWITH_SNAPPY=1 -DWITH_TESTS=OFF -DWITH_BENCHMARK_TOOLS=OFF -DWITH_TOOLS=OFF -DFAIL_ON_WARNINGS=OFF -DWITH_RUNTIME_DEBUG=OFF -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
     make -j$(nproc) && \
     make install
 
@@ -185,30 +186,32 @@ RUN cp -r /catapult/_build/lib /deps/sirius/ && \
 FROM debian:bookworm
 
 # copy required libs
-COPY --from=0 /deps /
+RUN apt-get update && apt-get install --no-install-recommends -y \
+   libboost-atomic-dev \
+   libboost-date-time-dev \
+   libboost-regex-dev \
+   libboost-system-dev \
+   libboost-timer-dev \
+   libboost-chrono-dev \
+   libboost-log-dev \
+   libboost-thread-dev \
+   libboost-filesystem-dev \
+   libboost-program-options-dev \
+   libboost-stacktrace-dev \
+   libboost-random-dev \
+   libzstd-dev \
+   libsnappy-dev
 
-# copy required libs
-COPY --from=0 /usr/local/lib/librocksdb.so /lib/x86_64-linux-gnu/
-COPY --from=0 /usr/local/lib/librocksdb.so.6 /lib/x86_64-linux-gnu/
-COPY --from=0 /usr/local/lib/librocksdb.so.6.6.4 /lib/x86_64-linux-gnu/
+COPY --from=basic /usr/local/lib/librocksdb.so /lib/x86_64-linux-gnu/
+COPY --from=basic /usr/local/lib/librocksdb.so.6 /lib/x86_64-linux-gnu/
+COPY --from=basic /usr/local/lib/librocksdb.so.6.6.4 /lib/x86_64-linux-gnu/
 
-# RUN apt-get update && apt-get install --no-install-recommends -y \
-#   libboost-atomic-dev \
-#   libboost-date-time-dev \
-#   libboost-regex-dev \
-#   libboost-system-dev \
-#   libboost-timer-dev \
-#   libboost-chrono-dev \
-#   libboost-log-dev \
-#   libboost-thread-dev \
-#   libboost-filesystem-dev \
-#   libboost-program-options-dev \
-#   libboost-stacktrace-dev \
-#   libboost-random-dev \
-#   libzstd-dev \
+COPY --from=basic /deps/sirius/ /sirius/
+COPY --from=basic /deps/usr/ /usr/
+COPY --from=basic /deps/lib/ /lib/
 
 # copy executables
-COPY --from=0 /catapult/_build/bin /sirius/bin
+COPY --from=basic /catapult/_build/bin /sirius/bin
 
 # sirius.bc as the entry point
 ENTRYPOINT ["/sirius/bin/sirius.bc"]
