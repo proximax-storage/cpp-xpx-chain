@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   pkg-config \
   libgtest-dev \
   libbenchmark-dev \
+  librocksdb-dev \
   libczmq-dev \
   libsasl2-dev \
   libssl-dev \
@@ -44,18 +45,6 @@ RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.
 
 # Clean Downloads
 RUN rm mongo-cxx-driver-r3.6.7.tar.gz
-
-# install rocks db
-RUN git clone https://github.com/facebook/rocksdb.git && \
-    cd rocksdb && \
-    git checkout v6.6.4 && \
-    mkdir _build && cd _build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DWITH_TESTS=OFF -DWITH_BENCHMARK_TOOLS=OFF -DWITH_TOOLS=OFF -DFAIL_ON_WARNINGS=OFF -DWITH_RUNTIME_DEBUG=OFF -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
-    make -j$(nproc) && \
-    make install
-
-# Clean Downloads
-RUN rm -rf /rocksdb
 
 # Copy local directory to image
 COPY . /catapult
@@ -179,39 +168,36 @@ WORKDIR /deps/sirius
 RUN cp -r /catapult/_build/lib /deps/sirius/ && \
     rm -rf /deps/home
 
-#------------------------
-# Actual target image which only contains the required binaries
-#------------------------
-FROM debian:bookworm
+# #------------------------
+# # Actual target image which only contains the required binaries
+# #------------------------
+# FROM debian:bookworm
 
-# copy required libs
-COPY --from=0 /deps /
-
-# copy required libs
-COPY --from=0 /usr/local/lib/librocksdb.so /lib/x86_64-linux-gnu/
-COPY --from=0 /usr/local/lib/librocksdb.so.6 /lib/x86_64-linux-gnu/
-COPY --from=0 /usr/local/lib/librocksdb.so.6.6.4 /lib/x86_64-linux-gnu/
+# # copy required libs
+# RUN mkdir /sirius
+# COPY --from=basic /deps/sirius/ /sirius/
 
 # RUN apt-get update && apt-get install --no-install-recommends -y \
-#   libboost-atomic-dev \
-#   libboost-date-time-dev \
-#   libboost-regex-dev \
-#   libboost-system-dev \
-#   libboost-timer-dev \
-#   libboost-chrono-dev \
-#   libboost-log-dev \
-#   libboost-thread-dev \
-#   libboost-filesystem-dev \
-#   libboost-program-options-dev \
-#   libboost-stacktrace-dev \
-#   libboost-random-dev \
-#   libzstd-dev \
+#    libboost-atomic-dev \
+#    libboost-date-time-dev \
+#    libboost-regex-dev \
+#    libboost-system-dev \
+#    libboost-timer-dev \
+#    libboost-chrono-dev \
+#    libboost-log-dev \
+#    libboost-thread-dev \
+#    libboost-filesystem-dev \
+#    libboost-program-options-dev \
+#    libboost-stacktrace-dev \
+#    libboost-random-dev \
+#    libzstd-dev \
+#    librocksdb-dev
 
-# copy executables
-COPY --from=0 /catapult/_build/bin /sirius/bin
+# # copy executables
+# COPY --from=basic /catapult/_build/bin /sirius/bin
 
-# sirius.bc as the entry point
-ENTRYPOINT ["/sirius/bin/sirius.bc"]
+# # sirius.bc as the entry point
+# ENTRYPOINT ["/sirius/bin/sirius.bc"]
 
-# set the config directory by default
-CMD ["/chainconfig"]
+# # set the config directory by default
+# CMD ["/chainconfig"]
