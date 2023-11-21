@@ -22,7 +22,6 @@
 #include "HeightRequestProcessor.h"
 #include "catapult/api/ChainPackets.h"
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/io/BlockStorageCache.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
 
 namespace catapult { namespace handlers {

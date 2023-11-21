@@ -18,10 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/validators/AggregateEntityValidator.h"
-#include "catapult/validators/ValidatorTypes.h"
-#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 

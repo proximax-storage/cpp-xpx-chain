@@ -20,10 +20,8 @@
 
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/api/ChainPackets.h"
-#include "catapult/model/TransactionPlugin.h"
 #include "tests/test/other/RemoteApiFactory.h"
 #include "tests/test/other/RemoteApiTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace api {
 
@@ -39,6 +37,7 @@ namespace catapult { namespace api {
 				block.Size = sizeof(model::BlockHeader);
 				block.Type = model::Entity_Type_Block;
 				block.Height = startHeight + Height(i);
+				block.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 			}
 
 			return pPacket;

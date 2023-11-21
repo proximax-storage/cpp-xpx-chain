@@ -19,7 +19,6 @@
 **/
 
 #include "DisruptorElement.h"
-#include <ostream>
 
 namespace catapult { namespace disruptor {
 

@@ -21,7 +21,6 @@
 #include "catapult/model/SizePrefixedEntity.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/nodeps/Equality.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 

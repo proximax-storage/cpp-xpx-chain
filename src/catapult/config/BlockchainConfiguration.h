@@ -45,8 +45,9 @@ namespace catapult { namespace config {
 				UserConfiguration userConfig,
 				ExtensionsConfiguration extensionsConfig,
 				InflationConfiguration inflationConfig,
-				SupportedEntityVersions supportedEntityVersions = config::SupportedEntityVersions());
-
+				SupportedEntityVersions supportedEntityVersions = config::SupportedEntityVersions(),
+				Height activationHeight = Height(),
+				const BlockchainConfiguration* previousConfig = nullptr);
 
 	public:
 		/// Immutable network configuration.
@@ -73,6 +74,12 @@ namespace catapult { namespace config {
 		/// Supported entity versions.
 		const config::SupportedEntityVersions SupportedEntityVersions;
 
+		/// Activation Height
+		const Height ActivationHeight;
+
+		/// Previous active configuration
+		const BlockchainConfiguration* PreviousConfiguration;
+
 	public:
 		/// Creates an uninitialized blockchain configuration.
 		static BlockchainConfiguration Uninitialized();
@@ -84,6 +91,9 @@ namespace catapult { namespace config {
 
 	/// Extracts a node representing the local node from \a config.
 	ionet::Node ToLocalNode(const BlockchainConfiguration& config);
+
+	/// Extracts a node representing the local DBRB node from \a config.
+	ionet::Node ToLocalDbrbNode(const BlockchainConfiguration& config);
 
 	/// Gets min transaction fee multiplier.
 	BlockFeeMultiplier GetMinFeeMultiplier(const BlockchainConfiguration& config);

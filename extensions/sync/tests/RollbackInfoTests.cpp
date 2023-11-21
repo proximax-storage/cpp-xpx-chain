@@ -20,7 +20,6 @@
 
 #include "sync/src/RollbackInfo.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
-#include "tests/TestHarness.h"
 #include "tests/test/nodeps/TimeSupplier.h"
 
 namespace catapult { namespace sync {

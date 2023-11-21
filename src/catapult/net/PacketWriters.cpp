@@ -26,9 +26,7 @@
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/thread/TimedCallback.h"
 #include "catapult/utils/ModificationSafeIterableContainer.h"
-#include "catapult/utils/SpinLock.h"
 #include "catapult/utils/ThrottleLogger.h"
-#include <list>
 
 namespace catapult { namespace net {
 
@@ -91,9 +89,13 @@ namespace catapult { namespace net {
 				}
 			}
 
-			bool pickOne(WriterState& state) {
+			bool pickOne(WriterState& state, const Key& identityKey) {
 				utils::SpinLockGuard guard(m_lock);
-				auto* pState = m_writers.nextIf(IsStateAvailable);
+				auto* pState = (Key() == identityKey) ?
+					m_writers.nextIf(IsStateAvailable) :
+					m_writers.nextIf([&identityKey](const WriterState& state) {
+						return IsStateAvailable(state) && (state.Node.identityKey() == identityKey);
+					});
 				if (!pState)
 					return false;
 
@@ -239,7 +241,7 @@ namespace catapult { namespace net {
 				if (ionet::SocketOperationCode::Success == code)
 					return;
 
-				CATAPULT_LOG(warning) << "calling error handler due to " << operation << " error";
+				CATAPULT_LOG(warning) << "calling error handler due to " << operation << " error " << code;
 				handler();
 			}
 
@@ -299,8 +301,12 @@ namespace catapult { namespace net {
 			}
 
 			ionet::NodePacketIoPair pickOne(const utils::TimeSpan& ioDuration) override {
+				return pickOne(ioDuration, Key());
+			}
+
+			ionet::NodePacketIoPair pickOne(const utils::TimeSpan& ioDuration, const Key& identityKey) override {
 				WriterState state;
-				if (!m_writers.pickOne(state)) {
+				if (!m_writers.pickOne(state, identityKey)) {
 					CATAPULT_LOG_THROTTLE(warning, 60'000) << "no packet io available for checkout";
 					return ionet::NodePacketIoPair();
 				}
@@ -318,6 +324,34 @@ namespace catapult { namespace net {
 						createTimedCompletionHandler(state.pSocket, ioDuration, errorHandler));
 
 				CATAPULT_LOG(trace) << "checked out an io for " << ioDuration;
+				return ionet::NodePacketIoPair(state.Node, pPacketIo);
+			}
+
+			ionet::NodePacketIoPair pickOne(const Key& identityKey) override {
+				WriterState state;
+				if (!m_writers.pickOne(state, identityKey)) {
+					CATAPULT_LOG_THROTTLE(warning, 60'000) << "no packet io available for checkout";
+					return ionet::NodePacketIoPair();
+				}
+
+				// important - capture pSocket by value in order to prevent it from being removed out from under the
+				// error handling packet io, also capture this for the same reason
+				auto errorHandler = [pThis = shared_from_this(), pSocket = state.pSocket, node = state.Node]() {
+					CATAPULT_LOG(warning) << "error handler triggered for " << node;
+					pThis->removeWriter(pSocket);
+				};
+
+				ErrorHandlingPacketIo::CompletionCallback completionHandler = [pThis = shared_from_this(), pSocket = state.pSocket](auto isCompleted) {
+					CATAPULT_LOG(trace) << "completed pickOne operation, success? " << isCompleted;
+					pThis->makeWriterAvailable(pSocket);
+				};
+
+				auto pPacketIo = std::make_shared<ErrorHandlingPacketIo>(
+						state.pBufferedIo,
+						errorHandler,
+						completionHandler);
+
+				CATAPULT_LOG(trace) << "checked out an io";
 				return ionet::NodePacketIoPair(state.Node, pPacketIo);
 			}
 

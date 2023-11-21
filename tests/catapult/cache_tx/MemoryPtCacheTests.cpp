@@ -20,11 +20,9 @@
 
 #include "catapult/cache_tx/MemoryPtCache.h"
 #include "catapult/crypto/Hashes.h"
-#include "catapult/model/Cosignature.h"
 #include "tests/catapult/cache_tx/test/TransactionCacheTests.h"
-#include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/nodeps/LockTestUtils.h"
-#include "tests/TestHarness.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace cache {
 
@@ -41,10 +39,10 @@ namespace catapult { namespace cache {
 				modifier.add(transactionInfo);
 		}
 
-		void AddAll(
-				cache::PtCache& cache,
-				const model::TransactionInfo& transactionInfo,
-				const std::vector<model::Cosignature>& cosignatures) {
+		void
+				AddAll(cache::PtCache& cache,
+					   const model::TransactionInfo& transactionInfo,
+					   const std::vector<model::Cosignature>& cosignatures) {
 			auto modifier = cache.modifier();
 			for (const auto& cosignature : cosignatures)
 				modifier.add(transactionInfo.EntityHash, cosignature.Signer, cosignature.Signature);
@@ -57,7 +55,8 @@ namespace catapult { namespace cache {
 		}
 
 		auto PrepareCache(const std::vector<Hash256>& hashes, const MemoryCacheOptions& options = Default_Options) {
-			auto pCache = std::make_unique<MemoryPtCache>(options);
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			auto pCache = std::make_unique<MemoryPtCache>(options, pTransactionFeeCalculator);
 
 			{
 				auto i = 0u;
@@ -76,7 +75,9 @@ namespace catapult { namespace cache {
 		}
 
 		auto& Sort(std::vector<model::Cosignature>& cosignatures) {
-			std::sort(cosignatures.begin(), cosignatures.end(), [](const auto& lhs, const auto& rhs) { return lhs.Signer < rhs.Signer; });
+			std::sort(cosignatures.begin(), cosignatures.end(), [](const auto& lhs, const auto& rhs) {
+				return lhs.Signer < rhs.Signer;
+			});
 			return cosignatures;
 		}
 
@@ -113,7 +114,7 @@ namespace catapult { namespace cache {
 			// - compare cosignatures
 			AssertCosignatures(expectedCosignatures, transactionInfoFromCache.cosignatures(), message);
 		}
-	}
+	} // namespace
 
 	// endregion
 
@@ -121,7 +122,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, InitiallyCacheIsEmpty) {
 		// Act:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 
 		// Assert:
 		AssertCacheSize(cache, 0);
@@ -133,7 +135,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, ModifierSizeIsDynamic) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 
 		// Act: modify cache and check sizes
 		{
@@ -168,7 +171,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanAddSingleTransactionInfo) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto originalInfo = test::CreateRandomTransactionInfo();
 
 		// Act:
@@ -184,7 +188,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanAddMultipleTransactionInfos) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto originalTransactionInfos = test::CreateTransactionInfos(5);
 
 		// Act:
@@ -203,7 +208,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, AddingSameTransactionInfosTwiceHasNoEffect) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto originalTransactionInfo = test::CreateRandomTransactionInfo();
 		EXPECT_TRUE(cache.modifier().add(originalTransactionInfo));
 
@@ -229,11 +235,12 @@ namespace catapult { namespace cache {
 		model::Cosignature GenerateRandomCosignature() {
 			return { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() };
 		}
-	}
+	} // namespace
 
 	TEST(TEST_CLASS, CanAttachCosignatureToKnownTransaction) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto originalInfos = test::CreateTransactionInfos(5);
 		AddAll(cache, originalInfos);
 
@@ -242,7 +249,8 @@ namespace catapult { namespace cache {
 
 		// Act:
 		auto cosignature = GenerateRandomCosignature();
-		auto transactionInfoFromAdd = cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.Signature);
+		auto transactionInfoFromAdd =
+				cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.Signature);
 
 		// Assert: added transaction is correct
 		ASSERT_TRUE(!!transactionInfoFromAdd);
@@ -255,7 +263,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanAttachManyCosignaturesToKnownTransaction) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto originalInfos = test::CreateTransactionInfos(5);
 		AddAll(cache, originalInfos);
 
@@ -267,7 +276,8 @@ namespace catapult { namespace cache {
 		std::vector<model::Cosignature> transactionsFromAdd;
 		for (auto i = 0u; i < 20; ++i) {
 			auto cosignature = GenerateRandomCosignature();
-			auto transactionInfoFromAdd = cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.Signature);
+			auto transactionInfoFromAdd =
+					cache.modifier().add(originalInfos[3].EntityHash, cosignature.Signer, cosignature.Signature);
 			cosignatures.push_back(cosignature);
 
 			// Assert: notice that same transaction (without cosignatures) is returned by each add
@@ -282,7 +292,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, AttachingCosignatureWithSameSignerToSameTransactionTwiceHasNoEffect) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto originalInfos = test::CreateTransactionInfos(5);
 		AddAll(cache, originalInfos);
 
@@ -305,7 +316,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CannotAttachCosignatureToUnknownTransaction) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 		AddAll(cache, test::CreateTransactionInfos(5));
 
 		// Sanity:
@@ -313,7 +325,8 @@ namespace catapult { namespace cache {
 
 		// Act + Assert: no transaction in the cache should match the random hash
 		auto cosignature = GenerateRandomCosignature();
-		EXPECT_FALSE(!!cache.modifier().add(test::GenerateRandomByteArray<Hash256>(), cosignature.Signer, cosignature.Signature));
+		EXPECT_FALSE(!!cache.modifier().add(
+				test::GenerateRandomByteArray<Hash256>(), cosignature.Signer, cosignature.Signature));
 	}
 
 	// endregion
@@ -323,7 +336,8 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanRemoveTransactionInfosByHash) {
 		// Arrange:
 		auto transactionInfos = test::CreateTransactionInfos(10);
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 		AddAll(cache, transactionInfos);
 
 		// Act: remove every second info
@@ -401,7 +415,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanPruneEmptyCache_Timestamp) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 
 		// Act: prune on empty cache does not throw
 		cache.modifier().prune(Timestamp(50));
@@ -464,7 +479,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanPruneEmptyCache_Predicate) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 
 		// Act: prune on empty cache does not throw
 		cache.modifier().prune([](const auto&) { return true; });
@@ -532,7 +548,8 @@ namespace catapult { namespace cache {
 		template<typename TAction>
 		void RunFindTest(TAction action) {
 			// Arrange:
-			MemoryPtCache cache(Default_Options);
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 			auto originalInfos = test::CreateTransactionInfos(10);
 			AddAll(cache, originalInfos);
 
@@ -546,7 +563,7 @@ namespace catapult { namespace cache {
 			// Act + Assert:
 			action(cache, originalInfos);
 		}
-	}
+	} // namespace
 
 	TEST(TEST_CLASS, FindReturnsTransactionWhenTransactionWithHashIsContainedInCache) {
 		// Act:
@@ -554,7 +571,8 @@ namespace catapult { namespace cache {
 			// Assert: all odd infos should still be accessible
 			for (auto i = 1u; i < originalInfos.size(); i += 2) {
 				auto transactionInfoFromCache = cache.view().find(originalInfos[i].EntityHash);
-				AssertTransactionWithCosignatures(*originalInfos[i].pEntity, {}, transactionInfoFromCache, "info at " + std::to_string(i));
+				AssertTransactionWithCosignatures(
+						*originalInfos[i].pEntity, {}, transactionInfoFromCache, "info at " + std::to_string(i));
 			}
 		});
 	}
@@ -596,7 +614,8 @@ namespace catapult { namespace cache {
 				auto message = "at index " + std::to_string(i);
 				auto expectedShortHashIter = expectedShortHashes.find(shortHashPair.TransactionShortHash);
 				EXPECT_NE(expectedShortHashes.cend(), expectedShortHashIter) << message;
-				EXPECT_EQ(getExpectedCosignaturesShortHash(*expectedShortHashIter), shortHashPair.CosignaturesShortHash) << message;
+				EXPECT_EQ(getExpectedCosignaturesShortHash(*expectedShortHashIter), shortHashPair.CosignaturesShortHash)
+						<< message;
 
 				expectedShortHashes.erase(expectedShortHashIter);
 				++i;
@@ -609,15 +628,17 @@ namespace catapult { namespace cache {
 		Hash256 HashCosignatures(const std::vector<model::Cosignature>& cosignatures) {
 			Hash256 cosignaturesHash;
 			crypto::Sha3_256(
-					{ reinterpret_cast<const uint8_t*>(cosignatures.data()), cosignatures.size() * sizeof(model::Cosignature) },
+					{ reinterpret_cast<const uint8_t*>(cosignatures.data()),
+					  cosignatures.size() * sizeof(model::Cosignature) },
 					cosignaturesHash);
 			return cosignaturesHash;
 		}
-	}
+	} // namespace
 
 	TEST(TEST_CLASS, ShortHashesReturnsAllShortHashesForTransactionsWithoutCosignatures) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto transactionInfos = test::CreateTransactionInfos(10);
 		AddAll(cache, transactionInfos);
 
@@ -630,7 +651,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, ShortHashesReturnAppropriateShortHashForTransactionWithCosignatures) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto transactionInfos = test::CreateTransactionInfos(3);
 		AddAll(cache, transactionInfos);
 
@@ -648,16 +670,18 @@ namespace catapult { namespace cache {
 		ValidateShortHashPairs(
 				transactionInfos,
 				shortHashPairs,
-				[&expectedCosignaturesHash, &targetEntityHash = transactionInfos[1].EntityHash](const auto& transactionShortHash) {
-			return utils::ToShortHash(targetEntityHash) == transactionShortHash
-					? utils::ToShortHash(expectedCosignaturesHash)
-					: utils::ShortHash();
-		});
+				[&expectedCosignaturesHash,
+				 &targetEntityHash = transactionInfos[1].EntityHash](const auto& transactionShortHash) {
+					return utils::ToShortHash(targetEntityHash) == transactionShortHash
+								   ? utils::ToShortHash(expectedCosignaturesHash)
+								   : utils::ShortHash();
+				});
 	}
 
 	TEST(TEST_CLASS, ShortHashesReturnOrderIndependentCosignaturesShortHash) {
 		// Arrange:
-		MemoryPtCache cache(Default_Options);
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 		auto transactionInfos = test::CreateTransactionInfos(3);
 		AddAll(cache, transactionInfos);
 
@@ -688,7 +712,8 @@ namespace catapult { namespace cache {
 
 	namespace {
 		using UnknownTransactionInfos = std::vector<model::CosignedTransactionInfo>;
-		using UnknownTransactionInfoMap = std::unordered_map<Hash256, model::CosignedTransactionInfo, utils::ArrayHasher<Hash256>>;
+		using UnknownTransactionInfoMap =
+				std::unordered_map<Hash256, model::CosignedTransactionInfo, utils::ArrayHasher<Hash256>>;
 
 		UnknownTransactionInfoMap ToMap(const UnknownTransactionInfos& unknownTransactionInfos) {
 			UnknownTransactionInfoMap infoMap;
@@ -697,7 +722,7 @@ namespace catapult { namespace cache {
 
 			return infoMap;
 		}
-	}
+	} // namespace
 
 	// endregion
 
@@ -709,13 +734,13 @@ namespace catapult { namespace cache {
 			using CacheType = MemoryPtCache;
 
 		public:
-			static UnknownTransactionInfos GetUnknownTransactions(
-					const MemoryPtCacheView& view,
-					const ShortHashPairMap& knownShortHashPairs) {
+			static UnknownTransactionInfos
+					GetUnknownTransactions(const MemoryPtCacheView& view, const ShortHashPairMap& knownShortHashPairs) {
 				return view.unknownTransactions(knownShortHashPairs);
 			}
 
-			static void AddAllToCache(cache::PtCache& cache, const std::vector<model::TransactionInfo>& transactionInfos) {
+			static void
+					AddAllToCache(cache::PtCache& cache, const std::vector<model::TransactionInfo>& transactionInfos) {
 				AddAll(cache, transactionInfos);
 			}
 
@@ -744,7 +769,7 @@ namespace catapult { namespace cache {
 				return std::make_pair(utils::ToShortHash(transactionInfo.EntityHash), utils::ShortHash());
 			}
 		};
-	}
+	} // namespace
 
 	DEFINE_BASIC_UNKNOWN_TRANSACTIONS_TESTS(MemoryPtCacheTests, MemoryPtCacheUnknownTransactionsTraits)
 
@@ -756,7 +781,8 @@ namespace catapult { namespace cache {
 		template<typename TAction>
 		void RunUnknownTransactionWithCosignaturesTest(TAction action) {
 			// Arrange:
-			MemoryPtCache cache(Default_Options);
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			MemoryPtCache cache(Default_Options, pTransactionFeeCalculator);
 			auto transactionInfos = test::CreateTransactionInfos(1);
 			AddAll(cache, transactionInfos);
 
@@ -768,51 +794,49 @@ namespace catapult { namespace cache {
 			auto expectedCosignaturesHash = HashCosignatures(cosignatures);
 
 			// Act + Assert:
-			auto shortHashPair = ShortHashPair{
-				utils::ToShortHash(transactionInfos[0].EntityHash),
-				utils::ToShortHash(expectedCosignaturesHash)
-			};
+			auto shortHashPair = ShortHashPair { utils::ToShortHash(transactionInfos[0].EntityHash),
+												 utils::ToShortHash(expectedCosignaturesHash) };
 			action(cache, transactionInfos[0], cosignatures, shortHashPair);
 		}
-	}
+	} // namespace
 
 	TEST(TEST_CLASS, UnknownTransactionsReturnsTransactionAndCosignaturesWhenTransactionIsUnknown) {
 		// Arrange:
-		RunUnknownTransactionWithCosignaturesTest([](const auto& cache, const auto& info, const auto& cosignatures, auto) {
-			// Act:
-			auto unknownInfos = cache.view().unknownTransactions({});
+		RunUnknownTransactionWithCosignaturesTest(
+				[](const auto& cache, const auto& info, const auto& cosignatures, auto) {
+					// Act:
+					auto unknownInfos = cache.view().unknownTransactions({});
 
-			// Assert:
-			ASSERT_EQ(1u, unknownInfos.size());
-			EXPECT_EQ(info.EntityHash, unknownInfos[0].EntityHash);
-			EXPECT_EQ(info.pEntity, unknownInfos[0].pTransaction);
-			AssertCosignatures(cosignatures, unknownInfos[0].Cosignatures);
-		});
+					// Assert:
+					ASSERT_EQ(1u, unknownInfos.size());
+					EXPECT_EQ(info.EntityHash, unknownInfos[0].EntityHash);
+					EXPECT_EQ(info.pEntity, unknownInfos[0].pTransaction);
+					AssertCosignatures(cosignatures, unknownInfos[0].Cosignatures);
+				});
 	}
 
 	TEST(TEST_CLASS, UnknownTransactionsReturnsOnlyCosignaturesWhenTransactionIsKnownButHasDifferentCosignatures) {
 		// Arrange:
-		RunUnknownTransactionWithCosignaturesTest([](const auto& cache, const auto& info, const auto& cosignatures, auto shortHashPair) {
-			// Act:
-			auto unknownInfos = cache.view().unknownTransactions({
-				{ shortHashPair.TransactionShortHash, utils::ShortHash() }
-			});
+		RunUnknownTransactionWithCosignaturesTest(
+				[](const auto& cache, const auto& info, const auto& cosignatures, auto shortHashPair) {
+					// Act:
+					auto unknownInfos = cache.view().unknownTransactions(
+							{ { shortHashPair.TransactionShortHash, utils::ShortHash() } });
 
-			// Assert:
-			ASSERT_EQ(1u, unknownInfos.size());
-			EXPECT_EQ(info.EntityHash, unknownInfos[0].EntityHash);
-			EXPECT_FALSE(!!unknownInfos[0].pTransaction);
-			AssertCosignatures(cosignatures, unknownInfos[0].Cosignatures);
-		});
+					// Assert:
+					ASSERT_EQ(1u, unknownInfos.size());
+					EXPECT_EQ(info.EntityHash, unknownInfos[0].EntityHash);
+					EXPECT_FALSE(!!unknownInfos[0].pTransaction);
+					AssertCosignatures(cosignatures, unknownInfos[0].Cosignatures);
+				});
 	}
 
 	TEST(TEST_CLASS, UnknownTransactionsReturnsNothingWhenTransactionAndCosignaturesBothMatch) {
 		// Arrange:
 		RunUnknownTransactionWithCosignaturesTest([](const auto& cache, const auto&, const auto&, auto shortHashPair) {
 			// Act:
-			auto unknownInfos = cache.view().unknownTransactions({
-				{ shortHashPair.TransactionShortHash, shortHashPair.CosignaturesShortHash }
-			});
+			auto unknownInfos = cache.view().unknownTransactions(
+					{ { shortHashPair.TransactionShortHash, shortHashPair.CosignaturesShortHash } });
 
 			// Assert:
 			EXPECT_TRUE(unknownInfos.empty());
@@ -832,16 +856,20 @@ namespace catapult { namespace cache {
 		uint64_t TotalSize(const UnknownTransactionInfos& unknownTransactionInfos) {
 			uint64_t totalSize = 0u;
 			for (const auto& unknownTransactionInfo : unknownTransactionInfos) {
-				auto transactionSize = unknownTransactionInfo.pTransaction ? unknownTransactionInfo.pTransaction->Size : 0;
+				auto transactionSize =
+						unknownTransactionInfo.pTransaction ? unknownTransactionInfo.pTransaction->Size : 0;
 				totalSize += transactionSize + sizeof(model::Cosignature) * unknownTransactionInfo.Cosignatures.size();
 			}
 
 			return totalSize;
 		}
 
-		void AssertMaxResponseSizeIsRespectedOnlyTransactions(uint32_t numExpectedTransactions, uint32_t maxResponseSize) {
+		void AssertMaxResponseSizeIsRespectedOnlyTransactions(
+				uint32_t numExpectedTransactions,
+				uint32_t maxResponseSize) {
 			// Arrange:
-			MemoryPtCache cache(MemoryCacheOptions(maxResponseSize, 1000));
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			MemoryPtCache cache(MemoryCacheOptions(maxResponseSize, 1000), pTransactionFeeCalculator);
 			AddAll(cache, test::CreateTransactionInfos(5));
 
 			// Act:
@@ -852,9 +880,12 @@ namespace catapult { namespace cache {
 			EXPECT_GE(maxResponseSize, TotalSize(unknownInfos));
 		}
 
-		void AssertMaxResponseSizeIsRespectedOnlyCosignatures(uint32_t numExpectedTransactions, uint32_t maxResponseSize) {
+		void AssertMaxResponseSizeIsRespectedOnlyCosignatures(
+				uint32_t numExpectedTransactions,
+				uint32_t maxResponseSize) {
 			// Arrange:
-			MemoryPtCache cache(MemoryCacheOptions(maxResponseSize, 1000));
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			MemoryPtCache cache(MemoryCacheOptions(maxResponseSize, 1000), pTransactionFeeCalculator);
 			auto transactionInfos = test::CreateTransactionInfos(5);
 			AddAll(cache, transactionInfos);
 
@@ -873,9 +904,12 @@ namespace catapult { namespace cache {
 			EXPECT_GE(maxResponseSize, TotalSize(unknownInfos));
 		}
 
-		void AssertMaxResponseSizeIsRespectedTransactionsWithCosignatures(uint32_t numExpectedTransactions, uint32_t maxResponseSize) {
+		void AssertMaxResponseSizeIsRespectedTransactionsWithCosignatures(
+				uint32_t numExpectedTransactions,
+				uint32_t maxResponseSize) {
 			// Arrange:
-			MemoryPtCache cache(MemoryCacheOptions(maxResponseSize, 1000));
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			MemoryPtCache cache(MemoryCacheOptions(maxResponseSize, 1000), pTransactionFeeCalculator);
 			auto transactionInfos = test::CreateTransactionInfos(5);
 			AddAll(cache, transactionInfos);
 
@@ -901,19 +935,22 @@ namespace catapult { namespace cache {
 			assertMaxResponseSize(3, 4 * transactionSize - 1);
 			assertMaxResponseSize(4, 4 * transactionSize);
 		}
-	}
+	} // namespace
 
 	TEST(TEST_CLASS, UnknownTransactionsReturnsTransactionsWithTotalSizeOfAtMostMaxResponseSize_OnlyTransactions) {
 		// Assert:
-		RunMaxResponseSizeTest(sizeof(Hash256) + GetTransactionSize(), AssertMaxResponseSizeIsRespectedOnlyTransactions);
+		RunMaxResponseSizeTest(
+				sizeof(Hash256) + GetTransactionSize(), AssertMaxResponseSizeIsRespectedOnlyTransactions);
 	}
 
 	TEST(TEST_CLASS, UnknownTransactionsReturnsTransactionsWithTotalSizeOfAtMostMaxResponseSize_OnlyCosignatures) {
 		// Assert:
-		RunMaxResponseSizeTest(sizeof(Hash256) + 3 * sizeof(model::Cosignature), AssertMaxResponseSizeIsRespectedOnlyCosignatures);
+		RunMaxResponseSizeTest(
+				sizeof(Hash256) + 3 * sizeof(model::Cosignature), AssertMaxResponseSizeIsRespectedOnlyCosignatures);
 	}
 
-	TEST(TEST_CLASS, UnknownTransactionsReturnsTransactionsWithTotalSizeOfAtMostMaxResponseSize_TransactionsWithCosignatures) {
+	TEST(TEST_CLASS,
+		 UnknownTransactionsReturnsTransactionsWithTotalSizeOfAtMostMaxResponseSize_TransactionsWithCosignatures) {
 		// Assert:
 		RunMaxResponseSizeTest(
 				sizeof(Hash256) + GetTransactionSize() + 3 * sizeof(model::Cosignature),
@@ -926,7 +963,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CacheCanContainMaxTransactions) {
 		// Arrange: fill the cache with one less than max transactions
-		MemoryPtCache cache(MemoryCacheOptions(1024, 5));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(MemoryCacheOptions(1024, 5), pTransactionFeeCalculator);
 		AddAll(cache, test::CreateTransactionInfos(4));
 		auto transactionInfo = test::CreateRandomTransactionInfo();
 
@@ -941,7 +979,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CacheCannotContainMoreThanMaxTransactions) {
 		// Arrange: fill the cache with max transactions
-		MemoryPtCache cache(MemoryCacheOptions(1024, 5));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(MemoryCacheOptions(1024, 5), pTransactionFeeCalculator);
 		AddAll(cache, test::CreateTransactionInfos(5));
 		auto transactionInfo = test::CreateRandomTransactionInfo();
 
@@ -956,7 +995,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CacheCanAcceptNewTransactionsAfterMaxTransactionsAreReduced) {
 		// Arrange:
-		MemoryPtCache cache(MemoryCacheOptions(1024, 5));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		MemoryPtCache cache(MemoryCacheOptions(1024, 5), pTransactionFeeCalculator);
 		auto transactionInfo = test::CreateRandomTransactionInfo();
 
 		// - fill the cache with max transactions
@@ -984,11 +1024,12 @@ namespace catapult { namespace cache {
 
 	namespace {
 		auto CreateLockProvider() {
-			return std::make_unique<MemoryPtCache>(Default_Options);
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			return std::make_unique<MemoryPtCache>(Default_Options, pTransactionFeeCalculator);
 		}
-	}
+	} // namespace
 
 	DEFINE_LOCK_PROVIDER_TESTS(MemoryPtCacheTests)
 
 	// endregion
-}}
+}} // namespace catapult::cache

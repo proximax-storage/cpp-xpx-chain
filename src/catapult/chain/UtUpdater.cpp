@@ -22,11 +22,9 @@
 #include "ChainResults.h"
 #include "ProcessingNotificationSubscriber.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache/RelockableDetachedCatapultCache.h"
 #include "catapult/cache_tx/UtCache.h"
 #include "catapult/model/FeeUtils.h"
-#include "catapult/utils/HexFormatter.h"
 
 namespace catapult { namespace chain {
 
@@ -168,7 +166,7 @@ namespace catapult { namespace chain {
 			// note that the "real" state is currently only required by block observers, so a dummy state can be used
 			auto& cache = applyState.UnconfirmedCatapultCache;
 			state::CatapultState dummyState;
-			auto observerContext = ObserverContext({ cache, dummyState }, config, effectiveHeight, observers::NotifyMode::Commit, resolverContext);
+			auto observerContext = ObserverContext({ cache, dummyState }, config, effectiveHeight, currentTime, observers::NotifyMode::Commit, resolverContext);
 			for (const auto& utInfo : utInfos) {
 				const auto& entity = *utInfo.pEntity;
 				const auto& entityHash = utInfo.EntityHash;
@@ -176,7 +174,11 @@ namespace catapult { namespace chain {
 				if (!filter(utInfo))
 					continue;
 
-				auto minTransactionFee = model::CalculateTransactionFee(config.Node.MinFeeMultiplier, entity, config.Node.FeeInterest, config.Node.FeeInterestDenominator);
+				auto minTransactionFee = m_executionConfig.pTransactionFeeCalculator->calculateTransactionFee(
+						config.Node.MinFeeMultiplier,
+						entity,
+						config.Node.FeeInterest,
+						config.Node.FeeInterestDenominator);
 				if (entity.MaxFee < minTransactionFee) {
 					// don't log reverted transactions that could have been included by harvester with lower min fee multiplier
 					if (TransactionSource::New == transactionSource) {
@@ -201,8 +203,8 @@ namespace catapult { namespace chain {
 				const auto& validator = *m_executionConfig.pValidator;
 				const auto& observer = *m_executionConfig.pObserver;
 				ProcessingNotificationSubscriber sub(validator, validatorContext, observer, observerContext);
-				sub.enableUndo();
 				model::WeakEntityInfo entityInfo(entity, entityHash, effectiveHeight);
+				cache.backupChanges(true);
 				m_executionConfig.pNotificationPublisher->publish(entityInfo, sub);
 				if (!IsValidationResultSuccess(sub.result())) {
 					CATAPULT_LOG_LEVEL(validators::MapToLogLevel(sub.result()))
@@ -212,7 +214,7 @@ namespace catapult { namespace chain {
 					if (IsValidationResultFailure(sub.result()))
 						applyState.FailureTransactions.emplace_back(FailureInfo{ entity, entityHash, effectiveHeight, sub.result() });
 
-					sub.undo();
+					cache.restoreChanges();
 					applyState.Modifier.remove(entityHash);
 					continue;
 				}

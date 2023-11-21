@@ -19,11 +19,9 @@
 **/
 
 #include "nodediscovery/src/NodePingUtils.h"
-#include "catapult/ionet/NodeContainer.h"
 #include "catapult/ionet/Packet.h"
 #include "nodediscovery/tests/test/NodeDiscoveryTestUtils.h"
 #include "tests/test/net/NodeTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace nodediscovery {
 

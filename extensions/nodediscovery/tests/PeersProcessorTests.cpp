@@ -19,11 +19,7 @@
 **/
 
 #include "nodediscovery/src/PeersProcessor.h"
-#include "catapult/ionet/NodeContainer.h"
-#include "catapult/utils/ArraySet.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
-#include "tests/test/net/NodeTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace nodediscovery {
 

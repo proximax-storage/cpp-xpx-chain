@@ -23,7 +23,6 @@
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
-#include "tests/TestHarness.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 
@@ -33,7 +32,7 @@ namespace catapult { namespace addressextraction {
 
 	namespace {
 		// region TestContext
-		
+
 		class TestContext {
 		public:
 			TestContext()

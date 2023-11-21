@@ -5,7 +5,6 @@
 **/
 
 #include "plugins/txes/exchange/src/model/ExchangeTransaction.h"
-#include "src/cache/DriveCache.h"
 #include "src/validators/Validators.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/ServiceTestUtils.h"

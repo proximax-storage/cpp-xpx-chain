@@ -26,7 +26,6 @@
 #include "RepairState.h"
 #include "StateChangeRepairingSubscriber.h"
 #include "StorageStart.h"
-#include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateFileStorage.h"
 #include "catapult/extensions/LocalNodeStateRef.h"
@@ -39,6 +38,8 @@
 #include "catapult/subscribers/BrokerMessageReaders.h"
 #include "catapult/subscribers/TransactionStatusReader.h"
 #include "catapult/utils/StackLogger.h"
+#include "catapult/extensions/NemesisBlockLoader.h"
+#include "plugins/txes/config/src/cache/NetworkConfigCache.h"
 
 namespace catapult { namespace local {
 
@@ -114,12 +115,51 @@ namespace catapult { namespace local {
 
 		public:
 			void boot() {
+				/// Initially we start by loading system requirements
 				CATAPULT_LOG(info) << "registering system plugins";
-				m_pluginModules = LoadAllPlugins(*m_pBootstrapper);
+				m_pluginModules = LoadSystemPlugins(*m_pBootstrapper);
 
-				CATAPULT_LOG(debug) << "initializing cache";
+				/// First we must determine if this is the first boot. If it is we must load nemesis block
+				auto isFirstBoot = IsStatePresent(m_dataDirectory);
+				std::unique_ptr<const model::NetworkConfiguration> pInitNetworkConfig;
+				if(isFirstBoot) {
+					/// We must retrieve the configuration from the nemesis block.
+					auto storageView = m_storage.view();
+					//This is the first boot, so we must load the nemesis block network configuration
+					const auto pNemesisBlockElement = storageView.loadBlockElement(Height(1));
+					auto bundleConfig = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+					pInitNetworkConfig = std::make_unique<const model::NetworkConfiguration>(std::get<0>(bundleConfig));
+				}
+				else {
+					auto stateDir = m_dataDirectory.dir("state");
+					/// We must retrieve the configuration from the active config file if available
+					/// At this point the configurations for the plugins are still uninitialized
+					if(extensions::HasActiveNetworkConfig(stateDir)) {
+						auto config = extensions::LoadActiveNetworkConfig(stateDir);
+						pInitNetworkConfig = std::make_unique<const model::NetworkConfiguration>(config);
+					} else {
+						/// Not first boot but no config was saved yet, we just use the local network configuration.
+						pInitNetworkConfig = std::make_unique<const model::NetworkConfiguration>(m_pBootstrapper->config().Network);
+					}
+				}
+
+				/// Load non system plugins
+				CATAPULT_LOG(debug) << "registering addon plugins";
+				auto addonPlugins = LoadConfigurablePlugins(*m_pBootstrapper, *pInitNetworkConfig);
+				m_pluginModules.insert(m_pluginModules.cend(), addonPlugins.begin(), addonPlugins.end());
+
+				/// New caches have been registered so we must update the cache.
+
+				CATAPULT_LOG(debug) << "initializing system cache";
+				CATAPULT_LOG(debug) << "initializing addon plugins cache";
 				m_catapultCache = m_pluginManager.createCache();
 				m_pluginManager.configHolder()->SetCache(&m_catapultCache);
+
+				/// Finally we can build and run the plugin initializers to manipulate the config.
+
+				auto initializers = m_pluginManager.createPluginInitializer();
+				initializers(const_cast<model::NetworkConfiguration&>(m_pluginManager.configHolder()->Config().Network));
+				m_pluginManager.configHolder()->SetPluginInitializer(std::move(initializers));
 
 				utils::StackLogger stackLogger("running recovery operations", utils::LogLevel::Info);
 				recover();

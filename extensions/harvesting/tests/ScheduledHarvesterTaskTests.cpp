@@ -19,7 +19,6 @@
 **/
 
 #include "harvesting/src/ScheduledHarvesterTask.h"
-#include "harvesting/src/Harvester.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
@@ -28,7 +27,6 @@
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
-#include "catapult/constants.h"
 
 using catapult::crypto::KeyPair;
 

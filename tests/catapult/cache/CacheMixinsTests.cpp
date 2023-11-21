@@ -21,7 +21,6 @@
 #include "catapult/cache/CacheMixins.h"
 #include "tests/test/cache/TestCacheTypes.h"
 #include "tests/TestHarness.h"
-#include <unordered_map>
 
 namespace catapult { namespace cache {
 

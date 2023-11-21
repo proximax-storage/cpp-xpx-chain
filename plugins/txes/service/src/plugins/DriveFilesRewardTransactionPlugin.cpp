@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/Address.h"
 #include "DriveFilesRewardTransactionPlugin.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/model/DriveFilesRewardTransaction.h"

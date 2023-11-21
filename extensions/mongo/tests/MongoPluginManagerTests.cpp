@@ -18,14 +18,13 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "mongo/src/MongoPluginManager.h"
-#include "mongo/src/MongoTransactionPlugin.h"
 #include "mongo/tests/test/MongoTestUtils.h"
 #include "mongo/tests/test/mocks/MockExternalCacheStorage.h"
 #include "mongo/tests/test/mocks/MockReceiptMapper.h"
 #include "mongo/tests/test/mocks/MockTransactionMapper.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
-#include "tests/TestHarness.h"
 #include <mongocxx/instance.hpp>
 
 namespace catapult { namespace mongo {
@@ -43,7 +42,7 @@ namespace catapult { namespace mongo {
 			auto pConfigHolder = config::CreateMockConfigurationHolder();
 			const_cast<config::ImmutableConfiguration&>(pConfigHolder->Config().Immutable).NetworkIdentifier = networkIdentifier;
 
-			MongoPluginManager manager(mongoContext, pConfigHolder);
+			MongoPluginManager manager(mongoContext, pConfigHolder, std::make_shared<model::TransactionFeeCalculator>());
 
 			// Act + Assert:
 			action(manager, mongoContext);

@@ -1,4 +1,4 @@
-(function prepareContractCollections() {
+(function prepareServiceCollections() {
 	db.createCollection('drives');
 	db.drives.createIndex({ 'drive.multisig': 1 }, { unique: true });
 	db.drives.createIndex({ 'drive.multisigAddress': 1 }, { unique: true });

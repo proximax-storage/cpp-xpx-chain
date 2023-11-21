@@ -24,6 +24,7 @@
 
 extern "C" {
 #include <ref10/ge.h>
+#include <blst/blst.hpp>
 }
 
 namespace catapult { namespace crypto {
@@ -40,5 +41,12 @@ namespace catapult { namespace crypto {
 
 		ge_scalarmult_base(&A, h.data());
 		ge_p3_tobytes(publicKey.data(), &A);
+	}
+
+	void ExtractPublicKeyFromPrivateKey(const BLSPrivateKey& privateKey, BLSPublicKey& publicKey) {
+		blst::blst_p1_affine point;
+		const auto* temp = reinterpret_cast<const blst::blst_scalar*>(&privateKey.m_array);
+		blst::blst_sk_to_pk2_in_g1(nullptr, &point, temp);
+		blst::blst_p1_affine_compress(publicKey.m_array, &point);
 	}
 }}

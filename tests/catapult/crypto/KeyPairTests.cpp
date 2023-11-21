@@ -60,6 +60,19 @@ namespace catapult { namespace crypto {
 		EXPECT_EQ(rawKeyString, test::ToHexString(keyPair.privateKey().data(), keyPair.privateKey().size()));
 	}
 
+	TEST(TEST_CLASS, CanCreateBLSKeyPairFromValidString) {
+		// Arrange:
+		auto rawKeyString = std::string("0000000000000000000000000000000000000000000000000000000000000000");
+		auto privateKeyString = std::string("3562DBB3987D4FEB5B898633CC9C812AEC49F2C64CAD5B34F5A086DF199A124D");
+		auto expectedKey = std::string("A695AD325DFC7E1191FBC9F186F58EFF42A634029731B18380FF89BF42C464A42CB8CA55B200F051F57F1E1893C68759");
+		// Act:
+		auto keyPair = BLSKeyPair::FromRawString(rawKeyString);
+
+		// Assert:
+		EXPECT_EQ(expectedKey, test::ToString(keyPair.publicKey()));
+		EXPECT_EQ(privateKeyString, test::ToHexString(keyPair.privateKey().data(), keyPair.privateKey().size()));
+	}
+
 	TEST(TEST_CLASS, CanCreateKeyPairFromPrivateKey) {
 		// Arrange:
 		auto privateKeyStr = test::GenerateRandomHexString(Key_Size * 2);
@@ -72,6 +85,21 @@ namespace catapult { namespace crypto {
 
 		// Assert:
 		EXPECT_EQ(PrivateKey::FromString(privateKeyStr), keyPair.privateKey());
+		EXPECT_EQ(expectedPublicKey, keyPair.publicKey());
+	}
+
+	TEST(TEST_CLASS, CanCreateBLSKeyPairFromPrivateKey) {
+		// Arrange:
+		auto privateKeyStr = test::GenerateRandomHexString(Key_Size * 2);
+		auto privateKey = BLSPrivateKey::FromString(privateKeyStr);
+		BLSPublicKey expectedPublicKey;
+		ExtractPublicKeyFromPrivateKey(privateKey, expectedPublicKey);
+
+		// Act:
+		auto keyPair = BLSKeyPair::FromPrivate(std::move(privateKey));
+
+		// Assert:
+		EXPECT_EQ(BLSPrivateKey::FromString(privateKeyStr), keyPair.privateKey());
 		EXPECT_EQ(expectedPublicKey, keyPair.publicKey());
 	}
 
@@ -128,6 +156,33 @@ namespace catapult { namespace crypto {
 		for (size_t i = 0; i < CountOf(dataSet); ++i) {
 			// Act:
 			auto keyPair = KeyPair::FromString(dataSet[i]);
+
+			// Assert:
+			EXPECT_EQ(expectedSet[i], test::ToString(keyPair.publicKey()));
+		}
+	}
+
+	TEST(TEST_CLASS, PassesBLSTestVectors) {
+		// Arrange:
+		std::string dataSet[] {
+				"ED4C70D78104EB11BCD73EBDC512FEBC8FBCEB36A370C957FF7E266230BB5D57",
+				"FE9BC2EF8DF88E708CAB471F82B54DBFCBA11B121E7C2D02799AB4D3A53F0E5B",
+				"DAEE5A32E12CEDEFD0349FDBA1FCBDB45356CA3A35AA5CF1A8AE1091BBA98B73",
+				"A6954BAA315EE50453CCE3483906F134405B8B3ADD94BFC8D8125CF3C09BBFE8",
+				"832A237053A83B7E97CA287AC15F9AD5838898E7395967B56D39749652EA25C3"
+		};
+		std::string expectedSet[] {
+				"AEB42F9632535A7C303E351FAAD9E10B99F8161EBA249B5576731BB672D08EB867FB2750E90148320D11670B1A3E4689",
+				"982045B797858B87379F20FB1BB1C6D205FECAF1658342F6FCCCCB6532B8990621E404C8138C0BF54AAEAC90B974EC9D",
+				"B80EFB84DBDE5F2ACE0C6919CBF4A1191E15AF965144A77819900A189C3AA355F99405C16DDDB44F2F433B34A7EA6331",
+				"81700EE94BE7D801D6E4A912CDA99F779FC38887EB1D6789051E3D85368AB82B0DE4669E7F2864C6DF2C7D285C8869A9",
+				"B147038CA03CAD1EE8F0D1F32621AE6B1AD12D832D9367110779DF87FB8C8BF0CA42138D40C46BC08F74D9CF6C10BF68",
+		};
+
+		ASSERT_EQ(CountOf(dataSet), CountOf(expectedSet));
+		for (size_t i = 0; i < CountOf(dataSet); ++i) {
+			// Act:
+			auto keyPair = BLSKeyPair::FromString(dataSet[i]);
 
 			// Assert:
 			EXPECT_EQ(expectedSet[i], test::ToString(keyPair.publicKey()));

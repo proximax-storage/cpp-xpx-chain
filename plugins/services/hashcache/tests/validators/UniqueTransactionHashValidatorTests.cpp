@@ -19,15 +19,7 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "src/cache/HashCache.h"
-#include "catapult/cache/CatapultCache.h"
-#include "catapult/model/EntityHasher.h"
-#include "catapult/validators/ValidatorContext.h"
 #include "tests/test/HashCacheTestUtils.h"
-#include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/EntityTestUtils.h"
-#include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 

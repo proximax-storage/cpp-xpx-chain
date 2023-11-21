@@ -20,7 +20,6 @@
 
 #include "tests/int/node/stress/test/ExpiryTestUtils.h"
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 
@@ -280,9 +279,9 @@ namespace catapult { namespace local {
 	namespace {
 		// namespace is pruned after the sum of the following
 		//   (1) namespace duration ==> 12
-		//   (2) grace period ========> 1hr of blocks with 60s target time
-		//   (3) max rollback blocks => 10
-		constexpr auto Blocks_Before_Namespace_Prune = static_cast<uint32_t>(12 + (utils::TimeSpan::FromHours(1).seconds() / 60) + 10);
+		//   (2) grace period ========> 1hr of blocks with 15s target time
+		//   (3) max rollback blocks => 360
+		constexpr auto Blocks_Before_Namespace_Prune = static_cast<uint32_t>(12 + (utils::TimeSpan::FromHours(1).seconds() / 15) + 360);
 
 		template<typename TTestContext>
 		NamespaceStateHashes RunPruneNamespaceTest(TTestContext& context) {
@@ -326,8 +325,8 @@ namespace catapult { namespace local {
 	namespace {
 		// namespace is deactivated after the sum of the following
 		//   (1) namespace duration ==> 12
-		//   (2) grace period ========> 1hr of blocks with 60s target time
-		constexpr auto Blocks_Before_Namespace_Deactivate = static_cast<uint32_t>(12 + (utils::TimeSpan::FromHours(1).seconds() / 60));
+		//   (2) grace period ========> 1hr of blocks with 15s target time
+		constexpr auto Blocks_Before_Namespace_Deactivate = static_cast<uint32_t>(12 + (utils::TimeSpan::FromHours(1).seconds() / 15));
 
 		template<typename TTestContext>
 		NamespaceStateHashes RunRegisterAndDeactivateNamespaceTest(TTestContext& context, size_t numAliveBlocks) {
@@ -465,7 +464,7 @@ namespace catapult { namespace local {
 				test::SeedStateHashCalculator(stateHashCalculator, allBlocks);
 
 				auto builder3 = pBuilder->createChainedBuilder(stateHashCalculator);
-				builder3.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
+				builder3.setBlockTimeInterval(utils::TimeSpan::FromSeconds(14)); // better block time will yield better chain
 				test::TransactionsBuilder transactionsBuilder(accounts);
 				transactionsBuilder.addTransfer(0, 1, Amount(1));
 				transactionsBuilder.addTransfer(0, 1, Amount(1));

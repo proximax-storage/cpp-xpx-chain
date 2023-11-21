@@ -24,7 +24,6 @@
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 
@@ -92,13 +91,13 @@ namespace catapult { namespace extensions {
 			RunExtensionsTest(directory, "extension.hashcache", [](auto& bootstrapper) {
 				// Sanity:
 				const auto& systemPluginNames = bootstrapper.extensionManager().systemPluginNames();
-				EXPECT_EQ(2u, systemPluginNames.size());
+				EXPECT_EQ(3u, systemPluginNames.size());
 
 				// Act:
 				bootstrapper.loadExtensions();
 
 				// Assert: hash cache plugin registers a single system plugin
-				EXPECT_EQ(3u, systemPluginNames.size());
+				EXPECT_EQ(4u, systemPluginNames.size());
 			});
 		}
 

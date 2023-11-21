@@ -46,6 +46,9 @@ namespace catapult { namespace model {
 		/// Adds inflation of \a amount starting at \a height.
 		void add(Height height, Amount amount);
 
+		/// Removes inflation of \a amount starting at \a height.
+		void remove(Height height);
+
 	private:
 		std::map<Height, Amount> m_inflationMap;
 	};

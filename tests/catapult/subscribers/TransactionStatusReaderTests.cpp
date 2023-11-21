@@ -22,7 +22,6 @@
 #include "tests/test/core/TransactionStatusTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
 #include "tests/test/other/mocks/MockTransactionStatusSubscriber.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace subscribers {
 

@@ -21,7 +21,6 @@
 #include "MongoErrorPolicy.h"
 #include "MongoBulkWriter.h"
 #include "mappers/MapperUtils.h"
-#include "catapult/exceptions.h"
 
 namespace catapult { namespace mongo {
 

@@ -32,6 +32,9 @@ namespace catapult { namespace crypto {
 	/// \note The function will throw if the generated S part of the signature is not less than the group order.
 	void Sign(const KeyPair& keyPair, std::initializer_list<const RawBuffer> buffersList, Signature& computedSignature);
 
+	/// Signs data in \a message using \a keyPair by BLS algorithm, placing resulting BLS signature in \a computedSignature.
+	void Sign(const BLSKeyPair& keyPair, const RawBuffer& message, BLSSignature& computedSignature);
+
 	/// Verifies that \a signature of data pointed by \a dataBuffer is valid, using public key \a publicKey.
 	/// Returns \c true if signature is valid.
 	bool Verify(const Key& publicKey, const RawBuffer& dataBuffer, const Signature& signature);
@@ -39,4 +42,24 @@ namespace catapult { namespace crypto {
 	/// Verifies that \a signature of data in \a buffersList is valid, using public key \a publicKey.
 	/// Returns \c true if signature is valid.
 	bool Verify(const Key& publicKey, std::initializer_list<const RawBuffer> buffersList, const Signature& signature);
+
+	/// Verifies that \a BLS signature of data pointed by \a dataBuffer is valid, using BLS public key \a publicKey.
+	/// Returns \c true if signature is valid.
+	bool Verify(const BLSPublicKey& publicKey, const RawBuffer& dataBuffer, const BLSSignature& signature);
+
+	/// Aggregates \a BLS signatures to one BLS signature.
+	/// Returns \c aggregated BLS signature.
+	BLSSignature Aggregate(const std::vector<const BLSSignature*>& signatures);
+
+	/// Aggregates \a BLS public keys to one BLS public key.
+	/// Returns \c aggregated BLS public key.
+	BLSPublicKey Aggregate(const std::vector<const BLSPublicKey*>& pubKeys);
+
+	/// Verifies that BLS \a signature of data pointed by \a dataBuffers is valid, using BLS public keys \a publicKeys.
+	/// Returns \c true if signature is valid.
+	bool AggregateVerify(const std::vector<const BLSPublicKey*>& publicKeys, const std::vector<RawBuffer>& dataBuffers, const BLSSignature& signature);
+
+	/// Verifies that BLS \a signature of data pointed by \a dataBuffer is valid, using BLS public keys \a publicKeys.
+	/// Returns \c true if signature is valid.
+	bool FastAggregateVerify(const std::vector<const BLSPublicKey*>& publicKeys, const RawBuffer& dataBuffer, const BLSSignature& signature);
 }}

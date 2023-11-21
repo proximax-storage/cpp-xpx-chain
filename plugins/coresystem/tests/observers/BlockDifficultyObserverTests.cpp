@@ -20,7 +20,6 @@
 
 #include "src/observers/Observers.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
-#include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 

@@ -23,10 +23,8 @@
 #include "src/model/MosaicPropertyTransaction.h"
 #include "src/model/PropertyNotifications.h"
 #include "src/model/TransactionTypePropertyTransaction.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {
 

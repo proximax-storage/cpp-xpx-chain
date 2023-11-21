@@ -20,7 +20,6 @@
 
 #include "src/parsers/BlockElementParser.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace parsers {
 

@@ -20,8 +20,6 @@
 
 #include "Base32.h"
 #include "catapult/exceptions.h"
-#include <array>
-#include <sstream>
 
 namespace catapult { namespace utils {
 

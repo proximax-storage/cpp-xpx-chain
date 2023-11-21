@@ -21,7 +21,6 @@
 #include "catapult/tree/MemoryDataSource.h"
 #include "catapult/utils/ArraySet.h"
 #include "tests/test/tree/PatriciaTreeDataSourceTests.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace tree {
 

@@ -18,19 +18,13 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/consumers/BlockChainProcessor.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/chain/ChainResults.h"
-#include "catapult/consumers/InputUtils.h"
 #include "catapult/model/BlockUtils.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
-#include "tests/test/nodeps/ParamsCapture.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
 
 using namespace catapult::validators;
 using catapult::disruptor::BlockElements;

@@ -20,7 +20,6 @@
 
 #include "BlockStateHash.h"
 #include "LocalTestUtils.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/observers/NotificationObserverAdapter.h"

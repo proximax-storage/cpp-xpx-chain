@@ -20,10 +20,7 @@
 
 #include "AsyncTcpServer.h"
 #include "ConnectionSettings.h"
-#include "catapult/ionet/PacketSocket.h"
 #include "catapult/thread/IoThreadPool.h"
-#include "catapult/utils/Logging.h"
-#include <atomic>
 
 namespace catapult { namespace net {
 

@@ -20,12 +20,10 @@
 
 #include "LocalTestUtils.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
-#include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/plugins/PluginLoader.h"
-#include "plugins/txes/transfer/src/model/TransferTransaction.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
-#include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
@@ -41,7 +39,7 @@ namespace catapult { namespace test {
 			"\t\t{\n"
 			"\t\t\t\"name\": \"Block\",\n"
 			"\t\t\t\"type\": \"33091\",\n"
-			"\t\t\t\"supportedVersions\": [3]\n"
+			"\t\t\t\"supportedVersions\": [4]\n"
 			"\t\t},\n"
 			"\t\t{\n"
 			"\t\t\t\"name\": \"Nemesis_Block\",\n"
@@ -238,13 +236,13 @@ namespace catapult { namespace test {
 		auto config = model::NetworkConfiguration::Uninitialized();
 		SetNetwork(config.Info);
 
-		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
-		config.BlockTimeSmoothingFactor = 10'000;
+		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
+		config.BlockTimeSmoothingFactor = 3'000;
 		config.MaxTransactionLifetime = utils::TimeSpan::FromHours(1);
 
 		config.ImportanceGrouping = 1;
 		config.MaxRollbackBlocks = 10;
-		config.MaxDifficultyBlocks = 60;
+		config.MaxDifficultyBlocks = 3;
 
 		config.MaxMosaicAtomicUnits = Amount(9'000'000'000'000'000);
 
@@ -256,8 +254,30 @@ namespace catapult { namespace test {
 
 		config.EnableUnconfirmedTransactionMinFeeValidation = true;
 
+		config.EnableUndoBlock = true;
+		config.EnableBlockSync = true;
+
+		config.EnableWeightedVoting = false;
+
 		config.GreedDelta = 0.5;
 		config.GreedExponent = 2.0;
+
+		config.CommitteeSize = 21;
+		config.CommitteeApproval = 0.67;
+		config.CommitteePhaseTime = utils::TimeSpan::FromSeconds(5);
+		config.MinCommitteePhaseTime = utils::TimeSpan::FromSeconds(1);
+		config.MaxCommitteePhaseTime = utils::TimeSpan::FromMinutes(1);
+		config.CommitteeSilenceInterval = utils::TimeSpan::FromMilliseconds(100);
+		config.CommitteeRequestInterval = utils::TimeSpan::FromMilliseconds(500);
+		config.CommitteeChainHeightRequestInterval = utils::TimeSpan::FromSeconds(30);
+		config.CommitteeTimeAdjustment = 1.1;
+		config.CommitteeEndSyncApproval = 0.45;
+		config.CommitteeBaseTotalImportance = 100;
+		config.CommitteeNotRunningContribution = 0.5;
+		config.DbrbRegistrationDuration = utils::TimeSpan::FromHours(24);
+		config.DbrbRegistrationGracePeriod = utils::TimeSpan::FromHours(1);
+		config.EnableHarvesterExpiration = false;
+
 		return config;
 	}
 
@@ -292,11 +312,14 @@ namespace catapult { namespace test {
 	}
 
 	std::unique_ptr<cache::MemoryUtCache> CreateUtCache() {
-		return std::make_unique<cache::MemoryUtCache>(cache::MemoryCacheOptions(1024, 1000));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		return std::make_unique<cache::MemoryUtCache>(cache::MemoryCacheOptions(1024, 1000), pTransactionFeeCalculator);
 	}
 
 	std::unique_ptr<cache::MemoryUtCacheProxy> CreateUtCacheProxy() {
-		return std::make_unique<cache::MemoryUtCacheProxy>(cache::MemoryCacheOptions(1024, 1000));
+		auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+		return std::make_unique<cache::MemoryUtCacheProxy>(cache::MemoryCacheOptions(1024, 1000),
+														   std::move(pTransactionFeeCalculator));
 	}
 
 	std::shared_ptr<plugins::PluginManager> CreateDefaultPluginManagerWithRealPlugins() {

@@ -5,10 +5,7 @@
 **/
 
 #include "catapult/plugins/CacheHandlers.h"
-#include "catapult/plugins/PluginManager.h"
 #include "NetworkConfigPlugin.h"
-#include "src/cache/NetworkConfigCache.h"
-#include "src/cache/NetworkConfigCacheStorage.h"
 #include "src/cache/NetworkConfigCacheSubCachePlugin.h"
 #include "src/config/NetworkConfigConfiguration.h"
 #include "src/observers/Observers.h"
@@ -42,7 +39,8 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([&manager](auto& builder) {
 			builder
 				.add(validators::CreateNetworkConfigSignerValidator())
-				.add(validators::CreateNetworkConfigValidator(manager));
+				.add(validators::CreateNetworkConfigValidator(manager))
+				.add(validators::CreatePluginAvailableValidator(manager));
 		});
 
 		manager.addObserverHook([](auto& builder) {

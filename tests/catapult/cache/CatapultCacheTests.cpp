@@ -18,15 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/cache/CatapultCache.h"
-#include "catapult/cache/CacheStorage.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/crypto/Hashes.h"
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/SimpleCache.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

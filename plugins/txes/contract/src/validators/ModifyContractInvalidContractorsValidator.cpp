@@ -6,7 +6,6 @@
 
 #include "Validators.h"
 #include "src/cache/ContractCache.h"
-#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 

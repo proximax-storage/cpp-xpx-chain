@@ -20,7 +20,6 @@
 
 #include "NetworkNode.h"
 #include "catapult/utils/MemoryUtils.h"
-#include "catapult/model/EntityPtr.h"
 
 namespace catapult { namespace ionet {
 

@@ -19,13 +19,11 @@
 **/
 
 #include "SyncSourceService.h"
-#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/ServerHooksUtils.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/handlers/ChainHandlers.h"
 #include "catapult/handlers/TransactionHandlers.h"
-#include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace syncsource {
 

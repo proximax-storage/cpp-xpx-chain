@@ -163,4 +163,99 @@ namespace catapult { namespace model {
 	}
 
 	// endregion
+
+	// region OfferCreationReceipt
+
+	TEST(TEST_CLASS, OfferCreationReceiptHasExpectedSize) {
+		// Arrange:
+		auto expectedSize =
+				sizeof(Receipt) // base
+				+ Key_Size // sender
+				+ sizeof(MosaicId)*2 // mosaic id pair
+				+ sizeof(Amount)*2; // amount to give and to get
+
+		// Assert:
+		EXPECT_EQ(expectedSize, sizeof(OfferCreationReceipt));
+		EXPECT_EQ(10u + 64, sizeof(OfferCreationReceipt));
+	}
+
+	TEST(TEST_CLASS, CanCreateOfferCreationReceipt) {
+		// Arrange:
+		auto sender = test::GenerateRandomByteArray<Key>();
+
+		// Act:
+		OfferCreationReceipt receipt(static_cast<ReceiptType>(126), sender, std::pair<MosaicId,MosaicId>(88,8080), Amount(500), Amount(250));
+
+		// Assert:
+		ASSERT_EQ(sizeof(OfferCreationReceipt), receipt.Size);
+		EXPECT_EQ(1u, receipt.Version);
+		EXPECT_EQ(static_cast<ReceiptType>(126), receipt.Type);
+		EXPECT_EQ(MosaicId(88), receipt.MosaicsPair.first);
+		EXPECT_EQ(MosaicId(8080), receipt.MosaicsPair.second);
+		EXPECT_EQ(Amount(500), receipt.AmountGive);
+		EXPECT_EQ(Amount(250), receipt.AmountGet);
+	}
+
+	// endregion
+
+	// region OfferExchangeReceipt
+
+	TEST(TEST_CLASS, CanCreateOfferExchangeReceipt) {
+		// Arrange:
+		auto sender = test::GenerateRandomByteArray<Key>();
+		auto recipient = test::GenerateRandomByteArray<Address>();
+
+		// Act:
+		auto pReceipt = CreateOfferExchangeReceipt(static_cast<ReceiptType>(127), sender, std::pair<MosaicId,MosaicId>(88,8080), std::vector<ExchangeDetail>{{recipient, std::pair<MosaicId,MosaicId>(8080,88), Amount(350), Amount(700)}});
+
+		// Assert:
+		ASSERT_EQ(sizeof(OfferExchangeReceipt) + sizeof(ExchangeDetail), pReceipt->Size);
+		EXPECT_EQ(1u, pReceipt->Version);
+		EXPECT_EQ(static_cast<ReceiptType>(127), pReceipt->Type);
+		EXPECT_EQ(MosaicId(88), pReceipt->MosaicsPair.first);
+		EXPECT_EQ(MosaicId(8080), pReceipt->MosaicsPair.second);
+		auto pDetail = reinterpret_cast<const ExchangeDetail*>(pReceipt.get() + 1);
+		for (auto i = 0u; i < pReceipt->ExchangeDetailCount; ++i, ++pDetail) {
+			EXPECT_EQ(recipient, pDetail->Recipient);
+			EXPECT_EQ(MosaicId(8080), pDetail->MosaicsPair.first);
+			EXPECT_EQ(MosaicId(88), pDetail->MosaicsPair.second);
+			EXPECT_EQ(Amount(350), pDetail->AmountGive);
+			EXPECT_EQ(Amount(700), pDetail->AmountGet);
+		}
+	}
+
+	// endregion
+
+	// region OfferRemovalReceipt
+
+	TEST(TEST_CLASS, OfferRemovalReceiptHasExpectedSize) {
+		// Arrange:
+		auto expectedSize =
+				sizeof(Receipt) // base
+				+ Key_Size // sender
+				+ sizeof(MosaicId)*2 // mosaic id pair
+				+ sizeof(Amount); // amount to give that has been returned
+
+		// Assert:
+		EXPECT_EQ(expectedSize, sizeof(OfferRemovalReceipt));
+		EXPECT_EQ(10u + 56, sizeof(OfferRemovalReceipt));
+	}
+
+	TEST(TEST_CLASS, CanCreateOfferRemovalReceipt) {
+		// Arrange:
+		auto sender = test::GenerateRandomByteArray<Key>();
+
+		// Act:
+		OfferRemovalReceipt receipt(static_cast<ReceiptType>(128), sender, std::pair<MosaicId,MosaicId>(35,58), Amount(358));
+
+		// Assert:
+		ASSERT_EQ(sizeof(OfferRemovalReceipt), receipt.Size);
+		EXPECT_EQ(1u, receipt.Version);
+		EXPECT_EQ(static_cast<ReceiptType>(128), receipt.Type);
+		EXPECT_EQ(MosaicId(35), receipt.MosaicsPair.first);
+		EXPECT_EQ(MosaicId(58), receipt.MosaicsPair.second);
+		EXPECT_EQ(Amount(358), receipt.AmountGiveReturned);
+	}
+
+	// endregion
 }}

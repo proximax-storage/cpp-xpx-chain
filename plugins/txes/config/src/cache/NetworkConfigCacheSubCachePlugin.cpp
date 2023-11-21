@@ -17,7 +17,7 @@ namespace catapult { namespace cache {
 		io::Write32(output, 1);
 
 		const auto& delta = cacheDelta.sub<NetworkConfigCache>();
-		const auto& heights = delta.heights();
+		auto heights = delta.heights();
 		io::Write64(output, heights.size());
 		for (const auto& height : heights)
 			io::Write64(output, height.unwrap());

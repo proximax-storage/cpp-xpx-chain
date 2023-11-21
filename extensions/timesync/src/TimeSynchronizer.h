@@ -22,7 +22,7 @@
 #include "catapult/extensions/ServiceState.h"
 #include "constants.h"
 #include "types.h"
-#include "timesync/src/filters/AggregateSynchronizationFilter.h"
+#include "filters/AggregateSynchronizationFilter.h"
 
 namespace catapult {
 	namespace cache {

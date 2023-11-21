@@ -7,7 +7,6 @@
 #include "src/cache/MetadataCache.h"
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CachePruneTests.h"
-#include "tests/test/cache/CacheMixinsTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
 
 namespace catapult { namespace cache {

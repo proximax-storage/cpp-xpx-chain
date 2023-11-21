@@ -21,7 +21,6 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "tests/int/node/test/LocalNodeBasicTests.h"
 #include "tests/int/node/test/LocalNodeTestContext.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 
@@ -61,7 +60,12 @@ namespace catapult { namespace local {
 
 	TEST(TEST_CLASS, AllCounterGroupsAreRegistered) {
 		// Act:
-		TestContext context(NodeFlag::Regular);
+		TestContext context(NodeFlag::Regular, {},
+				[](auto& config) {
+
+				},
+				"",
+				"../seed/mijin-test-basic-extended");
 
 		const auto& counters = context.localNode().counters();
 		for (const auto& counter : counters)
@@ -88,7 +92,12 @@ namespace catapult { namespace local {
 		template<typename THandler>
 		void RunExternalReaderTest(THandler handler) {
 			// Arrange: boot a partner node
-			TestContext context(NodeFlag::With_Partner, { test::CreateLocalPartnerNode() });
+			TestContext context(NodeFlag::With_Partner, { test::CreateLocalPartnerNode() },
+			[](auto& config) {
+
+			},
+			"",
+			"../seed/mijin-test-basic-extended");
 			context.waitForNumActiveWriters(1);
 
 			// Act: create an external connection to the node

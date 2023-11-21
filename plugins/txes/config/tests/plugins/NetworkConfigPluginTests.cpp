@@ -4,12 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/NetworkConfigPlugin.h"
 #include "plugins/txes/config/src/model/NetworkConfigEntityType.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/plugins/PluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {
 
@@ -65,6 +63,7 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
 					"NetworkConfigSignerValidator",
+					"PluginAvailableValidator",
 					"NetworkConfigValidator",
 				};
 			}

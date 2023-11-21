@@ -19,19 +19,15 @@
 **/
 
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
-#include "catapult/extensions/ServiceLocator.h"
-#include "catapult/ionet/NodeContainer.h"
 #include "catapult/thread/MultiServicePool.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/local/LocalTestUtils.h"
+#include "tests/test/other/mocks/MockBlockChangeSubscriber.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
 #include "tests/test/other/mocks/MockStateChangeSubscriber.h"
 #include "tests/test/other/mocks/MockTransactionStatusSubscriber.h"
-#include "tests/test/plugins/PluginManagerFactory.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 
@@ -60,6 +56,7 @@ namespace catapult { namespace extensions {
 		mocks::MockTransactionStatusSubscriber transactionStatusSubscriber;
 		mocks::MockStateChangeSubscriber stateChangeSubscriber;
 		mocks::MockNodeSubscriber nodeSubscriber;
+		mocks::MockBlockChangeSubscriber postBlockCommitSubscriber;
 
 		std::vector<utils::DiagnosticCounter> counters;
 		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
@@ -78,6 +75,7 @@ namespace catapult { namespace extensions {
 				transactionStatusSubscriber,
 				stateChangeSubscriber,
 				nodeSubscriber,
+				postBlockCommitSubscriber,
 				counters,
 				pluginManager,
 				pool);

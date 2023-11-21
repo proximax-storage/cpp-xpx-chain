@@ -271,6 +271,8 @@ namespace catapult { namespace test {
 						[](const auto& unresolved) { return model::ResolverContext().resolve(unresolved); },
 						[](const auto& unresolved) { return model::ResolverContext().resolve(unresolved); });
 			};
+
+			Config.pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
 		}
 
 		MockExecutionConfiguration() :
@@ -320,6 +322,38 @@ namespace catapult { namespace test {
 				// - cache contents + sequence (NumDifficultyInfos is incremented by each observer call)
 				EXPECT_TRUE(params.IsPassedMarkedCache) << message;
 				EXPECT_EQ(numInitialCacheDifficultyInfos + i, params.NumDifficultyInfos) << message;
+				++i;
+			}
+		}
+
+		/// Asserts observer contexts passed to \a observer reflect \a numInitialCacheDifficultyInfos
+		/// given \a expectedHeight, \a expectedImportanceHeight and \a isRollbackExecution.
+		static void AssertObserverContexts(
+				const MockAggregateNotificationObserver& observer,
+				const std::vector<size_t>& expectedNumDifficultyInfos,
+				const Height& expectedHeight,
+				const model::ImportanceHeight& expectedImportanceHeight,
+				const predicate<size_t>& isRollbackExecution) {
+			// Assert:
+			size_t i = 0;
+			for (const auto& params : observer.params()) {
+				auto message = "observer at " + std::to_string(i);
+
+				// - context (use resolver call to implicitly test creation of ResolverContext)
+				EXPECT_EQ(expectedHeight, params.Context.Height) << message;
+				if (isRollbackExecution(i))
+					EXPECT_EQ(observers::NotifyMode::Rollback, params.Context.Mode) << message;
+				else
+					EXPECT_EQ(observers::NotifyMode::Commit, params.Context.Mode) << message;
+
+				EXPECT_EQ(MosaicId(22), params.Context.Resolvers.resolve(UnresolvedMosaicId(11))) << message;
+
+				// - compare the copied state to the default state
+				EXPECT_EQ(expectedImportanceHeight, params.StateCopy.LastRecalculationHeight) << message;
+
+				// - cache contents + sequence (NumDifficultyInfos is incremented by each observer call)
+				EXPECT_TRUE(params.IsPassedMarkedCache) << message;
+				EXPECT_EQ(expectedNumDifficultyInfos[i], params.NumDifficultyInfos) << message;
 				++i;
 			}
 		}

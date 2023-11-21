@@ -20,8 +20,6 @@
 
 #include "ZeroMqTransactionStatusSubscriber.h"
 #include "ZeroMqEntityPublisher.h"
-#include "catapult/model/Transaction.h"
-#include "catapult/model/TransactionStatus.h"
 
 namespace catapult { namespace zeromq {
 

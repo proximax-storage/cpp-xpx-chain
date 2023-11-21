@@ -5,30 +5,19 @@
 **/
 
 #include "catapult/builders/TransferBuilder.h"
-#include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/TransactionExtensions.h"
 #include "catapult/ionet/Node.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
 #include "catapult/ionet/PacketSocket.h"
-#include "catapult/model/Address.h"
-#include "catapult/model/Mosaic.h"
 #include "catapult/net/VerifyPeer.h"
 #include "catapult/utils/FileSize.h"
 #include "catapult/utils/HexParser.h"
 #include "catapult/utils/NetworkTime.h"
-#include "catapult/utils/RawBuffer.h"
-#include "catapult/utils/RawBuffer.h"
 #include "SpammerOptions.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/nodeps/Random.h"
-#include <boost/asio.hpp>
 #include <boost/program_options.hpp>
-#include <chrono>
-#include <iomanip>
-#include <iostream>
 #include <random>
-#include <thread>
 
 using namespace std;
 using namespace boost::program_options;

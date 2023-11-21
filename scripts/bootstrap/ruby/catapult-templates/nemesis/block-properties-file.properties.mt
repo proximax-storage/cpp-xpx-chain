@@ -99,3 +99,8 @@ isSupplyMutable = true
 {{#xpx.distribution}}
 {{address}} = {{amount}}
 {{/xpx.distribution}}
+
+[harvesters]
+{{#harvester_keys}}
+{{harvester_key}} = true
+{{/harvester_keys}}

@@ -5,7 +5,6 @@
 **/
 
 #include "catapult/model/Address.h"
-#include "src/cache/DriveCache.h"
 #include "src/validators/Validators.h"
 #include "tests/test/ServiceTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

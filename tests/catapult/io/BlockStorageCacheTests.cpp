@@ -18,10 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/io/BlockStorageCache.h"
 #include "tests/test/core/BlockStorageTests.h"
 #include "tests/test/nodeps/LockTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace io {
 

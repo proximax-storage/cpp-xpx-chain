@@ -20,15 +20,12 @@
 
 #include "sdk/src/extensions/BlockExtensions.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
-#include "catapult/crypto/KeyPair.h"
 #include "catapult/model/BlockUtils.h"
-#include "catapult/model/NetworkInfo.h"
 #include "tests/int/stress/test/EntityDump.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
-#include "tests/TestHarness.h"
 
 namespace catapult {
 

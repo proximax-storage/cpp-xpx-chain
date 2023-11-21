@@ -21,7 +21,6 @@
 #include "src/cache/HashCacheStorage.h"
 #include "tests/test/cache/CacheStorageTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

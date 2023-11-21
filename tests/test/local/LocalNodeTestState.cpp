@@ -21,8 +21,6 @@
 #include "LocalNodeTestState.h"
 #include "LocalTestUtils.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
-#include "catapult/io/BlockStorageCache.h"
-#include "catapult/state/CatapultState.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
@@ -37,27 +35,14 @@ namespace catapult { namespace test {
 		}
 	}
 
-	struct LocalNodeTestState::Impl {
-	public:
-		explicit Impl(config::BlockchainConfiguration&& config, cache::CatapultCache&& cache)
+	LocalNodeTestState::Impl::Impl(config::BlockchainConfiguration&& config, cache::CatapultCache&& cache)
 				: m_config(std::move(config))
 				, m_cache(std::move(cache))
 				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>(), std::make_unique<mocks::MockMemoryBlockStorage>())
-		{}
-
-	public:
-		extensions::LocalNodeStateRef ref() {
-			return extensions::LocalNodeStateRef(config::CreateMockConfigurationHolder(m_config), m_state, m_cache, m_storage, m_score);
-		}
-
-	private:
-		config::BlockchainConfiguration m_config;
-		state::CatapultState m_state;
-		cache::CatapultCache m_cache;
-		io::BlockStorageCache m_storage;
-		extensions::LocalNodeChainScore m_score;
-	};
-
+			{}
+	extensions::LocalNodeStateRef  LocalNodeTestState::Impl::ref() {
+		return extensions::LocalNodeStateRef(config::CreateMockConfigurationHolder(m_config), m_state, m_cache, m_storage, m_score);
+	}
 	LocalNodeTestState::LocalNodeTestState(const model::NetworkConfiguration& config)
 			: LocalNodeTestState(config, "", CreateEmptyCatapultCache(config))
 	{}

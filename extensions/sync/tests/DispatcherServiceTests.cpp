@@ -21,25 +21,22 @@
 #include "sync/src/DispatcherService.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/io/IndexFile.h"
 #include "catapult/model/BlockUtils.h"
-#include "catapult/utils/NetworkTime.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
+#include "tests/test/nodeps/data/NemesisMemoryBlockStorage_data.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/mocks/MockNotificationValidator.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 
 using ValidationResult = catapult::validators::ValidationResult;
 
@@ -86,7 +83,7 @@ namespace catapult { namespace sync {
 			auto delta = cache.createDelta();
 
 			// set a difficulty for the nemesis block
-			delta.sub<cache::BlockDifficultyCache>().insert(Height(1), Timestamp(0), Difficulty(NEMESIS_BLOCK_DIFFICULTY));
+			delta.sub<cache::BlockDifficultyCache>().insert(Height(1), test::Nemesis_Timestamp, Difficulty(NEMESIS_BLOCK_DIFFICULTY));
 
 			// add a balance and importance for the signer
 			auto& accountCache = delta.sub<cache::AccountStateCache>();
@@ -160,6 +157,9 @@ namespace catapult { namespace sync {
 				// override data directory
 				auto& state = testState().state();
 				const_cast<std::string&>(state.config().User.DataDirectory) = m_tempDir.name();
+				const_cast<bool&>(state.config().Network.EnableUndoBlock) = true;
+				const_cast<bool&>(state.config().Network.EnableBlockSync) = true;
+				const_cast<bool&>(state.config().Network.EnableWeightedVoting) = false;
 
 				// initialize the cache
 				InitializeCatapultCacheForDispatcherTests(state.cache(), GetBlockSignerKeyPair());
@@ -268,7 +268,7 @@ namespace catapult { namespace sync {
 
 			model::PreviousBlockContext context(*pNemesisBlockElement);
 			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
-			pBlock->Timestamp = context.Timestamp + Timestamp(61'000);
+			pBlock->Timestamp = context.Timestamp + Timestamp(16'000);
 			pBlock->Difficulty = chain::CalculateDifficulty(
 					testContext.testState().cache().sub<cache::BlockDifficultyCache>(),
 					state::BlockDifficultyInfo(*pBlock),
@@ -639,8 +639,8 @@ namespace catapult { namespace sync {
 			const auto& stateChangeSubscriber = context.testState().stateChangeSubscriber();
 			EXPECT_EQ(1u, stateChangeSubscriber.numScoreChanges());
 			EXPECT_EQ(1u, stateChangeSubscriber.numStateChanges());
-			// 18'156'244'167'036'960 = 2^64 / NEMESIS_BLOCK_DIFFICULTY * 61 / 60
-			EXPECT_EQ(model::ChainScore(18'156'244'167'036'960), stateChangeSubscriber.lastChainScore());
+			// 17'304'637'967'832'600 = 2^64 / (NEMESIS_BLOCK_DIFFICULTY * 16) / 15
+			EXPECT_EQ(model::ChainScore(17'304'637'967'832'600), stateChangeSubscriber.lastChainScore());
 
 			// - commit step index file was updated
 			AssertCommitStepFileUpdated(context);

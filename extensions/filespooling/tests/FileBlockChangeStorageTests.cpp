@@ -22,14 +22,13 @@
 #include "catapult/subscribers/SubscriberOperationTypes.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace filespooling {
 
 #define TEST_CLASS FileBlockChangeStorageTests
 
 	namespace {
-		constexpr auto Empty_Block_Element_Size = sizeof(model::BlockHeader) + 2 * Hash256_Size + 2 * sizeof(uint32_t);
+		constexpr auto Empty_Block_Element_Size = sizeof(model::BlockHeaderV4) + 2 * Hash256_Size + 2 * sizeof(uint32_t);
 
 		template<typename TAction>
 		void RunTest(TAction action) {

@@ -200,7 +200,6 @@ namespace catapult { namespace extensions {
 			const NodeAgingConfiguration& config,
 			const ImportanceRetriever& importanceRetriever) {
 		// 1. find compatible (service) nodes; always match all roles
-		NodeSelectionResult result;
 		auto nodesInfo = FindServiceNodes(nodes.view(), config.ServiceId, ionet::NodeRoles::None, importanceRetriever);
 
 		// 2. find removal candidates

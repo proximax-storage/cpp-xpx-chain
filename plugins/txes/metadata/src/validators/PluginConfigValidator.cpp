@@ -5,7 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "src/config/MetadataConfiguration.h"
 
 namespace catapult { namespace validators {
 	DEFINE_PLUGIN_CONFIG_VALIDATOR(metadata, Metadata, 1)

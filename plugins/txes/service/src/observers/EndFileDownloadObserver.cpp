@@ -5,7 +5,6 @@
 **/
 
 #include "CommonDrive.h"
-#include "src/utils/ServiceUtils.h"
 
 namespace catapult { namespace observers {
 

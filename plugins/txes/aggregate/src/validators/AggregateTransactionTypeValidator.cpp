@@ -5,7 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "src/config/AggregateConfiguration.h"
 #include "src/model/AggregateEntityType.h"
 
 namespace catapult { namespace validators {

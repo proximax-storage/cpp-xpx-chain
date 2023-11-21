@@ -4,10 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/ExchangeCache.h"
 #include "tests/test/ExchangeTestUtils.h"
 #include "tests/test/cache/CacheBasicTests.h"
-#include "tests/test/cache/CacheMixinsTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
 
 namespace catapult { namespace cache {

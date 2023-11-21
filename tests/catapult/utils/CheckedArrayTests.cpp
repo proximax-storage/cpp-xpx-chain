@@ -21,9 +21,6 @@
 #include "catapult/utils/CheckedArray.h"
 #include "tests/test/nodeps/Equality.h"
 #include "tests/test/nodeps/IteratorTestTraits.h"
-#include "tests/TestHarness.h"
-#include <unordered_map>
-#include <unordered_set>
 
 namespace catapult { namespace utils {
 

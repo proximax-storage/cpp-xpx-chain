@@ -4,9 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <src/catapult/validators/ValidatorContext.h>
 #include "Validators.h"
-#include "plugins/txes/metadata/src/model/MetadataTypes.h"
 #include "plugins/txes/metadata/src/cache/MetadataCache.h"
 
 namespace catapult { namespace validators {

@@ -5,9 +5,7 @@
 **/
 
 #include "MetadataCacheTraits.h"
-#include "catapult/model/Address.h"
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
-#include "tests/TestHarness.h"
 
 
 namespace catapult { namespace mongo { namespace plugins {

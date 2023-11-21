@@ -21,8 +21,6 @@
 #include "RootNamespaceHistorySerializer.h"
 #include "catapult/io/PodIoUtils.h"
 #include "catapult/utils/Casting.h"
-#include <map>
-#include <vector>
 
 namespace catapult { namespace state {
 

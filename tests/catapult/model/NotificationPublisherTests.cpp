@@ -19,11 +19,10 @@
 **/
 
 #include "catapult/model/NotificationPublisher.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
-#include "tests/test/nodeps/NumericTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 
@@ -42,7 +41,8 @@ namespace catapult { namespace model {
 			mocks::MockNotificationSubscriber sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, mode);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, transactionFeeCalculator, mode);
 
 			// Act:
 			auto hash = test::GenerateRandomByteArray<Hash256>();
@@ -57,13 +57,31 @@ namespace catapult { namespace model {
 			PublishAll(entity, PublicationMode::All, assertSub);
 		}
 
+		template<typename TNotification, typename TEntity, typename TAssertSubFunc>
+		void PublishAllTyped(const TEntity& entity, TAssertSubFunc assertSub) {
+			// Arrange:
+			mocks::MockTypedNotificationSubscriber<TNotification> sub;
+
+			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, transactionFeeCalculator);
+
+			// Act:
+			auto hash = test::GenerateRandomByteArray<Hash256>();
+			pPub->publish(WeakEntityInfo(entity, hash, Height{0}), sub);
+
+			// Assert:
+			assertSub(sub);
+		}
+
 		template<typename TNotification, typename TAssertNotification>
 		void PublishOne(const WeakEntityInfo& entityInfo, TAssertNotification assertNotification) {
 			// Arrange:
 			mocks::MockTypedNotificationSubscriber<TNotification> sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, transactionFeeCalculator);
 
 			// Act:
 			pPub->publish(entityInfo, sub);
@@ -111,7 +129,7 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
 			// Assert:
-			EXPECT_EQ(6u, sub.numNotifications());
+			EXPECT_EQ(7u, sub.numNotifications());
 			EXPECT_EQ(0u, sub.numAddresses());
 			EXPECT_EQ(2u, sub.numKeys());
 
@@ -129,7 +147,7 @@ namespace catapult { namespace model {
 		// Act:
 		PublishAll(*pBlock, [&block = *pBlock](const auto& sub) {
 			// Assert:
-			EXPECT_EQ(5u, sub.numNotifications());
+			EXPECT_EQ(6u, sub.numNotifications());
 			EXPECT_EQ(0u, sub.numAddresses());
 			EXPECT_EQ(1u, sub.numKeys());
 
@@ -141,18 +159,17 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, CanRaiseBlockEntityNotifications) {
 		// Arrange:
 		auto pBlock = test::GenerateEmptyRandomBlock();
-		pBlock->Version = 0x11000003;
 
 		// Act:
 		PublishOne<EntityNotification<1>>(*pBlock, [&pBlock](const auto& notification) {
 			// Assert:
-			EXPECT_EQ(static_cast<NetworkIdentifier>(0x11), notification.NetworkIdentifier);
+			EXPECT_EQ(static_cast<NetworkIdentifier>(0x90), notification.NetworkIdentifier);
 			EXPECT_EQ(pBlock->Type, notification.EntityType);
-			EXPECT_EQ(0x03u, notification.EntityVersion);
+			EXPECT_EQ(0x04u, notification.EntityVersion);
 		});
 	}
 
-	TEST(TEST_CLASS, CanRaiseBlockSignatureNotifications) {
+	TEST(TEST_CLASS, CanRaiseBlockSignatureNotifications_WithoutCosignatures) {
 		// Arrange:
 		auto pBlock = test::GenerateEmptyRandomBlock();
 		test::FillWithRandomData(pBlock->Signer);
@@ -164,7 +181,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(block.Signer, notification.Signer);
 			EXPECT_EQ(block.Signature, notification.Signature);
 			EXPECT_EQ(test::AsVoidPointer(&block.Version), test::AsVoidPointer(notification.Data.pData));
-			EXPECT_EQ(sizeof(BlockHeader) - VerifiableEntity::Header_Size, notification.Data.Size);
+			EXPECT_EQ(sizeof(BlockHeaderV4) - VerifiableEntity::Header_Size, notification.Data.Size);
 			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
 		});
 	}
@@ -184,6 +201,45 @@ namespace catapult { namespace model {
 			pBlock->FeeInterestDenominator = 1;
 			return pBlock;
 		}
+	}
+
+	TEST(TEST_CLASS, CanRaiseBlockSignatureNotifications_WithCosignatures) {
+		// Arrange:
+		std::vector<Cosignature> cosignatures{
+			{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() },
+			{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() },
+			{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() },
+		};
+		auto numCosignatures = cosignatures.size();
+		auto pBlock = GenerateBlockWithTransactionSizes({ Amount(numCosignatures * sizeof(Cosignature)) });
+		test::FillWithRandomData(pBlock->Signer);
+		test::FillWithRandomData(pBlock->Signature);
+		// Convert transaction into cosignatures.
+		pBlock->setTransactionPayloadSize(0u);
+		auto* pData = reinterpret_cast<uint8_t*>(pBlock->CosignaturesPtr());
+		std::memcpy(pData, cosignatures.data(), numCosignatures * sizeof(Cosignature));
+
+		// Act:
+		PublishAllTyped<SignatureNotification<1>>(*pBlock, [&block = *pBlock, numCosignatures, &cosignatures](const auto& sub) {
+			// Assert:
+			ASSERT_EQ(numCosignatures + 1u, sub.numMatchingNotifications());
+
+			for (auto i = 0u; i < numCosignatures; ++i) {
+				const auto& notification = sub.matchingNotifications()[i];
+				EXPECT_EQ(cosignatures[i].Signer, notification.Signer);
+				EXPECT_EQ(cosignatures[i].Signature, notification.Signature);
+				EXPECT_EQ(test::AsVoidPointer(&block.Version), test::AsVoidPointer(notification.Data.pData));
+				EXPECT_EQ(sizeof(BlockHeaderV4) - VerifiableEntity::Header_Size, notification.Data.Size);
+				EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
+			}
+
+			const auto& notification = sub.matchingNotifications()[numCosignatures];
+			EXPECT_EQ(block.Signer, notification.Signer);
+			EXPECT_EQ(block.Signature, notification.Signature);
+			EXPECT_EQ(test::AsVoidPointer(&block.Version), test::AsVoidPointer(notification.Data.pData));
+			EXPECT_EQ(sizeof(BlockHeaderV4) - VerifiableEntity::Header_Size, notification.Data.Size);
+			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
+		});
 	}
 
 	TEST(TEST_CLASS, CanRaiseBlockNotifications_BlockWithoutTransactions) {
@@ -232,9 +288,30 @@ namespace catapult { namespace model {
 		});
 	}
 
-	TEST(TEST_CLASS, CanPublishBlockNotificationsWithModeBasic) {
+	TEST(TEST_CLASS, CanRaiseBlockCommitteeNotifications) {
+		// Arrange:
+		auto numCosignatures = 3;
+		auto pBlock = GenerateBlockWithTransactionSizes({ Amount(numCosignatures * sizeof(Cosignature)) });
+		pBlock->setRound(10);
+		pBlock->FeeInterest = 2;
+		pBlock->FeeInterestDenominator = 2;
+		// Convert transaction into cosignatures.
+		pBlock->setTransactionPayloadSize(0u);
+
+		// Act:
+		PublishOne<BlockCommitteeNotification<1>>(*pBlock, [&block = *pBlock, numCosignatures](const auto& notification) {
+			// Assert:
+			EXPECT_EQ(10, notification.Round);
+			EXPECT_EQ(2, notification.FeeInterest);
+			EXPECT_EQ(2, notification.FeeInterestDenominator);
+		});
+	}
+
+	TEST(TEST_CLASS, CanPublishBlockNotificationsWithModeBasic_v3) {
 		// Arrange:
 		auto pBlock = GenerateBlockWithTransactionSizes({});
+		pBlock->Version = 0x11000003;
+		pBlock->Size = sizeof(model::BlockHeader);
 
 		// Act:
 		PublishAll(*pBlock, PublicationMode::Basic, [](const auto& sub) {
@@ -246,6 +323,30 @@ namespace catapult { namespace model {
 			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[3]);
 			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[4]);
 			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[5]);
+		});
+	}
+
+	TEST(TEST_CLASS, CanPublishBlockNotificationsWithModeBasic) {
+		// Arrange:
+		auto numCosignatures = 3u;
+		auto pBlock = GenerateBlockWithTransactionSizes({ Amount(numCosignatures * sizeof(Cosignature)) });
+		// Convert transaction into cosignatures.
+		pBlock->setTransactionPayloadSize(0u);
+
+		// Act:
+		PublishAll(*pBlock, PublicationMode::Basic, [numCosignatures](const auto& sub) {
+			// Assert: no notifications were suppressed (blocks do not have custom notifications)
+			ASSERT_EQ(7u + numCosignatures, sub.numNotifications());
+			auto i = 0u;
+			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Core_Block_Committee_v1_Notification, sub.notificationTypes()[i++]);
+			for (auto k = 0u; k < numCosignatures; ++k)
+				EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
 		});
 	}
 
@@ -378,7 +479,7 @@ namespace catapult { namespace model {
 		auto pTransaction = test::GenerateRandomTransactionWithSize(234);
 		pTransaction->Type = mocks::MockTransaction::Entity_Type;
 		pTransaction->MaxFee = Amount(765);
-		BlockHeader blockHeader;
+		BlockHeaderV4 blockHeader;
 		blockHeader.FeeMultiplier = BlockFeeMultiplier(4);
 		blockHeader.FeeInterest = 1;
 		blockHeader.FeeInterestDenominator = 1;

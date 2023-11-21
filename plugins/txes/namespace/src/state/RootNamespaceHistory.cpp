@@ -19,7 +19,6 @@
 **/
 
 #include "RootNamespaceHistory.h"
-#include "catapult/state/AccountState.h"
 
 namespace catapult { namespace state {
 
@@ -38,7 +37,7 @@ namespace catapult { namespace state {
 	RootNamespaceHistory::RootNamespaceHistory(NamespaceId id) : m_id(id)
 	{}
 
-	RootNamespaceHistory::RootNamespaceHistory(const RootNamespaceHistory& history) : RootNamespaceHistory(history.m_id) {
+	RootNamespaceHistory::RootNamespaceHistory(const RootNamespaceHistory& history) : m_id(history.m_id) {
 		std::shared_ptr<RootNamespace::Children> pChildren;
 		auto owner = Key();
 		for (const auto& root : history) {
@@ -50,6 +49,22 @@ namespace catapult { namespace state {
 			m_rootHistory.emplace_back(root.id(), root.owner(), root.lifetime(), pChildren);
 			m_rootHistory.back().setAlias(root.id(), root.alias(root.id()));
 		}
+	}
+
+	RootNamespaceHistory& RootNamespaceHistory::operator=(const RootNamespaceHistory& history) {
+	    m_id = history.m_id;
+		std::shared_ptr<RootNamespace::Children> pChildren;
+		auto owner = Key();
+		for (const auto& root : history) {
+			if (owner != root.owner()) {
+				pChildren = std::make_shared<RootNamespace::Children>(root.children());
+				owner = root.owner();
+			}
+
+			m_rootHistory.emplace_back(root.id(), root.owner(), root.lifetime(), pChildren);
+			m_rootHistory.back().setAlias(root.id(), root.alias(root.id()));
+		}
+		return *this;
 	}
 
 	bool RootNamespaceHistory::empty() const {

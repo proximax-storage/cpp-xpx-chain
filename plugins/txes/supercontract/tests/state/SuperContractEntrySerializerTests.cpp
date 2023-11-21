@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/state/SuperContractEntrySerializer.h"
 #include "tests/test/core/SerializerTestUtils.h"
 #include "tests/test/SuperContractTestUtils.h"
 

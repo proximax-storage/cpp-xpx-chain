@@ -19,18 +19,12 @@
 **/
 
 #include "timesync/src/ImportanceAwareNodeSelector.h"
-#include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/ImportanceView.h"
-#include "catapult/ionet/NodeContainer.h"
-#include "catapult/ionet/NodeInfo.h"
-#include "catapult/utils/ArraySet.h"
 #include "tests/test/cache/ImportanceViewTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/other/NodeSelectorTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace timesync {
 

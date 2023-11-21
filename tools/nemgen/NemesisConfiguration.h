@@ -64,11 +64,17 @@ namespace catapult { namespace tools { namespace nemgen {
 		/// Nemesis signer private key.
 		std::string NemesisSignerPrivateKey;
 
+		/// Version of the nemesis account
+		uint32_t NemesisAccountVersion;
+
 		/// Cpp file header.
 		std::string CppFileHeader;
 
 		/// Cpp file path.
 		std::string CppFile;
+
+		/// Cpp variable name.
+		std::string CppVariableName;
 
 		/// Binary destination directory.
 		std::string BinDirectory;
@@ -84,6 +90,9 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		/// Map of nemesis account addresses to mosaic seeds.
 		AddressToMosaicSeedsMap NemesisAddressToMosaicSeeds;
+
+		/// Private keys of initial harvesters.
+		std::vector<std::string> HarvesterPrivateKeys;
 
 	public:
 		/// Loads a nemesis configuration from \a bag.

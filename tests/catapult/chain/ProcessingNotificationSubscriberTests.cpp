@@ -19,11 +19,8 @@
 **/
 
 #include "catapult/chain/ProcessingNotificationSubscriber.h"
-#include "tests/test/core/NotificationTestUtils.h"
-#include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/other/mocks/MockNotificationObserver.h"
 #include "tests/test/other/mocks/MockNotificationValidator.h"
-#include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -54,7 +51,7 @@ namespace catapult { namespace chain {
 					, m_cache({})
 					, m_cacheDelta(m_cache.createDelta())
 					, m_validatorContext(test::CreateValidatorContext(m_config, Height(123), m_cacheDelta.toReadOnly()))
-					, m_observerContext({ m_cacheDelta, m_state }, m_config, Height(123), executeMode, CreateResolverContext())
+					, m_observerContext({ m_cacheDelta, m_state }, m_config, Height(123), Timestamp(0), executeMode, CreateResolverContext())
 					, m_sub(m_validator, m_validatorContext, m_observer, m_observerContext) {
 				CATAPULT_LOG(debug) << "preparing test context with execute mode " << executeMode;
 			}

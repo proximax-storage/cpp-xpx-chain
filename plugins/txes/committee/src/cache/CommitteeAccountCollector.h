@@ -1,0 +1,55 @@
+/**
+*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#pragma once
+#include "catapult/utils/Hashers.h"
+#include "src/state/CommitteeEntry.h"
+#include <unordered_map>
+#include <map>
+
+namespace catapult { namespace cache {
+
+	using AccountMap = std::unordered_map<Key, state::AccountData, utils::ArrayHasher<Key>>;
+	using DisabledAccountMap = std::map<Height, std::vector<Key>>;
+
+	/// A class that collects harvester accounts from committee cache entries.
+	class CommitteeAccountCollector {
+	public:
+		/// Adds an account stored in \a entry.
+		void addAccount(const state::CommitteeEntry& entry) {
+			auto disabledHeight = entry.disabledHeight();
+			if (disabledHeight != Height(0)) {
+				m_disabledAccounts[disabledHeight].push_back(entry.key());
+			} else {
+				m_accounts.insert_or_assign(entry.key(), entry.data());
+			}
+		}
+
+		/// Returns collected accounts.
+		AccountMap& accounts() {
+			return m_accounts;
+		}
+
+		/// Returns collected accounts.
+		const AccountMap& accounts() const {
+			return m_accounts;
+		}
+
+		/// Returns collected disabled accounts.
+		DisabledAccountMap& disabledAccounts() {
+			return m_disabledAccounts;
+		}
+
+		/// Returns collected disabled accounts.
+		const DisabledAccountMap& disabledAccounts() const {
+			return m_disabledAccounts;
+		}
+
+	private:
+		AccountMap m_accounts;
+		DisabledAccountMap m_disabledAccounts;
+	};
+}}

@@ -22,7 +22,6 @@
 #include "catapult/extensions/ServerHooksUtils.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/handlers/TransactionHandlers.h"
-#include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace transactionsink {
 

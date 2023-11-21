@@ -18,23 +18,16 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/config/ValidateConfiguration.h"
-#include "catapult/model/BlockUtils.h"
-#include "catapult/model/ChainScore.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/int/node/stress/test/BlockChainBuilder.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
 #include "tests/int/node/test/LocalNodeTestContext.h"
 #include "tests/test/nodeps/Logging.h"
-#include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/thread.hpp>
 
 namespace catapult { namespace local {
 
@@ -238,7 +231,8 @@ namespace catapult { namespace local {
 		public:
 			Hash256 calculateReceiptsHash(const model::Block& block) const {
 				// happy block chain tests send transfers, so only harvest fee receipt needs to be added
-				auto totalFee = model::CalculateBlockTransactionsInfo(block).TotalFee;
+				model::TransactionFeeCalculator transactionFeeCalculator;
+				auto totalFee = model::CalculateBlockTransactionsInfo(block, transactionFeeCalculator).TotalFee;
 
 				model::BlockStatementBuilder blockStatementBuilder;
 				auto currencyMosaicId = test::Default_Currency_Mosaic_Id;
@@ -293,7 +287,7 @@ namespace catapult { namespace local {
 				stateHashDirectory /= std::to_string(id);
 				boost::filesystem::create_directories(stateHashDirectory);
 
-				return test::StateHashCalculator(context.prepareFreshDataDirectory(stateHashDirectory.generic_string()));
+				return test::StateHashCalculator(context.prepareFreshDataDirectory(stateHashDirectory.generic_string(), "../seed/mijin-test"));
 			}
 
 		private:
@@ -326,7 +320,7 @@ namespace catapult { namespace local {
 					const_cast<config::NodeConfiguration&>(config.Node).OutgoingConnections.MaxConnections = 20;
 				};
 				auto postfix = "_" + std::to_string(i);
-				contexts.push_back(std::make_unique<NodeTestContext>(nodeFlag, peers, configTransform, postfix));
+				contexts.push_back(std::make_unique<NodeTestContext>(nodeFlag, peers, configTransform, postfix, "../seed/mijin-test"));
 
 				// - (re)schedule a few tasks and boot the node
 				auto& context = *contexts[i];

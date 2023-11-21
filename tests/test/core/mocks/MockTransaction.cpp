@@ -21,7 +21,6 @@
 #include "MockTransaction.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
-#include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/nodeps/Random.h"
 #include "tests/test/other/mocks/MockNotification.h"

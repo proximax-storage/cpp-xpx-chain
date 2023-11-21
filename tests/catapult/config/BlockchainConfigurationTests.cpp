@@ -18,14 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/utils/HexParser.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 
 namespace catapult { namespace config {
 
@@ -37,7 +35,6 @@ namespace catapult { namespace config {
 		const char* Resources_Path = "../resources";
 		const char* Config_Filenames[] = {
 			"config-extensions-server.properties",
-			"config-inflation.properties",
 			"config-logging-server.properties",
 			"config-immutable.properties",
 			"config-network.properties",
@@ -101,6 +98,7 @@ namespace catapult { namespace config {
 			// Assert:
 			EXPECT_EQ(7900u, config.Port);
 			EXPECT_EQ(7901u, config.ApiPort);
+			EXPECT_EQ(7903u, config.DbrbPort);
 			EXPECT_FALSE(config.ShouldAllowAddressReuse);
 			EXPECT_FALSE(config.ShouldUseSingleThreadPool);
 			EXPECT_TRUE(config.ShouldUseCacheDatabaseStorage);
@@ -209,7 +207,7 @@ namespace catapult { namespace config {
 
 		void AssertDefaultSupportedEntityVersions(const SupportedEntityVersions& config) {
 			// Assert:
-			EXPECT_EQ(49u, config.size());
+			EXPECT_EQ(72u, config.size());
 		}
 	}
 
@@ -272,7 +270,6 @@ namespace catapult { namespace config {
 			"extension.nodediscovery", "extension.packetserver", "extension.pluginhandlers", "extension.sync",
 			"extension.timesync", "extension.transactionsink", "extension.unbondedpruning"
 		});
-		AssertDefaultInflationConfiguration(config.Inflation);
 		AssertDefaultSupportedEntityVersions(config.SupportedEntityVersions);
 	}
 
@@ -290,7 +287,6 @@ namespace catapult { namespace config {
 			"extension.addressextraction", "extension.mongo", "extension.zeromq",
 			"extension.hashcache"
 		});
-		AssertDefaultInflationConfiguration(config.Inflation);
 		AssertDefaultSupportedEntityVersions(config.SupportedEntityVersions);
 	}
 
@@ -305,7 +301,6 @@ namespace catapult { namespace config {
 		AssertDefaultLoggingConfiguration(config.Logging, "catapult_recovery%4N.log", utils::LogLevel::Debug);
 		AssertDefaultUserConfiguration(config.User);
 		AssertDefaultExtensionsConfiguration(config.Extensions, { "extension.hashcache" });
-		AssertDefaultInflationConfiguration(config.Inflation);
 		AssertDefaultSupportedEntityVersions(config.SupportedEntityVersions);
 	}
 

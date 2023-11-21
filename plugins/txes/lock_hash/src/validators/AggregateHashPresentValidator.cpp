@@ -21,7 +21,6 @@
 #include "Validators.h"
 #include "src/cache/HashLockInfoCache.h"
 #include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
-#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 

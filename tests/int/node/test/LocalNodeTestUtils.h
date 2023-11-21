@@ -144,7 +144,7 @@ namespace catapult { namespace test {
 	void PrepareNetworkConfiguration(config::BlockchainConfiguration& config, TAddNodeExtensions addNodeExtensions, NodeFlag nodeFlag) {
 		PrepareNetworkConfiguration(config, nodeFlag);
 
-		// in order for the nemesis block to be processed, at least the transfer plugin needs to be loaded
+		// in order for the nemesis block to be processed, at least the transfer plugin needs to be loaded. This cannot be done since configuration is loaded from nemesis block!
 		AddNemesisPluginExtensions(const_cast<model::NetworkConfiguration&>(config.Network));
 		addNodeExtensions(const_cast<config::ExtensionsConfiguration&>(config.Extensions));
 	}
@@ -157,7 +157,10 @@ namespace catapult { namespace test {
 	template<typename TTestContext>
 	void AssertConnectionError(unsigned short port) {
 		// Arrange: boot a local node
-		TTestContext context(NodeFlag::Regular);
+		TTestContext context(NodeFlag::Regular, {},
+			[](auto& config) {},
+			"",
+			"../seed/mijin-test-basic-extended");
 
 		// Act: attempt to connect to the node
 		auto result = ionet::ConnectResult::Connected;

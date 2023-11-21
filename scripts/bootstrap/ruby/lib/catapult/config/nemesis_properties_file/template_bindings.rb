@@ -25,7 +25,8 @@ module Catapult
             network_identifier: generation_info.network_identifier,
             nemesis_generation_hash: generation_info.generation_hash,
             nemesis_signer_private_key: generation_info.signer_private_key,
-            xpx: xpx(key_info_array)
+            xpx: xpx(key_info_array),
+            harvester_keys: key_info_array[0..4].map { |key_info| harvesters(key_info) }
           }
         end
 
@@ -43,6 +44,12 @@ module Catapult
           {
             address: key_info.address,
             amount:  XPX_ACCOUNT_SUPPLY,
+          }
+        end
+
+        def self.harvesters(key_info)
+          {
+            harvester_key: key_info.private
           }
         end
       end

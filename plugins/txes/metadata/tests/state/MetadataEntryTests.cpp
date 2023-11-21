@@ -5,7 +5,6 @@
 **/
 
 #include "catapult/model/Address.h"
-#include "catapult/model/NetworkInfo.h"
 #include "src/state/MetadataEntry.h"
 #include "tests/TestHarness.h"
 

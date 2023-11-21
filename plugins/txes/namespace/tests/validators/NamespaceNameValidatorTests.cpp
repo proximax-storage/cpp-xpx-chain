@@ -21,8 +21,6 @@
 #include "src/validators/Validators.h"
 #include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceIdGenerator.h"
-#include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -35,18 +33,23 @@ namespace catapult { namespace validators {
 
 	namespace {
 		model::NamespaceNameNotification<1> CreateNamespaceNameNotification(uint8_t nameSize, const uint8_t* pName) {
-			auto notification = model::NamespaceNameNotification<1>(NamespaceId(), NamespaceId(777), nameSize, pName);
+			auto notification = model::NamespaceNameNotification<1>(Key(),NamespaceId(), NamespaceId(777), nameSize, pName);
 			notification.NamespaceId = model::GenerateNamespaceId(NamespaceId(777), reinterpret_cast<const char*>(pName));
 			return notification;
 		}
 
-		auto CreateConfig(uint8_t maxNameSize, const std::unordered_set<std::string>& reservedRootNamespaceNames) {
+		auto CreateConfig(uint8_t maxNameSize, const Key& nemesis, const std::unordered_set<std::string>& reservedRootNamespaceNames) {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.MaxNameSize = maxNameSize;
 			pluginConfig.ReservedRootNamespaceNames = reservedRootNamespaceNames;
 			test::MutableBlockchainConfiguration config;
 			config.Network.SetPluginConfiguration(pluginConfig);
+			config.Network.Info.PublicKey = nemesis;
 			return config.ToConst();
+		}
+
+		auto CreateConfig(uint8_t maxNameSize, const std::unordered_set<std::string>& reservedRootNamespaceNames) {
+			return CreateConfig(maxNameSize, test::GenerateRandomByteArray<Key>(), reservedRootNamespaceNames);
 		}
 	}
 
@@ -170,17 +173,17 @@ namespace catapult { namespace validators {
 	// region reserved root names
 
 	namespace {
-		model::NamespaceNameNotification<1> CreateRootNamespaceNotification(const std::string& name) {
+		model::NamespaceNameNotification<1> CreateRootNamespaceNotification(const std::string& name, const Key& signer) {
 			auto nameSize = static_cast<uint8_t>(name.size());
 			const auto* pName = reinterpret_cast<const uint8_t*>(name.data());
-			auto notification = model::NamespaceNameNotification<1>(NamespaceId(), Namespace_Base_Id, nameSize, pName);
+			auto notification = model::NamespaceNameNotification<1>(signer, NamespaceId(), Namespace_Base_Id, nameSize, pName);
 			notification.NamespaceId = model::GenerateNamespaceId(Namespace_Base_Id, name);
 			return notification;
 		}
 
-		model::NamespaceNameNotification<1> CreateChildNamespaceNotification(const std::string& parentName) {
+		model::NamespaceNameNotification<1> CreateChildNamespaceNotification(const std::string& parentName, const Key& signer) {
 			const auto* pChildName = reinterpret_cast<const uint8_t*>("alice");
-			auto notification = model::NamespaceNameNotification<1>(NamespaceId(), NamespaceId(), 5, pChildName);
+			auto notification = model::NamespaceNameNotification<1>(signer, NamespaceId(), NamespaceId(), 5, pChildName);
 			notification.ParentId = model::GenerateNamespaceId(Namespace_Base_Id, parentName);
 			notification.NamespaceId = model::GenerateNamespaceId(notification.ParentId, reinterpret_cast<const char*>(pChildName));
 			return notification;
@@ -188,13 +191,19 @@ namespace catapult { namespace validators {
 
 		void AssertReservedRootNamesValidationResult(
 				ValidationResult expectedResult,
+				bool byNemesis,
 				const std::string& name,
-				const std::function<model::NamespaceNameNotification<1>(const std::string&)>& createNotification) {
+				const std::function<model::NamespaceNameNotification<1>(const std::string&, const Key&)>& createNotification) {
 			// Arrange:
 			auto config = CreateConfig(20, { "foo", "foobar" });
 			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pValidator = CreateNamespaceNameValidator();
-			auto notification = createNotification(name);
+
+			auto signer = test::GenerateRandomByteArray<Key>();
+			if (byNemesis) {
+				signer = config.Network.Info.PublicKey;
+			}
+			auto notification = createNotification(name, signer);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
@@ -207,25 +216,31 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SuccessWhenValidatingAllowedRootNamespaceNames) {
 		// Assert:
 		for (const auto& name : { "fo", "foo123", "bar", "bazz", "qux" })
-			AssertReservedRootNamesValidationResult(ValidationResult::Success, name, CreateRootNamespaceNotification);
+			AssertReservedRootNamesValidationResult(ValidationResult::Success, false, name, CreateRootNamespaceNotification);
 	}
 
 	TEST(TEST_CLASS, FailureWhenValidatingReservedRootNamespaceNames) {
 		// Assert:
 		for (const auto& name : { "foo", "foobar" })
-			AssertReservedRootNamesValidationResult(Failure_Namespace_Root_Name_Reserved, name, CreateRootNamespaceNotification);
+			AssertReservedRootNamesValidationResult(Failure_Namespace_Root_Name_Reserved, false, name, CreateRootNamespaceNotification);
 	}
 
 	TEST(TEST_CLASS, SuccessWhenValidatingChildNamespaceWithAllowedParentNamespaceNames) {
 		// Assert:
 		for (const auto& name : { "fo", "foo123", "bar", "bazz", "qux" })
-			AssertReservedRootNamesValidationResult(ValidationResult::Success, name, CreateChildNamespaceNotification);
+			AssertReservedRootNamesValidationResult(ValidationResult::Success, false, name, CreateChildNamespaceNotification);
 	}
 
 	TEST(TEST_CLASS, FailureWhenValidatingChildNamespaceWithReservedParentNamespaceNames) {
 		// Assert:
 		for (const auto& name : { "foo", "foobar" })
-			AssertReservedRootNamesValidationResult(Failure_Namespace_Root_Name_Reserved, name, CreateChildNamespaceNotification);
+			AssertReservedRootNamesValidationResult(Failure_Namespace_Root_Name_Reserved, false, name, CreateChildNamespaceNotification);
+	}
+
+	TEST(TEST_CLASS, FailureWhenValidatingChildNamespaceWithReservedParentNamespaceNamesByNemesis) {
+		// Assert:
+		for (const auto& name : { "foo", "foobar" })
+			AssertReservedRootNamesValidationResult(ValidationResult::Success, true, name, CreateChildNamespaceNotification);
 	}
 
 	// endregion

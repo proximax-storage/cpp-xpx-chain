@@ -19,17 +19,13 @@
 **/
 
 #include "catapult/net/PacketReaders.h"
-#include "catapult/crypto/KeyPair.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/ionet/SocketReader.h"
 #include "catapult/net/VerifyPeer.h"
-#include "catapult/thread/IoThreadPool.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
-#include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/net/SocketTestUtils.h"
-#include <unordered_map>
 
 namespace catapult { namespace net {
 

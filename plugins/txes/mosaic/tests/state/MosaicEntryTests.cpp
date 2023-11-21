@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/state/MosaicEntry.h"
 #include "tests/test/MosaicTestUtils.h"
 #include "tests/TestHarness.h"
 

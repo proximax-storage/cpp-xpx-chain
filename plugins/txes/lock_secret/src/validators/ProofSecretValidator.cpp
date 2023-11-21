@@ -21,7 +21,6 @@
 #include "Validators.h"
 #include "src/config/SecretLockConfiguration.h"
 #include "src/model/LockHashUtils.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/validators/ValidatorUtils.h"
 
 namespace catapult { namespace validators {

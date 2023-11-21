@@ -5,7 +5,6 @@
 **/
 
 #include "plugins/txes/operation/src/model/EndOperationTransaction.h"
-#include "plugins/txes/operation/tests/test/OperationTestUtils.h"
 #include "src/validators/Validators.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/test/SuperContractTestUtils.h"

@@ -49,7 +49,7 @@ namespace catapult { namespace validators {
 				if (100u < networkConfig.HarvestBeneficiaryPercentage)
 					return Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hundred;
 
-				auto totalInflation = context.Config.Inflation.InflationCalculator.sumAll();
+				auto totalInflation = pluginManager.configHolder()->InflationCalculator().sumAll();
 				auto totalCurrency = context.Config.Immutable.InitialCurrencyAtomicUnits + totalInflation.first;
 				if (totalCurrency > networkConfig.MaxMosaicAtomicUnits)
 					return Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid;
@@ -73,7 +73,7 @@ namespace catapult { namespace validators {
 			try {
 				std::istringstream configStream{std::string{(const char*)notification.SupportedEntityVersionsPtr, notification.SupportedEntityVersionsSize}};
 				auto supportedEntityVersions = config::LoadSupportedEntityVersions(configStream);
-				if (!supportedEntityVersions[model::Entity_Type_Network_Config].size()) {
+				if (supportedEntityVersions[model::Entity_Type_Network_Config].empty()) {
                     return Failure_NetworkConfig_Network_Config_Trx_Cannot_Be_Unsupported;
                 }
 			} catch (...) {

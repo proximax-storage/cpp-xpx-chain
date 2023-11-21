@@ -37,6 +37,16 @@ namespace catapult { namespace test {
 	/// Generates a uint16_t random number.
 	uint16_t Random16();
 
+	/// Generates a uint16_t random number.
+	uint32_t Random32();
+
+	/// Generates a random number in range from \a lower to \a upper (both included).
+	template<typename T>
+	T RandomInRange(T lower, T upper) {
+		T result = lower + static_cast<T>(static_cast<double>(Random()) / std::numeric_limits<uint64_t>::max() * (upper - lower + 1));
+		return std::min(result, upper);	// TODO: May be unnecessary
+	};
+
 	/// Generates random array data.
 	template<size_t N>
 	std::array<uint8_t, N> GenerateRandomArray() {

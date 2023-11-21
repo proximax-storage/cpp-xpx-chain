@@ -20,8 +20,6 @@
 
 #include "catapult/version/version.h"
 #include <benchmark/benchmark.h>
-#include <ctime>
-#include <iostream>
 
 extern void RegisterTests();
 

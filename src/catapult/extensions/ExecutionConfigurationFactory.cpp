@@ -19,7 +19,6 @@
 **/
 
 #include "ExecutionConfigurationFactory.h"
-#include "catapult/model/NotificationPublisher.h"
 #include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace extensions {
@@ -38,6 +37,7 @@ namespace catapult { namespace extensions {
 		executionConfig.ResolverContextFactory = [&pluginManager](const auto& cache) {
 			return pluginManager.createResolverContext(cache);
 		};
+		executionConfig.pTransactionFeeCalculator = pluginManager.transactionFeeCalculator();
 		return executionConfig;
 	}
 }}

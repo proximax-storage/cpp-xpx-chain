@@ -22,7 +22,6 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 
@@ -54,7 +53,7 @@ namespace catapult { namespace test {
 			TempDirectoryGuard forceCleanResourcesDir(State_Hash_Directory);
 		}
 
-		return StateHashCalculator(prepareFreshDataDirectory(m_stateHashCalculationDir.name()));
+		return StateHashCalculator(prepareFreshDataDirectory(m_stateHashCalculationDir.name(), "../seed/mijin-test"));
 	}
 
 	// endregion
@@ -171,7 +170,7 @@ namespace catapult { namespace test {
 		auto numNamespaces = GetCounterValue(localNode.counters(), "NS C");
 		auto numActiveNamespaces = GetCounterValue(localNode.counters(), "NS C AS");
 		EXPECT_EQ(numExpectedNamespaces, numNamespaces);
-		EXPECT_EQ(numExpectedNamespaces + 3, numActiveNamespaces); // default namespace defined in nemesis has two subnamespaces
+		EXPECT_EQ(numExpectedNamespaces + 5, numActiveNamespaces); // default namespace defined in nemesis has four subnamespaces
 	}
 
 	// endregion

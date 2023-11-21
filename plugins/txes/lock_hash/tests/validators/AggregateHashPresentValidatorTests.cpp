@@ -22,7 +22,6 @@
 #include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
 #include "tests/test/HashLockInfoCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
 

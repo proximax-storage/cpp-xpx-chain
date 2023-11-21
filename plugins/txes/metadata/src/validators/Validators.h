@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <plugins/txes/metadata/src/config/MetadataConfiguration.h>
+#include "src/config/MetadataConfiguration.h"
 #include "Results.h"
 #include "plugins/txes/metadata/src/model/MetadataNotifications.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"

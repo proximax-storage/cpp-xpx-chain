@@ -101,13 +101,16 @@ namespace catapult { namespace validators {
 			  return Failure_Exchange_Offer_Duration_Too_Large;
 
 		  auto mosaicEntryIter = mosaicCache.find(mosaicId);
-		  const auto& mosaicEntry = mosaicEntryIter.get();
-		  auto mosaicBlockDuration = mosaicEntry.definition().properties().duration();
+		  auto pMosaicEntry = mosaicEntryIter.tryGet();
+		  if (!pMosaicEntry)
+			  return Failure_Exchange_Mosaic_Does_Not_Exist;
+
+		  auto mosaicBlockDuration = pMosaicEntry->definition().properties().duration();
 
 		  Height maxMosaicHeight = Height(context.Height.unwrap() + mosaicBlockDuration.unwrap());
 		  Height maxOfferHeight = Height(context.Height.unwrap() + pOffer->Duration.unwrap());
 
-		  if (!mosaicEntry.definition().isEternal() && maxOfferHeight > maxMosaicHeight)
+		  if (!pMosaicEntry->definition().isEternal() && maxOfferHeight > maxMosaicHeight)
 			  return Failure_Exchange_Offer_Duration_Exceeds_Mosaic_Duration;
 
 		  if (pOffer->Mosaic.Amount == Amount(0))

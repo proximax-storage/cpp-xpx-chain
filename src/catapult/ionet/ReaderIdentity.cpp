@@ -19,7 +19,6 @@
 **/
 
 #include "ReaderIdentity.h"
-#include "catapult/utils/HexFormatter.h"
 
 namespace catapult { namespace ionet {
 

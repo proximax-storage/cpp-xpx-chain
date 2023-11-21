@@ -4,14 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/cache_core/AccountStateCache.h"
-#include "plugins/txes/multisig/src/cache/MultisigCache.h"
-#include "src/observers/Observers.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
-#include <cmath>
 
 namespace catapult { namespace observers {
 

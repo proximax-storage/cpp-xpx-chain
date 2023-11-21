@@ -20,9 +20,7 @@
 
 #include "BlockExtensions.h"
 #include "TransactionExtensions.h"
-#include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
-#include "catapult/model/Block.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/model/TransactionPlugin.h"

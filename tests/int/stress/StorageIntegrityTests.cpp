@@ -20,14 +20,10 @@
 
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/io/FileBlockStorage.h"
-#include "catapult/model/BlockUtils.h"
-#include "catapult/utils/SpinLock.h"
 #include "tests/int/stress/test/StressThreadLogger.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
-#include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
 
 namespace catapult { namespace io {

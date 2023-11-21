@@ -4,8 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/DriveCacheStorage.h"
-#include "src/cache/DriveCache.h"
 #include "tests/test/ServiceTestUtils.h"
 #include "tests/TestHarness.h"
 

@@ -28,8 +28,6 @@
 #include "catapult/thread/FutureUtils.h"
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/utils/ArraySet.h"
-#include "catapult/utils/HexFormatter.h"
-#include "catapult/utils/MemoryUtils.h"
 #include <boost/asio.hpp>
 
 namespace catapult { namespace chain {

@@ -22,7 +22,7 @@
 #include "BlockSpan.h"
 #include "FileSize.h"
 #include "HexParser.h"
-#include "TimeSpan.h"
+#include "ArraySet.h"
 #include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace utils {
@@ -56,6 +56,21 @@ namespace catapult { namespace utils {
 			{ std::make_pair("true", true) },
 			{ std::make_pair("false", false) }
 		}};
+
+		const std::array<std::pair<const char*, SortPolicy>, 12> String_To_SortPolicy_Pairs{{
+			{ std::make_pair("Default", SortPolicy::Default) },
+			{ std::make_pair("SmallToBig", SortPolicy::SmallToBig) },
+			{ std::make_pair("SmallToBigSortedByEarliestExpiry", SortPolicy::SmallToBigSortedByEarliestExpiry) },
+			{ std::make_pair("BigToSmall", SortPolicy::BigToSmall) },
+			{ std::make_pair("BigToSmallSortedByEarliestExpiry", SortPolicy::BigToSmallSortedByEarliestExpiry) },
+			{ std::make_pair("ExactOrClosest", SortPolicy::ExactOrClosest) },
+			{ std::make_pair("0", SortPolicy::Default) },
+			{ std::make_pair("1", SortPolicy::SmallToBig) },
+			{ std::make_pair("2", SortPolicy::SmallToBigSortedByEarliestExpiry) },
+			{ std::make_pair("3", SortPolicy::BigToSmall) },
+			{ std::make_pair("4", SortPolicy::BigToSmallSortedByEarliestExpiry) },
+			{ std::make_pair("5", SortPolicy::ExactOrClosest) }
+		}};
 	}
 
 	bool TryParseValue(const std::string& str, LogLevel& parsedValue) {
@@ -72,6 +87,10 @@ namespace catapult { namespace utils {
 
 	bool TryParseValue(const std::string& str, bool& parsedValue) {
 		return TryParseEnumValue(String_To_Boolean_Pairs, str, parsedValue);
+	}
+
+	bool TryParseValue(const std::string& str, SortPolicy& parsedValue) {
+		return TryParseEnumValue(String_To_SortPolicy_Pairs, str, parsedValue);
 	}
 
 	// endregion
@@ -293,6 +312,12 @@ namespace catapult { namespace utils {
 		case 'M':
 			return tryParse(FileSize::FromMegabytes, 2);
 
+		case 'G':
+			return tryParse(FileSize::FromGigabytes, 2);
+
+		case 'T':
+			return tryParse(FileSize::FromTerabytes, 2);
+
 		default:
 			return tryParse(FileSize::FromBytes, 1);
 		}
@@ -398,5 +423,10 @@ namespace catapult { namespace utils {
 		});
 	}
 
+	bool TryParseValue(const std::string& str, utils::KeySet& parsedSet) {
+		return TryParseSetValue<Key>(str, parsedSet, [](const std::string& value, Key& parsedValue) {
+			return TryParseValue(value, parsedValue);
+		});
+	}
 	// endregion
 }}

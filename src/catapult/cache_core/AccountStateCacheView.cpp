@@ -19,8 +19,6 @@
 **/
 
 #include "AccountStateCacheView.h"
-#include "catapult/model/Address.h"
-#include "catapult/model/NetworkInfo.h"
 
 namespace catapult { namespace cache {
 

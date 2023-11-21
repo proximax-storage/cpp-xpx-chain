@@ -21,23 +21,19 @@
 #include "partialtransaction/src/PtDispatcherService.h"
 #include "partialtransaction/src/PtBootstrapperService.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
-#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "plugins/txes/aggregate/src/validators/Results.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
 #include "catapult/consumers/ConsumerResults.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/ionet/BroadcastUtils.h"
 #include "catapult/model/EntityHasher.h"
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
-#include "tests/test/core/TransactionInfoTestUtils.h"
-#include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
 #include "tests/test/nodeps/Nemesis.h"
-#include "tests/test/other/mocks/MockNotification.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace partialtransaction {
 
@@ -138,7 +134,8 @@ namespace catapult { namespace partialtransaction {
 					: m_numCompletedTransactions(0)
 					, m_pWriters(std::make_shared<mocks::BroadcastAwareMockPacketWriters>()) {
 				auto pBootstrapperRegistrar = CreatePtBootstrapperServiceRegistrar([]() {
-					return std::make_unique<cache::MemoryPtCacheProxy>(cache::MemoryCacheOptions(1024, 1024));
+					return std::make_unique<cache::MemoryPtCacheProxy>(cache::MemoryCacheOptions(1024, 1024),
+																	   std::make_shared<model::TransactionFeeCalculator>());
 				});
 				pBootstrapperRegistrar->registerServices(locator(), testState().state());
 

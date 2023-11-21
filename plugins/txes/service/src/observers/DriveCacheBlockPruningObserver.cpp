@@ -4,9 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "Observers.h"
 #include "src/cache/DriveCache.h"
-#include "catapult/observers/ObserverUtils.h"
 
 namespace catapult { namespace observers {
 

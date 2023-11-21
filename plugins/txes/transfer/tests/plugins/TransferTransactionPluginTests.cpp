@@ -19,13 +19,10 @@
 **/
 
 #include "src/plugins/TransferTransactionPlugin.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/model/TransferNotifications.h"
 #include "src/model/TransferTransaction.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace catapult::model;
 

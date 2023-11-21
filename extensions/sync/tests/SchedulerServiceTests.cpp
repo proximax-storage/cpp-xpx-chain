@@ -21,10 +21,8 @@
 #include "sync/src/SchedulerService.h"
 #include "sync/src/TasksConfiguration.h"
 #include "catapult/thread/Scheduler.h"
-#include "tests/test/core/SchedulerTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace sync {
 

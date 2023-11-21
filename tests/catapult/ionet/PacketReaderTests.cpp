@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/ionet/PacketReader.h"
-#include "catapult/model/VerifiableEntity.h"
 #include "tests/test/core/PacketTestUtils.h"
 #include "tests/TestHarness.h"
 

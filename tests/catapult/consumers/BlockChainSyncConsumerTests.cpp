@@ -21,8 +21,6 @@
 #include "catapult/consumers/BlockConsumers.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/ChainScore.h"
 #include "sdk/src/builders/NetworkConfigBuilder.h"
 #include "tests/catapult/consumers/test/ConsumerInputFactory.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
@@ -32,8 +30,6 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/nodeps/ParamsCapture.h"
-#include "tests/TestHarness.h"
-#include "plugins/txes/config/src/model/NetworkConfigTransaction.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 
 using catapult::disruptor::ConsumerInput;
@@ -147,7 +143,7 @@ namespace catapult { namespace consumers {
 
 		class MockUndoBlock : public test::ParamsCapture<UndoBlockParams> {
 		public:
-			void operator()(const model::BlockElement& blockElement, observers::ObserverState& state, UndoBlockType undoBlockType) const {
+			void operator()(const model::NetworkConfiguration&, const model::BlockElement& blockElement, observers::ObserverState& state, UndoBlockType undoBlockType) const {
 				const_cast<MockUndoBlock*>(this)->push(blockElement, state, undoBlockType);
 
 				// simulate undoing a block by modifying the state to mark it
@@ -160,6 +156,27 @@ namespace catapult { namespace consumers {
 
 				auto& height = state.State.LastRecalculationHeight;
 				height = AddImportanceHeight(height, 1);
+			}
+		};
+
+		// endregion
+
+		// region MockPostBlockCommit
+
+		struct PostBlockCommitParams {
+		public:
+			PostBlockCommitParams(const std::vector<model::BlockElement>& blockElements)
+					: Elements(blockElements)
+			{}
+
+		public:
+			std::vector<model::BlockElement> Elements;
+		};
+
+		class MockPostBlockCommit : public test::ParamsCapture<PostBlockCommitParams> {
+		public:
+			void operator()(const std::vector<model::BlockElement>& blockElements) const {
+				const_cast<MockPostBlockCommit*>(this)->push(blockElements);
 			}
 		};
 
@@ -389,8 +406,8 @@ namespace catapult { namespace consumers {
 				handlers.DifficultyChecker = [this](const auto& blocks, const auto& cache, const auto& remoteConfigs) {
 					return DifficultyChecker(blocks, cache, remoteConfigs);
 				};
-				handlers.UndoBlock = [this](const auto& block, auto& state, auto undoBlockType) {
-					return UndoBlock(block, state, undoBlockType);
+				handlers.UndoBlock = [this](const auto& config, const auto& block, auto& state, auto undoBlockType) {
+					return UndoBlock(config, block, state, undoBlockType);
 				};
 				handlers.Processor = [this](const auto& parentBlockInfo, auto& elements, auto& state) {
 					return Processor(parentBlockInfo, elements, state);
@@ -406,6 +423,9 @@ namespace catapult { namespace consumers {
 				};
 				handlers.CommitStep = [this](auto step) {
 					return CommitStep(step);
+				};
+				handlers.PostBlockCommit = [this](const auto& elements) {
+					return PostBlockCommit(elements);
 				};
 				auto config = model::NetworkConfiguration::Uninitialized();
 				config.MaxRollbackBlocks = Max_Rollback_Blocks;
@@ -426,6 +446,7 @@ namespace catapult { namespace consumers {
 			MockStateChange StateChange;
 			MockPreStateWritten PreStateWritten;
 			MockTransactionsChange TransactionsChange;
+			MockPostBlockCommit PostBlockCommit;
 			MockCommitStep CommitStep;
 
 			disruptor::DisruptorConsumer Consumer;

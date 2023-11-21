@@ -21,7 +21,6 @@
 #include "DispatcherSyncHandlers.h"
 #include "catapult/cache/CacheStorage.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateFileStorage.h"
 #include "catapult/io/IndexFile.h"
@@ -53,12 +52,12 @@ namespace catapult { namespace sync {
 
 		// can't create any views (or storages) in PreStateWritten handler because cache lock is held by calling code
 		auto pStorages = std::make_shared<decltype(cache.storages())>(cache.storages());
-		syncHandlers.PreStateWritten = [preStateWrittenHandler, pStorages, dataDirectory, &score](
+		syncHandlers.PreStateWritten = [&cache, preStateWrittenHandler, pStorages, dataDirectory, &score](
 				const auto& cacheDelta,
 				const auto& catapultState,
 				auto height) {
 			extensions::LocalNodeStateSerializer serializer(dataDirectory.dir("state.tmp"));
-			serializer.save(cacheDelta, *pStorages, catapultState, score.get(), height);
+			serializer.save(cache, cacheDelta, *pStorages, catapultState, score.get(), height);
 
 			preStateWrittenHandler(cacheDelta, catapultState, height);
 		};

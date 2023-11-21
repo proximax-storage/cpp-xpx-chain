@@ -19,7 +19,6 @@
 **/
 
 #include "src/cache/HashCachePredicates.h"
-#include "src/cache/HashCache.h"
 #include "tests/test/HashCacheTestUtils.h"
 #include "tests/TestHarness.h"
 

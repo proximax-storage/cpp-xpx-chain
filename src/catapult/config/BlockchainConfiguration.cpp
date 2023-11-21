@@ -21,7 +21,6 @@
 #include "BlockchainConfiguration.h"
 #include "ConfigurationFileLoader.h"
 #include "catapult/crypto/KeyPair.h"
-#include <boost/filesystem.hpp>
 
 namespace catapult { namespace config {
 
@@ -49,7 +48,9 @@ namespace catapult { namespace config {
 			UserConfiguration userConfig,
 			ExtensionsConfiguration extensionsConfig,
 			InflationConfiguration inflationConfig,
-			config::SupportedEntityVersions supportedEntityVersions)
+			config::SupportedEntityVersions supportedEntityVersions,
+			Height activationHeight,
+			const BlockchainConfiguration* previousConfig)
 			: Immutable(std::move(immutableConfig))
 			, Network(std::move(networkConfig))
 			, Node(std::move(nodeConfig))
@@ -58,6 +59,8 @@ namespace catapult { namespace config {
 			, Extensions(std::move(extensionsConfig))
 			, Inflation(std::move(inflationConfig))
 			, SupportedEntityVersions(std::move(supportedEntityVersions))
+			, ActivationHeight(activationHeight)
+			, PreviousConfiguration(previousConfig)
 	{}
 
 	BlockchainConfiguration BlockchainConfiguration::LoadFromPath(
@@ -97,6 +100,23 @@ namespace catapult { namespace config {
 		auto endpoint = ionet::NodeEndpoint();
 		endpoint.Host = localNodeConfig.Host;
 		endpoint.Port = config.Node.Port;
+
+		auto metadata = ionet::NodeMetadata(config.Immutable.NetworkIdentifier);
+		metadata.Name = localNodeConfig.FriendlyName;
+		metadata.Version = ionet::NodeVersion(localNodeConfig.Version);
+		metadata.Roles = localNodeConfig.Roles;
+
+		return ionet::Node(identityKey, endpoint, metadata);
+	}
+
+	ionet::Node ToLocalDbrbNode(const BlockchainConfiguration& config) {
+		const auto& localNodeConfig = config.Node.Local;
+
+		auto identityKey = crypto::KeyPair::FromString(config.User.BootKey).publicKey();
+
+		auto endpoint = ionet::NodeEndpoint();
+		endpoint.Host = localNodeConfig.Host;
+		endpoint.Port = config.Node.DbrbPort;
 
 		auto metadata = ionet::NodeMetadata(config.Immutable.NetworkIdentifier);
 		metadata.Name = localNodeConfig.FriendlyName;

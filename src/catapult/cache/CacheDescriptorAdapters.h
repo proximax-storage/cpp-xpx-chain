@@ -169,6 +169,56 @@ namespace catapult { namespace cache {
 		deltaset::ImmutableTypeTraits<typename TDescriptor::ValueType>>;
 
 	namespace detail {
+		/// Defines cache types for an unordered, memory backed set based cache.
+		template<typename TElementTraits, typename TValueHasher>
+		struct UnorderedMemorySetAdapter {
+		private:
+			using ElementType = std::remove_const_t<typename TElementTraits::ElementType>;
+			using UnorderedSet = std::unordered_set<typename TElementTraits::ElementType, TValueHasher>;
+
+			class StorageSetType : public UnorderedSet {
+			public:
+				StorageSetType(CacheDatabase&, size_t)
+				{}
+			};
+
+			using MemorySetType = UnorderedSet;
+
+			// workaround for VS truncation
+			using SetStorageTraits = deltaset::SetStorageTraits<
+				deltaset::ConditionalContainer<
+					deltaset::SetKeyTraits<MemorySetType>,
+					StorageSetType,
+					MemorySetType
+				>,
+				MemorySetType
+			>;
+
+			struct StorageTraits : public SetStorageTraits {};
+
+		public:
+			/// Base set type.
+			using BaseSetType = deltaset::BaseSet<TElementTraits, StorageTraits>;
+
+			/// Base set delta type.
+			using BaseSetDeltaType = typename BaseSetType::DeltaType;
+
+			/// Base set delta pointer type.
+			using BaseSetDeltaPointerType = std::shared_ptr<BaseSetDeltaType>;
+		};
+	}
+
+	/// Defines cache types for an unordered, mutable, memory backed set based cache.
+	template<typename TDescriptor, typename TValueHasher>
+	using MutableUnorderedMemorySetAdapter = detail::UnorderedMemorySetAdapter<
+		deltaset::MutableTypeTraits<typename TDescriptor::ValueType>, TValueHasher>;
+
+	/// Defines cache types for an unordered, immutable, memory backed set based cache.
+	template<typename TDescriptor, typename TValueHasher>
+	using ImmutableUnorderedMemorySetAdapter = detail::UnorderedMemorySetAdapter<
+		deltaset::ImmutableTypeTraits<typename TDescriptor::ValueType>, TValueHasher>;
+
+	namespace detail {
 		/// Defines cache types for an ordered set based cache.
 		template<typename TElementTraits, typename TDescriptor>
 		struct OrderedSetAdapter {
@@ -234,4 +284,75 @@ namespace catapult { namespace cache {
 	using ImmutableOrderedSetAdapter = detail::OrderedSetAdapter<
 		deltaset::ImmutableTypeTraits<typename TDescriptor::ValueType>,
 		TDescriptor>;
+
+	namespace detail {
+		/// Defines cache types for an ordered map based cache.
+		template<typename TElementTraits, typename TDescriptor>
+		struct OrderedMapAdapter {
+		private:
+			struct DescriptorAdapter {
+			public:
+				using KeyType = typename TDescriptor::KeyType;
+				using ValueType = typename TDescriptor::ValueType;
+				using StorageType = std::pair<const KeyType, ValueType>;
+				using Serializer = typename TDescriptor::Serializer;
+
+				static constexpr auto GetKeyFromValue = TDescriptor::GetKeyFromValue;
+
+				static constexpr auto& ToKey(const StorageType& element) {
+					return element.first;
+				}
+
+				static constexpr auto& ToValue(const StorageType& element) {
+					return element.second;
+				}
+
+				static auto ToStorage(const ValueType& value) {
+					return StorageType(TDescriptor::GetKeyFromValue(value), value);
+				}
+			};
+
+			using StorageMapType = CacheContainerView<DescriptorAdapter>;
+			using MemoryMapType = std::map<typename TDescriptor::KeyType, typename TDescriptor::ValueType>;
+
+			struct Converter {
+				static constexpr auto ToKey = TDescriptor::GetKeyFromValue;
+			};
+
+			// workaround for VS truncation
+			using MapStorageTraits = deltaset::MapStorageTraits<
+					deltaset::ConditionalContainer<
+					deltaset::MapKeyTraits<MemoryMapType>,
+					StorageMapType,
+					MemoryMapType
+					>,
+					Converter,
+					MemoryMapType
+					>;
+
+			struct StorageTraits : public MapStorageTraits {};
+
+		public:
+			/// Base set type.
+			using BaseSetType = deltaset::BaseSet<TElementTraits, StorageTraits>;
+
+			/// Base set delta type.
+			using BaseSetDeltaType = typename BaseSetType::DeltaType;
+
+			/// Base set delta pointer type.
+			using BaseSetDeltaPointerType = std::shared_ptr<BaseSetDeltaType>;
+		};
+	}
+
+	/// Defines cache types for an ordered mutable map based cache.
+	template<typename TDescriptor>
+			using MutableOrderedMapAdapter = detail::OrderedMapAdapter<
+					deltaset::MutableTypeTraits<typename TDescriptor::ValueType>,
+					TDescriptor>;
+
+	/// Defines cache types for an ordered immutable map based cache.
+	template<typename TDescriptor>
+			using ImmutableOorderedMapAdapter = detail::OrderedMapAdapter<
+					deltaset::ImmutableTypeTraits<typename TDescriptor::ValueType>,
+					TDescriptor>;
 }}

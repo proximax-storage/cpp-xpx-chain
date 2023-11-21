@@ -21,15 +21,10 @@
 #include "CoreSystem.h"
 #include "observers/Observers.h"
 #include "validators/Validators.h"
-#include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "catapult/cache_core/AccountStateCacheSubCachePlugin.h"
-#include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "catapult/cache_core/BlockDifficultyCacheSubCachePlugin.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
-#include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace plugins {
 

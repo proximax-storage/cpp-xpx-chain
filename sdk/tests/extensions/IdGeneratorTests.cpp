@@ -19,7 +19,6 @@
 **/
 
 #include "src/extensions/IdGenerator.h"
-#include "plugins/txes/mosaic/src/model/MosaicIdGenerator.h"
 #include "plugins/txes/namespace/src/model/NamespaceIdGenerator.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"

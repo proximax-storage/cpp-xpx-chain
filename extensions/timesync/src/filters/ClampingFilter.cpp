@@ -20,8 +20,6 @@
 
 #include "SynchronizationFilters.h"
 #include "filter_constants.h"
-#include "catapult/utils/ContainerHelpers.h"
-#include <algorithm>
 #include <cmath>
 
 namespace catapult { namespace timesync { namespace filters {

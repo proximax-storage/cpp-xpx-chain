@@ -22,7 +22,6 @@
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockScorer.h"
-#include "catapult/crypto/KeyPair.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/StackLogger.h"
 
@@ -58,7 +57,7 @@ namespace catapult { namespace harvesting {
 				model::NetworkIdentifier networkIdentifier,
 				const Key& signer,
 				const Key& beneficiary) {
-			auto pBlock = model::CreateBlock(context.ParentContext, networkIdentifier, signer, {});
+			auto pBlock = model::CreateBlock(context.ParentContext, networkIdentifier, signer, {}, 3);
 			pBlock->Difficulty = context.Difficulty;
 			pBlock->Timestamp = context.Timestamp;
 			pBlock->Beneficiary = beneficiary;

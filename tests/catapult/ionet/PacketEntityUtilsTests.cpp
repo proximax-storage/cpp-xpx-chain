@@ -19,10 +19,8 @@
 **/
 
 #include "catapult/ionet/PacketEntityUtils.h"
-#include "catapult/ionet/IoTypes.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/PacketTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace ionet {
 
@@ -120,8 +118,8 @@ namespace catapult { namespace ionet {
 	namespace {
 		constexpr auto Default_Packet_Type = PacketType::Push_Block; // packet type is not validated by the parser
 		constexpr uint32_t Transaction_Size = sizeof(mocks::MockTransaction);
-		constexpr uint32_t Block_Packet_Size = sizeof(Packet) + sizeof(model::BlockHeader);
-		constexpr uint32_t Block_Transaction_Size = sizeof(model::BlockHeader) + Transaction_Size;
+		constexpr uint32_t Block_Packet_Size = sizeof(Packet) + sizeof(model::BlockHeaderV4);
+		constexpr uint32_t Block_Transaction_Size = sizeof(model::BlockHeaderV4) + Transaction_Size;
 		constexpr uint32_t Block_Transaction_Packet_Size = sizeof(Packet) + Block_Transaction_Size;
 
 		void SetTransactionAt(ByteBuffer& buffer, size_t offset) {
@@ -150,7 +148,7 @@ namespace catapult { namespace ionet {
 			static Packet& CreatePacketWithOverflowSize(ByteBuffer& buffer, uint32_t size) {
 				// create a packet with no complete blocks but some overflow bytes
 				constexpr auto Base_Packet_Size = sizeof(Packet);
-				buffer.resize(Base_Packet_Size + std::max<uint32_t>(sizeof(model::BlockHeader), size));
+				buffer.resize(Base_Packet_Size + std::max<uint32_t>(sizeof(model::BlockHeaderV4), size));
 				auto& packet = test::SetPushBlockPacketInBuffer(buffer);
 				packet.Size = Base_Packet_Size + size;
 				return packet;
@@ -187,12 +185,12 @@ namespace catapult { namespace ionet {
 			static Packet& CreatePacketWithOverflowSize(ByteBuffer& buffer, uint32_t size) {
 				// create a packet with two complete blocks and some overflow bytes
 				constexpr auto Num_Full_Blocks = 2u;
-				constexpr auto Base_Packet_Size = sizeof(Packet) + Num_Full_Blocks * sizeof(model::BlockHeader);
-				buffer.resize(Base_Packet_Size + std::max<uint32_t>(sizeof(model::BlockHeader), size));
+				constexpr auto Base_Packet_Size = sizeof(Packet) + Num_Full_Blocks * sizeof(model::BlockHeaderV4);
+				buffer.resize(Base_Packet_Size + std::max<uint32_t>(sizeof(model::BlockHeaderV4), size));
 				auto& packet = test::SetPushBlockPacketInBuffer(buffer);
 				for (auto i = 0u; i <= Num_Full_Blocks; ++i) {
-					auto blockSize = Num_Full_Blocks == i ? size : sizeof(model::BlockHeader);
-					test::SetBlockAt(buffer, sizeof(Packet) + i * sizeof(model::BlockHeader), blockSize);
+					auto blockSize = Num_Full_Blocks == i ? size : sizeof(model::BlockHeaderV4);
+					test::SetBlockAt(buffer, sizeof(Packet) + i * sizeof(model::BlockHeaderV4), blockSize);
 				}
 
 				packet.Size = Base_Packet_Size + size;
@@ -278,7 +276,7 @@ namespace catapult { namespace ionet {
 
 	PACKET_FAILURE_TEST(CannotExtractFromPacketWithoutFullEntityData) {
 		// Assert:
-		for (auto size : std::vector<uint32_t>{ sizeof(model::VerifiableEntity), sizeof(model::BlockHeader) - 1 })
+		for (auto size : std::vector<uint32_t>{ sizeof(model::VerifiableEntity), sizeof(model::BlockHeaderV4) - 1 })
 			AssertCannotExtractEntitiesFromPacketWithSize<TTraits>(size);
 	}
 
@@ -303,7 +301,7 @@ namespace catapult { namespace ionet {
 		// - create a packet wrapping a block
 		// - expand the buffer by the size of a transaction so it looks like the packet expands beyond the last entity
 		ByteBuffer buffer;
-		TTraits::CreatePacketWithOverflowSize(buffer, sizeof(model::BlockHeader));
+		TTraits::CreatePacketWithOverflowSize(buffer, sizeof(model::BlockHeaderV4));
 		buffer.resize(buffer.size() + Transaction_Size);
 		auto& packet = reinterpret_cast<Packet&>(buffer[0]);
 		packet.Size += Transaction_Size;
@@ -327,7 +325,7 @@ namespace catapult { namespace ionet {
 
 		// Assert:
 		ASSERT_TRUE(!!pBlock);
-		ASSERT_EQ(sizeof(model::BlockHeader), pBlock->Size);
+		ASSERT_EQ(sizeof(model::BlockHeaderV4), pBlock->Size);
 		EXPECT_EQ_MEMORY(&buffer[sizeof(Packet)], pBlock, pBlock->Size);
 	}
 
@@ -351,7 +349,7 @@ namespace catapult { namespace ionet {
 	PACKET_SINGLE_ENTITY_TEST(CanExtractSingleBlockWithTransaction) {
 		// Arrange: create a packet containing a block with one transaction
 		ByteBuffer buffer(Block_Transaction_Packet_Size);
-		const auto& packet = test::SetPushBlockPacketInBuffer(buffer);
+		const auto& packet = test::SetPushBlockPacketInBuffer(buffer, Transaction_Size);
 		SetTransactionAt(buffer, static_cast<uint32_t>(buffer.size() - Transaction_Size));
 
 		// Act:
@@ -368,12 +366,12 @@ namespace catapult { namespace ionet {
 	namespace {
 		const Packet& PrepareMultiBlockPacket(ByteBuffer& buffer) {
 			// create a packet containing three blocks
-			buffer.resize(Block_Transaction_Packet_Size + 2 * sizeof(model::BlockHeader));
+			buffer.resize(Block_Transaction_Packet_Size + 2 * sizeof(model::BlockHeaderV4));
 			const auto& packet = test::SetPushBlockPacketInBuffer(buffer);
 			test::SetBlockAt(buffer, sizeof(Packet)); // block 1
-			test::SetBlockAt(buffer, sizeof(Packet) + sizeof(model::BlockHeader), Block_Transaction_Size); // block 2
-			SetTransactionAt(buffer, sizeof(Packet) + 2 * sizeof(model::BlockHeader)); // block 2 tx
-			test::SetBlockAt(buffer, sizeof(Packet) + sizeof(model::BlockHeader) + Block_Transaction_Size); // block 3
+			test::SetBlockAt(buffer, sizeof(Packet) + sizeof(model::BlockHeaderV4), Block_Transaction_Size, Transaction_Size); // block 2
+			SetTransactionAt(buffer, sizeof(Packet) + 2 * sizeof(model::BlockHeaderV4)); // block 2 tx
+			test::SetBlockAt(buffer, sizeof(Packet) + sizeof(model::BlockHeaderV4) + Block_Transaction_Size); // block 3
 			return packet;
 		}
 	}
@@ -393,19 +391,19 @@ namespace catapult { namespace ionet {
 		auto iter = range.cbegin();
 		const auto* pBlock = &*iter;
 		size_t offset = sizeof(Packet);
-		ASSERT_EQ(sizeof(model::BlockHeader), pBlock->Size);
+		ASSERT_EQ(sizeof(model::BlockHeaderV4), pBlock->Size);
 		EXPECT_EQ_MEMORY(&buffer[offset], pBlock, pBlock->Size);
 
 		// - block 2
 		pBlock = &*++iter;
-		offset += sizeof(model::BlockHeader);
+		offset += sizeof(model::BlockHeaderV4);
 		ASSERT_EQ(Block_Transaction_Size, pBlock->Size);
 		EXPECT_EQ_MEMORY(&buffer[offset], pBlock, pBlock->Size);
 
 		// - block 3
 		pBlock = &*++iter;
 		offset += Block_Transaction_Size;
-		ASSERT_EQ(sizeof(model::BlockHeader), pBlock->Size);
+		ASSERT_EQ(sizeof(model::BlockHeaderV4), pBlock->Size);
 		EXPECT_EQ_MEMORY(&buffer[offset], pBlock, pBlock->Size);
 	}
 

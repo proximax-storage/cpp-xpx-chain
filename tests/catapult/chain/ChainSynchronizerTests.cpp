@@ -18,18 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/chain/ChainSynchronizer.h"
-#include "catapult/api/RemoteChainApi.h"
-#include "catapult/model/NetworkConfiguration.h"
-#include "catapult/model/BlockUtils.h"
-#include "catapult/model/ChainScore.h"
-#include "catapult/model/EntityRange.h"
 #include "tests/catapult/chain/test/MockChainApi.h"
-#include "tests/test/core/HashTestUtils.h"
-#include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/mocks/MockPacketIo.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
-#include "tests/TestHarness.h"
 
 using namespace catapult::model;
 using catapult::mocks::MockPacketIo;

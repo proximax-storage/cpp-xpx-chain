@@ -20,7 +20,6 @@
 
 #include "catapult/thread/detail/FutureSharedState.h"
 #include "tests/TestHarness.h"
-#include <thread>
 
 namespace catapult { namespace thread {
 

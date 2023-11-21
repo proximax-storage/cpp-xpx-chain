@@ -19,9 +19,6 @@
 **/
 
 #include "catapult/config/ValidateConfiguration.h"
-#include "catapult/config/BlockchainConfiguration.h"
-#include "catapult/utils/ConfigurationBag.h"
-#include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
@@ -48,10 +45,6 @@ namespace catapult { namespace config {
 			auto& nodeConfig = config.Node;
 			nodeConfig.FeeInterest = 1;
 			nodeConfig.FeeInterestDenominator = 1;
-
-			auto& inflationConfig = config.Inflation;
-			inflationConfig.InflationCalculator.add(Height(1), Amount(1));
-			inflationConfig.InflationCalculator.add(Height(100), Amount());
 
 			auto& userConfig = config.User;
 			userConfig.BootKey = Valid_Private_Key;
@@ -156,72 +149,5 @@ namespace catapult { namespace config {
 
 	// endregion
 
-	// region total chain currency validation
 
-	namespace {
-		struct InflationEntry {
-			catapult::Height Height;
-			catapult::Amount Amount;
-		};
-
-		namespace {
-			auto CreateBlockchainConfiguration(uint64_t initialCurrencyAtomicUnits, const std::vector<InflationEntry>& inflationEntries) {
-				auto mutableConfig = CreateMutableBlockchainConfiguration();
-				mutableConfig.Immutable.InitialCurrencyAtomicUnits = Amount(initialCurrencyAtomicUnits);
-
-				model::InflationCalculator calculator;
-				for (const auto& inflationEntry : inflationEntries)
-					calculator.add(inflationEntry.Height, inflationEntry.Amount);
-
-				// Sanity:
-				EXPECT_EQ(inflationEntries.size(), calculator.size());
-
-				mutableConfig.Inflation.InflationCalculator = std::move(calculator);
-				return mutableConfig.ToConst();
-			}
-		}
-	}
-
-	TEST(TEST_CLASS, SuccessfulValidationWhenConfigIsValid) {
-		// Arrange: MaxMosaicAtomicUnits is 1000
-		auto config = CreateBlockchainConfiguration(123, { { Height(1), Amount(1) }, { Height(234), Amount(0) } });
-
-		// Act:
-		EXPECT_NO_THROW(ValidateConfiguration(config));
-	}
-
-	TEST(TEST_CLASS, InitialTotalChainAmountMustNotExceedMaxMosaicAtomicUnits) {
-		// Act + Assert: MaxMosaicAtomicUnits is 1000
-		auto inflationEntries = std::vector<InflationEntry>();
-		EXPECT_THROW(ValidateConfiguration(CreateBlockchainConfiguration(1001, inflationEntries)), utils::property_malformed_error);
-		EXPECT_THROW(ValidateConfiguration(CreateBlockchainConfiguration(5000, inflationEntries)), utils::property_malformed_error);
-		EXPECT_THROW(ValidateConfiguration(CreateBlockchainConfiguration(1234567890, inflationEntries)), utils::property_malformed_error);
-	}
-
-	TEST(TEST_CLASS, InitialTotalCurrenyPlusInflationMustNotExceedMaxMosaicAtomicUnits) {
-		// Arrange: MaxMosaicAtomicUnits is 1000
-		auto config = CreateBlockchainConfiguration(600, { { Height(1), Amount(1) }, { Height(500), Amount(0) } });
-
-		// Act:
-		EXPECT_THROW(ValidateConfiguration(config), utils::property_malformed_error);
-	}
-
-	TEST(TEST_CLASS, InitialTotalCurrenyPlusInflationMustNotOverflow) {
-		// Arrange:
-		auto numBlocks = std::numeric_limits<uint64_t>::max();
-		auto config = CreateBlockchainConfiguration(2, { { Height(1), Amount(1) }, { Height(numBlocks), Amount(0) } });
-
-		// Act:
-		EXPECT_THROW(ValidateConfiguration(config), utils::property_malformed_error);
-	}
-
-	TEST(TEST_CLASS, TerminalInflationMustBeZero) {
-		// Arrange:
-		auto config = CreateBlockchainConfiguration(0, { { Height(3), Amount(5) }, { Height(10), Amount(2) } });
-
-		// Act:
-		EXPECT_THROW(ValidateConfiguration(config), utils::property_malformed_error);
-	}
-
-	// endregion
 }}

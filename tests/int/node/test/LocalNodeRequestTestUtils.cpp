@@ -19,7 +19,11 @@
 **/
 
 #include "LocalNodeRequestTestUtils.h"
+#include "catapult/cache_core/BlockDifficultyCacheTypes.h"
+#include "catapult/chain/BlockDifficultyScorer.h"
+#include "catapult/extensions/NemesisBlockLoader.h"
 #include "sdk/src/extensions/BlockExtensions.h"
+#include "plugins/txes/committee/src/plugins/AddHarvesterTransactionPlugin.h"
 #include "plugins/txes/config/src/plugins/NetworkConfigTransactionPlugin.h"
 #include "plugins/txes/upgrade/src/plugins/BlockchainUpgradeTransactionPlugin.h"
 #include "plugins/txes/mosaic/src/plugins/MosaicDefinitionTransactionPlugin.h"
@@ -27,7 +31,6 @@
 #include "plugins/txes/namespace/src/plugins/MosaicAliasTransactionPlugin.h"
 #include "plugins/txes/namespace/src/plugins/RegisterNamespaceTransactionPlugin.h"
 #include "plugins/txes/transfer/src/plugins/TransferTransactionPlugin.h"
-#include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/RealTransactionFactory.h"
 
@@ -44,6 +47,7 @@ namespace catapult { namespace test {
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		registry.registerPlugin(plugins::CreateNetworkConfigTransactionPlugin());
 		registry.registerPlugin(plugins::CreateBlockchainUpgradeTransactionPlugin());
+		registry.registerPlugin(plugins::CreateAddHarvesterTransactionPlugin());
 		return registry;
 	}
 
@@ -68,6 +72,8 @@ namespace catapult { namespace test {
 	}
 
 	namespace {
+		using DifficultySet = cache::BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType::SetType::MemorySetType;
+
 		crypto::KeyPair GetNemesisAccountKeyPair() {
 			return crypto::KeyPair::FromString(Mijin_Test_Private_Keys[0]); // use a nemesis account
 		}
@@ -82,7 +88,9 @@ namespace catapult { namespace test {
 			model::PreviousBlockContext context(*pNemesisBlockElement);
 			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
 			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
-			pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
+			DifficultySet blockDifficulties{ state::BlockDifficultyInfo(pNemesisBlockElement->Block) };
+			auto [config, _] = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+			pBlock->Difficulty = chain::CalculateDifficulty(cache::DifficultyInfoRange(blockDifficulties.cbegin(), blockDifficulties.cend()), state::BlockDifficultyInfo(*pBlock), config);
 			pBlock->Version = MakeVersion(Network_Identifier, model::BlockHeader::Current_Version);
 			pBlock->FeeInterest = 1;
 			pBlock->FeeInterestDenominator = 2;

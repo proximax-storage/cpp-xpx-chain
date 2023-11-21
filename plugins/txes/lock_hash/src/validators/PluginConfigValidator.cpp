@@ -5,7 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "src/config/HashLockConfiguration.h"
 
 namespace catapult { namespace validators {
 	DEFINE_PLUGIN_CONFIG_VALIDATOR_WITH_FAILURE(lockhash, HashLock, Failure_LockHash_Plugin_Config_Malformed, 1)

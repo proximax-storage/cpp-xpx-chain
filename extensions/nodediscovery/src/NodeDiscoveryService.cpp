@@ -26,17 +26,14 @@
 #include "catapult/extensions/NetworkUtils.h"
 #include "catapult/extensions/NodeInteractionUtils.h"
 #include "catapult/extensions/ServiceLocator.h"
-#include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
-#include "catapult/subscribers/NodeSubscriber.h"
 
 namespace catapult { namespace nodediscovery {
 
 	namespace {
 		constexpr auto Service_Name = "nd.ping_requestor";
-		using ConstNetworkNodePointer = std::shared_ptr<const ionet::NetworkNode>;
 
 		thread::Task CreatePingTask(extensions::ServiceState& state) {
 			return thread::CreateNamedTask("node discovery ping task", [packetPayloadSink = state.hooks().packetPayloadSink(), &state]() {

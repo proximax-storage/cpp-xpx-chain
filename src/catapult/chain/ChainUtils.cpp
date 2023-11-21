@@ -21,7 +21,6 @@
 #include "ChainUtils.h"
 #include "BlockDifficultyScorer.h"
 #include "BlockScorer.h"
-#include "catapult/model/BlockUtils.h"
 
 namespace catapult { namespace chain {
 

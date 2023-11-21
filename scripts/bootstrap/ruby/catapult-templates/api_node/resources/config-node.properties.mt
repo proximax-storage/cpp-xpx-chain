@@ -2,6 +2,7 @@
 
 port = {{port}}
 apiPort = {{api_port}}
+dbrbPort = {{dbrb_port}}
 shouldAllowAddressReuse = false
 shouldUseSingleThreadPool = false
 shouldUseCacheDatabaseStorage = true
@@ -22,6 +23,7 @@ minFeeMultiplier = 0
 feeInterest = 1
 feeInterestDenominator = 1
 rejectEmptyBlocks = false
+
 transactionSelectionStrategy = oldest
 unconfirmedTransactionsCacheMaxResponseSize = 20MB
 unconfirmedTransactionsCacheMaxSize = 1'000'000

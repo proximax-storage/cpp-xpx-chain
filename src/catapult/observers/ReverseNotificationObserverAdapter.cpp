@@ -20,7 +20,6 @@
 
 #include "ReverseNotificationObserverAdapter.h"
 #include "catapult/model/NotificationSubscriber.h"
-#include "catapult/model/TransactionPlugin.h"
 
 namespace catapult { namespace observers {
 

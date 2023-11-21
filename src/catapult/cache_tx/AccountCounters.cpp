@@ -19,7 +19,6 @@
 **/
 
 #include "AccountCounters.h"
-#include "catapult/utils/HexFormatter.h"
 #include "catapult/exceptions.h"
 
 namespace catapult { namespace cache {

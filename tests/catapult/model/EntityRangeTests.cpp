@@ -18,11 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/model/EntityRange.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/nodeps/IteratorTestTraits.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 
@@ -557,7 +555,7 @@ namespace catapult { namespace model {
 			// Assert:
 			EXPECT_FALSE(range.empty());
 			ASSERT_EQ(expectedBlocks.size(), range.size());
-			EXPECT_EQ(sizeof(BlockHeader) * expectedBlocks.size(), range.totalSize());
+			EXPECT_EQ(sizeof(BlockHeaderV4) * expectedBlocks.size(), range.totalSize());
 
 			// Assert: non-const and const iteration should produce the same results
 			auto& mutableRange = const_cast<BlockRange&>(range);

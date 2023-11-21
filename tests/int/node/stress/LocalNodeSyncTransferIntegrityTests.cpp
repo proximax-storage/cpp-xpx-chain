@@ -22,9 +22,7 @@
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
-#include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/nodeps/Nemesis.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 
@@ -201,7 +199,7 @@ namespace catapult { namespace local {
 
 			auto stateHashCalculator = context.createStateHashCalculator();
 			BlockChainBuilder builder1(accounts, stateHashCalculator);
-			builder1.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
+			builder1.setBlockTimeInterval(utils::TimeSpan::FromSeconds(14)); // better block time will yield better chain
 			auto blocks = TTraits::GetBlocks(builder1, transactionsBuilder1);
 
 			// - prepare a transfer that can only attach to rollback case
@@ -433,7 +431,7 @@ namespace catapult { namespace local {
 				BlockChainBuilder builder2(accounts, stateHashCalculator);
 
 				// - prepare invalid blocks
-				builder2.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
+				builder2.setBlockTimeInterval(utils::TimeSpan::FromSeconds(14)); // better block time will yield better chain
 				invalidBlocks = generateInvalidBlocks(accounts, builder2);
 			}
 

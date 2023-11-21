@@ -20,7 +20,6 @@
 
 #include "Observers.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/model/InflationCalculator.h"
 #include "catapult/model/Mosaic.h"
 
 namespace catapult { namespace observers {
@@ -74,7 +73,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(HarvestFee, Notification)(
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_OBSERVER(HarvestFee, Notification, ([pConfigHolder](const auto& notification, auto& context) {
-			const auto& calculator = pConfigHolder->Config().Inflation.InflationCalculator;
+			const auto& calculator = pConfigHolder->InflationCalculator();
 			auto inflationAmount = calculator.getSpotAmount(context.Height);
 			auto totalAmount = notification.TotalFee + inflationAmount;
 			auto config = context.Config;

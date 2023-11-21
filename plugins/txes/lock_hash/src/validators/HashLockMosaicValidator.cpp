@@ -19,9 +19,6 @@
 **/
 
 #include "Validators.h"
-#include "catapult/model/NetworkConfiguration.h"
-#include "catapult/validators/ValidatorContext.h"
-#include "src/config/HashLockConfiguration.h"
 
 namespace catapult { namespace validators {
 

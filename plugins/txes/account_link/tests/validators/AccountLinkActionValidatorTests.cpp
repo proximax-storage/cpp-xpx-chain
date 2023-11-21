@@ -20,7 +20,6 @@
 
 #include "src/validators/Validators.h"
 #include "tests/test/plugins/DiscreteIntegerValidatorTests.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
 

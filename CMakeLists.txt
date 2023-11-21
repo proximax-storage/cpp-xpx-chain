@@ -5,6 +5,12 @@ option(ENABLE_CODE_COVERAGE "Enable code coverage" OFF)
 option(SANITIZE_ADDRESS "Enable address sanitizer" OFF)
 option(SANITIZE_THREAD "Enable thread sanitizer" OFF)
 option(SANITIZE_UNDEFINED "Enable undefined behavior sanitizer" OFF)
+option(SIRIUS_DRIVE_MULTI "changes for sirius drive-multi" ON)
+option(XPX_STORAGE_SDK_NOT_BUILD_EXAMPLES "Not Build XPX-STORAGE SDK examples." ON)
+
+if (SIRIUS_DRIVE_MULTI)
+	add_definitions(-DSIRIUS_DRIVE_MULTI)
+endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -54,13 +60,20 @@ function(catapult_add_rocksdb_dependencies TARGET_NAME)
 	endif()
 endfunction()
 
+### extension settings
+
 ### add source directories
 add_subdirectory(external)
 
+if(NOT APPLE)
+	set(DO_NOT_SKIP_BUILD_TESTS TRUE)
+endif()
+
 # run catapult tests first
 add_subdirectory(src)
+if(DO_NOT_SKIP_BUILD_TESTS)
 add_subdirectory(tests)
-
+endif()
 # run other tests second
 add_subdirectory(sdk)
 add_subdirectory(plugins)
@@ -76,4 +89,8 @@ endif()
 add_subdirectory(tools)
 
 # Help programs
+if(DO_NOT_SKIP_BUILD_TESTS)
 add_subdirectory(spammer)
+endif()
+
+add_subdirectory(cpp-xpx-storage-sdk)

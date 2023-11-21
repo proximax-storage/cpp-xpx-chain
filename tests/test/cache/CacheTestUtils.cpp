@@ -20,13 +20,13 @@
 
 #include "CacheTestUtils.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
-#include "catapult/cache/SubCachePluginAdapter.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
-#include "tests/test/nodeps/Random.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
+#include "plugins/txes/config/src/cache/NetworkConfigCache.h"
+#include "plugins/txes/config/src/cache/NetworkConfigCacheStorage.h"
 
 namespace catapult { namespace test {
 
@@ -76,6 +76,16 @@ namespace catapult { namespace test {
 				CreateAccountStateCacheOptions(pConfigHolder));
 
 		subCaches[BlockDifficultyCache::Id] = MakeConfigurationFreeSubCachePlugin<BlockDifficultyCache, BlockDifficultyCacheStorage>(pConfigHolder);
+
+		std::string name;
+		if(cacheConfig.CacheDatabaseDirectory == "") {
+			name = cache::NetworkConfigCache::Name;
+		} else {
+			name = cacheConfig.CacheDatabaseDirectory+"/"+cache::NetworkConfigCache::Name;
+		}
+		auto netConfigCacheConfig = CacheConfiguration(cache::NetworkConfigCache::Name, utils::FileSize(), cacheConfig.ShouldStorePatriciaTrees ? PatriciaTreeStorageMode::Enabled : PatriciaTreeStorageMode::Disabled);
+		netConfigCacheConfig.ShouldUseCacheDatabase = cacheConfig.ShouldUseCacheDatabase;
+		subCaches[NetworkConfigCache::Id] = MakeSubCachePluginWithCacheConfiguration<NetworkConfigCache, NetworkConfigCacheStorage>(netConfigCacheConfig, pConfigHolder);
 	}
 
 	// endregion

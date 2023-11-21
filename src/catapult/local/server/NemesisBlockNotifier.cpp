@@ -19,13 +19,10 @@
 **/
 
 #include "NemesisBlockNotifier.h"
-#include "catapult/cache/CacheChanges.h"
-#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/extensions/NemesisBlockLoader.h"
 #include "catapult/io/BlockChangeSubscriber.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/ChainScore.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/subscribers/StateChangeInfo.h"
 #include "catapult/subscribers/StateChangeSubscriber.h"

@@ -20,17 +20,12 @@
 
 #include "BlockSaver.h"
 #include "NemesisConfiguration.h"
-#include "catapult/extensions/BlockExtensions.h"
 #include "catapult/io/FileBlockStorage.h"
-#include "catapult/io/IndexFile.h"
-#include "catapult/utils/HexFormatter.h"
-#include "catapult/utils/HexParser.h"
-#include <boost/filesystem.hpp>
 
 namespace catapult { namespace tools { namespace nemgen {
 
 	namespace {
-		void UpdateMemoryBlockStorageData(const model::Block& block, const std::string& cppFile, const std::string& cppFileHeader) {
+		void UpdateMemoryBlockStorageData(const model::Block& block, const std::string& cppFile, const std::string& cppFileHeader, const std::string& cppVariableName) {
 			io::RawFile cppRawFile(cppFile, io::OpenMode::Read_Write);
 
 			if (!cppFileHeader.empty()) {
@@ -40,12 +35,21 @@ namespace catapult { namespace tools { namespace nemgen {
 				cppRawFile.write(headerBuffer);
 			}
 
-			auto header =
+			std::string header =
 				"#pragma once\n"
 				"#include <stdint.h>\n\n"
 				"namespace catapult { namespace test {\n\n"
-				"\tconstexpr inline uint8_t MemoryBlockStorage_NemesisBlockData[] = {\n";
-			cppRawFile.write(RawBuffer(reinterpret_cast<const uint8_t*>(header), strlen(header)));
+				"\tconstexpr inline Timestamp Nemesis_Timestamp = Timestamp(";
+			cppRawFile.write(RawBuffer(reinterpret_cast<const uint8_t*>(header.data()), header.size()));
+
+			std::stringstream timestamp;
+			timestamp << block.Timestamp;
+			cppRawFile.write(RawBuffer(reinterpret_cast<const uint8_t*>(timestamp.str().c_str()), timestamp.str().size()));
+
+			header =
+				");\n\n"
+				"\tconstexpr inline uint8_t "+cppVariableName+"[] = {\n";
+			cppRawFile.write(RawBuffer(reinterpret_cast<const uint8_t*>(header.data()), header.size()));
 
 			auto pCurrent = reinterpret_cast<const uint8_t*>(&block);
 			auto pEnd = pCurrent + block.Size;
@@ -83,7 +87,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		// 3. update the memory based storage data
 		if (!config.CppFile.empty()) {
 			CATAPULT_LOG(info) << "creating cpp file " << config.CppFile;
-			UpdateMemoryBlockStorageData(blockElement.Block, config.CppFile, config.CppFileHeader);
+			UpdateMemoryBlockStorageData(blockElement.Block, config.CppFile, config.CppFileHeader, config.CppVariableName);
 		}
 	}
 }}}

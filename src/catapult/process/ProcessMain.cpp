@@ -27,9 +27,7 @@
 #include "catapult/io/FileLock.h"
 #include "catapult/thread/ThreadInfo.h"
 #include "catapult/utils/ExceptionLogging.h"
-#include "catapult/utils/Logging.h"
 #include "catapult/version/version.h"
-#include <iostream>
 
 namespace catapult { namespace process {
 
@@ -81,8 +79,8 @@ namespace catapult { namespace process {
 		}
 	}
 
-	int ProcessMain(int argc, const char** argv, const std::string& host, const CreateProcessHost& createProcessHost) {
-		return ProcessMain(argc, argv, host, ProcessOptions::Exit_After_Termination_Signal, createProcessHost);
+	int ProcessMain(int argc, const char** argv, const std::string& host, const CreateProcessHostConfig& createProcessConfig,const CreateProcessHost& createProcessHost) {
+		return ProcessMain(argc, argv, host, ProcessOptions::Exit_After_Termination_Signal, createProcessConfig, createProcessHost);
 	}
 
 	int ProcessMain(
@@ -90,23 +88,22 @@ namespace catapult { namespace process {
 			const char** argv,
 			const std::string& host,
 			ProcessOptions processOptions,
+			const CreateProcessHostConfig& createProcessConfig,
 			const CreateProcessHost& createProcessHost) {
 		std::set_terminate(&TerminateHandler);
 		thread::SetThreadName("Process Main (" + host + ")");
 		version::WriteVersionInformation(std::cout);
 
 		// 1. load and validate the configuration
-		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(argc, argv);
-		auto config = config::BlockchainConfiguration::LoadFromPath(resourcesPath, host);
-		auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
 
-		ValidateConfiguration(config);
+		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(argc, argv);
+		auto pConfigHolder = createProcessConfig(resourcesPath, host);
 
 		// 2. initialize logging
-		auto pLoggingGuard = SetupLogging(config.Logging);
+		auto pLoggingGuard = SetupLogging(pConfigHolder->Config().Logging);
 
 		// 3. check instance
-		boost::filesystem::path lockFilePath = config.User.DataDirectory;
+		boost::filesystem::path lockFilePath = pConfigHolder->Config().User.DataDirectory;
 		lockFilePath /= host + ".lock";
 		io::FileLock instanceLock(lockFilePath.generic_string());
 		if (!instanceLock.try_lock()) {

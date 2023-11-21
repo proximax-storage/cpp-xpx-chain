@@ -18,9 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/disruptor/ConsumerInput.h"
 #include "tests/catapult/disruptor/test/ConsumerInputTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace disruptor {
 

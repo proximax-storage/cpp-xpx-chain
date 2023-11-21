@@ -18,11 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/state/RootNamespace.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/nodeps/Equality.h"
-#include "tests/TestHarness.h"
-#include <unordered_set>
 
 namespace catapult { namespace state {
 
@@ -347,11 +344,16 @@ namespace catapult { namespace state {
 		auto owner = test::CreateRandomOwner();
 		auto root = CreateDefaultRootWithChildren(owner);
 
+		NamespaceAlias na(test::GenerateRandomValue<MosaicId>());
+		root.setAlias(root.id(), na);
+
 		// Act:
 		auto renewedRoot = root.renew(test::CreateLifetime(468, 579));
 
 		// Assert:
 		EXPECT_EQ(root.id(), renewedRoot.id());
+		EXPECT_EQ(root.alias(root.id()).type(), renewedRoot.alias(renewedRoot.id()).type());
+		EXPECT_EQ(root.alias(root.id()).mosaicId(), renewedRoot.alias(renewedRoot.id()).mosaicId());
 		EXPECT_EQ(root, renewedRoot);
 		EXPECT_EQ(test::CreateLifetime(468, 579), renewedRoot.lifetime());
 		EXPECT_EQ(owner, renewedRoot.owner());

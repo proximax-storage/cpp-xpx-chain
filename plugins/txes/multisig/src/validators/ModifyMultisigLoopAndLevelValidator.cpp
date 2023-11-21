@@ -21,7 +21,6 @@
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
 #include "src/cache/MultisigCacheUtils.h"
-#include "src/config/MultisigConfiguration.h"
 #include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {

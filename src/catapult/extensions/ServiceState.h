@@ -21,6 +21,7 @@
 #pragma once
 #include "ServerHooks.h"
 #include "catapult/config/BlockchainConfiguration.h"
+#include "catapult/io/BlockChangeSubscriber.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/net/PacketIoPickerContainer.h"
 #include "catapult/plugins/PluginManager.h"
@@ -39,6 +40,7 @@ namespace catapult {
 		class NodeSubscriber;
 		class StateChangeSubscriber;
 		class TransactionStatusSubscriber;
+		class BlockChangeSubscriber;
 	}
 	namespace thread { class MultiServicePool; }
 	namespace utils { class DiagnosticCounter; }
@@ -62,6 +64,7 @@ namespace catapult { namespace extensions {
 				subscribers::TransactionStatusSubscriber& transactionStatusSubscriber,
 				subscribers::StateChangeSubscriber& stateChangeSubscriber,
 				subscribers::NodeSubscriber& nodeSubscriber,
+				io::BlockChangeSubscriber& postBlockCommitSubscriber,
 				const std::vector<utils::DiagnosticCounter>& counters,
 				const plugins::PluginManager& pluginManager,
 				thread::MultiServicePool& pool)
@@ -75,10 +78,12 @@ namespace catapult { namespace extensions {
 				, m_transactionStatusSubscriber(transactionStatusSubscriber)
 				, m_stateChangeSubscriber(stateChangeSubscriber)
 				, m_nodeSubscriber(nodeSubscriber)
+				, m_postBlockCommitSubscriber(postBlockCommitSubscriber)
 				, m_counters(counters)
 				, m_pluginManager(pluginManager)
 				, m_pool(pool)
 				, m_packetHandlers(m_pluginManager.configHolder()->Config().Node.MaxPacketDataSize.bytes32())
+				, m_maxChainHeight(Height(0))
 		{}
 
 	public:
@@ -142,6 +147,11 @@ namespace catapult { namespace extensions {
 			return m_nodeSubscriber;
 		}
 
+		/// Gets the post block commit subscriber.
+		auto& postBlockCommitSubscriber() const {
+			return m_postBlockCommitSubscriber;
+		}
+
 		/// Gets the (basic) counters.
 		/// \note These counters are node counters and do not include counters registered via ServiceLocator.
 		const auto& counters() const {
@@ -188,6 +198,14 @@ namespace catapult { namespace extensions {
 			return config().Immutable.NetworkIdentifier;
 		}
 
+		const Height& maxChainHeight() const {
+			return m_maxChainHeight;
+		}
+
+		void setMaxChainHeight(const Height& height) {
+			m_maxChainHeight = height;
+		}
+
 	private:
 		// references
 		ionet::NodeContainer& m_nodes;
@@ -201,6 +219,7 @@ namespace catapult { namespace extensions {
 		subscribers::TransactionStatusSubscriber& m_transactionStatusSubscriber;
 		subscribers::StateChangeSubscriber& m_stateChangeSubscriber;
 		subscribers::NodeSubscriber& m_nodeSubscriber;
+		io::BlockChangeSubscriber& m_postBlockCommitSubscriber;
 
 		const std::vector<utils::DiagnosticCounter>& m_counters;
 		const plugins::PluginManager& m_pluginManager;
@@ -211,5 +230,6 @@ namespace catapult { namespace extensions {
 		ionet::ServerPacketHandlers m_packetHandlers;
 		ServerHooks m_hooks;
 		net::PacketIoPickerContainer m_packetIoPickers;
+		Height m_maxChainHeight;
 	};
 }}

@@ -19,13 +19,10 @@
 **/
 
 #include "src/model/AddressPropertyTransaction.h"
-#include "src/model/MosaicPropertyTransaction.h"
-#include "src/model/TransactionTypePropertyTransaction.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/VariableSizedEntityTestUtils.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 

@@ -48,6 +48,10 @@ module Catapult
       "127.0.0.1"
     end
 
+    def self.replicator_host(node_type, index)
+      (node_type == :api_node ? "192.168.10.1" : "192.168.20.2") + index.to_s
+    end
+
     def self.config_name(node_type, index)
       "#{node_type.to_s.gsub('_','-')}-#{index}"
     end
@@ -61,7 +65,7 @@ module Catapult
 
       # node_type value in set {:peer_node, :api_node}
       def self.peer_port(node_type, index)
-        node_type == :peer_node ? PEER_PORT + 3 * (index + 1) : PEER_PORT
+        node_type == :peer_node ? PEER_PORT + 10 * (index + 1) : PEER_PORT
       end
     end
 

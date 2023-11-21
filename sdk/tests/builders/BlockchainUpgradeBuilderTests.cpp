@@ -4,10 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/io/RawFile.h"
 #include "src/builders/BlockchainUpgradeBuilder.h"
 #include "tests/builders/test/BuilderTestUtils.h"
-#include "tests/test/nodeps/Filesystem.h"
 
 namespace catapult { namespace builders {
 

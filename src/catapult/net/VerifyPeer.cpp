@@ -21,8 +21,6 @@
 #include "VerifyPeer.h"
 #include "Challenge.h"
 #include "catapult/ionet/PacketSocket.h"
-#include "catapult/utils/MacroBasedEnumIncludes.h"
-#include <random>
 
 namespace catapult { namespace net {
 

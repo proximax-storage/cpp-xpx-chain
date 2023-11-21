@@ -19,7 +19,7 @@
 **/
 
 #include "NetworkConfiguration.h"
-#include "catapult/utils/ConfigurationBag.h"
+#include "catapult/crypto/KeyUtils.h"
 #include "catapult/utils/ConfigurationUtils.h"
 
 namespace catapult { namespace model {
@@ -74,10 +74,51 @@ namespace catapult { namespace model {
 
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "chain", #NAME, config.NAME)
 
+		config.Inflation = Amount(0);
+		TRY_LOAD_CHAIN_PROPERTY(Inflation);
+
 		config.EnableUnconfirmedTransactionMinFeeValidation = true;
 		TRY_LOAD_CHAIN_PROPERTY(EnableUnconfirmedTransactionMinFeeValidation);
 		config.EnableDeadlineValidation = true;
 		TRY_LOAD_CHAIN_PROPERTY(EnableDeadlineValidation);
+
+		config.EnableUndoBlock = true;
+		TRY_LOAD_CHAIN_PROPERTY(EnableUndoBlock);
+		config.EnableBlockSync = true;
+		TRY_LOAD_CHAIN_PROPERTY(EnableBlockSync);
+
+		config.EnableWeightedVoting = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableWeightedVoting);
+		config.CommitteeSize = 21;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeSize);
+		config.CommitteeApproval = 0.67;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeApproval);
+		config.CommitteePhaseTime = utils::TimeSpan::FromSeconds(5);
+		TRY_LOAD_CHAIN_PROPERTY(CommitteePhaseTime);
+		config.MinCommitteePhaseTime = utils::TimeSpan::FromSeconds(1);
+		TRY_LOAD_CHAIN_PROPERTY(MinCommitteePhaseTime);
+		config.MaxCommitteePhaseTime = utils::TimeSpan::FromMinutes(1);;
+		TRY_LOAD_CHAIN_PROPERTY(MaxCommitteePhaseTime);
+		config.CommitteeSilenceInterval = utils::TimeSpan::FromMilliseconds(100);
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeSilenceInterval);
+		config.CommitteeRequestInterval = utils::TimeSpan::FromMilliseconds(500);
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeRequestInterval);
+		config.CommitteeChainHeightRequestInterval = utils::TimeSpan::FromSeconds(30);
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeChainHeightRequestInterval);
+		config.CommitteeTimeAdjustment = 1.1;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeTimeAdjustment);
+		config.CommitteeEndSyncApproval = 0.45;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeEndSyncApproval);
+		config.CommitteeBaseTotalImportance = 100;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeBaseTotalImportance);
+		config.CommitteeNotRunningContribution = 0.5;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeNotRunningContribution);
+		config.DbrbRegistrationDuration = utils::TimeSpan::FromHours(24);
+		TRY_LOAD_CHAIN_PROPERTY(DbrbRegistrationDuration);
+		config.DbrbRegistrationGracePeriod = utils::TimeSpan::FromHours(1);
+		TRY_LOAD_CHAIN_PROPERTY(DbrbRegistrationGracePeriod);
+		config.EnableHarvesterExpiration = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableHarvesterExpiration);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 
@@ -94,6 +135,18 @@ namespace catapult { namespace model {
 			CheckPluginName(pluginName);
 			auto iter = config.Plugins.emplace(pluginName, utils::ExtractSectionAsBag(bag, section.c_str())).first;
 			numPluginProperties += iter->second.size();
+		}
+
+		auto dbrbBootstrapProcesses = bag.getAllOrdered<bool>("dbrb.bootstrap.processes");
+		for (const auto& [key, enabled] : dbrbBootstrapProcesses) {
+			if (enabled)
+				config.DbrbBootstrapProcesses.emplace(crypto::ParseKey(key));
+		}
+
+		auto emergencyHarvesters = bag.getAllOrdered<bool>("harvesters");
+		for (const auto& [key, enabled] : emergencyHarvesters) {
+			if (enabled)
+				config.EmergencyHarvesters.emplace(crypto::ParseKey(key));
 		}
 
 		return config;

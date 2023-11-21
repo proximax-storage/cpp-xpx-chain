@@ -19,8 +19,8 @@
 **/
 
 #pragma once
-#include "HarvesterBlockGenerator.h"
-#include "UnlockedAccounts.h"
+#include "catapult/harvesting_core/HarvesterBlockGenerator.h"
+#include "catapult/harvesting_core/UnlockedAccounts.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/model/Elements.h"

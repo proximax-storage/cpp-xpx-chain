@@ -20,7 +20,6 @@
 
 #include "catapult/crypto/PrivateKey.h"
 #include "tests/test/nodeps/Equality.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace crypto {
 
@@ -38,31 +37,40 @@ namespace catapult { namespace crypto {
 			return test::GenerateRandomByteArray<Key>();
 		}
 
-		PrivateKey CreatePrivateKey(const Key& rawKey) {
+		template<typename T>
+		T CreatePrivateKey(const Key& rawKey) {
 			auto i = 0u;
-			return PrivateKey::Generate([&i, &rawKey]() { return rawKey[i++]; });
+			return T::Generate([&i, &rawKey]() { return rawKey[i++]; });
 		}
 
-		PrivateKey CreateRandomPrivateKey() {
-			return PrivateKey::Generate(test::RandomByte);
+		template<typename T>
+		T CreateRandomPrivateKey() {
+			return T::Generate(test::RandomByte);
 		}
 	}
 
-	TEST(TEST_CLASS, CanCreateDefaultInitializedPrivateKey) {
+	template<typename T>
+	void CanCreateDefaultInitializedPrivateKeyHelp() {
 		// Act:
-		auto key = PrivateKey();
+		T key;
 
 		// Assert:
-		EXPECT_EQ(Key_Size, key.size());
+		EXPECT_EQ(sizeof(T), key.size());
 		// nothing else to validate since std::array is default initialized with garbage
 	}
 
-	TEST(TEST_CLASS, CanCreatePrivateKeyWithRawKey) {
+	TEST(TEST_CLASS, CanCreateDefaultInitializedPrivateKey) {
+		CanCreateDefaultInitializedPrivateKeyHelp<PrivateKey>();
+		CanCreateDefaultInitializedPrivateKeyHelp<BLSPrivateKey>();
+	}
+
+	template<typename T>
+	void CanCreatePrivateKeyWithRawKeyHelp() {
 		// Arrange:
 		auto rawKey = GenerateRandomRawKey();
 
 		// Act:
-		auto key = CreatePrivateKey(rawKey);
+		auto key = CreatePrivateKey<T>(rawKey);
 
 		// Assert:
 		EXPECT_EQ(Key_Size, key.size());
@@ -70,29 +78,42 @@ namespace catapult { namespace crypto {
 		EXPECT_TRUE(std::equal(rawKey.begin(), rawKey.end(), key.begin(), key.end())); // const iterator
 	}
 
-	TEST(TEST_CLASS, DestructorZerosOutBackingMemory) {
+	TEST(TEST_CLASS, CanCreatePrivateKeyWithRawKey) {
+		CanCreatePrivateKeyWithRawKeyHelp<PrivateKey>();
+		// For BLS we are calculating private key base on IKM
+	}
+
+	template<typename T>
+	void DestructorZerosOutBackingMemoryHelp() {
 		// Arrange: call placement new and move constructor
 		auto keyData = GenerateRandomRawKey();
-		uint8_t keyMemory[sizeof(PrivateKey)];
-		auto pKey = new (keyMemory) PrivateKey;
-		*pKey = CreatePrivateKey(keyData);
+		uint8_t keyMemory[sizeof(T)];
+		auto pKey = new (keyMemory) T;
+		*pKey = CreatePrivateKey<T>(keyData);
 
 		// Sanity: the key's backing memory is non zero
 		EXPECT_FALSE(IsZeroKey(keyMemory));
 
 		// Act: destroy the key
-		pKey->~PrivateKey();
+		pKey->~T();
 
 		// Assert: the key's backing memory is zero
 		EXPECT_TRUE(IsZeroKey(keyMemory));
 	}
 
-	TEST(TEST_CLASS, MoveConstructorZerosOutBackingMemoryOfSource) {
+	TEST(TEST_CLASS, DestructorZerosOutBackingMemory) {
+		DestructorZerosOutBackingMemoryHelp<PrivateKey>();
+		DestructorZerosOutBackingMemoryHelp<BLSPrivateKey>();
+	}
+
+	template<typename T>
+	void MoveConstructorZerosOutBackingMemoryOfSourceHelp() {
 		// Arrange: call placement new and move constructor
-		auto keyData = GenerateRandomRawKey();
-		uint8_t keyMemory[sizeof(PrivateKey)];
-		auto pKey = new (keyMemory) PrivateKey;
-		*pKey = CreatePrivateKey(keyData);
+		uint8_t keyMemory[sizeof(T)];
+		auto pKey = new (keyMemory) T;
+		*pKey = CreatePrivateKey<T>(GenerateRandomRawKey());
+		uint8_t keyCopy[sizeof(T)];
+		std::copy(pKey->begin(), pKey->end(), std::begin(keyCopy));
 
 		// Sanity: the key's backing memory is non zero
 		EXPECT_FALSE(IsZeroKey(keyMemory));
@@ -104,53 +125,68 @@ namespace catapult { namespace crypto {
 		// - the source's backing memory is zero
 		EXPECT_TRUE(IsZeroKey(keyMemory));
 		// - the destination's backing memory is equal to the moved key
-		EXPECT_TRUE(std::equal(keyData.cbegin(), keyData.cend(), movedKey.data(), movedKey.data() + movedKey.size()));
+		EXPECT_TRUE(std::equal(std::begin(keyCopy), std::end(keyCopy), movedKey.data(), movedKey.data() + movedKey.size()));
 	}
 
-	TEST(TEST_CLASS, MoveAssignmentZerosOutBackingMemoryOfSource) {
+	TEST(TEST_CLASS, MoveConstructorZerosOutBackingMemoryOfSource) {
+		MoveConstructorZerosOutBackingMemoryOfSourceHelp<PrivateKey>();
+		MoveConstructorZerosOutBackingMemoryOfSourceHelp<BLSPrivateKey>();
+	}
+
+	template<typename T>
+	void MoveAssignmentZerosOutBackingMemoryOfSourceHelp() {
 		// Arrange: call placement new and move constructor
-		auto keyData = GenerateRandomRawKey();
-		uint8_t keyMemory[sizeof(PrivateKey)];
-		auto pKey = new (keyMemory) PrivateKey;
-		*pKey = CreatePrivateKey(keyData);
+		uint8_t keyMemory[sizeof(T)];
+		auto pKey = new (keyMemory) T;
+		*pKey = CreatePrivateKey<T>(GenerateRandomRawKey());
+		uint8_t keyCopy[sizeof(T)];
+		std::copy(pKey->begin(), pKey->end(), std::begin(keyCopy));
 
 		// Sanity: the key's backing memory is non zero
 		EXPECT_FALSE(IsZeroKey(keyMemory));
 
 		// Act: trigger the move assignment operator
-		PrivateKey movedKey;
+		T movedKey;
 		const auto& assignResult = (movedKey = std::move(*pKey));
 
 		// Assert:
 		// - the source's backing memory is zero
 		EXPECT_TRUE(IsZeroKey(keyMemory));
 		// - the destination's backing memory is equal to the moved key
-		EXPECT_TRUE(std::equal(keyData.cbegin(), keyData.cend(), movedKey.data(), movedKey.data() + movedKey.size()));
+		EXPECT_TRUE(std::equal(std::begin(keyCopy), std::end(keyCopy), movedKey.data(), movedKey.data() + movedKey.size()));
 		// - the assignment operator returned the correct reference
 		EXPECT_EQ(&movedKey, &assignResult);
 	}
 
+	TEST(TEST_CLASS, MoveAssignmentZerosOutBackingMemoryOfSource) {
+		MoveAssignmentZerosOutBackingMemoryOfSourceHelp<PrivateKey>();
+		MoveAssignmentZerosOutBackingMemoryOfSourceHelp<BLSPrivateKey>();
+	}
+
 	namespace {
+		template<typename T>
 		void AssertCannotCreatePrivateKeyFromStringWithSize(size_t size, char keyFirstChar) {
 			// Arrange:
 			auto rawKeyString = test::GenerateRandomHexString(size);
 			rawKeyString[0] = keyFirstChar;
 
 			// Act + Assert: key creation should fail but string should not be cleared
-			EXPECT_THROW(PrivateKey::FromString(rawKeyString), catapult_invalid_argument) << "string size: " << size;
+			EXPECT_THROW(T::FromString(rawKeyString), catapult_invalid_argument) << "string size: " << size;
 			EXPECT_EQ(keyFirstChar, rawKeyString[0]);
 		}
 
+		template<typename T>
 		void AssertCannotCreatePrivateKeyFromStringWithInvalidCharacter(char invalidChar) {
 			// Arrange:
 			auto rawKeyString = test::GenerateRandomHexString(Key_Size * 2);
 			rawKeyString[Key_Size] = invalidChar;
 
 			// Act + Assert: key creation should fail but string should not be cleared
-			EXPECT_THROW(PrivateKey::FromString(rawKeyString), catapult_invalid_argument) << "invalid char: " << invalidChar;
+			EXPECT_THROW(T::FromString(rawKeyString), catapult_invalid_argument) << "invalid char: " << invalidChar;
 			EXPECT_EQ(invalidChar, rawKeyString[Key_Size]);
 		}
 
+		template<typename T>
 		void AssertCannotCreatePrivateKeyFromSecureStringWithSize(size_t size) {
 			// Arrange:
 			std::string zeroString(size, '\0');
@@ -158,11 +194,12 @@ namespace catapult { namespace crypto {
 
 			// Act + Assert: key creation should fail but string should still be cleared
 			EXPECT_THROW(
-					PrivateKey::FromStringSecure(&rawKeyString[0], rawKeyString.size()),
+					T::FromStringSecure(&rawKeyString[0], rawKeyString.size()),
 					catapult_invalid_argument) << "string size: " << size;
 			EXPECT_EQ(zeroString, rawKeyString);
 		}
 
+		template<typename T>
 		void AssertCannotCreatePrivateKeyFromSecureStringWithInvalidCharacter(char invalidChar) {
 			// Arrange:
 			std::string zeroString(Key_Size * 2, '\0');
@@ -171,7 +208,7 @@ namespace catapult { namespace crypto {
 
 			// Act + Assert: key creation should fail but string should still be cleared
 			EXPECT_THROW(
-					PrivateKey::FromStringSecure(&rawKeyString[0], rawKeyString.size()),
+					T::FromStringSecure(&rawKeyString[0], rawKeyString.size()),
 					catapult_invalid_argument) << "invalid char: " << invalidChar;
 			EXPECT_EQ(zeroString, rawKeyString);
 		}
@@ -179,28 +216,38 @@ namespace catapult { namespace crypto {
 
 	TEST(TEST_CLASS, CannotCreatePrivateKeyFromIncorrectlySizedString) {
 		// Assert:
-		AssertCannotCreatePrivateKeyFromStringWithSize(0, '\0');
-		AssertCannotCreatePrivateKeyFromStringWithSize(50, 'c');
-		AssertCannotCreatePrivateKeyFromStringWithSize(120, 'd');
+		AssertCannotCreatePrivateKeyFromStringWithSize<PrivateKey>(0, '\0');
+		AssertCannotCreatePrivateKeyFromStringWithSize<PrivateKey>(50, 'c');
+		AssertCannotCreatePrivateKeyFromStringWithSize<PrivateKey>(120, 'd');
+		AssertCannotCreatePrivateKeyFromStringWithSize<BLSPrivateKey>(0, '\0');
+		AssertCannotCreatePrivateKeyFromStringWithSize<BLSPrivateKey>(50, 'c');
+		AssertCannotCreatePrivateKeyFromStringWithSize<BLSPrivateKey>(120, 'd');
 	}
 
 	TEST(TEST_CLASS, CannotCreatePrivateKeyFromIncorrectlySizedSecureString) {
 		// Assert:
-		AssertCannotCreatePrivateKeyFromSecureStringWithSize(0);
-		AssertCannotCreatePrivateKeyFromSecureStringWithSize(50);
-		AssertCannotCreatePrivateKeyFromSecureStringWithSize(120);
+		AssertCannotCreatePrivateKeyFromSecureStringWithSize<PrivateKey>(0);
+		AssertCannotCreatePrivateKeyFromSecureStringWithSize<PrivateKey>(50);
+		AssertCannotCreatePrivateKeyFromSecureStringWithSize<PrivateKey>(120);
+		AssertCannotCreatePrivateKeyFromSecureStringWithSize<BLSPrivateKey>(0);
+		AssertCannotCreatePrivateKeyFromSecureStringWithSize<BLSPrivateKey>(50);
+		AssertCannotCreatePrivateKeyFromSecureStringWithSize<BLSPrivateKey>(120);
 	}
 
 	TEST(TEST_CLASS, CannotCreatePrivateKeyFromStringWithInvalidCharacter) {
 		// Assert:
-		AssertCannotCreatePrivateKeyFromStringWithInvalidCharacter('g');
-		AssertCannotCreatePrivateKeyFromStringWithInvalidCharacter('-');
+		AssertCannotCreatePrivateKeyFromStringWithInvalidCharacter<PrivateKey>('g');
+		AssertCannotCreatePrivateKeyFromStringWithInvalidCharacter<PrivateKey>('-');
+		AssertCannotCreatePrivateKeyFromStringWithInvalidCharacter<BLSPrivateKey>('g');
+		AssertCannotCreatePrivateKeyFromStringWithInvalidCharacter<BLSPrivateKey>('-');
 	}
 
 	TEST(TEST_CLASS, CannotCreatePrivateKeyFromSecureStringWithInvalidCharacter) {
 		// Assert:
-		AssertCannotCreatePrivateKeyFromSecureStringWithInvalidCharacter('g');
-		AssertCannotCreatePrivateKeyFromSecureStringWithInvalidCharacter('-');
+		AssertCannotCreatePrivateKeyFromSecureStringWithInvalidCharacter<PrivateKey>('g');
+		AssertCannotCreatePrivateKeyFromSecureStringWithInvalidCharacter<PrivateKey>('-');
+		AssertCannotCreatePrivateKeyFromSecureStringWithInvalidCharacter<BLSPrivateKey>('g');
+		AssertCannotCreatePrivateKeyFromSecureStringWithInvalidCharacter<BLSPrivateKey>('-');
 	}
 
 	TEST(TEST_CLASS, CanCreatePrivateKeyFromString) {
@@ -263,9 +310,9 @@ namespace catapult { namespace crypto {
 		std::unordered_map<std::string, PrivateKey> GenerateEqualityInstanceMap() {
 			auto rawKey = GenerateRandomRawKey();
 			std::unordered_map<std::string, PrivateKey> map;
-			map.emplace(Default_Key, CreatePrivateKey(rawKey));
-			map.emplace("same-raw", CreatePrivateKey(rawKey));
-			map.emplace("diff-raw", CreateRandomPrivateKey());
+			map.emplace(Default_Key, CreatePrivateKey<PrivateKey>(rawKey));
+			map.emplace("same-raw", CreatePrivateKey<PrivateKey>(rawKey));
+			map.emplace("diff-raw", CreateRandomPrivateKey<PrivateKey>());
 			return map;
 		}
 

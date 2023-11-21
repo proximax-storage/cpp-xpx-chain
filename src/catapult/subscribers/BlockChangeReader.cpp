@@ -25,7 +25,6 @@
 #include "catapult/io/BlockStatementSerializer.h"
 #include "catapult/io/PodIoUtils.h"
 #include "catapult/io/Stream.h"
-#include "catapult/exceptions.h"
 
 namespace catapult { namespace subscribers {
 

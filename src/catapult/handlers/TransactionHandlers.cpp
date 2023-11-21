@@ -21,8 +21,6 @@
 #include "TransactionHandlers.h"
 #include "HandlerUtils.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
-#include "catapult/utils/ShortHash.h"
-#include "catapult/types.h"
 
 namespace catapult { namespace handlers {
 

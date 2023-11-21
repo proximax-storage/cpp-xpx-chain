@@ -20,7 +20,6 @@
 
 #include "MongoPluginLoader.h"
 #include "catapult/plugins/PluginExceptions.h"
-#include "catapult/utils/Logging.h"
 #include <boost/exception_ptr.hpp>
 
 namespace catapult { namespace mongo {

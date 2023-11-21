@@ -20,10 +20,7 @@
 
 #include "NemesisExecutionHasher.h"
 #include "blockhashes/NemesisBlockHashesCalculator.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/model/Elements.h"
-#include "catapult/utils/HexFormatter.h"
-#include <boost/filesystem.hpp>
 
 namespace catapult { namespace tools { namespace nemgen {
 

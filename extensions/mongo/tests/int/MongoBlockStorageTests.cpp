@@ -19,22 +19,15 @@
 **/
 
 #include "mongo/src/MongoBlockStorage.h"
-#include "mongo/src/MongoBulkWriter.h"
 #include "mongo/src/MongoChainInfoUtils.h"
-#include "mongo/src/MongoReceiptPlugin.h"
-#include "mongo/src/MongoTransactionMetadata.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
-#include "mongo/tests/test/MapperTestUtils.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "mongo/tests/test/MongoReceiptTestUtils.h"
 #include "mongo/tests/test/MongoTestUtils.h"
 #include "mongo/tests/test/mocks/MockReceiptMapper.h"
 #include "mongo/tests/test/mocks/MockTransactionMapper.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/ThreadPoolTestUtils.h"
-#include "tests/test/core/mocks/MockReceipt.h"
-#include "tests/test/core/mocks/MockTransaction.h"
-#include "tests/TestHarness.h"
 
 using namespace bsoncxx::builder::stream;
 
@@ -74,15 +67,17 @@ namespace catapult { namespace mongo {
 			auto mockReceiptType = utils::to_underlying_type(mocks::MockReceipt::Receipt_Type);
 			pMongoReceiptRegistry->registerPlugin(mocks::CreateMockReceiptMongoPlugin(mockReceiptType));
 			const auto& receiptRegistry = *pMongoReceiptRegistry;
+			auto pTransactionFeeCalculator = std::make_shared<model::TransactionFeeCalculator>();
+			const auto& transactionFeeCalculator = *pTransactionFeeCalculator;
 			auto pBlockStorage = test::CreateMongoStorage<io::LightBlockStorage>(
 					std::move(pTransactionPlugin),
 					test::DbInitializationType::None,
 					errorPolicyMode,
-					[&receiptRegistry](auto& context, const auto& transactionRegistry) {
-						return mongo::CreateMongoBlockStorage(context, transactionRegistry, receiptRegistry);
+					[&receiptRegistry, &transactionFeeCalculator](auto& context, const auto& transactionRegistry) {
+						return mongo::CreateMongoBlockStorage(context, transactionRegistry, receiptRegistry, transactionFeeCalculator);
 					});
 
-			return decltype(pBlockStorage)(pBlockStorage.get(), [pMongoReceiptRegistry, pBlockStorage](const auto*) {});
+			return decltype(pBlockStorage)(pBlockStorage.get(), [pMongoReceiptRegistry, pBlockStorage, pTransactionFeeCalculator](const auto*) {});
 		}
 
 		size_t GetNumEntitiesAtHeight(
@@ -199,7 +194,8 @@ namespace catapult { namespace mongo {
 			auto database = connection[test::DatabaseName()];
 
 			const auto& block = expectedElement.Block;
-			auto totalFee = model::CalculateBlockTransactionsInfo(block).TotalFee;
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto totalFee = model::CalculateBlockTransactionsInfo(block, transactionFeeCalculator).TotalFee;
 
 			auto filter = document() << "block.height" << static_cast<int64_t>(block.Height.unwrap()) << finalize;
 			auto result = database["blocks"].find_one(filter.view()).value();
@@ -315,16 +311,18 @@ namespace catapult { namespace mongo {
 			blockElement.OptionalStatement = pBlockStatement;
 		}
 
-		model::UniqueEntityPtr<model::Block> PrepareDbAndBlock(const BlockElementCounts& blockElementCounts) {
+		model::UniqueEntityPtr<model::Block> PrepareDbAndBlock(const BlockElementCounts& blockElementCounts, size_t numCosignatures = 0) {
 			// Arrange:
 			test::PrepareDatabase(test::DatabaseName());
-			auto pBlock = test::GenerateBlockWithTransactions(blockElementCounts.NumTransactions);
+			auto pBlock = test::GenerateBlockWithTransactionsAndCosignatures(blockElementCounts.NumTransactions, numCosignatures);
+			auto transactionPaylodSize = pBlock->transactionPayloadSize();
 			auto pRawData = reinterpret_cast<uint8_t*>(pBlock.get());
 			test::FillWithRandomData({ pRawData + sizeof(uint32_t), sizeof(model::BlockHeader) - sizeof(uint32_t) });
 			pBlock->Height = Height(1);
 			pBlock->Difficulty = RandomClamped<Difficulty>();
 			pBlock->FeeInterest = 1;
 			pBlock->FeeInterestDenominator = 1;
+			pBlock->setTransactionPayloadSize(transactionPaylodSize);
 			return pBlock;
 		}
 
@@ -455,9 +453,10 @@ namespace catapult { namespace mongo {
 		void AssertCanSaveBlock(
 				const BlockElementCounts& blockElementCounts,
 				size_t numDependentDocuments,
-				size_t numExpectedTransactions) {
+				size_t numExpectedTransactions,
+				size_t numCosignatures = 0) {
 			// Arrange:
-			auto pBlock = PrepareDbAndBlock(blockElementCounts);
+			auto pBlock = PrepareDbAndBlock(blockElementCounts, numCosignatures);
 			auto blockElement = test::BlockToBlockElement(*pBlock, test::GenerateRandomByteArray<Hash256>());
 			AddStatements(blockElement, blockElementCounts);
 			auto pTransactionPlugin = mocks::CreateMockTransactionMongoPlugin(mocks::PluginOptionFlags::Default, numDependentDocuments);
@@ -514,6 +513,11 @@ namespace catapult { namespace mongo {
 	TEST(TEST_CLASS, CanSaveBlockWithTransactionsAndAllStatements) {
 		// Assert:
 		AssertCanSaveBlock({ 10, 4, 2, 3 }, 0, 10);
+	}
+
+	TEST(TEST_CLASS, CanSaveBlockWithTransactionsAndAllStatementsAndCosignatures) {
+		// Assert:
+		AssertCanSaveBlock({ 10, 4, 2, 3 }, 0, 10, 5);
 	}
 
 	TEST(TEST_CLASS, CanSaveMultipleBlocks) {

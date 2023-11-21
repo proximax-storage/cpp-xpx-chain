@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/model/EntityType.h"
-#include "catapult/utils/HexFormatter.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace model {

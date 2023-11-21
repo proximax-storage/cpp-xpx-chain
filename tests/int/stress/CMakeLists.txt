@@ -6,6 +6,7 @@ catapult_int_test_executable_target(${TARGET_NAME} test)
 target_link_libraries(${TARGET_NAME}
 	catapult.cache_db
 	catapult.harvesting
+	catapult.harvesting_core
 	catapult.plugins.hashcache
 	catapult.plugins.hashcache.cache
 	tests.catapult.test.local

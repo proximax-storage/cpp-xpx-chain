@@ -9,7 +9,6 @@
 #include "catapult/utils/MemoryUtils.h"
 #include "catapult/model/EntityPtr.h"
 
-
 namespace catapult { namespace test {
 
     /// Generates a metadata modification with \a type, \a keySize and \a valueSize.

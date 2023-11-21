@@ -19,8 +19,6 @@
 **/
 
 #include "src/observers/Observers.h"
-#include "catapult/cache_core/AccountStateCache.h"
-#include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/plugins/AccountObserverTestContext.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"

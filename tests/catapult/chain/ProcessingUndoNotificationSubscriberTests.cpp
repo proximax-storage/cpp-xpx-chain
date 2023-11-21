@@ -20,7 +20,6 @@
 
 #include "catapult/chain/ProcessingUndoNotificationSubscriber.h"
 #include "catapult/cache/CatapultCache.h"
-#include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/other/mocks/MockNotificationObserver.h"
 #include "tests/TestHarness.h"
@@ -48,7 +47,7 @@ namespace catapult { namespace chain {
 					: m_config(config::BlockchainConfiguration::Uninitialized())
 					, m_cache({})
 					, m_cacheDelta(m_cache.createDelta())
-					, m_observerContext({ m_cacheDelta, m_state }, m_config, Height(123), executeMode, CreateResolverContext())
+					, m_observerContext({ m_cacheDelta, m_state }, m_config, Height(123), Timestamp(0), executeMode, CreateResolverContext())
 					, m_sub(m_observer, m_observerContext) {
 				CATAPULT_LOG(debug) << "preparing test context with execute mode " << executeMode;
 			}

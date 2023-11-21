@@ -19,10 +19,8 @@
 **/
 
 #include "catapult/thread/TimedCallback.h"
-#include "catapult/thread/IoThreadPool.h"
 #include "catapult/utils/MacroBasedEnumIncludes.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace thread {
 

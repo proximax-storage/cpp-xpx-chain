@@ -30,6 +30,14 @@
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
 #include "tests/test/nodeps/Filesystem.h"
+#include "catapult/extensions/NemesisBlockLoader.h"
+#include "plugins/txes/mosaic/src/config/MosaicConfiguration.h"
+#include "plugins/txes/transfer/src/config/TransferConfiguration.h"
+#include "plugins/txes/namespace/src/config/NamespaceConfiguration.h"
+#include "plugins/txes/upgrade/src/config/BlockchainUpgradeConfiguration.h"
+#include "plugins/txes/config/src/config/NetworkConfigConfiguration.h"
+#include "plugins/txes/committee/src/config/CommitteeConfiguration.h"
+#include "plugins/txes/dbrb/src/config/DbrbConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -50,12 +58,14 @@ namespace catapult { namespace test {
 	class LocalNodeTestContext {
 	public:
 		/// Creates a context around \a nodeFlag.
-		explicit LocalNodeTestContext(NodeFlag nodeFlag) : LocalNodeTestContext(nodeFlag, {})
+		explicit LocalNodeTestContext(NodeFlag nodeFlag,
+									  const std::string& seedDir = "") : LocalNodeTestContext(nodeFlag, std::vector<ionet::Node>{})
 		{}
 
 		/// Creates a context around \a nodeFlag with custom \a nodes.
-		LocalNodeTestContext(NodeFlag nodeFlag, const std::vector<ionet::Node>& nodes)
-				: LocalNodeTestContext(nodeFlag, nodes, [](const auto&) {}, "")
+		LocalNodeTestContext(NodeFlag nodeFlag, const std::vector<ionet::Node>& nodes,
+							 const std::string& seedDir = "")
+				: LocalNodeTestContext(nodeFlag, nodes, [](const auto&) {}, "", seedDir)
 		{}
 
 		/// Creates a context around \a nodeFlag with custom \a nodes, config transform (\a configTransform)
@@ -64,7 +74,8 @@ namespace catapult { namespace test {
 				NodeFlag nodeFlag,
 				const std::vector<ionet::Node>& nodes,
 				const consumer<config::BlockchainConfiguration&>& configTransform,
-				const std::string& tempDirPostfix)
+				const std::string& tempDirPostfix,
+				const std::string& seedDir= "")
 				: m_nodeFlag(nodeFlag)
 				, m_nodes(nodes)
 				, m_configTransform(configTransform)
@@ -72,14 +83,30 @@ namespace catapult { namespace test {
 				, m_partnerServerKeyPair(LoadPartnerServerKeyPair())
 				, m_tempDir("lntc" + tempDirPostfix)
 				, m_partnerTempDir("lntc_partner" + tempDirPostfix) {
-			initializeDataDirectory(m_tempDir.name());
+			if(HasFlag(NodeFlag::Auto_Harvest, nodeFlag)) initializeDataDirectory(m_tempDir.name(), seedDir);
+			else initializeDataDirectory(m_tempDir.name(), seedDir);
+
+
 
 			if (HasFlag(NodeFlag::With_Partner, nodeFlag)) {
-				initializeDataDirectory(m_partnerTempDir.name());
+				initializeDataDirectory(m_partnerTempDir.name(), seedDir);
 
 				// need to call configTransform first so that partner node loads all required transaction plugins
 				auto config = CreatePrototypicalBlockchainConfiguration(m_partnerTempDir.name());
 				m_configTransform(config);
+				auto conf = loadAssociatedNemesisBlock();
+				const_cast<model::NetworkConfiguration&>(config.Network) = std::get<0>(conf);
+				const_cast<config::SupportedEntityVersions&>(config.SupportedEntityVersions) = std::get<1>(conf);
+
+				// Preload plugin configurations for nemesis required plugins
+
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::TransferConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::MosaicConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NamespaceConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NetworkConfigConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::CommitteeConfiguration>();
+				const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::DbrbConfiguration>();
 				m_pLocalPartnerNode = BootLocalPartnerNode(std::move(config), m_partnerServerKeyPair, nodeFlag);
 			}
 
@@ -88,8 +115,8 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		void initializeDataDirectory(const std::string& directory) const {
-			PrepareStorage(directory);
+		void initializeDataDirectory(const std::string& directory, const std::string& seedDir) const {
+			PrepareStorage(directory, seedDir);
 			PrepareConfiguration(directory, m_nodeFlag);
 
 			if (HasFlag(NodeFlag::Verify_Receipts, m_nodeFlag))
@@ -114,6 +141,15 @@ namespace catapult { namespace test {
 			return m_tempDir.name() + "/resources";
 		}
 
+		auto loadAssociatedNemesisBlock() const{
+			// load from file storage to allow successive modifications
+			io::FileBlockStorage storage(dataDirectory());
+			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
+
+			// modify nemesis block and resign it
+			auto& nemesisBlock = const_cast<model::Block&>(pNemesisBlockElement->Block);
+			return extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+		}
 		/// Gets the primary (first) local node.
 		local::LocalNode& localNode() const {
 			return *m_pLocalNode;
@@ -133,17 +169,31 @@ namespace catapult { namespace test {
 		}
 
 	public:
-		/// Creates a copy of the default blockchain configuration.
+		/// Creates a copy of the default blockchain configuration which will be overwritten.
 		config::BlockchainConfiguration createConfig() const {
-			return CreatePrototypicalBlockchainConfiguration(m_tempDir.name());
+			auto config = CreatePrototypicalBlockchainConfiguration(m_tempDir.name());
+			return config;
 		}
 
 		/// Prepares a fresh data \a directory and returns corresponding configuration.
-		config::BlockchainConfiguration prepareFreshDataDirectory(const std::string& directory) const {
-			initializeDataDirectory(directory);
-
+		config::BlockchainConfiguration prepareFreshDataDirectory(const std::string& directory, const std::string& seedDir) const {
+			initializeDataDirectory(directory, seedDir);
+			auto conf = loadAssociatedNemesisBlock();
 			auto config = CreatePrototypicalBlockchainConfiguration(directory);
 			prepareNetworkConfiguration(config);
+			const_cast<model::NetworkConfiguration&>(config.Network) = std::get<0>(conf);
+			const_cast<config::SupportedEntityVersions&>(config.SupportedEntityVersions) = std::get<1>(conf);
+
+			// Preload plugin configuraitons for nemesis required plugins
+
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::TransferConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::MosaicConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NamespaceConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::NetworkConfigConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::CommitteeConfiguration>();
+			const_cast<model::NetworkConfiguration&>(config.Network).InitPluginConfiguration<config::DbrbConfiguration>();
+
 			return config;
 		}
 
@@ -155,6 +205,11 @@ namespace catapult { namespace test {
 				CATAPULT_THROW_RUNTIME_ERROR("cannot boot local node multiple times via same test context");
 
 			m_pLocalNode = boot(createConfig());
+		}
+
+		/// Get the config holder that was created when the node was booted.
+		std::shared_ptr<config::BlockchainConfigurationHolder> configHolder() {
+			return m_pConfigHolder;
 		}
 
 		/// Boots a new local node around \a config.
@@ -182,9 +237,10 @@ namespace catapult { namespace test {
 				const consumer<extensions::ProcessBootstrapper&>& configure) {
 			prepareNetworkConfiguration(config);
 
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			m_pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
+
 			auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
-					pConfigHolder,
+					m_pConfigHolder,
 					resourcesDirectory(),
 					extensions::ProcessDisposition::Production,
 					"LocalNodeTests");
@@ -200,6 +256,7 @@ namespace catapult { namespace test {
 		}
 
 	private:
+		/// Note: Network configuration is loaded from nemesis block.
 		void prepareNetworkConfiguration(config::BlockchainConfiguration& config) const {
 			PrepareNetworkConfiguration(config, TTraits::AddPluginExtensions, m_nodeFlag);
 			m_configTransform(config);
@@ -274,6 +331,7 @@ namespace catapult { namespace test {
 
 		std::unique_ptr<local::LocalNode> m_pLocalPartnerNode;
 		std::unique_ptr<local::LocalNode> m_pLocalNode;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		mutable CapturedServiceState m_capturedServiceState;
 	};
 }}

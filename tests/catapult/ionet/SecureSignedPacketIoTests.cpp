@@ -26,8 +26,6 @@
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/PacketIoTestUtils.h"
 #include "tests/test/core/PacketTestUtils.h"
-#include "tests/test/core/mocks/MockPacketIo.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace ionet {
 

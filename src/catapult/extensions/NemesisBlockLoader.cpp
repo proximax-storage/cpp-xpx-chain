@@ -21,16 +21,13 @@
 #include "NemesisBlockLoader.h"
 #include "LocalNodeStateRef.h"
 #include "NemesisFundingObserver.h"
-#include "catapult/cache/CatapultCache.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/NotificationPublisher.h"
-#include "catapult/model/TransactionPlugin.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/utils/IntegerMath.h"
+#include "plugins/txes/config/src/model/NetworkConfigTransaction.h"
 
 namespace catapult { namespace extensions {
 
@@ -168,6 +165,15 @@ namespace catapult { namespace extensions {
 				}
 			}
 		}
+
+		const model::NetworkConfigTransaction& GetNetworkConfigUpgradeTransaction(const std::shared_ptr<const model::BlockElement> pNemesisBlock) {
+			for (const auto& transaction : pNemesisBlock->Transactions) {
+				if (transaction.Transaction.Type == model::NetworkConfigTransaction::Entity_Type)
+					return static_cast<const model::NetworkConfigTransaction&>(transaction.Transaction);
+			}
+
+			CATAPULT_THROW_RUNTIME_ERROR("network config upgrade transaction is not found in nemesis block")
+		}
 	}
 
 	NemesisBlockLoader::NemesisBlockLoader(
@@ -189,6 +195,22 @@ namespace catapult { namespace extensions {
 
 		// 2. execute the nemesis block
 		execute(stateRef.ConfigHolder, *pNemesisBlockElement, stateRef.State, stateHashVerification, Verbosity::On);
+	}
+
+	const std::tuple<const model::NetworkConfiguration, const config::SupportedEntityVersions> NemesisBlockLoader::ReadNetworkConfiguration(const std::shared_ptr<const model::BlockElement> nemesisBlock) {
+		const auto& transaction = GetNetworkConfigUpgradeTransaction(nemesisBlock);
+		auto nConfigString = std::string(reinterpret_cast<const char*>(transaction.BlockChainConfigPtr()), transaction.BlockChainConfigSize);
+		auto nSupportedVersionsString = std::string(reinterpret_cast<const char*>(transaction.SupportedEntityVersionsPtr()), transaction.SupportedEntityVersionsSize);
+		std::istringstream inputBlock(nConfigString);
+		std::istringstream inputVersions(nSupportedVersionsString);
+		return std::make_tuple(model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock)), config::LoadSupportedEntityVersions(inputVersions));
+	}
+
+	const std::tuple<const std::string, const std::string> NemesisBlockLoader::ReadNetworkConfigurationAsStrings(const std::shared_ptr<const model::BlockElement> nemesisBlock) {
+		const auto& transaction = GetNetworkConfigUpgradeTransaction(nemesisBlock);
+		auto nConfigString = std::string(reinterpret_cast<const char*>(transaction.BlockChainConfigPtr()), transaction.BlockChainConfigSize);
+		auto nSupportedVersionsString = std::string(reinterpret_cast<const char*>(transaction.SupportedEntityVersionsPtr()), transaction.SupportedEntityVersionsSize);
+		return std::make_tuple(nConfigString, nSupportedVersionsString);
 	}
 
 	void NemesisBlockLoader::executeAndCommit(const LocalNodeStateRef& stateRef, StateHashVerification stateHashVerification) {
@@ -218,7 +240,7 @@ namespace catapult { namespace extensions {
 
 		void RequireValidSignature(const model::Block& block) {
 			auto headerSize = model::VerifiableEntity::Header_Size;
-			auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(model::BlockHeader) - headerSize };
+			auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, block.GetHeaderSize() - headerSize };
 			if (crypto::Verify(block.Signer, blockData, block.Signature))
 				return;
 

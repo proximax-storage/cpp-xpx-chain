@@ -23,6 +23,7 @@
 #include "MemoryCacheProxy.h"
 #include "UtCache.h"
 #include "catapult/model/RangeTypes.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/SpinReaderWriterLock.h"
 #include <set>
@@ -50,6 +51,7 @@ namespace catapult { namespace cache {
 				uint64_t maxResponseSize,
 				const TransactionDataContainer& transactionDataContainer,
 				const IdLookup& idLookup,
+				std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator,
 				utils::SpinReaderWriterLock::ReaderLockGuard&& readLock);
 
 	public:
@@ -76,10 +78,13 @@ namespace catapult { namespace cache {
 			uint32_t feeInterest,
 			uint32_t feeInterestDenominator) const;
 
+		const model::TransactionFeeCalculator& transactionFeeCalculator() const;
+
 	private:
 		uint64_t m_maxResponseSize;
 		const TransactionDataContainer& m_transactionDataContainer;
 		const IdLookup& m_idLookup;
+		std::shared_ptr<model::TransactionFeeCalculator> m_pTransactionFeeCalculator;
 		utils::SpinReaderWriterLock::ReaderLockGuard m_readLock;
 	};
 
@@ -87,7 +92,8 @@ namespace catapult { namespace cache {
 	class MemoryUtCache : public UtCache {
 	public:
 		/// Creates an unconfirmed transactions cache around \a options.
-		explicit MemoryUtCache(const MemoryCacheOptions& options);
+		explicit MemoryUtCache(const MemoryCacheOptions& options,
+							   std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator);
 
 		/// Destroys an unconfirmed transactions cache.
 		~MemoryUtCache() override;
@@ -105,6 +111,7 @@ namespace catapult { namespace cache {
 	private:
 		MemoryCacheOptions m_options;
 		size_t m_idSequence;
+		std::shared_ptr<model::TransactionFeeCalculator> m_pTransactionFeeCalculator;
 		std::unique_ptr<Impl> m_pImpl;
 		mutable utils::SpinReaderWriterLock m_lock;
 	};

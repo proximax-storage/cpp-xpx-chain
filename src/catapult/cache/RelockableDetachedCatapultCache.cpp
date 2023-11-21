@@ -20,7 +20,6 @@
 
 #include "RelockableDetachedCatapultCache.h"
 #include "CatapultCache.h"
-#include "CatapultCacheDetachedDelta.h"
 
 namespace catapult { namespace cache {
 

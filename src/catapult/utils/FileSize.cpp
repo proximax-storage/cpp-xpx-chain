@@ -20,7 +20,6 @@
 
 #include "FileSize.h"
 #include "IntegerMath.h"
-#include <iostream>
 
 namespace catapult { namespace utils {
 
@@ -66,10 +65,15 @@ namespace catapult { namespace utils {
 		auto totalBytes = fileSize.bytes();
 		auto bytes = DivideAndGetRemainder<uint64_t>(totalBytes, 1024);
 		auto kilobytes = DivideAndGetRemainder<uint64_t>(totalBytes, 1024);
-		auto megabytes = totalBytes;
+		auto megabytes = DivideAndGetRemainder<uint64_t>(totalBytes, 1024);
+		auto gigabytes = DivideAndGetRemainder<uint64_t>(totalBytes, 1024);
+		auto terabytes = totalBytes;
 
 		// output as [0MB][ ][0KB][ ][0B]
 		OutputWriter writer(out);
+
+		writer.writeNonZero(terabytes, "TB");
+		writer.writeNonZero(gigabytes, "GB");
 		writer.writeNonZero(megabytes, "MB");
 		writer.writeNonZero(kilobytes, "KB");
 		writer.writeNonZero(bytes, "B");

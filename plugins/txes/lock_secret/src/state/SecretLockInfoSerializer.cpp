@@ -19,7 +19,6 @@
 **/
 
 #include "SecretLockInfoSerializer.h"
-#include "src/model/LockHashUtils.h"
 
 namespace catapult { namespace state {
 

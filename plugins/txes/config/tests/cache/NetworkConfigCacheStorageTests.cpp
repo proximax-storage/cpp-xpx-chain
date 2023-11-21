@@ -4,10 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/NetworkConfigCacheStorage.h"
-#include "src/cache/NetworkConfigCache.h"
 #include "tests/test/NetworkConfigTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {

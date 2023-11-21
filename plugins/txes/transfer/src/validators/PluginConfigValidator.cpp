@@ -6,7 +6,6 @@
 
 #include "Validators.h"
 #include "src/config/TransferConfiguration.h"
-#include "catapult/plugins/PluginUtils.h"
 
 namespace catapult { namespace validators {
 	DEFINE_PLUGIN_CONFIG_VALIDATOR(transfer, Transfer, 1)

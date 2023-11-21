@@ -23,7 +23,6 @@
 #include "tests/test/net/ClientSocket.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 

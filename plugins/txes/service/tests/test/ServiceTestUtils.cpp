@@ -6,7 +6,6 @@
 
 #include "ServiceTestUtils.h"
 #include "catapult/model/Address.h"
-#include "plugins/txes/multisig/src/cache/MultisigCache.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {

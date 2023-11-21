@@ -78,7 +78,7 @@ namespace catapult { namespace consumers {
 
 		/// Prototype for undoing a block.
 		/// \note This is called with all rolled back blocks and the (new) common block.
-		using UndoBlockFunc = consumer<const model::BlockElement&, observers::ObserverState&, UndoBlockType>;
+		using UndoBlockFunc = consumer<const model::NetworkConfiguration&, const model::BlockElement&, observers::ObserverState&, UndoBlockType>;
 
 		/// Prototype for state change notification.
 		using StateChangeFunc = consumer<const subscribers::StateChangeInfo&>;
@@ -88,6 +88,9 @@ namespace catapult { namespace consumers {
 
 		/// Prototype for transaction change notification.
 		using TransactionsChangeFunc = consumer<const TransactionsChangeInfo&>;
+
+		/// Prototype for transaction change notification.
+		using PostBlockCommitFunc = consumer<const std::vector<model::BlockElement>&>;
 
 		/// Prototype for commit step notification.
 		using CommitStepFunc = consumer<CommitOperationStep>;
@@ -110,6 +113,9 @@ namespace catapult { namespace consumers {
 
 		/// Called with the hashes of confirmed transactions and the infos of reverted transactions when transaction statuses change.
 		TransactionsChangeFunc TransactionsChange;
+
+		/// Called with block elements that already commited.
+		PostBlockCommitFunc PostBlockCommit;
 
 		/// Called with the commit operation step.
 		CommitStepFunc CommitStep;

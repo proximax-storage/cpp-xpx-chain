@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/utils/MemoryUtils.h"
 #include "src/model/AddressMetadataTransaction.h"
 #include "src/model/MetadataNotifications.h"
 #include "src/model/MosaicMetadataTransaction.h"
@@ -14,7 +13,6 @@
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/MetadataTestUtils.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {
 

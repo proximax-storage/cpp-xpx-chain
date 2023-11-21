@@ -21,7 +21,6 @@
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 
@@ -48,7 +47,7 @@ namespace catapult { namespace local {
 
 				auto stateHashCalculator = context.createStateHashCalculator();
 				BlockChainBuilder builder(accounts, stateHashCalculator);
-				builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
+				builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(15)); // better block time will yield better chain
 				pUnsignedBlock = builder.asSingleBlock(transactionsBuilder);
 				test::FillWithRandomData(pUnsignedBlock->Signature);
 			}

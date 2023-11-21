@@ -20,8 +20,6 @@
 
 #include "Observers.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/model/EntityType.h"
-#include "catapult/model/TransactionPlugin.h"
 
 namespace catapult { namespace observers {
 

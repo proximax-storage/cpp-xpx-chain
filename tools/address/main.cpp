@@ -23,12 +23,8 @@
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/model/Address.h"
-#include "catapult/utils/Logging.h"
 #include "catapult/exceptions.h"
 #include <boost/random/random_device.hpp>
-#include <iostream>
-#include <random>
-#include <string>
 
 namespace catapult { namespace tools { namespace address {
 

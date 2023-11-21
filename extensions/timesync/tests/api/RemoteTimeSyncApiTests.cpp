@@ -20,9 +20,7 @@
 
 #include "timesync/src/api/RemoteTimeSyncApi.h"
 #include "timesync/src/api/TimeSyncPackets.h"
-#include "tests/test/core/PacketTestUtils.h"
 #include "tests/test/other/RemoteApiTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace api {
 

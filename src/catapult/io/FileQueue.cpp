@@ -19,10 +19,8 @@
 **/
 
 #include "FileQueue.h"
-#include "catapult/utils/HexFormatter.h"
 #include "catapult/exceptions.h"
 #include <boost/filesystem.hpp>
-#include <sstream>
 
 namespace catapult { namespace io {
 

@@ -21,6 +21,7 @@
 #pragma once
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/src/MongoStorageContext.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "mongo/tests/test/MongoTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
@@ -37,7 +38,9 @@ namespace catapult { namespace test {
 		//   like creating a mongocxx::pool (via MongoStorageContext)
 		mongocxx::instance::current();
 		mongo::MongoStorageContext mongoContext(test::DefaultDbUri(), "", nullptr, mongo::MongoErrorPolicy::Mode::Strict);
-		mongo::MongoPluginManager manager(mongoContext, config::CreateMockConfigurationHolder());
+		mongo::MongoPluginManager manager(mongoContext,
+										  config::CreateMockConfigurationHolder(),
+										  std::make_shared<model::TransactionFeeCalculator>());
 		registerSubsystem(manager);
 
 		// Act:

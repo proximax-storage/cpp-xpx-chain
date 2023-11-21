@@ -22,12 +22,10 @@
 #include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceNotifications.h"
 #include "src/model/RegisterNamespaceTransaction.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/constants.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "catapult/plugins/PluginUtils.h"
 
 using namespace catapult::model;
 
@@ -111,6 +109,7 @@ namespace catapult { namespace plugins {
 					}
 
 					sub.notify(NamespaceNameNotification<1>(
+						transaction.Signer,
 						transaction.NamespaceId,
 						parentId,
 						transaction.NamespaceNameSize,

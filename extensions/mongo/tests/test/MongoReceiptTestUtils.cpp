@@ -20,9 +20,7 @@
 
 #include "MongoReceiptTestUtils.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
-#include "catapult/model/BlockStatement.h"
 #include "tests/test/core/mocks/MockReceipt.h"
-#include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {
 

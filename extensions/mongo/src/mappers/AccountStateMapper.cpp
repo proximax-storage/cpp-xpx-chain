@@ -21,7 +21,6 @@
 #include "AccountStateMapper.h"
 #include "MapperUtils.h"
 #include "catapult/state/AccountState.h"
-#include "catapult/utils/Casting.h"
 
 namespace catapult { namespace mongo { namespace mappers {
 

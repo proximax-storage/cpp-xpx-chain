@@ -8,7 +8,6 @@
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "src/mappers/ContractEntryMapper.h"
 #include "tests/test/ContractMapperTestUtils.h"
-#include "tests/test/ReputationTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {

@@ -6,7 +6,6 @@
 
 #include "Validators.h"
 #include "src/cache/DriveCache.h"
-#include "src/config/ServiceConfiguration.h"
 
 namespace catapult { namespace validators {
 

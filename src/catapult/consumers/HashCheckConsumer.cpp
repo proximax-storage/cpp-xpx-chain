@@ -22,8 +22,6 @@
 #include "ConsumerResultFactory.h"
 #include "RecentHashCache.h"
 #include "TransactionConsumers.h"
-#include "catapult/utils/Hashers.h"
-#include <unordered_map>
 
 namespace catapult { namespace consumers {
 

@@ -26,15 +26,10 @@
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "plugins/txes/namespace/src/model/NamespaceIdGenerator.h"
 #include "catapult/crypto/KeyPair.h"
-#include "catapult/crypto/Signer.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/NetworkInfo.h"
-#include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/Random.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include <string.h>
 
 namespace catapult { namespace test {
 

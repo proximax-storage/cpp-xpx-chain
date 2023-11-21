@@ -20,9 +20,6 @@
 
 #include "PeersConfiguration.h"
 #include "catapult/crypto/KeyUtils.h"
-#include "catapult/ionet/Node.h"
-#include "catapult/exceptions.h"
-#include "catapult/types.h"
 
 #ifdef _MSC_VER
 #include <boost/config/compiler/visualc.hpp>

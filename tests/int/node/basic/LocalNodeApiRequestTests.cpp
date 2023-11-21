@@ -21,7 +21,6 @@
 #include "tests/int/node/test/LocalNodeApiTraits.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
 #include "tests/int/node/test/LocalNodeTestContext.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 
@@ -30,7 +29,10 @@ namespace catapult { namespace local {
 	namespace {
 		class TestContext {
 		public:
-			TestContext() : m_context(test::NodeFlag::With_Partner | test::NodeFlag::Simulated_Api, { test::CreateLocalPartnerNode() })
+			TestContext() : m_context(test::NodeFlag::With_Partner | test::NodeFlag::Simulated_Api, { test::CreateLocalPartnerNode() },
+		[](auto& config) {},
+		"",
+		"../seed/mijin-test-basic-extended")
 			{}
 
 		public:

@@ -20,7 +20,6 @@
 
 #include "Node.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/NetworkInfo.h"
 #include <cctype>
 
 namespace catapult { namespace ionet {
@@ -75,6 +74,10 @@ namespace catapult { namespace ionet {
 
 	bool Node::operator!=(const Node& rhs) const {
 		return !(*this == rhs);
+	}
+
+	bool Node::operator<(const Node& rhs) const {
+		return m_metadata.NetworkIdentifier < rhs.m_metadata.NetworkIdentifier || m_identityKey < rhs.m_identityKey;
 	}
 
 	std::ostream& operator<<(std::ostream& out, const Node& node) {

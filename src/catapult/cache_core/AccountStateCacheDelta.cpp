@@ -20,8 +20,6 @@
 
 #include "AccountStateCacheDelta.h"
 #include "catapult/model/Address.h"
-#include "catapult/utils/HexFormatter.h"
-#include "catapult/functions.h"
 
 namespace catapult { namespace cache {
 

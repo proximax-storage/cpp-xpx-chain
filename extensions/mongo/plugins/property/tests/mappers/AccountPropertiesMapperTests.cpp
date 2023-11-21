@@ -19,13 +19,11 @@
 **/
 
 #include "src/mappers/AccountPropertiesMapper.h"
-#include "plugins/txes/property/src/state/AccountProperty.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "tests/test/AccountPropertiesMapperTestUtils.h"
 #include "tests/test/AccountPropertiesTestUtils.h"
 #include "tests/TestHarness.h"
 #include <bsoncxx/builder/stream/document.hpp>
-#include <set>
 
 namespace catapult { namespace mongo { namespace plugins {
 

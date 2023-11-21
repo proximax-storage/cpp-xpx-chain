@@ -21,7 +21,6 @@
 #include "timesync/src/TimeSynchronizationState.h"
 #include "catapult/utils/NetworkTime.h"
 #include "tests/test/nodeps/Waits.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace timesync {
 

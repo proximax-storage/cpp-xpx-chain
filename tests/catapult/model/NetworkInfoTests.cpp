@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/model/NetworkInfo.h"
-#include "catapult/utils/Casting.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace model {

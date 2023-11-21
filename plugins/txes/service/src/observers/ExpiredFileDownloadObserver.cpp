@@ -7,7 +7,6 @@
 #include "Observers.h"
 #include "src/cache/DownloadCache.h"
 #include "src/utils/ServiceUtils.h"
-#include "catapult/cache_core/AccountStateCache.h"
 
 namespace catapult { namespace observers {
 

@@ -5,19 +5,14 @@
 **/
 
 #include "catapult/model/Address.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "src/plugins/EndDriveVerificationTransactionPlugin.h"
 #include "src/model/EndDriveVerificationTransaction.h"
-#include "src/model/ServiceNotifications.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "plugins/txes/multisig/src/model/MultisigNotifications.h"
-#include "plugins/txes/lock_secret/src/model/LockHashAlgorithm.h"
 #include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
-#include <limits>
 
 using namespace catapult::model;
 
@@ -40,6 +35,7 @@ namespace catapult { namespace plugins {
 
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_End_Drive_Verification, Network_Identifier)
 
+	// TODO: Fix
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
 		auto pPlugin = TTraits::CreatePlugin(Network_Identifier);

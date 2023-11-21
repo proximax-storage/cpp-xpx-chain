@@ -18,11 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/crypto/KeyGenerator.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/NetworkInfo.h"
-#include "catapult/utils/HexFormatter.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/TestHarness.h"
 

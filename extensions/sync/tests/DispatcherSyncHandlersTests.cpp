@@ -25,7 +25,6 @@
 #include "catapult/io/IndexFile.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 
 namespace catapult { namespace sync {
 

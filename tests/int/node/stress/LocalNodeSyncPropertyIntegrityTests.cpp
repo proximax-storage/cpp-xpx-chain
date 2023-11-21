@@ -21,7 +21,6 @@
 #include "tests/int/node/stress/test/ExpiryTestUtils.h"
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
 #include "tests/int/node/stress/test/PropertyTransactionsBuilder.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 
@@ -37,7 +36,7 @@ namespace catapult { namespace local {
 
 		Hash256 GetComponentStateHash(const test::PeerLocalNodeTestContext& context) {
 			auto subCacheMerkleRoots = context.localNode().cache().createView().calculateStateHash().SubCacheMerkleRoots;
-			return subCacheMerkleRoots.empty() ? Hash256() : subCacheMerkleRoots[4]; // { Config, AccountState, Namespace, Mosaic, *Property* }
+			return subCacheMerkleRoots.empty() ? Hash256() : subCacheMerkleRoots[8]; // { Config, AccountState, Namespace, Metadata, Mosaic, Multisig, HashLock, SecretLock, *Property* }
 		}
 
 		void AssertPropertyCount(const local::LocalNode& localNode, size_t numExpectedProperties) {
@@ -194,7 +193,7 @@ namespace catapult { namespace local {
 			facade.pushProperty();
 
 			// - prepare block that will remove the property
-			auto nextBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(60), [](auto& transactionsBuilder) {
+			auto nextBlocks = facade.createTailBlocks(utils::TimeSpan::FromSeconds(15), [](auto& transactionsBuilder) {
 				transactionsBuilder.addAddressUnblockProperty(2, 3);
 			});
 

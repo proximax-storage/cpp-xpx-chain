@@ -5,11 +5,9 @@
 **/
 
 #include "plugins/txes/namespace/src/config/NamespaceConfiguration.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/validators/Validators.h"
 #include "tests/test/MetadataCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
 

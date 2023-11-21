@@ -19,14 +19,11 @@
 **/
 
 #include "catapult/model/EntityHasher.h"
-#include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/utils/HexParser.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockTransactionPluginWithCustomBuffers.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/TestHarness.h"
-#include <array>
 
 namespace catapult { namespace model {
 

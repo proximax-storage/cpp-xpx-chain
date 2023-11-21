@@ -67,6 +67,19 @@ namespace catapult { namespace test {
 	/// Seeds \a stateHashCalculator with \a blocks.
 	void SeedStateHashCalculator(StateHashCalculator& stateHashCalculator, const BlockChainBuilder::Blocks& blocks);
 
+	/// Seeds \a stateHashCalculator with \a blocks.
+	template<typename TData>
+	void SeedStateHashCalculator(StateHashCalculator& stateHashCalculator, const BlockChainBuilder::Blocks& blocks, const TData& nemesisBlockData)
+	{
+		// can load nemesis from memory because it is only used for execution, so state hash can be wrong
+		mocks::MockMemoryBlockStorage storage([=](){return mocks::CreateNemesisBlockElement(nemesisBlockData);});
+		auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
+		stateHashCalculator.execute(pNemesisBlockElement->Block);
+
+		for (const auto& pBlock : blocks)
+			stateHashCalculator.execute(*pBlock);
+	}
+
 	/// Waits for the local node wrapped by \a context to reach \a height with \a numExpectedBlockElements block elements
 	/// and \a numTerminalReaders terminal readers.
 	void WaitForHeightAndElements(

@@ -6,6 +6,7 @@ set(PLUGIN_CATAPULT_LIBS
 	${CORE_CATAPULT_LIBS}
 	catapult.cache
 	catapult.cache_core
+	catapult.chain
 	catapult.config
 	catapult.config_holder
 	catapult.observers

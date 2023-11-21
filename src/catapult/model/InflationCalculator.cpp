@@ -93,4 +93,8 @@ namespace catapult { namespace model {
 
 		m_inflationMap.emplace(height, amount);
 	}
+
+	void InflationCalculator::remove(Height height) {
+		m_inflationMap.erase(height);
+	}
 }}

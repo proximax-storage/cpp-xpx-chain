@@ -23,18 +23,13 @@
 #include "PtUtils.h"
 #include "partialtransaction/src/chain/PtUpdater.h"
 #include "partialtransaction/src/chain/PtValidator.h"
-#include "partialtransaction/src/handlers/CosignatureHandler.h"
-#include "partialtransaction/src/handlers/PtHandlers.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
 #include "catapult/consumers/RecentHashCache.h"
 #include "catapult/consumers/ReclaimMemoryInspector.h"
 #include "catapult/consumers/TransactionConsumers.h"
-#include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/extensions/DispatcherUtils.h"
-#include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/extensions/ServiceUtils.h"
-#include "catapult/plugins/PluginManager.h"
 #include "catapult/thread/MultiServicePool.h"
 
 using namespace catapult::consumers;

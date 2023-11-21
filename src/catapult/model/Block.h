@@ -21,10 +21,8 @@
 #pragma once
 #include "Transaction.h"
 #include "TransactionContainer.h"
-#include "VerifiableEntity.h"
+#include "catapult/model/Cosignature.h"
 #include "catapult/types.h"
-#include <memory>
-#include <vector>
 
 namespace catapult { namespace model {
 
@@ -34,7 +32,7 @@ namespace catapult { namespace model {
 	struct BlockHeader : public VerifiableEntity {
 	public:
 		/// Block format version.
-		static constexpr VersionType Current_Version = 3;
+		static constexpr VersionType Current_Version = 4;
 
 	public:
 		/// Height of a block.
@@ -71,10 +69,112 @@ namespace catapult { namespace model {
 
 		/// Denominator of the transaction fee.
 		uint32_t FeeInterestDenominator;
+
+		// followed by transaction data
+
+	public:
+		size_t GetHeaderSize() const;
+	};
+
+	/// Binary layout for a block header v4.
+	struct BlockHeaderV4 : public BlockHeader {
+	public:
+		/// Committee round (number of attempts to generate this block).
+		int64_t Round;
+
+		/// Time lapse in milliseconds of the committee phase of the round this block was generated in.
+		uint64_t CommitteePhaseTime;
+
+		/// Transaction payload size in bytes.
+		/// \note This is the total number of bytes occupied by all transactions.
+		uint32_t TransactionPayloadSize;
+
+		// followed by transaction data
+		// followed by cosignatures data
 	};
 
 	/// Binary layout for a block.
-	struct Block : public TransactionContainer<BlockHeader, Transaction> {};
+	struct Block : public TransactionContainer<BlockHeader, Transaction> {
+	private:
+		static auto* CosignaturesPtrT(Block& block) {
+			return (block.EntityVersion() < 4 || block.Size <= sizeof(BlockHeaderV4) + reinterpret_cast<const BlockHeaderV4&>(block).TransactionPayloadSize)
+				? nullptr
+				: block.ToBytePointer() + sizeof(BlockHeaderV4) + reinterpret_cast<const BlockHeaderV4&>(block).TransactionPayloadSize;
+		}
+
+		static size_t CosignaturesCountT(Block& block) {
+			return (block.EntityVersion() < 4 || block.Size <= sizeof(BlockHeaderV4) + reinterpret_cast<const BlockHeaderV4&>(block).TransactionPayloadSize)
+				? 0
+				: (block.Size - sizeof(BlockHeaderV4) - reinterpret_cast<const BlockHeaderV4&>(block).TransactionPayloadSize) / sizeof(Cosignature);
+		}
+
+	public:
+		/// Returns a const pointer to the first cosignature contained in this block.
+		/// \note The returned pointer is null if the block has an invalid size.
+		const Cosignature* CosignaturesPtr() const {
+			return reinterpret_cast<const Cosignature*>(CosignaturesPtrT(const_cast<Block&>(*this)));
+		}
+
+		/// Returns a pointer to the first cosignature contained in this block.
+		/// \note The returned pointer is null if the block has an invalid size.
+		Cosignature* CosignaturesPtr() {
+			return reinterpret_cast<Cosignature*>(CosignaturesPtrT(*this));
+		}
+
+		/// Returns the number of cosignatures attached to this block.
+		/// \note The returned value is zero if the block has an invalid size.
+		size_t CosignaturesCount() const {
+			return CosignaturesCountT(const_cast<Block&>(*this));
+		}
+
+		/// Returns the number of cosignatures attached to this block.
+		/// \note The returned value is zero if the block has an invalid size.
+		size_t CosignaturesCount() {
+			return CosignaturesCountT(*this);
+		}
+
+		int64_t round() const {
+			switch (EntityVersion()) {
+				case 3:
+					return 0u;
+				default:
+					return reinterpret_cast<const BlockHeaderV4&>(*this).Round;
+			}
+		}
+
+		void setRound(int64_t value) {
+			if (EntityVersion() > 3)
+				reinterpret_cast<BlockHeaderV4&>(*this).Round = value;
+		}
+
+		uint64_t committeePhaseTime() const {
+			switch (EntityVersion()) {
+				case 3:
+					return 0u;
+				default:
+					return reinterpret_cast<const BlockHeaderV4&>(*this).CommitteePhaseTime;
+			}
+		}
+
+		void setCommitteePhaseTime(uint64_t value) {
+			if (EntityVersion() > 3)
+				reinterpret_cast<BlockHeaderV4&>(*this).CommitteePhaseTime = value;
+		}
+
+		uint32_t transactionPayloadSize() const {
+			switch (EntityVersion()) {
+				case 3:
+					return 0u;
+				default:
+					return reinterpret_cast<const BlockHeaderV4&>(*this).TransactionPayloadSize;
+			}
+		}
+
+		void setTransactionPayloadSize(uint32_t value) {
+			if (EntityVersion() > 3)
+				reinterpret_cast<BlockHeaderV4&>(*this).TransactionPayloadSize = value;
+		}
+	};
 
 #pragma pack(pop)
 

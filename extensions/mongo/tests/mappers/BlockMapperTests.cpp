@@ -19,12 +19,10 @@
 **/
 
 #include "mongo/src/mappers/BlockMapper.h"
-#include "mongo/src/mappers/MapperUtils.h"
 #include "catapult/model/BlockUtils.h"
-#include "mongo/tests/test/MapperTestUtils.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "mongo/tests/test/MongoReceiptTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace mappers {
 
@@ -55,7 +53,8 @@ namespace catapult { namespace mongo { namespace mappers {
 					: std::vector<Hash256>();
 
 			// Act:
-			auto dbBlock = ToDbModel(blockElement);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto dbBlock = ToDbModel(blockElement, transactionFeeCalculator);
 
 			// Assert:
 			auto view = dbBlock.view();
@@ -90,12 +89,14 @@ namespace catapult { namespace mongo { namespace mappers {
 		AssertCanMapBlock(*pBlock, Amount(0), 0, Num_Statements);
 	}
 
-	TRAITS_BASED_RECEIPTS_TEST(CanMapBlockWithTransactions) {
+	TRAITS_BASED_RECEIPTS_TEST(CanMapBlockWithTransactionsAndCosignatures) {
 		// Arrange:
-		auto pBlock = test::GenerateBlockWithTransactions(5, Height(123));
+		auto pBlock = test::GenerateBlockWithTransactionsAndCosignatures(5, Height(123), 10);
 		pBlock->FeeInterest = 1;
 		pBlock->FeeInterestDenominator = 1;
-		auto totalFee = model::CalculateBlockTransactionsInfo(*pBlock).TotalFee;
+
+		model::TransactionFeeCalculator transactionFeeCalculator;
+		auto totalFee = model::CalculateBlockTransactionsInfo(*pBlock, transactionFeeCalculator).TotalFee;
 
 		// Assert:
 		AssertCanMapBlock(*pBlock, totalFee, 5, Num_Statements);

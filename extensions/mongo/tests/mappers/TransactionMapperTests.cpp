@@ -21,7 +21,6 @@
 #include "mongo/src/mappers/TransactionMapper.h"
 #include "mongo/src/MongoTransactionPlugin.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "catapult/model/Transaction.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/TestHarness.h"
@@ -131,7 +130,7 @@ namespace catapult { namespace mongo { namespace mappers {
 			test::AssertEqualTransactionMetadata(metadata, metaView);
 
 			auto transactionView = view["transaction"].get_document().view();
-			EXPECT_EQ(6u + numExpectedAdditionalFields, test::GetFieldCount(transactionView));
+			EXPECT_EQ(7u + numExpectedAdditionalFields, test::GetFieldCount(transactionView));
 			test::AssertEqualTransactionData(transaction, transactionView);
 			assertAdditionalFields(transactionView);
 		}

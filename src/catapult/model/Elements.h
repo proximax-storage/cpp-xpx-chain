@@ -84,6 +84,9 @@ namespace catapult { namespace model {
 		std::shared_ptr<model::Block> m_pOwnedBlock;
 	};
 
+	/// Supplies information about the last block of the chain.
+	using BlockElementSupplier = supplier<std::shared_ptr<const model::BlockElement>>;
+
 	/// Predicate for evaluating a timestamp, a hash and an entity type.
 	using MatchingEntityPredicate = predicate<BasicEntityType, Timestamp, const Hash256&>;
 

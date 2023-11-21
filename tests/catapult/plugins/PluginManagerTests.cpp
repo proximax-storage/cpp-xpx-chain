@@ -24,7 +24,6 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
-#include "tests/test/nodeps/NumericTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 
@@ -47,9 +46,8 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		test::MutableBlockchainConfiguration config;
 		config.Network.BlockPruneInterval = 15;
-		config.Inflation.InflationCalculator.add(Height(123), Amount(234));
+		config.Network.Inflation = Amount(234);
 		auto pConfigHolder = config::CreateMockConfigurationHolder(config.ToConst());
-
 		auto storageConfig = StorageConfiguration();
 		storageConfig.CacheDatabaseDirectory = "abc";
 
@@ -60,8 +58,8 @@ namespace catapult { namespace plugins {
 		//         because the manager copies the configs
 		EXPECT_EQ(15u, manager.config().BlockPruneInterval);
 		EXPECT_EQ("abc", manager.storageConfig().CacheDatabaseDirectory);
-		EXPECT_EQ(1u, manager.inflationConfig().InflationCalculator.size());
-		EXPECT_TRUE(manager.inflationConfig().InflationCalculator.contains(Height(123), Amount(234)));
+		EXPECT_EQ(1u, manager.configHolder()->InflationCalculator().size());
+		EXPECT_TRUE(manager.configHolder()->InflationCalculator().contains(Height(1), Amount(234)));
 	}
 
 	TEST(TEST_CLASS, CanCreateCacheConfiguration) {

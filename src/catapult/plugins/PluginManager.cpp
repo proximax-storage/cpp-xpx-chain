@@ -19,7 +19,6 @@
 **/
 
 #include "PluginManager.h"
-#include <boost/filesystem/path.hpp>
 
 namespace catapult { namespace plugins {
 
@@ -29,6 +28,7 @@ namespace catapult { namespace plugins {
 			: m_pConfigHolder(pConfigHolder)
 			, m_storageConfig(storageConfig)
 			, m_shouldEnableVerifiableState(immutableConfig().ShouldEnableVerifiableState)
+			, m_pTransactionFeeCalculator(std::make_shared<model::TransactionFeeCalculator>())
 	{}
 
 	// region config
@@ -47,10 +47,6 @@ namespace catapult { namespace plugins {
 
 	const StorageConfiguration& PluginManager::storageConfig() const {
 		return m_storageConfig;
-	}
-
-	const config::InflationConfiguration& PluginManager::inflationConfig() const {
-		return m_pConfigHolder->Config().Inflation;
 	}
 
 	const config::ImmutableConfiguration& PluginManager::immutableConfig() const {
@@ -280,8 +276,8 @@ namespace catapult { namespace plugins {
 		return model::ExtractorContext(bindExtractorToCache(addressesExtractors), bindExtractorToCache(publicKeysExtractors));
 	}
 
-	void PluginManager::addPluginInitializer(const PluginInitializer& initializer) {
-		m_pluginInitializers.push_back(initializer);
+	void PluginManager::addPluginInitializer(PluginInitializer&& initializer) {
+		m_pluginInitializers.push_back(std::move(initializer));
 	}
 
 	PluginManager::PluginInitializer PluginManager::createPluginInitializer() const {
@@ -296,7 +292,133 @@ namespace catapult { namespace plugins {
 	// region publisher
 
 	PluginManager::PublisherPointer PluginManager::createNotificationPublisher(model::PublicationMode mode) const {
-		return model::CreateNotificationPublisher(m_transactionRegistry, config::GetUnresolvedCurrencyMosaicId(immutableConfig()), mode);
+		return model::CreateNotificationPublisher(m_transactionRegistry,
+												  config::GetUnresolvedCurrencyMosaicId(immutableConfig()),
+												  *m_pTransactionFeeCalculator,
+												  mode);
+	}
+
+	// endregion
+
+	// region committee
+
+	/// Sets a committee manager.
+	void PluginManager::setCommitteeManager(const std::shared_ptr<chain::CommitteeManager>& pManager) {
+		if (!!m_pCommitteeManager)
+			CATAPULT_THROW_RUNTIME_ERROR("committee manager already set");
+
+		m_pCommitteeManager = pManager;
+	}
+
+	/// Gets committee manager.
+	chain::CommitteeManager& PluginManager::getCommitteeManager() const {
+		if (!m_pCommitteeManager)
+			CATAPULT_THROW_RUNTIME_ERROR("committee manager not set");
+
+		return *m_pCommitteeManager;
+	}
+
+	// endregion
+
+	// region dbrb
+
+	/// Sets a DBRB view fetcher.
+	void PluginManager::setDbrbViewFetcher(const std::shared_ptr<dbrb::DbrbViewFetcher>& pFetcher) {
+		if (!!m_pDbrbViewFetcher)
+			CATAPULT_THROW_RUNTIME_ERROR("DBRB view fetcher already set");
+
+		m_pDbrbViewFetcher = pFetcher;
+	}
+
+	/// Gets DBRB view fetcher.
+	dbrb::DbrbViewFetcher& PluginManager::dbrbViewFetcher() const {
+		if (!m_pDbrbViewFetcher)
+			CATAPULT_THROW_RUNTIME_ERROR("DBRB view fetcher not set");
+
+		return *m_pDbrbViewFetcher;
+	}
+
+	// endregion
+
+	// region storage
+
+	void PluginManager::setStorageState(const std::shared_ptr<state::StorageState>& pState) {
+		if (!!m_pStorageState)
+			CATAPULT_THROW_RUNTIME_ERROR("storage state already set");
+
+		m_pStorageState = pState;
+	}
+
+	bool PluginManager::isStorageStateSet() {
+		return !!m_pStorageState;
+	}
+
+	state::StorageState& PluginManager::storageState() const {
+		if (!m_pStorageState)
+			CATAPULT_THROW_RUNTIME_ERROR("storage state not set");
+
+		return *m_pStorageState;
+	}
+
+	// endregion
+
+	// region liquidity provider
+	void PluginManager::setLiquidityProviderExchangeValidator(
+			std::unique_ptr<validators::LiquidityProviderExchangeValidator>&& validator) {
+		m_pLiquidityProviderExchangeValidator = std::move(validator);
+	}
+
+	const std::unique_ptr<validators::LiquidityProviderExchangeValidator>& PluginManager::liquidityProviderExchangeValidator() const {
+		return m_pLiquidityProviderExchangeValidator;
+	}
+
+	void PluginManager::setLiquidityProviderExchangeObserver(std::unique_ptr<observers::LiquidityProviderExchangeObserver>&& observer) {
+		m_pLiquidityProviderExchangeObserver = std::move(observer);
+	}
+
+	const std::unique_ptr<observers::LiquidityProviderExchangeObserver>& PluginManager::liquidityProviderExchangeObserver() const {
+		return m_pLiquidityProviderExchangeObserver;
+	}
+
+	// endregion
+
+	// region storage updates listeners
+
+	const std::vector<std::unique_ptr<observers::StorageUpdatesListener>>&
+	PluginManager::storageUpdatesListeners() const {
+		return m_storageUpdatesListeners;
+	}
+	void PluginManager::addStorageUpdateListener(std::unique_ptr<observers::StorageUpdatesListener>&& storageUpdatesListener) {
+		m_storageUpdatesListeners.emplace_back(std::move(storageUpdatesListener));
+	}
+
+	// endregion
+
+	// region transaction fee limiter
+
+	std::shared_ptr<model::TransactionFeeCalculator> PluginManager::transactionFeeCalculator() const {
+		return m_pTransactionFeeCalculator;
+	}
+
+	// endregion
+
+	// region configure plugin manager
+
+	void PluginManager::reset() {
+		m_transactionRegistry.reset();
+		m_nonDiagnosticHandlerHooks.clear();
+		m_diagnosticHandlerHooks.clear();
+		m_diagnosticCounterHooks.clear();
+		m_statelessValidatorHooks.clear();
+		m_statefulValidatorHooks.clear();
+		m_observerHooks.clear();
+		m_transientObserverHooks.clear();
+		m_mosaicResolvers.clear();
+		m_addressResolvers.clear();
+		m_amountResolvers.clear();
+		m_addressesExtractors.clear();
+		m_publicKeysExtractors.clear();
+		m_pluginInitializers.clear();
 	}
 
 	// endregion

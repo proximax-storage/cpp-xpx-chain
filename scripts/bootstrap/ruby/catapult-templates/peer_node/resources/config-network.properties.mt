@@ -4,7 +4,7 @@ publicKey = {{network_public_key}}
 
 [chain]
 
-blockGenerationTargetTime = 5s
+blockGenerationTargetTime = 10s
 blockTimeSmoothingFactor = 1000
 
 greedDelta = 0.5
@@ -28,6 +28,45 @@ maxTransactionsPerBlock = 200'000
 
 enableUnconfirmedTransactionMinFeeValidation = true
 
+enableUndoBlock = false
+enableBlockSync = false
+
+enableWeightedVoting = true
+committeeSize = 3
+committeeApproval = 1
+committeePhaseTime = 5s
+minCommitteePhaseTime = 3750ms
+maxCommitteePhaseTime = 1m
+committeeSilenceInterval = 100ms
+committeeRequestInterval = 500ms
+committeeChainHeightRequestInterval = 30s
+committeeTimeAdjustment = 1.1
+committeeEndSyncApproval = 0.45
+committeeBaseTotalImportance = 100
+committeeNotRunningContribution = 0.5
+
+dbrbRegistrationDuration = 24h
+dbrbRegistrationGracePeriod = 1h
+
+enableHarvesterExpiration = true
+
+[dbrb.bootstrap.processes]
+
+10E8A1CCCFE02C4C22C12D42277520F1FC7D471E570C9FE2A2961ECB020BC596 = true
+E8D4B7BEB2A531ECA8CC7FD93F79A4C828C24BE33F99CF7C5609FF5CE14605F4 = true
+7C756F2D5E9F21E7215851FC26C9F6819DB7992F0CDD22D822AFBE764404E976 = true
+0A0EAC0E56FE4C052B66D070434621E74793FBF1D6F45286897240681A668BB1 = true
+1AAD933111E340E74FE9A44C12CEB359744BC9F8A6630ECA7DEA8B5AECE5C1C5 = true
+71FA42E336DE2DD74CE864A7A5A747C23EAB41BC6235CBA4C28E96B1900565FC = true
+
+[harvesters]
+
+E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21 = true
+A384FBAAADBFF0405DDA0212D8A6C85F9164A08C24AFD15425927BCB274A45D4 = true
+D2301C3F34280B1FC214A6580B1A3B24D48ACC8A2C4BF0B05B514E73D73B0BAC = true
+C198E0BBB2D1D04DD69C22C25BE0C93E4BB5046C34418726A141C3116AFF1A23 = true
+88FB179C1FD67A2FE77E3DA63617AAF24013FCF6B44F89E396BE4FEFDFB8ACA9 = true
+
 [plugin:catapult.plugins.accountlink]
 dummy = to trigger plugin load
 
@@ -42,6 +81,17 @@ enableBondedAggregateSupport = true
 
 maxBondedTransactionLifetime = 48h
 strictSigner = true
+
+[plugin:catapult.plugins.committee]
+
+enabled = true
+
+minGreed = 0.1
+# log(7/3)
+initialActivity = 0.367976785
+activityDelta = 0.00001
+activityCommitteeCosignedDelta = 0.01
+activityCommitteeNotCosignedDelta = 0.02
 
 [plugin:catapult.plugins.config]
 
@@ -146,3 +196,46 @@ maxSuperContractsOnDrive = 10
 
 enabled = true
 maxValueSize = 1024
+
+[plugin:catapult.plugins.liquidityprovider]
+enabled = true
+managerPublicKeys = E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21
+maxWindowSize = 10
+percentsDigitsAfterDot = 2
+
+[plugin:catapult.plugins.storage]
+
+enabled = true
+minDriveSize = 1MB
+maxDriveSize = 10TB
+minCapacity = 1MB
+maxModificationSize = 10TB
+minReplicatorCount = 4
+maxReplicatorCount = 20
+maxFreeDownloadSize = 1MB
+maxDownloadSize = 10TB
+# 4 weeks = 28 days = 672 hours
+storageBillingPeriod = 672h
+downloadBillingPeriod = 24h
+verificationInterval = 4h
+shardSize = 20
+verificationExpirationCoefficient = 0.24
+verificationExpirationConstant = 10
+
+[plugin:catapult.plugins.streaming]
+
+enabled = true
+maxFolderNameSize = 512
+
+[plugin:catapult.plugins.exchangesda]
+
+enabled = true
+
+maxOfferDuration = 57600
+longOfferKey = CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE
+
+offerSortPolicy = 1
+
+[plugin:catapult.plugins.dbrb]
+
+enabled = true

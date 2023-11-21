@@ -20,7 +20,6 @@
 
 #include "catapult/observers/ObserverContext.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace observers {
@@ -112,7 +111,7 @@ namespace catapult { namespace observers {
 		// Act:
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
 			auto config = config::BlockchainConfiguration::Uninitialized();
-			ObserverContext context(ObserverState(cacheDelta, state), config, Default_Height, NotifyMode::Commit, CreateResolverContext());
+			ObserverContext context(ObserverState(cacheDelta, state), config, Default_Height, Timestamp(0), NotifyMode::Commit, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());
 
 			// Assert:
@@ -126,7 +125,7 @@ namespace catapult { namespace observers {
 			model::BlockStatementBuilder blockStatementBuilder;
 			auto observerState = ObserverState(cacheDelta, state, blockStatementBuilder);
 			auto config = config::BlockchainConfiguration::Uninitialized();
-			ObserverContext context(observerState, config, Default_Height, NotifyMode::Commit, CreateResolverContext());
+			ObserverContext context(observerState, config, Default_Height, Timestamp(0), NotifyMode::Commit, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());
 
 			// Assert:
@@ -143,7 +142,7 @@ namespace catapult { namespace observers {
 		// Act:
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
 			auto config = config::BlockchainConfiguration::Uninitialized();
-			ObserverContext context(ObserverState(cacheDelta, state), config, Default_Height, NotifyMode::Rollback, CreateResolverContext());
+			ObserverContext context(ObserverState(cacheDelta, state), config, Default_Height, Timestamp(0), NotifyMode::Rollback, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());
 
 			// Assert:
@@ -157,7 +156,7 @@ namespace catapult { namespace observers {
 			model::BlockStatementBuilder blockStatementBuilder;
 			auto observerState = ObserverState(cacheDelta, state, blockStatementBuilder);
 			auto config = config::BlockchainConfiguration::Uninitialized();
-			ObserverContext context(observerState, config, Default_Height, NotifyMode::Rollback, CreateResolverContext());
+			ObserverContext context(observerState, config, Default_Height, Timestamp(0), NotifyMode::Rollback, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());
 
 			// Assert:

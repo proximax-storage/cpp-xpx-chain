@@ -20,7 +20,6 @@
 
 #include "HashCacheStorage.h"
 #include "catapult/io/PodIoUtils.h"
-#include "catapult/io/Stream.h"
 
 namespace catapult { namespace cache {
 

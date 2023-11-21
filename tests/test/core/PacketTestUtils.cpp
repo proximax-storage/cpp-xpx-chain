@@ -20,9 +20,6 @@
 
 #include "PacketTestUtils.h"
 #include "BlockTestUtils.h"
-#include "mocks/MockTransaction.h"
-#include "catapult/model/Block.h"
-#include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {
 
@@ -118,15 +115,19 @@ namespace catapult { namespace test {
 				: 0;
 	}
 
-	void SetBlockAt(ionet::ByteBuffer& buffer, size_t offset) {
-		SetBlockAt(buffer, offset, sizeof(model::BlockHeader));
+	void SetBlockAt(ionet::ByteBuffer& buffer, size_t offset, uint32_t transactionSize) {
+		SetBlockAt(buffer, offset, sizeof(model::BlockHeaderV4), transactionSize);
 	}
 
-	void SetBlockAt(ionet::ByteBuffer& buffer, size_t offset, size_t size) {
-		SetVerifiableEntityAt<model::Block>(buffer, offset, size, model::Entity_Type_Block);
+	void SetBlockAt(ionet::ByteBuffer& buffer, size_t offset, size_t size, uint32_t transactionSize) {
+		SetVerifiableEntityAt<model::BlockHeaderV4>(buffer, offset, size, model::Entity_Type_Block);
+
+		auto& block = reinterpret_cast<model::BlockHeaderV4&>(buffer[offset]);
+		block.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, model::BlockHeader::Current_Version);
+		block.TransactionPayloadSize = transactionSize;
 	}
 
-	ionet::Packet& SetPushBlockPacketInBuffer(ionet::ByteBuffer& buffer) {
+	ionet::Packet& SetPushBlockPacketInBuffer(ionet::ByteBuffer& buffer, uint32_t transactionSize) {
 		// fill the buffer with random data
 		FillWithRandomData(buffer);
 
@@ -137,7 +138,7 @@ namespace catapult { namespace test {
 
 		// set the block after the packet if Size and Type fit in the buffer
 		uint32_t entitySize = packet.Size - sizeof(ionet::Packet);
-		SetBlockAt(buffer, sizeof(ionet::Packet), entitySize);
+		SetBlockAt(buffer, sizeof(ionet::Packet), entitySize, transactionSize);
 		return packet;
 	}
 

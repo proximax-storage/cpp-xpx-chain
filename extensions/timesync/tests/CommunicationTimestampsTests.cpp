@@ -20,7 +20,6 @@
 
 #include "timesync/src/CommunicationTimestamps.h"
 #include "tests/test/nodeps/Equality.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace timesync {
 

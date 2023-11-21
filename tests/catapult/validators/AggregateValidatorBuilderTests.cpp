@@ -19,11 +19,8 @@
 **/
 
 #include "catapult/validators/AggregateValidatorBuilder.h"
-#include "catapult/cache/CatapultCache.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "tests/catapult/validators/test/AggregateValidatorTestUtils.h"
 #include "tests/test/other/ValidationResultTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
 

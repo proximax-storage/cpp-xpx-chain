@@ -19,12 +19,11 @@
 **/
 
 #include "extensions/harvesting/src/Harvester.h"
-#include "extensions/harvesting/src/HarvesterBlockGenerator.h"
-#include "extensions/harvesting/src/HarvestingUtFacadeFactory.h"
+#include "catapult/harvesting_core/HarvestingUtFacadeFactory.h"
 #include "plugins/services/hashcache/src/cache/HashCacheStorage.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
@@ -35,9 +34,6 @@
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/test/plugins/PluginManagerFactory.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
 #include <boost/thread.hpp>
 
 namespace catapult { namespace harvesting {
@@ -60,6 +56,7 @@ namespace catapult { namespace harvesting {
 			auto config = test::CreatePrototypicalBlockchainConfiguration(std::move(networkConfig), "");
 			const_cast<config::NodeConfiguration&>(config.Node).FeeInterestDenominator = 2;
 			const_cast<config::ImmutableConfiguration&>(config.Immutable).ShouldEnableVerifiableState = true;
+			const_cast<config::SupportedEntityVersions&>(config.SupportedEntityVersions).at(model::Entity_Type_Block) = { 3 };
 
 			return config;
 		}
@@ -82,7 +79,8 @@ namespace catapult { namespace harvesting {
 		public:
 			HarvesterTestContext()
 					: m_pPluginManager(test::CreatePluginManagerWithRealPlugins(CreateConfiguration()))
-					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
+					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2),
+									  std::make_shared<model::TransactionFeeCalculator>())
 					, m_cache(CreateCatapultCache(m_dbDirGuard.name(), m_pPluginManager->configHolder()))
 					, m_unlockedAccounts(100) {
 				// create the harvester
@@ -170,7 +168,7 @@ namespace catapult { namespace harvesting {
 				observers::NotificationObserverAdapter entityObserver(
 						m_pPluginManager->createObserver(),
 						m_pPluginManager->createNotificationPublisher());
-				auto observerContext = observers::ObserverContext(observerState, m_pPluginManager->configHolder()->Config(), Height(1), notifyMode, resolverContext);
+				auto observerContext = observers::ObserverContext(observerState, m_pPluginManager->configHolder()->Config(), Height(1), Timestamp(0), notifyMode, resolverContext);
 				entityObserver.notify(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height(1)), observerContext);
 				m_cache.commit(Height(1));
 			}

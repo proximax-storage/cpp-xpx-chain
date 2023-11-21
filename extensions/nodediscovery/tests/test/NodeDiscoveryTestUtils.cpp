@@ -19,7 +19,6 @@
 **/
 
 #include "NodeDiscoveryTestUtils.h"
-#include "catapult/ionet/NetworkNode.h"
 #include "tests/test/core/PacketTestUtils.h"
 #include "tests/test/nodeps/Random.h"
 

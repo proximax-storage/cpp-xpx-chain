@@ -46,6 +46,22 @@ namespace catapult { namespace test {
 					}
 				}}));
 			}
+
+			if (NonNemesisTransactionPlugins::Namespace == additionalPlugins) {
+				plugins.emplace("catapult.plugins.namespace", utils::ConfigurationBag({{
+				  "",
+				  {
+						  { "maxNameSize", "64" },
+						  { "maxNamespaceDuration", "365d" },
+						  { "namespaceGracePeriodDuration", "0d" },
+						  { "reservedRootNamespaceNames", "xem, nem, user, account, org, com, biz, net, edu, mil, gov, info, prx, xpx, xarcade, xar, proximax, prc, storage" },
+						  { "namespaceRentalFeeSinkPublicKey", "3E82E1C1E4A75ADAA3CBA8C101C3CD31D9817A2EB966EB3B511FB2ED45B8E262" },
+						  { "rootNamespaceRentalFeePerBlock", "10'000'000'000" },
+						  { "childNamespaceRentalFee", "10'000'000'000" },
+						  { "maxChildNamespaces", "500" },
+				  }
+				}}));
+			}
 		}
 	}
 
@@ -71,6 +87,9 @@ namespace catapult { namespace test {
 		return m_context.dataDirectory();
 	}
 
+	std::shared_ptr<config::BlockchainConfigurationHolder> PeerLocalNodeTestContext::configHolder() {
+		return m_context.configHolder();
+	}
 	PeerLocalNodeStats PeerLocalNodeTestContext::stats() const {
 		return m_context.stats();
 	}
@@ -78,6 +97,10 @@ namespace catapult { namespace test {
 	Height PeerLocalNodeTestContext::height() const {
 		ExternalSourceConnection connection;
 		return GetLocalNodeHeightViaApi(connection);
+	}
+
+	std::string PeerLocalNodeTestContext::resourcesDirectory() const {
+		return m_context.resourcesDirectory();
 	}
 
 	Height PeerLocalNodeTestContext::loadSavedStateChainHeight() const {
@@ -89,8 +112,8 @@ namespace catapult { namespace test {
 		WaitForLocalNodeHeight(connection, height);
 	}
 
-	config::BlockchainConfiguration PeerLocalNodeTestContext::prepareFreshDataDirectory(const std::string& directory) const {
-		return m_context.prepareFreshDataDirectory(directory);
+	config::BlockchainConfiguration PeerLocalNodeTestContext::prepareFreshDataDirectory(const std::string& directory, const std::string& seedDir) const {
+		return m_context.prepareFreshDataDirectory(directory, seedDir);
 	}
 
 	void PeerLocalNodeTestContext::assertSingleReaderConnection() const {

@@ -19,15 +19,14 @@
 **/
 
 #include "catapult/chain/UtUpdater.h"
-#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/model/FeeUtils.h"
 #include "catapult/model/TransactionStatus.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
 
 using catapult::validators::ValidationResult;
 
@@ -127,7 +126,8 @@ namespace catapult { namespace chain {
 					BlockFeeMultiplier minFeeMultiplier = BlockFeeMultiplier())
 					: m_executionConfig(CreateConfiguration(minFeeMultiplier))
 					, m_cache(CreateCacheWithDefaultHeight())
-					, m_transactionsCache(cache::MemoryCacheOptions(1024, 1000))
+					, m_transactionsCache(cache::MemoryCacheOptions(1024, 1000),
+									  std::make_shared<model::TransactionFeeCalculator>())
 					, m_updater(
 							m_transactionsCache,
 							m_cache,
@@ -156,20 +156,10 @@ namespace catapult { namespace chain {
 				m_executionConfig.pValidator->setResult(result, hash, id);
 			}
 
-			void setPartialUndoFailureIndexes(const std::unordered_set<size_t>& partialUndoFailureIndexes) {
-				m_partialUndoFailureIndexes = partialUndoFailureIndexes;
-			}
-
 		private:
 			bool isRollbackExecution(size_t index) const {
-				// MockExecutionConfiguration is configured to create two notifications for each entity
-				// as such, there are three possible states for each entity:
-				// 1. both validations pass => both notifications are executed
-				// 2. first validation fails => no notifications are executed
-				// 3. second validation fails => first notification is executed and then undone
-				//
-				// a test sets m_partialUndoFailureIndexes to indicate rollbacks of the first notification in state (3)
-				return m_partialUndoFailureIndexes.cend() != m_partialUndoFailureIndexes.find(index);
+				// There are no rollback executions.
+				return false;
 			}
 
 		public:
@@ -230,6 +220,17 @@ namespace catapult { namespace chain {
 						[this](auto i) { return this->isRollbackExecution(i); });
 			}
 
+			void assertObserverContexts(const std::vector<size_t>& expectedNumDifficultyInfos) const {
+				// Assert:
+				CATAPULT_LOG(debug) << "checking observer contexts passed to observer";
+				test::MockExecutionConfiguration::AssertObserverContexts(
+						*m_executionConfig.pObserver,
+						expectedNumDifficultyInfos,
+						Default_Height + Height(1),
+						model::ImportanceHeight(0), // a dummy state is passed by the updater because only block observers modify it
+						[this](auto i) { return this->isRollbackExecution(i); });
+			}
+
 			std::vector<size_t> getExpectedNumDifficultyInfos(size_t numInitialCacheDifficultyInfos) const {
 				std::vector<size_t> expectedNumDifficultyInfos;
 				for (auto i = 0u; i < m_executionConfig.pObserver->params().size(); ++i)
@@ -249,10 +250,31 @@ namespace catapult { namespace chain {
 			}
 
 			void assertContexts(
+					const std::vector<UtUpdater::TransactionSource>& expectedTransactionSources,
+					const std::vector<size_t>& expectedValidatorNumDifficultyInfos,
+					const std::vector<size_t>& expectedObserverNumDifficultyInfos) const {
+				// Assert:
+				assertThrottleContexts(expectedTransactionSources);
+				assertValidatorContexts(expectedValidatorNumDifficultyInfos);
+				assertObserverContexts(expectedObserverNumDifficultyInfos);
+			}
+
+			void assertContexts(
 					UtUpdater::TransactionSource expectedTransactionSource,
 					const std::vector<size_t>& expectedNumDifficultyInfos) const {
 				// Assert:
 				assertContexts({ m_throttleParams.size(), expectedTransactionSource }, expectedNumDifficultyInfos);
+			}
+
+			void assertContexts(
+					UtUpdater::TransactionSource expectedTransactionSource,
+					const std::vector<size_t>& expectedValidatorNumDifficultyInfos,
+					const std::vector<size_t>& expectedObserverNumDifficultyInfos) const {
+				// Assert:
+				assertContexts(
+					{ m_throttleParams.size(), expectedTransactionSource },
+					expectedValidatorNumDifficultyInfos,
+					expectedObserverNumDifficultyInfos);
 			}
 
 			void assertContexts(UtUpdater::TransactionSource expectedTransactionSource) const {
@@ -350,13 +372,14 @@ namespace catapult { namespace chain {
 				}
 			}
 
-		private:
-			static std::vector<size_t> GetValidatorObserverIndexes(const model::WeakEntityInfos& entityInfos) {
+		public:
+			static std::vector<size_t> GetValidatorObserverIndexes(const model::WeakEntityInfos& entityInfos, const std::set<size_t>& failedIndexes = {}) {
 				// MockNotificationPublisher publishes two notifications per entity (with sequence ids 1 and 2)
 				std::vector<size_t> indexes;
 				for (auto i = 0u; i < entityInfos.size(); ++i) {
 					indexes.push_back(i);
-					indexes.push_back(i);
+					if (failedIndexes.find(i) == failedIndexes.cend())
+						indexes.push_back(i);
 				}
 
 				return indexes;
@@ -423,7 +446,6 @@ namespace catapult { namespace chain {
 			cache::MemoryUtCache m_transactionsCache;
 			UtUpdater m_updater;
 
-			std::unordered_set<size_t> m_partialUndoFailureIndexes;
 			std::vector<model::TransactionStatus> m_failedTransactionStatuses;
 			std::vector<ThrottleParams> m_throttleParams;
 		};
@@ -542,9 +564,10 @@ namespace catapult { namespace chain {
 		// - set fee multiples
 		auto i = 0u;
 		std::array<uint32_t, 10> feeMultiples{ 10, 20, 19, 30, 21, 40, 30, 10, 10, 20 };
+		model::TransactionFeeCalculator transactionFeeCalculator;
 		for (auto& utInfo : transactionData.UtInfos) {
 			auto multiplier = BlockFeeMultiplier(feeMultiples[i++]);
-			const_cast<Amount&>(utInfo.pEntity->MaxFee) = model::CalculateTransactionFee(multiplier, *utInfo.pEntity, 1, 1);
+			const_cast<Amount&>(utInfo.pEntity->MaxFee) = transactionFeeCalculator.calculateTransactionFee(multiplier, *utInfo.pEntity, 1, 1);
 		}
 
 		// Sanity:
@@ -647,11 +670,16 @@ namespace catapult { namespace chain {
 			test::AssertContainsAll(context.transactionsCache(), Select(transactionData.Hashes, { 0, 2, 3, 5 }));
 
 			// - observer (commit) only gets called for entities that pass validation
-			// - observer (rollback) gets called for entities that fail validation
 			//   E[0] V0,O1,V1,O2; E[1] V2,O3,V3;RO4 E[2] V4,O5,V5,O6; E[3] V6,O7,V7,O8; E[4] V8,O9,V9;RO10 E[5] V10,O11,V11,O12
-			context.setPartialUndoFailureIndexes({ 3, 9 });
-			context.assertContexts(TTraits::TransactionSource);
-			context.assertEntityInfos(transactionData.EntityInfos, GetFailedIndexes(result, { { 1, Modify(result) }, { 4, result } }));
+			context.assertContexts(
+				TTraits::TransactionSource,
+				{ 0, 1, 2, 3, 2, 3, 4, 5, 6, 7, 6, 7 },
+				{ 0, 1, 2, 2, 3, 4, 5, 6, 6, 7 });
+			context.assertEntityInfos(
+				transactionData.EntityInfos,
+				context.GetValidatorObserverIndexes(transactionData.EntityInfos),
+				context.GetValidatorObserverIndexes(transactionData.EntityInfos, { 1, 4 }),
+				GetFailedIndexes(result, { { 1, Modify(result) }, { 4, result } }));
 		}
 	}
 
@@ -912,14 +940,18 @@ namespace catapult { namespace chain {
 		test::AssertContainsAll(context.transactionsCache(), transactionData.Hashes);
 
 		// - observer (commit) only gets called for entities that pass validation
-		// - observer (rollback) gets called for entities that fail validation
 		//   new: E[0] V0,O1,V1,O2; E[1] V2,O3,V3,O4; E[2] V4,O5,V5,O6
 		//   old: E[0] V0,O1,V1,O2; E[1] V2,O3,V3;RO4 E[2] V4,O5,V5,O6; E[3] V6,O7,V7,O8; E[4] V8,O9,V9;RO10 E[5] V10,O11,V11,O12
-		context.setPartialUndoFailureIndexes({ 6 + 3, 6 + 9 });
-		context.assertContexts(CreateRevertedAndExistingSources(3, 6));
+		context.assertContexts(
+			CreateRevertedAndExistingSources(3, 6),
+			{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 8, 9, 10, 11, 12, 13, 12, 13 },
+			{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 12, 13 });
+		auto entityInfos = ConcatContainers(transactionData.EntityInfos, originalTransactionData.EntityInfos);
 		context.assertEntityInfos(
-				ConcatContainers(transactionData.EntityInfos, originalTransactionData.EntityInfos),
-				GetFailedIndexes(TResult, { { 3 + 1, Modify(TResult) }, { 3 + 4, TResult } }));
+			entityInfos,
+			context.GetValidatorObserverIndexes(entityInfos),
+			context.GetValidatorObserverIndexes(entityInfos, { 3 + 1, 3 + 4 }),
+			GetFailedIndexes(TResult, { { 3 + 1, Modify(TResult) }, { 3 + 4, TResult } }));
 	}
 
 	TEST(TEST_CLASS, CommittedRevertedTransactionsAreAddedToCache) {

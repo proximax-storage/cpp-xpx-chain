@@ -26,4 +26,8 @@ namespace catapult { namespace config {
 
 	/// Validates \a config and throws an exception if it is invalid.
 	void ValidateConfiguration(const BlockchainConfiguration& config);
+
+	/// Validates \a config, without validating network and supported entities, and throws an exception if it is invalid.
+	void ValidateLocalConfiguration(const BlockchainConfiguration& config);
+
 }}

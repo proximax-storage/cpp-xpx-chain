@@ -20,6 +20,7 @@
 
 #pragma once
 #include "ContainerTypes.h"
+#include "Cosignature.h"
 #include "EntityType.h"
 #include "NetworkInfo.h"
 #include "NotificationType.h"
@@ -278,6 +279,40 @@ namespace catapult { namespace model {
 
 		/// Number of block transactions.
 		uint32_t NumTransactions;
+
+		/// The part of the transaction fee harvester is willing to get.
+		uint32_t FeeInterest;
+
+		/// Denominator of the transaction fee.
+		uint32_t FeeInterestDenominator;
+	};
+
+	/// Notifies the cosignatures of a block.
+	template<VersionType version>
+	struct BlockCommitteeNotification;
+
+	template<>
+	struct BlockCommitteeNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Committee_v1_Notification;
+
+	public:
+		/// Creates a block notification around \a signer, \a numCosignatures, \a pCosignatures,
+		/// \a feeInterest and \a feeInterestDenominator.
+		 BlockCommitteeNotification(
+			int64_t round,
+			uint32_t feeInterest,
+			uint32_t feeInterestDenominator)
+				: Notification(Notification_Type, sizeof(BlockCommitteeNotification<1>))
+				, Round(round)
+				, FeeInterest(feeInterest)
+				, FeeInterestDenominator(feeInterestDenominator)
+		{}
+
+	public:
+		/// Committee round (number of attempts to generate this block).
+		int64_t Round;
 
 		/// The part of the transaction fee harvester is willing to get.
 		uint32_t FeeInterest;
@@ -598,6 +633,64 @@ namespace catapult { namespace model {
 
 		/// Plugin configuration bag.
 		const utils::ConfigurationBag& Bag;
+	};
+
+	// endregion
+
+	// region active
+
+	/// Notification of whether a mosaic is active.
+	template<VersionType version>
+	struct MosaicActiveNotification;
+	template<>
+	struct MosaicActiveNotification<1> :  public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Mosaic_Active_v1_Notification;
+	
+	public:
+		explicit MosaicActiveNotification(UnresolvedMosaicId mosaicId, const Height expirationHeight)
+			: Notification(Notification_Type, sizeof(MosaicActiveNotification<1>))
+			, MosaicId(mosaicId)
+			, OfferExpirationHeight(expirationHeight)
+		{}
+	
+	public:
+		
+		/// Id of the mosaic.
+		UnresolvedMosaicId MosaicId;
+		
+		/// Offer expiration height
+		Height OfferExpirationHeight;
+	};
+
+	// endregion
+
+	// region harvesters
+
+	/// Notification of active harvesters.
+	template<VersionType version>
+	struct ActiveHarvestersNotification;
+
+	template<>
+	struct ActiveHarvestersNotification<1> :  public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Active_Harvesters_v1_Notification;
+
+	public:
+		explicit ActiveHarvestersNotification(const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
+			: Notification(Notification_Type, sizeof(MosaicActiveNotification<1>))
+			, HarvesterKeysPtr(pHarvesterKeys)
+			, HarvesterKeysCount(harvesterKeysCount)
+		{}
+
+	public:
+		/// Active harvester keys.
+		const Key* HarvesterKeysPtr;
+
+		/// Harvester key count.
+		uint16_t HarvesterKeysCount;
 	};
 
 	// endregion

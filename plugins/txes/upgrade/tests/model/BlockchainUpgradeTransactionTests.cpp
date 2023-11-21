@@ -5,9 +5,7 @@
 **/
 
 #include "src/model/BlockchainUpgradeTransaction.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
-#include "tests/test/nodeps/NumericTestUtils.h"
 
 namespace catapult { namespace model {
 

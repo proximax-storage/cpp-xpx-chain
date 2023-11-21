@@ -19,14 +19,12 @@
 **/
 
 #include "NetworkTestUtils.h"
-#include "catapult/ionet/PacketSocket.h"
 #include "catapult/net/PacketWriters.h"
 #include "catapult/net/VerifyPeer.h"
 #include "catapult/thread/TimedCallback.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/net/SocketTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 

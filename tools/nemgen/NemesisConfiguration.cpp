@@ -20,12 +20,9 @@
 
 #include "NemesisConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
-#include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/IdGenerator.h"
 #include "catapult/model/MosaicIdGenerator.h"
 #include "catapult/model/NamespaceIdGenerator.h"
-#include "catapult/state/Namespace.h"
-#include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/ConfigurationUtils.h"
 
 namespace catapult { namespace tools { namespace nemgen {
@@ -170,6 +167,17 @@ namespace catapult { namespace tools { namespace nemgen {
 
 			return numMosaicProperties;
 		}
+
+		size_t LoadHarvesters(const utils::ConfigurationBag& bag, NemesisConfiguration& config) {
+			auto harvesters = bag.getAllOrdered<bool>("harvesters");
+
+			for (const auto& pair : harvesters) {
+				if (pair.second)
+					config.HarvesterPrivateKeys.push_back(pair.first);
+			}
+
+			return harvesters.size();
+		}
 	}
 
 #define LOAD_PROPERTY(SECTION, NAME) utils::LoadIniProperty(bag, SECTION, #NAME, config.NAME)
@@ -184,6 +192,10 @@ namespace catapult { namespace tools { namespace nemgen {
 		LOAD_NEMESIS_PROPERTY(NemesisSignerPrivateKey);
 
 #undef LOAD_NEMESIS_PROPERTY
+#define TRY_LOAD_NEMESIS_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "nemesis", #NAME, config.NAME)
+		config.NemesisAccountVersion = 1;
+		TRY_LOAD_NEMESIS_PROPERTY(NemesisAccountVersion);
+
 
 #define LOAD_CPP_PROPERTY(NAME) LOAD_PROPERTY("cpp", NAME)
 
@@ -197,7 +209,10 @@ namespace catapult { namespace tools { namespace nemgen {
 		LOAD_OUTPUT_PROPERTY(BinDirectory);
 
 #undef LOAD_OUTPUT_PROPERTY
-
+#define TRY_LOAD_OUTPUT_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "output", #NAME, config.NAME)
+		config.CppVariableName = "MemoryBlockStorage_NemesisBlockData";
+		TRY_LOAD_OUTPUT_PROPERTY(CppVariableName);
+#undef TRY_LOAD_OUTPUT_PROPERTY
 		// the nemesis account owns all namespaces and mosaic definitions in the configuration
 		auto owner = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey).publicKey();
 
@@ -207,7 +222,9 @@ namespace catapult { namespace tools { namespace nemgen {
 		// load mosaics information
 		auto numMosaicProperties = LoadMosaics(bag, config, owner);
 
-		utils::VerifyBagSizeLte(bag, 6 + numNamespaceProperties + numMosaicProperties);
+		auto numHarvesters = LoadHarvesters(bag, config);
+
+		utils::VerifyBagSizeLte(bag, 6 + numNamespaceProperties + numMosaicProperties + numHarvesters);
 		return config;
 	}
 }}}

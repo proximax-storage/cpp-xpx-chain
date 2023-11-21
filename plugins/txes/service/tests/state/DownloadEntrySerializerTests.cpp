@@ -4,13 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/state/DownloadEntrySerializer.h"
-#include "catapult/utils/HexFormatter.h"
-#include "catapult/utils/Casting.h"
-#include "tests/test/core/SerializerOrderingTests.h"
 #include "tests/test/core/SerializerTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace state {
 

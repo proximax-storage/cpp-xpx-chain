@@ -69,6 +69,12 @@ namespace catapult { namespace io {
 		output.write({ reinterpret_cast<const uint8_t*>(&value), sizeof(uint8_t) });
 	}
 
+	/// Writes \a value into \a output.
+	template<typename TIo>
+	void WriteDouble(TIo& output, double value) {
+		output.write({ reinterpret_cast<const uint8_t*>(&value), sizeof(double) });
+	}
+
 	/// Reads base \a value from \a input.
 	template<typename TIo, typename TValue, typename TTag, typename TBaseValue>
 	void Read(TIo& input, utils::BasicBaseValue<TValue, TTag, TBaseValue>& value) {
@@ -128,6 +134,14 @@ namespace catapult { namespace io {
 	TValue Read(TIo& input) {
 		TValue result;
 		Read(input, result);
+		return result;
+	}
+
+	/// Reads value from \a input.
+	template<typename TIo>
+	auto ReadDouble(TIo& input) {
+		double result;
+		input.read({ reinterpret_cast<uint8_t*>(&result), sizeof(double) });
 		return result;
 	}
 }}

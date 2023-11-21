@@ -21,7 +21,6 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "tests/int/node/test/LocalNodeBasicTests.h"
 #include "tests/int/node/test/LocalNodeTestContext.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 
@@ -34,6 +33,17 @@ namespace catapult { namespace local {
 		class TestContext : public test::LocalNodeTestContext<test::LocalNodePeerTraits> {
 		public:
 			using test::LocalNodeTestContext<test::LocalNodePeerTraits>::LocalNodeTestContext;
+			TestContext(
+					NodeFlag nodeFlag)
+				: test::LocalNodeTestContext<test::LocalNodePeerTraits>::LocalNodeTestContext(
+						  nodeFlag | NodeFlag::With_Partner,
+						  { test::CreateLocalPartnerNode() },
+						  [](auto& config) {
+
+						  },
+						  "",
+						  "../seed/mijin-test-basic-extended")
+			{}
 
 		public:
 			void waitForNumActiveBroadcastWriters(size_t value) const {
@@ -95,7 +105,13 @@ namespace catapult { namespace local {
 			auto flags = shouldAutoHarvest ? NodeFlag::Auto_Harvest : NodeFlag::Regular;
 
 			// Act
-			TestContext context(flags);
+			TestContext context(flags,
+					{ },
+					[](auto& config) {
+
+					},
+					"",
+					"../seed/mijin-test-basic-extended");
 			context.waitForNumActiveReaders(0);
 			auto stats = context.stats();
 
@@ -122,7 +138,7 @@ namespace catapult { namespace local {
 		template<typename THandler>
 		void RunExternalConnectionTest(unsigned short port, THandler handler) {
 			// Arrange: boot a local node and wait for the node to connect to the peer
-			TestContext context(NodeFlag::With_Partner, { test::CreateLocalPartnerNode() });
+			TestContext context(NodeFlag::Regular);
 			context.waitForNumActiveWriters(1);
 
 			// Act: create an external connection to the node
@@ -159,7 +175,7 @@ namespace catapult { namespace local {
 
 	TEST(TEST_CLASS, CanShutdownLocalNodeWithExternalConnections) {
 		// Arrange: boot a local node and wait for the node to connect to the peer
-		TestContext context(NodeFlag::With_Partner, { test::CreateLocalPartnerNode() });
+		TestContext context(NodeFlag::Regular);
 		context.waitForNumActiveWriters(1);
 
 		// Act: create external connections to the node

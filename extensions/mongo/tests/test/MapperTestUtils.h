@@ -107,6 +107,18 @@ namespace catapult { namespace test {
 		return static_cast<uint64_t>(doc[name].get_int64().value);
 	}
 
+	/// Returns value \a name from a document (\a doc) as a bool value.
+	template<typename TDocument>
+	auto GetBool(const TDocument& doc, const std::string& name) {
+		return doc[name].get_bool().value;
+	}
+
+	/// Returns value \a name from a document (\a doc) as a double value.
+	template<typename TDocument>
+	auto GetDouble(const TDocument& doc, const std::string& name) {
+		return doc[name].get_double().value;
+	}
+
 	/// Returns number of fields in a document \a view.
 	template<typename TDocumentView>
 	size_t GetFieldCount(const TDocumentView& view) {
@@ -207,6 +219,10 @@ namespace catapult { namespace test {
 
 	/// Verifies that model \a expectedCosignatures and db cosignatures (\a dbCosignatures) are equivalent.
 	void AssertEqualCosignatures(const std::vector<model::Cosignature>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures);
+
+	/// Verifies that model cosignatures (\a numCosignatures pointed to by \a pCosignature) and db cosignatures
+	/// (\a dbCosignatures) are equivalent.
+	void AssertEqualCosignatures(size_t numCosignatures, const model::Cosignature* pCosignature, const bsoncxx::array::view& dbCosignatures);
 
 	/// Verifies that model \a receipt and db receipt (\a dbReceipt) are equivalent.
 	void AssertEqualReceiptData(const model::Receipt& receipt, const bsoncxx::document::view& dbReceipt);

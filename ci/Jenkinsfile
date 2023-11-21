@@ -12,7 +12,7 @@ pipeline {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
         IMAGE = "proximax-catapult-server"
-        BUILD_IMAGE = "proximax-catapult-server-dependencies-build-image:v1.2-focal"
+        BUILD_IMAGE = "proximax-catapult-server-dependencies-build-image:v1.4-jammy"
     }
 
 	stages {
@@ -22,7 +22,7 @@ pipeline {
                 script {
                     def buildImage = docker.image("${BUILD_IMAGE}")
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        buildImage.inside {
+                        buildImage.inside() {
                             sh """
                                 echo 'Building catapult-server'
                                 rm -rf _build
@@ -32,7 +32,10 @@ pipeline {
                                     make -j4 publish
                                 make -j4
                                 cd ..
-                                ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
+                                ./scripts/release-script/copyDeps.sh _build/bin ./deps
+                                mkdir -p ./deps/sirius
+                                cp -r _build/lib ./deps/sirius/
+                                rm -rf ./deps/home
                             """    
                         }
                     }
@@ -43,6 +46,7 @@ pipeline {
         stage('Unit Test') {
             steps {
               script {
+                sh "if [ \$(docker ps -q) ]; then docker kill \$(docker ps -q); fi"
                 def buildImage = docker.image("${BUILD_IMAGE}")
                 docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
                     docker.image("mongo:4.4").run("-p 27017:27017") // mongo is required for unit test

@@ -46,6 +46,16 @@ namespace catapult { namespace cache {
 		Operation,
 		MosaicLevy,
 		Metadata_v2,
+		Committee,
+		BcDrive,
+		DownloadChannel,
+		Replicator,
+		Queue,
+		PriorityQueue,
+		LiquidityProvider,
+		ExchangeSda,
+		SdaOfferGroup,
+		DbrbView,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

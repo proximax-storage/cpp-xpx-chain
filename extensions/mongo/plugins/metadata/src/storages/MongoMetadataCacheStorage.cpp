@@ -8,7 +8,6 @@
 #include "mongo/src/storages/MongoCacheStorage.h"
 #include "src/mappers/MetadataEntryMapper.h"
 #include "plugins/txes/metadata/src/cache/MetadataCache.h"
-#include "plugins/txes/metadata/src/cache/MetadataCacheTypes.h"
 
 using namespace bsoncxx::builder::stream;
 

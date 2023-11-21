@@ -21,7 +21,6 @@
 #include "catapult/utils/TimeSpan.h"
 #include "tests/test/nodeps/Comparison.h"
 #include "tests/test/nodeps/Equality.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace utils {
 

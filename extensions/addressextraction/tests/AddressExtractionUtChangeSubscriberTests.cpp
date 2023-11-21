@@ -20,7 +20,6 @@
 
 #include "addressextraction/src/AddressExtractionUtChangeSubscriber.h"
 #include "addressextraction/tests/test/AddressExtractionSubscriberTestContext.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace addressextraction {
 

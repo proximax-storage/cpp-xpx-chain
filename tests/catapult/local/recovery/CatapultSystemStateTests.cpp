@@ -20,7 +20,6 @@
 
 #include "catapult/local/recovery/CatapultSystemState.h"
 #include "catapult/io/IndexFile.h"
-#include "catapult/io/RawFile.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 

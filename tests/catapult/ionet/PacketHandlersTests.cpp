@@ -18,10 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/ionet/PacketHandlers.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
 #include "tests/TestHarness.h"
-#include <memory>
 
 namespace catapult { namespace ionet {
 

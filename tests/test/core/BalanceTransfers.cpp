@@ -21,7 +21,6 @@
 #include "BalanceTransfers.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/utils/HexFormatter.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {

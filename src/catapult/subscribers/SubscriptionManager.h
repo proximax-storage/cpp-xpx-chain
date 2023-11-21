@@ -32,6 +32,8 @@
 
 namespace catapult { namespace config { class BlockchainConfiguration; } }
 
+namespace catapult::model { class TransactionFeeCalculator; };
+
 namespace catapult { namespace subscribers {
 
 	/// A manager for subscribing to notifications.
@@ -47,6 +49,9 @@ namespace catapult { namespace subscribers {
 	public:
 		/// Registers a block change subscriber (\a pSubscriber).
 		void addBlockChangeSubscriber(std::unique_ptr<io::BlockChangeSubscriber>&& pSubscriber);
+
+		/// Registers a post block commit subscriber (\a pSubscriber).
+		void addPostBlockCommitSubscriber(std::unique_ptr<io::BlockChangeSubscriber>&& pSubscriber);
 
 		/// Registers an unconfirmed transactions change subscriber (\a pSubscriber).
 		void addUtChangeSubscriber(std::unique_ptr<cache::UtChangeSubscriber>&& pSubscriber);
@@ -66,6 +71,9 @@ namespace catapult { namespace subscribers {
 	public:
 		/// Creates the block change subscriber.
 		std::unique_ptr<io::BlockChangeSubscriber> createBlockChangeSubscriber();
+
+		/// Creates the post block commit subscriber.
+		std::unique_ptr<io::BlockChangeSubscriber> createPostBlockCommitSubscriber();
 
 		/// Creates the ut change subscriber.
 		std::unique_ptr<cache::UtChangeSubscriber> createUtChangeSubscriber();
@@ -89,14 +97,18 @@ namespace catapult { namespace subscribers {
 
 		/// Creates the unconfirmed transactions cache with the specified cache \a options.
 		/// \note createUtChangeSubscriber cannot be called if this function is called.
-		std::unique_ptr<cache::MemoryUtCacheProxy> createUtCache(const cache::MemoryCacheOptions& options);
+		std::unique_ptr<cache::MemoryUtCacheProxy> createUtCache(
+				const cache::MemoryCacheOptions& options,
+				std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator);
 
 		/// Creates the partial transactions cache with the specified cache \a options.
 		/// \note createPtChangeSubscriber cannot be called if this function is called.
-		std::unique_ptr<cache::MemoryPtCacheProxy> createPtCache(const cache::MemoryCacheOptions& options);
+		std::unique_ptr<cache::MemoryPtCacheProxy> createPtCache(
+				const cache::MemoryCacheOptions& options,
+				std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator);
 
 	private:
-		enum class SubscriberType : uint32_t { BlockChange, UtChange, PtChange, TransactionStatus, StateChange, Node, Count };
+		enum class SubscriberType : uint32_t { BlockChange, UtChange, PtChange, TransactionStatus, StateChange, Node, PostBlockCommit, Count };
 
 	private:
 		void requireUnused(SubscriberType subscriberType) const;
@@ -108,6 +120,7 @@ namespace catapult { namespace subscribers {
 		std::array<bool, utils::to_underlying_type(SubscriberType::Count)> m_subscriberUsedFlags;
 
 		std::vector<std::unique_ptr<io::BlockChangeSubscriber>> m_blockChangeSubscribers;
+		std::vector<std::unique_ptr<io::BlockChangeSubscriber>> m_postBlockCommitSubscribers;
 		std::vector<std::unique_ptr<cache::UtChangeSubscriber>> m_utChangeSubscribers;
 		std::vector<std::unique_ptr<cache::PtChangeSubscriber>> m_ptChangeSubscribers;
 		std::vector<std::unique_ptr<TransactionStatusSubscriber>> m_transactionStatusSubscribers;

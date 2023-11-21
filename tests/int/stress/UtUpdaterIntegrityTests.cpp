@@ -22,17 +22,14 @@
 #include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/chain/UtUpdater.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
-#include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/TestHarness.h"
 #include <boost/thread.hpp>
 #include <plugins/txes/transfer/src/config/TransferConfiguration.h>
 #include "plugins/txes/mosaic/src/config/MosaicConfiguration.h"
 #include "tests/test/nodeps/MijinConstants.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace chain {
 
@@ -73,7 +70,8 @@ namespace catapult { namespace chain {
 		public:
 			UpdaterTestContext()
 					: m_pPluginManager(CreatePluginManager())
-					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
+					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2),
+									  std::make_shared<model::TransactionFeeCalculator>())
 					, m_cache(m_pPluginManager->createCache())
 					, m_updater(
 							m_transactionsCache,

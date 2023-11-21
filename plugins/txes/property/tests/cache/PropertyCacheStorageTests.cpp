@@ -20,12 +20,10 @@
 
 #include "src/cache/PropertyCacheStorage.h"
 #include "src/cache/PropertyCache.h"
-#include "src/model/PropertyTypes.h"
 #include "tests/test/AccountPropertiesTestUtils.h"
 #include "tests/test/cache/CacheStorageTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

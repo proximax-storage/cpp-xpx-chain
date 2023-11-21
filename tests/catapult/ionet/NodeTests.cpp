@@ -20,11 +20,7 @@
 
 #include "catapult/ionet/Node.h"
 #include "catapult/crypto/KeyUtils.h"
-#include "catapult/model/Address.h"
-#include "catapult/model/NetworkInfo.h"
 #include "tests/test/nodeps/Equality.h"
-#include "tests/TestHarness.h"
-#include <sstream>
 
 namespace catapult { namespace ionet {
 

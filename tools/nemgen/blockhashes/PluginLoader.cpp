@@ -19,7 +19,6 @@
 **/
 
 #include "PluginLoader.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/plugins/PluginLoader.h"
 
 namespace catapult { namespace tools { namespace nemgen {

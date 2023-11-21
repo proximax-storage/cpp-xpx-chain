@@ -20,8 +20,6 @@
 
 #include "catapult/utils/traits/StlTraits.h"
 #include "tests/TestHarness.h"
-#include <set>
-#include <unordered_set>
 
 namespace catapult { namespace utils {
 

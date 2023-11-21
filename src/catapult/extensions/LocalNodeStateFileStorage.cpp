@@ -22,11 +22,7 @@
 #include "LocalNodeChainScore.h"
 #include "LocalNodeStateRef.h"
 #include "NemesisBlockLoader.h"
-#include "catapult/cache/CacheStorage.h"
-#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/SupplementalDataStorage.h"
-#include "catapult/config/CatapultDataDirectory.h"
-#include "catapult/config/NodeConfiguration.h"
 #include "catapult/consumers/BlockChainSyncHandlers.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/io/BufferedFileStream.h"
@@ -34,6 +30,7 @@
 #include "catapult/io/IndexFile.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/utils/StackLogger.h"
+#include "plugins/txes/config/src/cache/NetworkConfigCache.h"
 
 namespace catapult { namespace extensions {
 
@@ -42,6 +39,7 @@ namespace catapult { namespace extensions {
 	namespace {
 		constexpr size_t Default_Loader_Batch_Size = 100'000;
 		constexpr auto Supplemental_Data_Filename = "supplemental.dat";
+		constexpr auto Network_Config_Filename = "activeconfig.dat";
 
 		std::string GetStorageFilename(const cache::CacheStorage& storage) {
 			return storage.name() + ".dat";
@@ -56,13 +54,21 @@ namespace catapult { namespace extensions {
 		return boost::filesystem::exists(directory.file(Supplemental_Data_Filename));
 	}
 
+	bool HasActiveNetworkConfig(const config::CatapultDirectory& directory) {
+		return boost::filesystem::exists(directory.file(Network_Config_Filename));
+	}
+
 	// endregion
 
 	// region LoadStateFromDirectory
 
 	namespace {
 		io::BufferedInputFileStream OpenInputStream(const config::CatapultDirectory& directory, const std::string& filename) {
-			return io::BufferedInputFileStream(io::RawFile(directory.file(filename), io::OpenMode::Read_Only));
+			auto filepath = directory.file(filename);
+			if (!boost::filesystem::exists(filepath))
+				return io::BufferedInputFileStream(io::RawFile(filepath, io::OpenMode::Read_Write));
+
+			return io::BufferedInputFileStream(io::RawFile(filepath, io::OpenMode::Read_Only));
 		}
 
 		bool LoadStateFromDirectory(
@@ -93,6 +99,20 @@ namespace catapult { namespace extensions {
 		}
 	}
 
+	const model::NetworkConfiguration LoadActiveNetworkConfig(const config::CatapultDirectory& directory) {
+		auto networkConfig = LoadActiveNetworkConfigString(directory);
+		auto stream = std::istringstream(networkConfig);
+		return model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(stream));
+	}
+	const std::string LoadActiveNetworkConfigString(const config::CatapultDirectory& directory) {
+		auto inputStream = OpenInputStream(directory, Network_Config_Filename);
+		auto size = io::Read16(inputStream);
+		std::string networkConfig;
+		networkConfig.resize(size);
+		io::Read(inputStream, MutableRawBuffer((uint8_t*)networkConfig.data(), networkConfig.size()));
+		return networkConfig;
+	}
+
 	StateHeights LoadStateFromDirectory(
 			const config::CatapultDirectory& directory,
 			const LocalNodeStateRef& stateRef,
@@ -114,7 +134,16 @@ namespace catapult { namespace extensions {
 		return heights;
 	}
 
+	const Height LoadLatestHeightFromDirectory(const config::CatapultDirectory& directory) {
+		auto inputStream = OpenInputStream(directory, Supplemental_Data_Filename);
+		cache::SupplementalData data;
+		Height rtHeight;
+		cache::LoadSupplementalData(inputStream, data, rtHeight);
+		return rtHeight;
+	}
+
 	// endregion
+
 
 	// region LocalNodeStateSerializer
 
@@ -123,12 +152,20 @@ namespace catapult { namespace extensions {
 			return io::BufferedOutputFileStream(io::RawFile(directory.file(filename), io::OpenMode::Read_Write));
 		}
 
+		void SaveActiveNetworkConfig(const std::string& networkConfig, const config::CatapultDirectory& directory, io::OutputStream& output) {
+			io::Write16(output, networkConfig.size());
+			io::Write(output, RawBuffer((uint8_t*)networkConfig.data(), networkConfig.size()));
+			output.flush();
+		}
+
 		void SaveStateToDirectory(
 				const config::CatapultDirectory& directory,
 				const std::vector<std::unique_ptr<const cache::CacheStorage>>& cacheStorages,
 				const state::CatapultState& state,
+
 				const model::ChainScore& score,
 				Height height,
+				const std::optional<state::NetworkConfigEntry>& config,
 				const consumer<const cache::CacheStorage&, io::OutputStream&>& save) {
 			// 1. create directory if required
 			if (!boost::filesystem::exists(directory.path()))
@@ -144,6 +181,14 @@ namespace catapult { namespace extensions {
 			cache::SupplementalData supplementalData{ state, score };
 			auto outputStream = OpenOutputStream(directory, Supplemental_Data_Filename);
 			cache::SaveSupplementalData(supplementalData, height, outputStream);
+
+			// 4. save active or to be active network configuration
+
+			if(config.has_value()) {
+				auto outputStream = OpenOutputStream(directory, Network_Config_Filename);
+				SaveActiveNetworkConfig(config->networkConfig(), directory, outputStream);
+			}
+
 		}
 	}
 
@@ -157,18 +202,40 @@ namespace catapult { namespace extensions {
 		auto cacheStorages = cache.storages();
 		auto cacheView = cache.createView();
 		auto height = cacheView.height();
-		SaveStateToDirectory(m_directory, cacheStorages, state, score, height, [&cacheView](const auto& storage, auto& outputStream) {
+		std::optional<state::NetworkConfigEntry> config;
+		if(!cacheStorages.empty()) {
+			auto& networkConfigCache = cache.sub<cache::NetworkConfigCache>();
+			auto networkConfigCacheView = networkConfigCache.createView(height+Height(1));
+			auto nextBlockConfig = networkConfigCacheView->FindConfigHeightAt(height+Height(1));
+			if(nextBlockConfig != Height(0)) {
+				auto configIter = networkConfigCacheView->find(nextBlockConfig).get();
+				config = std::make_optional(configIter);
+			}
+		}
+		SaveStateToDirectory(m_directory, cacheStorages, state, score, height, config, [&cacheView](const auto& storage, auto& outputStream) {
 			storage.saveAll(cacheView, outputStream);
 		});
 	}
 
 	void LocalNodeStateSerializer::save(
+			const cache::CatapultCache& cache,
 			const cache::CatapultCacheDelta& cacheDelta,
 			const std::vector<std::unique_ptr<const cache::CacheStorage>>& cacheStorages,
 			const state::CatapultState& state,
 			const model::ChainScore& score,
 			Height height) const {
-		SaveStateToDirectory(m_directory, cacheStorages, state, score, height, [&cacheDelta](const auto& storage, auto& outputStream) {
+		std::optional<state::NetworkConfigEntry> config;
+		// To allow for simpler tests.
+		if(!cacheStorages.empty()) {
+			auto& networkConfigCache = cache.sub<cache::NetworkConfigCache>();
+			auto networkConfigCacheView = networkConfigCache.createView(height+Height(1));
+			auto nextBlockConfig = networkConfigCacheView->FindConfigHeightAt(height+Height(1));
+			if(nextBlockConfig != Height(0)) {
+				auto configIter = networkConfigCacheView->find(nextBlockConfig).get();
+				config = std::make_optional(configIter);
+			}
+		}
+		SaveStateToDirectory(m_directory, cacheStorages, state, score, height, config, [&cacheDelta](const auto& storage, auto& outputStream) {
 			storage.saveSummary(cacheDelta, outputStream);
 		});
 	}
@@ -207,7 +274,7 @@ namespace catapult { namespace extensions {
 			auto cacheDetachedDelta = cacheDetachableDelta.detach();
 			auto pCacheDelta = cacheDetachedDelta.tryLock();
 
-			serializer.save(*pCacheDelta, storages, state, score, height);
+			serializer.save(cache, *pCacheDelta, storages, state, score, height);
 		} else {
 			serializer.save(cache, state, score);
 		}
