@@ -173,6 +173,10 @@ namespace catapult { namespace cache {
 		m_queuedRemoveByAddress.emplace(height, address);
 	}
 
+	void BasicAccountStateCacheDelta::forceRemove(const Address& address, Height height) {
+		remove(address, height);
+	}
+
 	void BasicAccountStateCacheDelta::queueRemove(const Key& publicKey, Height height) {
 		m_queuedRemoveByPublicKey.emplace(height, publicKey);
 	}

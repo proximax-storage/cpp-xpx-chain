@@ -134,6 +134,12 @@ namespace catapult { namespace cache {
 		/// information from the cache.
 		void queueRemove(const Key& publicKey, Height height);
 
+		/// If \a height matches the height at which account was added, removes account's \a address
+		/// information from the cache, therefore queuing complete removal of the account from the cache.
+		/// IMPORTANT: MUST only be used in rollbacks where it is absolutely guaranteed that the account was completely created
+		/// both the in the realm of public key and address in that specific observation of a transaction
+		void forceRemove(const Address& address, Height height);
+
 		/// Commits all queued removals.
 		void commitRemovals();
 

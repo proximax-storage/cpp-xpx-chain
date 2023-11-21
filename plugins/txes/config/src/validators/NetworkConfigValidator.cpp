@@ -42,11 +42,11 @@ namespace catapult { namespace validators {
 					if(notification.UpdateType == model::NetworkUpdateType::Delta)
 						height = Height{context.Height.unwrap() + notification.ApplyHeight};
 					else {
-						if(context.Height.unwrap() >= notification.ApplyHeight)
-							return Failure_NetworkConfig_ApplyHeight_In_The_Past;
 						height = Height(notification.ApplyHeight);
 					}
 				}
+				if(height <= context.Height)
+					return Failure_NetworkConfig_ApplyHeight_In_The_Past;
 				auto networkConfigIter = cache.find(height);
 				if (networkConfigIter.tryGet())
 					return Failure_NetworkConfig_Config_Redundant;

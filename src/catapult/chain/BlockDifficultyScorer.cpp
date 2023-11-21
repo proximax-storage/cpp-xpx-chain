@@ -39,7 +39,7 @@ namespace catapult { namespace chain {
 			const state::BlockDifficultyInfo& nextBlockInfo,
 			const model::NetworkConfiguration& config) {
 
-		if (config.BlockGenerationTargetTime.millis() == 0) {
+		if (config.BlockGenerationTargetTime.seconds() == 0) {
 			// if Block GenerationTarget Time is zero, it means, that we want generate blocks as fast as it is possible,
 			// so difficulty of each block must be the highest
 			return Difficulty(std::numeric_limits<uint64_t>::max());

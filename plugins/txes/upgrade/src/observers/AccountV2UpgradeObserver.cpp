@@ -72,8 +72,7 @@ namespace {
 			auto& newAccount = *cache::GetAccountStateByPublicKeyOrAddress(accountStateCache, notification.NewAccountPublicKey);
 			auto& originalAccount = *cache::GetAccountStateByPublicKeyOrAddress(accountStateCache, notification.Signer);
 			originalAccount = *newAccount.OldState;
-			accountStateCache.queueRemove(notification.NewAccountPublicKey, newAccount.PublicKeyHeight);
-			accountStateCache.commitRemovals();
+			accountStateCache.forceRemove(newAccount.Address, newAccount.AddressHeight);
 
 		}
 
