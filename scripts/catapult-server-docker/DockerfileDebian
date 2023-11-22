@@ -49,7 +49,7 @@ RUN rm mongo-cxx-driver-r3.6.7.tar.gz
 # install rocks db
 RUN git clone https://github.com/facebook/rocksdb.git && \
     cd rocksdb && \
-    git checkout v6.6.4 && \
+    git checkout 6.6.fb && \
     mkdir _build && cd _build && \
     cmake -DCMAKE_BUILD_TYPE=Release -DWITH_SNAPPY=1 -DWITH_TESTS=OFF -DWITH_BENCHMARK_TOOLS=OFF -DWITH_TOOLS=OFF -DFAIL_ON_WARNINGS=OFF -DWITH_RUNTIME_DEBUG=OFF -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
     make -j$(nproc) && \
