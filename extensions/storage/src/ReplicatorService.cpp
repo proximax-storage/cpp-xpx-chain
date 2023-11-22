@@ -736,8 +736,9 @@ namespace catapult { namespace storage {
 					CATAPULT_LOG(warning) << "endpoint not resolved " << host << ":" << port << " " << ec.message();
 				} else {
 					auto endpoint = result.begin()->endpoint();
+					auto udpEndpoint = boost::asio::ip::udp::endpoint{ endpoint.address(), endpoint.port() };
 					auto publicKey = node.identityKey().array();
-					bootstrapReplicators.emplace_back(sirius::drive::ReplicatorInfo{ endpoint, publicKey });
+					bootstrapReplicators.emplace_back(sirius::drive::ReplicatorInfo{ udpEndpoint, publicKey });
 				}
 			}
 

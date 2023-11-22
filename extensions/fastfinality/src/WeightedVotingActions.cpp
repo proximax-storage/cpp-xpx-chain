@@ -77,18 +77,15 @@ namespace catapult { namespace fastfinality {
 			const chain::CommitteeManager& committeeManager) {
 		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager]() {
 			TRY_GET_FSM()
-			
+
 			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
 			pFsmShared->resetChainSyncData();
 			pFsmShared->resetCommitteeData();
 
 			auto localHeight = lastBlockElementSupplier()->Block.Height;
-			bool isInDbrbSystem = pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::NetworkTime(), localHeight);
+			bool isInDbrbSystem = pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::NetworkTime(), localHeight, false);
 
-			std::vector<RemoteNodeState> remoteNodeStates;
-			{
-				remoteNodeStates = retriever().get();
-			}
+			std::vector<RemoteNodeState> remoteNodeStates = retriever();
 
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
@@ -118,15 +115,13 @@ namespace catapult { namespace fastfinality {
 				std::map<Hash256, std::pair<uint64_t, std::vector<Key>>> hashKeys;
 
 				for (const auto& state : remoteNodeStates) {
-					if (state.Height < chainSyncData.NetworkHeight) {
+					if (state.Height < chainSyncData.NetworkHeight)
 						break;
-					}
 
 					auto& pair = hashKeys[state.BlockHash];
 					pair.first += importanceGetter(state.NodeKey);
-					for (const auto& key : state.HarvesterKeys) {
+					for (const auto& key : state.HarvesterKeys)
 						pair.first += importanceGetter(key);
-					}
 					pair.second.push_back(state.NodeKey);
 				}
 
@@ -145,9 +140,8 @@ namespace catapult { namespace fastfinality {
 
 				for (const auto& state : remoteNodeStates) {
 					uint64_t importance = 0;
-					for (const auto& key : state.HarvesterKeys) {
+					for (const auto& key : state.HarvesterKeys)
 						importance += importanceGetter(key);
-					}
 					double alpha;
 					if (state.BlockHash != localBlockHash) {
 						alpha = 0;
@@ -165,6 +159,7 @@ namespace catapult { namespace fastfinality {
 					if (isInDbrbSystem) {
 						pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 					} else {
+						pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::NetworkTime(), localHeight, true);
 						DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 							TRY_GET_FSM()
 
@@ -406,7 +401,7 @@ namespace catapult { namespace fastfinality {
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto round = committeeData.committeeRound();
-			bool isInDbrbSystem = pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight());
+			bool isInDbrbSystem = pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight(), true);
 			if (!isInDbrbSystem) {
 				pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
 				return;

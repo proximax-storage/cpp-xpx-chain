@@ -19,7 +19,7 @@ namespace catapult { namespace dbrb {
 
 	class NodeRetreiver {
 	public:
-		explicit NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier, std::weak_ptr<net::PacketWriters> pWriters);
+		explicit NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier, const ProcessId& id, std::weak_ptr<net::PacketWriters> pWriters);
 
 	public:
 		void requestNodes(const std::set<ProcessId>& requestedIds);
@@ -31,7 +31,8 @@ namespace catapult { namespace dbrb {
 		const net::PacketIoPickerContainer& m_packetIoPickers;
 		std::map<ProcessId, SignedNode> m_nodes;
 		model::NetworkIdentifier m_networkIdentifier;
-		mutable std::mutex m_mutex;
+		ProcessId m_id;
 		std::weak_ptr<net::PacketWriters> m_pWriters;
+		mutable std::mutex m_mutex;
 	};
 }}

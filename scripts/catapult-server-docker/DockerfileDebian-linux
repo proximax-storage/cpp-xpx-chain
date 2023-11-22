@@ -1,3 +1,5 @@
+# For running nodes locally
+
 FROM debian:bookworm AS basic
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -171,12 +173,27 @@ RUN cp -r /catapult/_build/lib /deps/sirius/ && \
 #------------------------
 # Actual target image which only contains the required binaries
 #------------------------
-FROM debian:bookworm-slim
+FROM debian:bookworm
 
 # copy required libs
+RUN mkdir /sirius
 COPY --from=basic /deps/sirius/ /sirius/
-COPY --from=basic /deps/usr/ /usr/
-COPY --from=basic /deps/lib/ /lib/
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+   libboost-atomic-dev \
+   libboost-date-time-dev \
+   libboost-regex-dev \
+   libboost-system-dev \
+   libboost-timer-dev \
+   libboost-chrono-dev \
+   libboost-log-dev \
+   libboost-thread-dev \
+   libboost-filesystem-dev \
+   libboost-program-options-dev \
+   libboost-stacktrace-dev \
+   libboost-random-dev \
+   libzstd-dev \
+   librocksdb-dev
 
 # copy executables
 COPY --from=basic /catapult/_build/bin /sirius/bin

@@ -1,0 +1,58 @@
+FROM debian:bookworm
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  software-properties-common \
+  curl \
+  git \
+  build-essential \
+  cmake \
+  pkg-config \
+  libgtest-dev \
+  libbenchmark-dev \
+  librocksdb-dev \
+  libczmq-dev \
+  libsasl2-dev \
+  libssl-dev \
+  libboost-dev \
+  libboost-atomic-dev \
+  libboost-date-time-dev \
+  libboost-regex-dev \
+  libboost-system-dev \
+  libboost-timer-dev \
+  libboost-chrono-dev \
+  libboost-log-dev \
+  libboost-thread-dev \
+  libboost-filesystem-dev \
+  libboost-program-options-dev \
+  libboost-stacktrace-dev \
+  libboost-random-dev \
+  libmongoc-1.0-0 \
+  libmongoc-dev \
+  libzstd-dev \
+  googletest \
+  libzmq3-dev \
+  cppzmq-dev
+
+WORKDIR /usr/local/src
+
+# Install mongo-cxx
+RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.7/mongo-cxx-driver-r3.6.7.tar.gz && \
+  tar -xzf mongo-cxx-driver-r3.6.7.tar.gz && \
+  cd mongo-cxx-driver-r3.6.7/build && \
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBSONCXX_POLY_USE_BOOST=1 .. && \
+  make -j$(nproc) && \
+  make install
+
+# Clean Downloads
+RUN rm mongo-cxx-driver-r3.6.7.tar.gz
+
+# Copy local directory to image
+# COPY . /catapult
+
+RUN echo
+
+# sirius.bc as the entry point
+ENTRYPOINT ["/bin/bash"]
+
+# set the config directory by default
+CMD ["/chainconfig"]
