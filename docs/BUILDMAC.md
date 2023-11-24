@@ -176,6 +176,7 @@ If there are still issues:
 ```sh
 git clone https://github.com/proximax-storage/cpp-xpx-chain.git
 cd cpp-xpx-chain
+git submodule update --init --remote --recursive
 
 mkdir _build && cd _build
 cmake -DCMAKE_BUILD_TYPE=Release
