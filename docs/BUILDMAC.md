@@ -127,19 +127,26 @@ sudo rm -R cppzmq.git
 
 ### Rocks
 
-rocks
+Working version is v8.5.3. But the newest could OK too. If there are issues with newer version return to the v8.5.3.
+
+Use homebrew
+```sh
+brew install rocksdb
+```
+
+Or install from source
 
 ```sh
-git clone https://github.com/nemtech/rocksdb.git rocksdb.git
-cd rocksdb.git
-git checkout v6.6.4-nem
+git clone https://github.com/facebook/rocksdb.git
+cd rocksdb
+git checkout v8.5.3
 
 mkdir _build && cd _build
 cmake -DCMAKE_BUILD_TYPE=Release -DWITH_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SNAPPY=1 ..
 make
 sudo make install
 cd ../..
-sudo rm -R rocksdb.git
+sudo rm -R rocksdb
 ```
 
 ### Openssl
