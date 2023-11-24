@@ -9,8 +9,8 @@
 
 namespace catapult { namespace dbrb {
 
-	bool QuorumManager::update(const AcknowledgedMessage& message) {
-		CATAPULT_LOG(debug) << "[DBRB] QUORUM: Received ACKNOWLEDGED message in view " << message.View << ".";
+	bool QuorumManager::update(const AcknowledgedMessage& message, ionet::PacketType payloadType) {
+		CATAPULT_LOG(trace) << "[DBRB] QUORUM: Received ACKNOWLEDGED message in view " << message.View << ".";
 		auto& set = AcknowledgedPayloads[message.View];
 		const auto& payloadHash = message.PayloadHash;
 		set.emplace(message.Sender, payloadHash);
@@ -20,19 +20,16 @@ namespace catapult { namespace dbrb {
 		});
 
 		const auto triggered = (acknowledgedCount == message.View.quorumSize());
-		CATAPULT_LOG(debug) << "[DBRB] QUORUM: ACK quorum status is " << acknowledgedCount << "/"
-							<< message.View.quorumSize() << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
+		CATAPULT_LOG(debug) << "[DBRB] QUORUM: ACKNOWLEDGE " << payloadType << " quorum status is " << acknowledgedCount << "/" << message.View.quorumSize() << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
 
 		return triggered;
 	}
 
-	bool QuorumManager::update(const DeliverMessage& message) {
+	bool QuorumManager::update(const DeliverMessage& message, ionet::PacketType payloadType) {
 		auto& set = DeliveredProcesses[message.View];
 		if (set.emplace(message.Sender).second) {
 			bool triggered = set.size() == message.View.quorumSize();
-			CATAPULT_LOG(debug) << "[DBRB] QUORUM: DELIVER quorum status is " << set.size() << "/"
-								<< message.View.quorumSize()
-								<< (triggered ? " (TRIGGERED)." : " (NOT triggered).");
+			CATAPULT_LOG(debug) << "[DBRB] QUORUM: DELIVER " << payloadType << " quorum status is " << set.size() << "/" << message.View.quorumSize() << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
 			return triggered;
 		} else {
 			return false;

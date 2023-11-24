@@ -1,4 +1,4 @@
-FROM debian:bullseye AS basic
+FROM debian:bookworm
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
   software-properties-common \
@@ -30,19 +30,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libmongoc-dev \
   libzstd-dev \
   googletest \
-  libzmq3-dev
+  libzmq3-dev \
+  cppzmq-dev
 
 WORKDIR /usr/local/src
-
-# Install cppzmq
-RUN curl -OL https://github.com/zeromq/cppzmq/archive/v4.9.0.tar.gz && \
-  tar xzf v4.9.0.tar.gz && \
-  cd cppzmq-4.9.0 && \
-  mkdir build && \
-  cd build && \
-  cmake -DCPPZMQ_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
-  make -j$(nproc) && \
-  make install
 
 # Install mongo-cxx
 RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.7/mongo-cxx-driver-r3.6.7.tar.gz && \
@@ -53,7 +44,7 @@ RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.
   make install
 
 # Clean Downloads
-RUN rm v4.9.0.tar.gz mongo-cxx-driver-r3.6.7.tar.gz
+RUN rm mongo-cxx-driver-r3.6.7.tar.gz
 
 # Copy local directory to image
 COPY . /catapult
@@ -180,18 +171,34 @@ RUN cp -r /catapult/_build/lib /deps/sirius/ && \
 #------------------------
 # Actual target image which only contains the required binaries
 #------------------------
-FROM debian:bullseye-slim
+#FROM debian:bookworm
 
 # copy required libs
-COPY --from=basic /deps/sirius/ /sirius/
-COPY --from=basic /deps/usr/ /usr/
-COPY --from=basic /deps/lib/ /lib/
+#COPY --from=0 /deps /
+
+# RUN apt-get update && apt-get install --no-install-recommends -y \
+#   libboost-atomic-dev \
+#   libboost-date-time-dev \
+#   libboost-regex-dev \
+#   libboost-system-dev \
+#   libboost-timer-dev \
+#   libboost-chrono-dev \
+#   libboost-log-dev \
+#   libboost-thread-dev \
+#   libboost-filesystem-dev \
+#   libboost-program-options-dev \
+#   libboost-stacktrace-dev \
+#   libboost-random-dev \
+#   libzstd-dev \
+#   librocksdb6.11 
 
 # copy executables
-COPY --from=basic /catapult/_build/bin /sirius/bin
+#COPY --from=0 /catapult/_build/bin /sirius/bin
+
+WORKDIR /deps
 
 # sirius.bc as the entry point
-ENTRYPOINT ["/sirius/bin/sirius.bc"]
+ENTRYPOINT ["/catapult/_build/bin/sirius.bc"]
 
 # set the config directory by default
-CMD ["/chainconfig"]
+CMD ["../chainconfig"]

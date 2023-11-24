@@ -6,6 +6,7 @@
 
 #include "WeightedVotingCommitteeManager.h"
 #include "src/config/CommitteeConfiguration.h"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace chain {
 
@@ -84,7 +85,7 @@ namespace catapult { namespace chain {
 			for (const auto& pair : accounts) {
 				const auto& data = pair.second;
 				CATAPULT_LOG_LEVEL(utils::LogLevel::Trace) << "committee account " << pair.first << " data: "
-					<< CalculateWeight(data) << "|" << data.Activity << data.Greed << "|" << data.LastSigningBlockHeight << "|"
+					<< CalculateWeight(data) << "|" << data.Activity << "|" << data.Greed << "|" << data.LastSigningBlockHeight << "|"
 					<< data.CanHarvest << "|" << data.EffectiveBalance;
 			}
 		}
@@ -96,12 +97,44 @@ namespace catapult { namespace chain {
 
 			CATAPULT_LOG_LEVEL(utils::LogLevel::Trace) << "committee account " << key << ": activity " << activity << ", weight " << CalculateWeight(data);
 		}
+
+		void LogProcess(const char* prefix, const Key& process, const Timestamp& timestamp, std::ostringstream& out) {
+			auto time = std::chrono::system_clock::to_time_t(utils::ToTimePoint(timestamp));
+			char buffer[40];
+			std::strftime(buffer, 40 ,"%F %T", std::localtime(&time));
+			out << std::endl << prefix << process << " expires at: " << buffer;
+		}
+
+		void LogHarvesters(const cache::AccountMap& accounts) {
+			std::ostringstream out;
+			out << std::endl << "Harvesters (" << accounts.size() << "):";
+			for (const auto& [ key, data ] : accounts)
+				LogProcess("harvester ", key, data.ExpirationTime, out);
+
+			CATAPULT_LOG(trace) << out.str();
+		}
+
+		void LogCommittee(const cache::AccountMap& accounts, const Committee& committee) {
+			std::ostringstream out;
+			out << std::endl << "Committee (" << committee.Cosigners.size() + 1u << "):";
+			LogProcess("block proposer ", committee.BlockProposer, accounts.at(committee.BlockProposer).ExpirationTime, out);
+			for (const auto& key : committee.Cosigners)
+				LogProcess("committee member ", key, accounts.at(key).ExpirationTime, out);
+
+			CATAPULT_LOG(debug) << out.str();
+		}
 	}
 
-	WeightedVotingCommitteeManager::WeightedVotingCommitteeManager(const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector)
+	void WeightedVotingCommitteeManager::logCommittee() const {
+		LogHarvesters(m_accounts);
+		LogCommittee(m_accounts, m_committee);
+	}
+
+	WeightedVotingCommitteeManager::WeightedVotingCommitteeManager(std::shared_ptr<cache::CommitteeAccountCollector> pAccountCollector)
 		: m_pHasher(std::make_unique<DefaultHasher>())
-		, m_pAccountCollector(pAccountCollector)
+		, m_pAccountCollector(std::move(pAccountCollector))
 		, m_accounts(m_pAccountCollector->accounts())
+		, m_phaseTime(0u)
 	{}
 
 	void WeightedVotingCommitteeManager::reset() {
@@ -130,6 +163,8 @@ namespace catapult { namespace chain {
 		auto pLastBlockElement = lastBlockElementSupplier()();
 		if (previousRound < 0) {
 			m_phaseTime = pLastBlockElement->Block.committeePhaseTime();
+			if (!m_phaseTime)
+				m_phaseTime = networkConfig.CommitteePhaseTime.millis();
 			m_timestamp = pLastBlockElement->Block.Timestamp;
 			LogAccountData(m_accounts);
 		} else {

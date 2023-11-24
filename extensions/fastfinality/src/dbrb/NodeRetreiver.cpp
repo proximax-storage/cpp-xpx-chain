@@ -61,9 +61,10 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	NodeRetreiver::NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier, std::weak_ptr<net::PacketWriters> pWriters)
+	NodeRetreiver::NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier, const ProcessId& id, std::weak_ptr<net::PacketWriters> pWriters)
 		: m_packetIoPickers(packetIoPickers)
 		, m_networkIdentifier(networkIdentifier)
+		, m_id(id)
 		, m_pWriters(std::move(pWriters))
 	{}
 
@@ -121,30 +122,22 @@ namespace catapult { namespace dbrb {
 		for (const auto& signedNode : nodes) {
 			const auto& id = signedNode.Node.identityKey();
 			auto iter = m_nodes.find(id);
-			if (iter != m_nodes.end() && iter->second.Signature == signedNode.Signature && iter->second.Node.endpoint().Host == signedNode.Node.endpoint().Host &&
-				iter->second.Node.endpoint().Port == signedNode.Node.endpoint().Port)
+			if (iter == m_nodes.end() || iter->second.Signature != signedNode.Signature || iter->second.Node.endpoint().Host != signedNode.Node.endpoint().Host || iter->second.Node.endpoint().Port != signedNode.Node.endpoint().Port) {
+				m_nodes[id] = signedNode;
+				CATAPULT_LOG(debug) << "[DBRB] Added node " << signedNode.Node;
+			}
+
+			if (id == m_id)
 				continue;
 
 			auto pWriters = m_pWriters.lock();
 			if (pWriters) {
-				bool notConnected = true;
 				auto identities = pWriters->identities();
-				for (const auto& identityKey : identities) {
-					if (signedNode.Node.identityKey() == identityKey) {
-						notConnected = false;
-						break;
-					}
-				}
-
-				if (notConnected) {
-					m_nodes[id] = signedNode;
-					CATAPULT_LOG(debug) << "[DBRB] Added node " << signedNode.Node;
-					if (!signedNode.Node.endpoint().Host.empty()) {
-						CATAPULT_LOG(debug) << "[DBRB] Connecting to " << signedNode.Node;
-						pWriters->connect(signedNode.Node, [node = signedNode.Node](const auto& result) {
-							CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[DBRB] connection attempt to " << node << " completed with " << result.Code;
-						});
-					}
+				if ((identities.find(id) == identities.cend()) && !signedNode.Node.endpoint().Host.empty()) {
+					CATAPULT_LOG(debug) << "[DBRB] Connecting to " << signedNode.Node;
+					pWriters->connect(signedNode.Node, [node = signedNode.Node](const auto& result) {
+						CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[DBRB] connection attempt to " << node << " completed with " << result.Code;
+					});
 				}
 			}
 		}

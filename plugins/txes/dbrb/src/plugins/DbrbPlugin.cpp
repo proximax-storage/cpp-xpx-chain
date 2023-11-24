@@ -47,10 +47,10 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateAddDbrbProcessValidator());
 		});
 
-		manager.addObserverHook([pDbrbViewFetcher](auto& builder) {
+		manager.addObserverHook([](auto& builder) {
 			builder
 				.add(observers::CreateAddDbrbProcessObserver())
-				.add(observers::CreateDbrbProcessPruningObserver(pDbrbViewFetcher));
+				.add(observers::CreateDbrbProcessPruningObserver());
 		});
 	}
 }}

@@ -15,7 +15,10 @@ pipeline {
 	stages {
         stage ('Multi-architecture Docker Build and Push'){
             when {
-                tag 'v*-bullseye'
+                anyOf {
+                    tag 'v*-bookworm';
+                    tag 'v*-bullseye'
+                }
             }
             parallel {
                 stage('Build on AMD64'){
