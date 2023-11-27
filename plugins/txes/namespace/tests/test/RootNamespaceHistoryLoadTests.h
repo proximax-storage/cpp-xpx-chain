@@ -37,18 +37,20 @@ namespace catapult { namespace test {
 	/// Root namespace header.
 	struct RootNamespaceHeader {
 	public:
-		RootNamespaceHeader(const Key& owner, Height lifetimeStart, Height lifetimeEnd, uint64_t numChildren)
+		RootNamespaceHeader(const Key& owner, Height lifetimeStart, Height lifetimeEnd, uint64_t numChildren, BlockDuration graceperiod = BlockDuration(0))
 				: Owner(owner)
 				, LifetimeStart(lifetimeStart)
 				, LifetimeEnd(lifetimeEnd)
 				, AliasType(state::AliasType::None)
 				, NumChildren(numChildren)
+				, GracePeriod(graceperiod)
 		{}
 
 	public:
 		Key Owner;
 		Height LifetimeStart;
 		Height LifetimeEnd;
+		BlockDuration GracePeriod;
 		state::AliasType AliasType;
 		uint64_t NumChildren;
 	};

@@ -21,16 +21,22 @@
 #include "Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/validators/ValidatorContext.h"
+#include "catapult/cache_core/AccountStateCacheUtils.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::NewRemoteAccountNotification<1>;
-
-	DEFINE_STATEFUL_VALIDATOR(NewRemoteAccountAvailability, [](const auto& notification, const auto& context) {
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(NewRemoteAccountAvailability, model::NewRemoteAccountNotification<1>, [](const model::NewRemoteAccountNotification<1>& notification, const auto& context) {
 		const auto& cache = context.Cache.template sub<cache::AccountStateCache>();
 		auto remoteAccountStateIter = cache.find(notification.RemoteAccountKey);
 		return !remoteAccountStateIter.tryGet() || state::AccountType::Remote_Unlinked == remoteAccountStateIter.get().AccountType
 				? ValidationResult::Success
 				: Failure_AccountLink_Remote_Account_Ineligible;
 	});
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(NewRemoteAccountAvailabilityV2, model::NewRemoteAccountNotification<2>, [](const model::NewRemoteAccountNotification<2>& notification, const auto& context) {
+		const auto& cache = context.Cache.template sub<cache::AccountStateCache>();
+		auto remoteAccountStateIter = cache::FindAccountStateByPublicKeyOrAddress(cache, notification.RemoteAccountKey);
+		return !remoteAccountStateIter || state::AccountType::Remote_Unlinked == remoteAccountStateIter->AccountType
+					   ? ValidationResult::Success
+					   : Failure_AccountLink_Remote_Account_Ineligible;
+	})
 }}

@@ -32,8 +32,8 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS AccountLinkTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AccountLink, 2, 2,)
-		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 2);
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AccountLink, 3, 3,)
+		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 3);
 	}
 
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_Account_Link)
@@ -64,7 +64,7 @@ namespace catapult { namespace plugins {
 		test::FillWithRandomData(transaction.Signer);
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 		transaction.LinkAction = AccountLinkAction::Link;
-		transaction.Version = 0x2;
+		transaction.Version = 0x3;
 		transaction.Size = sizeof(transaction);
 
 		// Act:
@@ -84,7 +84,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanExtractNewRemoteAccount) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<NewRemoteAccountNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<NewRemoteAccountNotification<2>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
@@ -92,7 +92,7 @@ namespace catapult { namespace plugins {
 		test::FillWithRandomData(transaction.Signer);
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 		transaction.LinkAction = AccountLinkAction::Link;
-		transaction.Version = 0x2;
+		transaction.Version = 0x3;
 		transaction.Size = sizeof(transaction);
 
 		// Act:

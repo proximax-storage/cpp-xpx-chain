@@ -689,8 +689,8 @@ namespace catapult { namespace state {
 		};
 	}
 
-	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_TESTS(LoadTraits<FullTraits>,,1)
-	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_NON_EMPTY_TESTS(LoadTraits<NonHistoricalTraits>, _NonHistorical,1)
+	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_TESTS(LoadTraits<FullTraits>,,2)
+	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_NON_EMPTY_TESTS(LoadTraits<NonHistoricalTraits>, _NonHistorical,2)
 
 	// endregion
 }}

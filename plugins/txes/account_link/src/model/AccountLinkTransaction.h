@@ -29,7 +29,7 @@ namespace catapult { namespace model {
 
 	/// Binary layout for an account link transaction body.
 	template<typename THeader>
-	struct AccountLinkTransactionBody : public AccountLinkBaseTransaction<THeader, Key, Entity_Type_Account_Link, 2> {};
+	struct AccountLinkTransactionBody : public AccountLinkBaseTransaction<THeader, Key, Entity_Type_Account_Link, 3> {};
 
 	DEFINE_EMBEDDABLE_TRANSACTION(AccountLink)
 

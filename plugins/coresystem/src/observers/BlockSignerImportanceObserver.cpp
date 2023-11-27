@@ -29,9 +29,9 @@ namespace catapult { namespace observers {
 		using Notification = model::BlockSignerImportanceNotification<1>;
 		void ObserveNotification(const Notification& notification, ObserverContext& context)
 		{
-			auto& cache = context.Cache.sub<cache::AccountStateCache>();
 			if (NotifyMode::Commit == context.Mode)
 			{
+				auto& cache = context.Cache.sub<cache::AccountStateCache>();
 				auto accountStateOpt = cache::FindAccountStateByPublicKeyOrAddress(cache.asReadOnly(), notification.Signer);
 				const auto& config = context.Config;
 				auto balances = accountStateOpt->Balances.getCompoundEffectiveBalance(context.Height, config.Network.ImportanceGrouping);

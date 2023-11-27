@@ -246,7 +246,7 @@ namespace catapult { namespace cache {
 		};
 	}
 
-	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_TESTS(LoadTraits,,1)
+	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_TESTS(LoadTraits,,2)
 
 	// endregion
 
@@ -383,22 +383,22 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanPurgeHistoryWithDepthOneWithoutChildren) {
 		// Assert:
-		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthOneWithoutChildren(VersionType{1});
+		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthOneWithoutChildren(VersionType{2});
 	}
 
 	TEST(TEST_CLASS, CanPurgeHistoryWithDepthOneWithChildren) {
 		// Assert:
-		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthOneWithChildren(VersionType{1});
+		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthOneWithChildren(VersionType{2});
 	}
 
 	TEST(TEST_CLASS, CanPurgeHistoryWithDepthGreaterThanOneSameOwner) {
 		// Assert:
-		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthGreaterThanOneSameOwner(VersionType{1});
+		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthGreaterThanOneSameOwner(VersionType{2});
 	}
 
 	TEST(TEST_CLASS, CanPurgeHistoryWithDepthGreaterThanOneDifferentOwner) {
 		// Assert:
-		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthGreaterThanOneDifferentOwner(VersionType{1});
+		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthGreaterThanOneDifferentOwner(VersionType{2});
 	}
 
 	// endregion

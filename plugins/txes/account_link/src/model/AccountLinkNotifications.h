@@ -36,6 +36,9 @@ namespace catapult { namespace model {
 	/// New remote account was created.
 	DEFINE_ACCOUNT_LINK_NOTIFICATION(New_Remote_Account_v1, 0x002, Validator);
 
+	/// New remote account was created.
+	DEFINE_ACCOUNT_LINK_NOTIFICATION(New_Remote_Account_v2, 0x006, Validator);
+
 	/// Account was un/linked to a node.
 	DEFINE_ACCOUNT_LINK_NOTIFICATION(Node, 0x003, All);
 
@@ -79,6 +82,24 @@ namespace catapult { namespace model {
 		explicit NewRemoteAccountNotification(const Key& remoteAccountKey)
 				: Notification(Notification_Type, sizeof(NewRemoteAccountNotification<1>))
 				, RemoteAccountKey(remoteAccountKey)
+		{}
+
+	public:
+		/// Remote account key.
+		const Key& RemoteAccountKey;
+	};
+
+	template<>
+	struct NewRemoteAccountNotification<2> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = AccountLink_New_Remote_Account_v2_Notification;
+
+	public:
+		/// Creates a notification around \a remoteAccountKey.
+		explicit NewRemoteAccountNotification(const Key& remoteAccountKey)
+			: Notification(Notification_Type, sizeof(NewRemoteAccountNotification<2>))
+			, RemoteAccountKey(remoteAccountKey)
 		{}
 
 	public:

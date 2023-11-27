@@ -52,6 +52,7 @@ namespace catapult { namespace plugins {
 				return {
 					"RemoteInteractionValidator",
 					"NewRemoteAccountAvailabilityValidator",
+					"NewRemoteAccountAvailabilityV2Validator",
 					"RemoteSenderValidator",
 					"AccountLinkAvailabilityValidator",
 					"NodeKeyLinkValidator",

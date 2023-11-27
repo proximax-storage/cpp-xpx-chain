@@ -64,6 +64,7 @@ namespace catapult { namespace plugins {
 			builder
 				.add(validators::CreateAccountLinkAvailabilityValidator())
 				.add(validators::CreateNewRemoteAccountAvailabilityValidator())
+				.add(validators::CreateNewRemoteAccountAvailabilityV2Validator())
 				.add(validators::CreateRemoteSenderValidator())
 				.add(validators::CreateRemoteInteractionValidator())
 		  		.add(keylink::CreateKeyLinkValidator<model::NodeAccountLinkNotification<1>, NodeKeyAccessor>("Node"))

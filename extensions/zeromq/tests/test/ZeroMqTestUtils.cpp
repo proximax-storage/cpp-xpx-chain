@@ -210,8 +210,16 @@ namespace catapult { namespace test {
 		for (size_t i = 0u; i < types.size(); ++i) {
 			ZmqReceive(message, zmqSocket);
 
-			const auto* pTypeData = reinterpret_cast<const uint8_t*>(message[0].data()) + 1;
-			const auto& type = reinterpret_cast<const model::EntityType&>(*pTypeData);
+			const auto pTypeData = *reinterpret_cast<const uint16_t*>(reinterpret_cast<const uint8_t*>(message[0].data()) + 1);
+			uint16_t type_t;
+#ifdef IS_BIG_ENDIAN
+			type = reinterpret_cast<const uint16_t&>(*pTypeData);
+#else
+			type_t = (pTypeData >> 8) & 0xFF;
+			type_t |= (pTypeData << 8) & 0xFF00;
+#endif
+
+			auto type = static_cast<model::EntityType>(type_t);
 			EXPECT_EQ(1u, typesCopy.erase(type)) << "type " << type;
 
 			auto topic = CreateTopic(marker, type);

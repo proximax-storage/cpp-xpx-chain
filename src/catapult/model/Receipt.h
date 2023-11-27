@@ -83,10 +83,10 @@ namespace catapult { namespace model {
 		catapult::Amount Amount;
 	};
 
-	/// Binary layout for an amount receipt to record the total locked harvesting mosaic
+	/// Binary layout for a global state change receipt
 	struct GlobalStateChangeReceipt : public Receipt {
 	public:
-		/// Creates a receipt around \a amount and \a lockedAmount.
+		/// Creates a receipt around \a flags.
 		GlobalStateChangeReceipt(
 				ReceiptType receiptType,
 				model::StateChangeFlags flags)
