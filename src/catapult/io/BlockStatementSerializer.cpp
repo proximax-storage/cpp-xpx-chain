@@ -79,11 +79,12 @@ namespace catapult { namespace io {
 		}
 	}
 
-	void ReadBlockStatement(InputStream& inputStream, model::BlockStatement& blockStatement) {
+	void ReadBlockStatement(InputStream& inputStream, model::BlockStatement& blockStatement, const VersionType& version) {
 		ReadStatements(inputStream, blockStatement.TransactionStatements);
 		ReadStatements(inputStream, blockStatement.AddressResolutionStatements);
 		ReadStatements(inputStream, blockStatement.MosaicResolutionStatements);
 		ReadStatements(inputStream, blockStatement.PublicKeyStatements);
+		ReadStatements(inputStream, blockStatement.BlockchainStateStatements);
 	}
 
 	namespace {
@@ -117,10 +118,12 @@ namespace catapult { namespace io {
 		}
 	}
 
-	void WriteBlockStatement(OutputStream& outputStream, const model::BlockStatement& blockStatement) {
+	void WriteBlockStatement(OutputStream& outputStream, const model::BlockStatement& blockStatement, const VersionType& version) {
 		WriteStatements(outputStream, blockStatement.TransactionStatements);
 		WriteStatements(outputStream, blockStatement.AddressResolutionStatements);
 		WriteStatements(outputStream, blockStatement.MosaicResolutionStatements);
 		WriteStatements(outputStream, blockStatement.PublicKeyStatements);
+		if(version >= 4)
+			WriteStatements(outputStream, blockStatement.BlockchainStateStatements);
 	}
 }}

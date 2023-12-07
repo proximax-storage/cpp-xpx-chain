@@ -38,7 +38,7 @@ namespace catapult { namespace filespooling {
 				io::WriteBlockElement(*m_pOutputStream, blockElement);
 				if (blockElement.OptionalStatement) {
 					io::Write8(*m_pOutputStream, 0xFF);
-					io::WriteBlockStatement(*m_pOutputStream, *blockElement.OptionalStatement);
+					io::WriteBlockStatement(*m_pOutputStream, *blockElement.OptionalStatement, blockElement.Block.Version);
 				} else {
 					io::Write8(*m_pOutputStream, 0);
 				}

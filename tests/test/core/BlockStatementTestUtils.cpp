@@ -22,6 +22,7 @@
 #include "mocks/MockMemoryStream.h"
 #include "mocks/MockReceipt.h"
 #include "catapult/io/BlockStatementSerializer.h"
+#include "catapult/model/Block.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -86,7 +87,7 @@ namespace catapult { namespace test {
 	std::vector<uint8_t> SerializeBlockStatement(const model::BlockStatement& blockStatement) {
 		std::vector<uint8_t> serialized;
 		mocks::MockMemoryStream stream(serialized);
-		io::WriteBlockStatement(stream, blockStatement);
+		io::WriteBlockStatement(stream, blockStatement, model::Block::Current_Version);
 		return serialized;
 	}
 

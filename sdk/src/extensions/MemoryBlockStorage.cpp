@@ -167,8 +167,9 @@ namespace catapult { namespace extensions {
 
 	std::pair<std::vector<uint8_t>, bool> MemoryBlockStorage::loadBlockStatementData(Height height) const {
 		requireHeight(height, "block statement data");
+		auto blockIter = m_blocks.find(height);
 		auto iter = m_blockStatements.find(height);
-		if (m_blockStatements.end() == iter)
+		if (m_blocks.cend() == blockIter || m_blockStatements.end() == iter)
 			CATAPULT_THROW_INVALID_ARGUMENT_1("block statement not found at height", height);
 		auto pBlockStatement = iter->second;
 		if (!pBlockStatement)
@@ -176,7 +177,7 @@ namespace catapult { namespace extensions {
 
 		std::vector<uint8_t> serialized;
 		BufferOutputStream stream(serialized);
-		io::WriteBlockStatement(stream, *pBlockStatement);
+		io::WriteBlockStatement(stream, *pBlockStatement, blockIter->second->Version);
 		return std::make_pair(std::move(serialized), true);
 	}
 

@@ -21,6 +21,7 @@
 #include "catapult/io/BlockStatementSerializer.h"
 #include "tests/test/core/BlockStatementTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
+#include "catapult/model/Block.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace io {
@@ -139,7 +140,7 @@ namespace catapult { namespace io {
 		void PrepareOnlyHomogenousStatementsTest(bool shouldOrder, TAction action, TSetSizes setSizes) {
 			// Arrange:
 			size_t statementsSize = sizeof(TZeroEntryStatement) + 2 * sizeof(TTwoEntryStatement);
-			std::vector<uint8_t> buffer(4 * sizeof(uint32_t) + statementsSize);
+			std::vector<uint8_t> buffer(5 * sizeof(uint32_t) + statementsSize);
 			test::FillWithRandomData(buffer);
 			auto offset = setSizes(buffer, statementsSize);
 
@@ -169,6 +170,7 @@ namespace catapult { namespace io {
 				reinterpret_cast<uint32_t&>(buffer[sizeof(uint32_t) + statementsSize]) = 0;
 				reinterpret_cast<uint32_t&>(buffer[2 * sizeof(uint32_t) + statementsSize]) = 0;
 				reinterpret_cast<uint32_t&>(buffer[3 * sizeof(uint32_t) + statementsSize]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[4 * sizeof(uint32_t) + statementsSize]) = 0;
 				return sizeof(uint32_t);
 			});
 		}
@@ -187,6 +189,7 @@ namespace catapult { namespace io {
 				reinterpret_cast<uint32_t&>(buffer[sizeof(uint32_t)]) = 3;
 				reinterpret_cast<uint32_t&>(buffer[2 * sizeof(uint32_t) + statementsSize]) = 0;
 				reinterpret_cast<uint32_t&>(buffer[3 * sizeof(uint32_t) + statementsSize]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[4 * sizeof(uint32_t) + statementsSize]) = 0;
 				return 2 * sizeof(uint32_t);
 			});
 		}
@@ -203,7 +206,42 @@ namespace catapult { namespace io {
 				reinterpret_cast<uint32_t&>(buffer[sizeof(uint32_t)]) = 0;
 				reinterpret_cast<uint32_t&>(buffer[2 * sizeof(uint32_t)]) = 3;
 				reinterpret_cast<uint32_t&>(buffer[3 * sizeof(uint32_t) + statementSize]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[4 * sizeof(uint32_t) + statementSize]) = 0;
 				return 3 * sizeof(uint32_t);
+			});
+		}
+
+		template<typename TAction>
+		void PrepareOnlyPublicKeyResolutionsTest(bool shouldOrder, TAction action) {
+			// Arrange:
+			using ZeroEntryStatement = ResolutionStatementWithZeroEntries<UnresolvedMosaicId>;
+			using TwoEntryStatement = ResolutionStatementWithTwoEntries<UnresolvedMosaicId, MosaicId>;
+
+			// Act + Assert:
+			PrepareOnlyHomogenousStatementsTest<ZeroEntryStatement, TwoEntryStatement>(shouldOrder, action, [](auto& buffer, auto statementSize) {
+				reinterpret_cast<uint32_t&>(buffer[0]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[sizeof(uint32_t)]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[2 * sizeof(uint32_t)]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[3 * sizeof(uint32_t)]) = 3;
+				reinterpret_cast<uint32_t&>(buffer[4 * sizeof(uint32_t) + statementSize]) = 0;
+				return 4 * sizeof(uint32_t);
+			});
+		}
+
+		template<typename TAction>
+		void PrepareOnlyBlockchainStateResolutionsTest(bool shouldOrder, TAction action) {
+			// Arrange:
+			using ZeroEntryStatement = ResolutionStatementWithZeroEntries<UnresolvedMosaicId>;
+			using TwoEntryStatement = ResolutionStatementWithTwoEntries<UnresolvedMosaicId, MosaicId>;
+
+			// Act + Assert:
+			PrepareOnlyHomogenousStatementsTest<ZeroEntryStatement, TwoEntryStatement>(shouldOrder, action, [](auto& buffer, auto statementSize) {
+				reinterpret_cast<uint32_t&>(buffer[0]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[sizeof(uint32_t)]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[2 * sizeof(uint32_t)]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[3 * sizeof(uint32_t)]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[4 * sizeof(uint32_t)]) = 3;
+				return 5 * sizeof(uint32_t);
 			});
 		}
 
@@ -215,14 +253,14 @@ namespace catapult { namespace io {
 			PrepareOnlyTransactionStatementsTest(shouldOrder, [&](auto& blockStatement, const auto& buffer) {
 				aggregateBlockStatement.TransactionStatements = std::move(blockStatement.TransactionStatements);
 
-				aggregateBuffer.resize(buffer.size() - 3 * sizeof(uint32_t));
+				aggregateBuffer.resize(buffer.size() - 4 * sizeof(uint32_t));
 				std::memcpy(aggregateBuffer.data(), buffer.data(), aggregateBuffer.size());
 			});
 			PrepareOnlyAddressResolutionsTest(shouldOrder, [&](auto& blockStatement, const auto& buffer) {
 				aggregateBlockStatement.AddressResolutionStatements = std::move(blockStatement.AddressResolutionStatements);
 
 				auto initialSize = aggregateBuffer.size();
-				auto appendSize = buffer.size() - 3 * sizeof(uint32_t);
+				auto appendSize = buffer.size() - 4 * sizeof(uint32_t);
 				aggregateBuffer.resize(aggregateBuffer.size() + appendSize);
 				std::memcpy(aggregateBuffer.data() + initialSize, buffer.data() + sizeof(uint32_t), appendSize);
 			});
@@ -247,7 +285,7 @@ namespace catapult { namespace io {
 			// Act:
 			model::BlockStatement blockStatement;
 			mocks::MockMemoryStream inputStream(buffer);
-			ReadBlockStatement(inputStream, blockStatement);
+			ReadBlockStatement(inputStream, blockStatement, model::Block::Current_Version);
 
 			// Assert:
 			test::AssertEqual(expectedBlockStatement, blockStatement);
@@ -257,7 +295,7 @@ namespace catapult { namespace io {
 			// Act:
 			std::vector<uint8_t> outputBuffer;
 			mocks::MockMemoryStream outputStream(outputBuffer);
-			WriteBlockStatement(outputStream, blockStatement);
+			WriteBlockStatement(outputStream, blockStatement, model::Block::Current_Version);
 
 			// Assert:
 			ASSERT_EQ(expectedBuffer.size(), outputBuffer.size());
@@ -271,7 +309,7 @@ namespace catapult { namespace io {
 
 	TEST(TEST_CLASS, CanReadBlockStatementWithoutStatements) {
 		// Act + Assert:
-		auto buffer = std::vector<uint8_t>(4 * sizeof(uint32_t), 0);
+		auto buffer = std::vector<uint8_t>(5 * sizeof(uint32_t), 0);
 		AssertRead(model::BlockStatement(), buffer);
 	}
 
@@ -301,7 +339,7 @@ namespace catapult { namespace io {
 
 	TEST(TEST_CLASS, CanWriteBlockStatementWithoutStatements) {
 		// Act + Assert:
-		AssertWrite(model::BlockStatement(), std::vector<uint8_t>(4 * sizeof(uint32_t), 0));
+		AssertWrite(model::BlockStatement(), std::vector<uint8_t>(5 * sizeof(uint32_t), 0));
 	}
 
 	TEST(TEST_CLASS, CanWriteBlockStatementWithOnlyTransactionStatements) {
@@ -334,12 +372,12 @@ namespace catapult { namespace io {
 			auto pOriginalBlockStatement = test::GenerateRandomStatements(numStatements);
 			std::vector<uint8_t> buffer;
 			mocks::MockMemoryStream outputStream(buffer);
-			WriteBlockStatement(outputStream, *pOriginalBlockStatement);
+			WriteBlockStatement(outputStream, *pOriginalBlockStatement, model::Block::Current_Version);
 
 			// Act:
 			model::BlockStatement blockStatement;
 			mocks::MockMemoryStream inputStream(buffer);
-			ReadBlockStatement(inputStream, blockStatement);
+			ReadBlockStatement(inputStream, blockStatement, model::Block::Current_Version);
 
 			// Assert:
 			test::AssertEqual(*pOriginalBlockStatement, blockStatement);

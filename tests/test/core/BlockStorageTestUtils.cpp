@@ -56,7 +56,7 @@ namespace catapult { namespace test {
 		if (blockStatementPair.second) {
 			auto pBlockStatement = std::make_shared<model::BlockStatement>();
 			io::BufferInputStreamAdapter blockStatementStream(blockStatementPair.first);
-			io::ReadBlockStatement(blockStatementStream, *pBlockStatement);
+			io::ReadBlockStatement(blockStatementStream, *pBlockStatement, pBlockElement->Block.Version);
 			const_cast<model::BlockElement&>(*pBlockElement).OptionalStatement = std::move(pBlockStatement);
 		}
 

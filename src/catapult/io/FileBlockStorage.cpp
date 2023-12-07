@@ -230,7 +230,7 @@ namespace catapult { namespace io {
 			// write statements
 			if (blockElement.OptionalStatement) {
 				BufferedOutputFileStream blockStatementOutputStream(OpenBlockStatementFile(m_dataDirectory, height, OpenMode::Read_Write));
-				WriteBlockStatement(blockStatementOutputStream, *blockElement.OptionalStatement);
+				WriteBlockStatement(blockStatementOutputStream, *blockElement.OptionalStatement, blockElement.Block.Version);
 				blockStatementOutputStream.flush();
 			}
 		}
