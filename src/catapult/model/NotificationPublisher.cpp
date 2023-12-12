@@ -96,8 +96,39 @@ namespace catapult { namespace model {
 				case 4: {
 					// Before balance change notificaitons can be issued, signer must be validated
 					sub.notify(SignerNotification<1>(block.Signer));
+
+
+					// raise an account public key notification
+					if (Key() != block.Beneficiary)
+						sub.notify(AccountPublicKeyNotification<1>(block.Beneficiary));
+
+					sub.notify(EntityNotification<1>(block.Network(), block.Type, block.EntityVersion(), block.SignatureDerivationScheme()));
+
+					// raise a block notification
+					auto blockTransactionsInfo = CalculateBlockTransactionsInfo(block);
+					BlockNotification<1> blockNotification(block.Signer, block.Beneficiary, block.Timestamp, block.Difficulty, block.FeeInterest, block.FeeInterestDenominator);
+					blockNotification.NumTransactions = blockTransactionsInfo.Count;
+					blockNotification.TotalFee = blockTransactionsInfo.TotalFee;
+
+					sub.notify(blockNotification);
+
+					// raise a signature notification
+					switch (block.SignatureDerivationScheme())
+					{
+						case DerivationScheme::Unset: //unset: prior to merge
+						{
+							sub.notify(BlockSignatureNotification<1>(block.Signer, block.Signature, blockData));
+							break;
+						}
+						default:
+						{
+							sub.notify(BlockSignatureNotification<2>(block.Signer, block.Signature, block.SignatureDerivationScheme(), blockData));
+						}
+					}
+
+					// raise signer importance notification
 					sub.notify(BlockSignerImportanceNotification<1>(block.Signer));
-					[[fallthrough]];
+					break;
 				}
 				case 3: {
 					// raise an account public key notification

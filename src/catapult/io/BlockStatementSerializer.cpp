@@ -84,7 +84,8 @@ namespace catapult { namespace io {
 		ReadStatements(inputStream, blockStatement.AddressResolutionStatements);
 		ReadStatements(inputStream, blockStatement.MosaicResolutionStatements);
 		ReadStatements(inputStream, blockStatement.PublicKeyStatements);
-		ReadStatements(inputStream, blockStatement.BlockchainStateStatements);
+		if(version >= 4)
+			ReadStatements(inputStream, blockStatement.BlockchainStateStatements);
 	}
 
 	namespace {

@@ -62,6 +62,7 @@ namespace catapult { namespace state {
 		m_balances.optimize(m_optimizedMosaicId);
 		m_accountState = &newAccount;
 		std::vector<MosaicId> toRemove;
+		std::vector<MosaicId> toRemoveLocked;
 
 		for (const auto& pair : balances.m_balances)
 		{
@@ -72,7 +73,7 @@ namespace catapult { namespace state {
 		for (const auto& pair : balances.m_lockedBalances)
 		{
 			m_lockedBalances.insert(pair);
-			toRemove.push_back(pair.first);
+			toRemoveLocked.push_back(pair.first);
 		}
 		for (const auto& snapshot : balances.m_localSnapshots)
 			pushSnapshot(snapshot, true /* committed */);
@@ -83,6 +84,10 @@ namespace catapult { namespace state {
 		for(const auto& mosaic : toRemove)
 		{
 			balances.m_balances.erase(mosaic);
+		}
+
+		for(const auto& mosaic : toRemoveLocked)
+		{
 			balances.m_lockedBalances.erase(mosaic);
 		}
 
