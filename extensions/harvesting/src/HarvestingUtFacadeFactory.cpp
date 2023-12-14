@@ -79,12 +79,18 @@ namespace catapult { namespace harvesting {
 					blockHeader.FeeMultiplier, transaction, pBlock->FeeInterest, pBlock->FeeInterestDenominator);
 				if (Amount(0) != surplus) {
 					auto* accountPtr = &accountStateCache.find(transaction.Signer).get();
-					while(accountPtr->IsLocked()) {
-						accountPtr = &accountStateCache.find(accountPtr->SupplementalPublicKeys.upgrade().get()).get();
+					/// IMPORTANT
+					// An account can only be found in locked state as a signer here, after passing transactions validation and observation, if it was upgraded in this block.
+					// If transactions were signed by this, now locked, account prior to the upgrade we must credit the new account instead of the old one. The old one cannot process balances.
+					// When upgrade transaction happens, the oldstate of the newaccount will be filled with the old account as it was during this observation, meaning it's balances will have been debitted MAX_FEE as happens in block harvesting.
+					// We have to both return fees to the new account, which after this block will be the actual owner of the balances(balances up to upgrade, including upgrade fee would be transferred on upgrade observation),
+					// but also update the OldState accordingly to keep state hash consistent as well as allow for correct rollbacks.
+					if (accountPtr->IsLocked()) {
+						accountPtr = &accountStateCache.find(accountPtr->GetUpgradedToKey()).get();
+						accountPtr->OldState->Balances.credit(config.Immutable.CurrencyMosaicId, surplus, blockHeader.Height);
 					}
 					accountPtr->Balances.credit(config.Immutable.CurrencyMosaicId, surplus, blockHeader.Height);
 				}
-
 			}
 
 			// 3. execute block (using zero hash)

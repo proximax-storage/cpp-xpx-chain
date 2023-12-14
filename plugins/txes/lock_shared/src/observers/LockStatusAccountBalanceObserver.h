@@ -36,19 +36,23 @@ namespace catapult { namespace observers {
 		auto& lockInfo = lockInfoIter.get();
 
 		auto accountStateIter = accountStateCache.find(TTraits::DestinationAccount(lockInfo));
-		auto& accountState = accountStateIter.get();
+		auto* accountState = &accountStateIter.get();
+		// If this account is now locked it means it was upgraded in the meanwhile. We must return the funds to the upgraded account.
+		if (accountState->IsLocked()) {
+			accountState = &accountStateCache.find(accountState->GetUpgradedToKey()).get();
+		}
 
 		if (NotifyMode::Rollback == context.Mode) {
 			lockInfo.Status = state::LockStatus::Unused;
 			for (const auto& pair : lockInfo.Mosaics)
-				accountState.Balances.debit(pair.first, pair.second, context.Height);
+				accountState->Balances.debit(pair.first, pair.second, context.Height);
 			return;
 		}
 
 		lockInfo.Status = state::LockStatus::Used;
 		for (const auto& pair : lockInfo.Mosaics) {
-			accountState.Balances.credit(pair.first, pair.second, context.Height);
-			model::BalanceChangeReceipt receipt(TTraits::Receipt_Type, accountState.PublicKey, pair.first, pair.second);
+			accountState->Balances.credit(pair.first, pair.second, context.Height);
+			model::BalanceChangeReceipt receipt(TTraits::Receipt_Type, accountState->PublicKey, pair.first, pair.second);
 			context.StatementBuilder().addTransactionReceipt(receipt);
 		}
 	}

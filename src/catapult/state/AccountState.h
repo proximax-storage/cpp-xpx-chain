@@ -154,6 +154,8 @@ namespace catapult { namespace state {
 			data |= !!OldState << static_cast<uint8_t>(AdditionalDataFlags::HasOldState);
 			return data;
 		}
+
+		Key GetUpgradedToKey();
 	};
 
 	bool HasAdditionalData(AdditionalDataFlags flag, uint8_t mask);

@@ -15,6 +15,7 @@ namespace catapult { namespace validators {
 	using Notification = model::AccountV2UpgradeNotification<1>;
 
 	namespace {
+		///TODO: In the future care must be taken to make sure upgrades cannot be chained in the same AggregateTransaction
 		ValidationResult Validate(const Notification& notification, const ValidatorContext& context) {
 			if(context.Config.Network.AccountVersion < 2)
 				return Failure_BlockchainUpgrade_Account_Version_Not_Allowed;

@@ -253,11 +253,11 @@ namespace catapult { namespace model {
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[0]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
 			EXPECT_EQ(Core_Signer_v1_Notification, sub.notificationTypes()[2]);
-		    EXPECT_EQ(Core_Block_Signer_Importance_v1_Notification, sub.notificationTypes()[3]);
-			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[4]);
-			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[5]);
-			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[6]);
-			EXPECT_EQ(Core_Block_Signature_v1_Notification, sub.notificationTypes()[7]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[3]);
+			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[4]);
+			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[5]);
+			EXPECT_EQ(Core_Block_Signature_v1_Notification, sub.notificationTypes()[6]);
+			EXPECT_EQ(Core_Block_Signer_Importance_v1_Notification, sub.notificationTypes()[7]);
 		});
 	}
 

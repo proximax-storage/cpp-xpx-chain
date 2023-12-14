@@ -50,6 +50,8 @@ namespace catapult { namespace state {
 		}
 	}
 
+
+
 	UpgradeRelationTypeResult IsUpgraded(const AccountState& accountState) {
 		auto result = UpgradeRelationTypeResult::Unrelated;
 		if(accountState.IsLocked()) {
@@ -97,5 +99,11 @@ namespace catapult { namespace state {
 
 	Key GetPreviousPublicKey(const AccountState& accountState) {
 		return accountState.OldState ? accountState.OldState->PublicKey : Key();
+	}
+
+	Key AccountState::GetUpgradedToKey() {
+		if(this->Version == 1)
+			return GetLinkedPublicKey(*this);
+		return GetUpgradePublicKey(*this);
 	}
 }}

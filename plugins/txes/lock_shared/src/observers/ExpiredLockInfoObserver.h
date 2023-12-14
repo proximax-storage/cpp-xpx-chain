@@ -35,13 +35,17 @@ namespace catapult { namespace observers {
 		lockInfoCache.processUnusedExpiredLocks(context.Height, [&context, &accountStateCache, ownerAccountIdSupplier](
 				const auto& lockInfo) {
 			auto accountStateIter = accountStateCache.find(ownerAccountIdSupplier(lockInfo));
-			auto& accountState = accountStateIter.get();
+			auto* accountState = &accountStateIter.get();
+			// If this account is now locked it means it was upgraded in the meanwhile. We must return the funds to the upgraded account.
+			if (accountState->IsLocked()) {
+				accountState = &accountStateCache.find(accountState->GetUpgradedToKey()).get();
+			}
 			if (NotifyMode::Commit == context.Mode)
 				for (const auto& pair : lockInfo.Mosaics)
-					accountState.Balances.credit(pair.first, pair.second, context.Height);
+					accountState->Balances.credit(pair.first, pair.second, context.Height);
 			else
 				for (const auto& pair : lockInfo.Mosaics)
-					accountState.Balances.debit(pair.first, pair.second, context.Height);
+					accountState->Balances.debit(pair.first, pair.second, context.Height);
 		});
 	}
 }}

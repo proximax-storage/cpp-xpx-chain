@@ -37,6 +37,11 @@ namespace {
 		}
 
 		originalAccount.SupplementalPublicKeys.upgrade().set(newAccount.PublicKey);
+		// For V1 accounts linkedAccountKey will become the upgraded account Key
+		if(originalAccount.GetVersion() == 1) {
+			originalAccount.SupplementalPublicKeys.linked().unset();
+			originalAccount.SupplementalPublicKeys.linked().set(newAccount.PublicKey);
+		}
 	}
 	void TransferGenerateNewState(state::AccountState& originalAccount, state::AccountState& newAccount, Height eventHeight)
 	{
@@ -46,8 +51,8 @@ namespace {
 		newAccount.PublicKeyHeight = originalAccount.PublicKeyHeight;
 		newAccount.AddressHeight = originalAccount.AddressHeight;
 
-		newAccount.Balances = state::AccountBalances(&newAccount);
-		newAccount.Balances.steal(originalAccount.Balances, newAccount);
+		newAccount.Balances = state::AccountBalances(std::move(originalAccount.Balances));
+		originalAccount.Balances = state::AccountBalances(&originalAccount);
 		newAccount.AccountType = originalAccount.AccountType;
 
 		originalAccount.AccountType = state::AccountType::Locked;
