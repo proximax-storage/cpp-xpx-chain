@@ -88,24 +88,26 @@ namespace catapult { namespace mongo {
 			auto dbUri = mongocxx::uri(dbConfig.DatabaseUri);
 			const auto& dbName = dbConfig.DatabaseName;
 
-			const auto& networkConfigMap = bootstrapper.config().Network.Plugins;
-			const auto& dbConfigSet = dbConfig.Plugins;
-			const std::string networkPrefix = "catapult.plugins.";
-			const std::string dbPrefix = "catapult.mongo.plugins.";
-			for (const auto& [networkPluginName, bag] : networkConfigMap) {
-				bool enabled = true;
-				bag.tryGet<bool>(utils::ConfigurationKey("", "enabled"), enabled);
+			bootstrapper.addConfigValidator([dbConfig](const config::BlockchainConfiguration& config) {
+				const auto& networkConfigMap = config.Network.Plugins;
+				const auto& dbConfigSet = dbConfig.Plugins;
+				const std::string networkPrefix = "catapult.plugins.";
+				const std::string dbPrefix = "catapult.mongo.plugins.";
+				for (const auto& [networkPluginName, bag] : networkConfigMap) {
+					bool enabled = true;
+					bag.tryGet<bool>(utils::ConfigurationKey("", "enabled"), enabled);
 
-				const auto pluginName = networkPluginName.substr(networkPrefix.length());
-				const auto dbPluginName = dbPrefix + pluginName;
-				auto iter = dbConfigSet.find(dbPluginName);
+					const auto pluginName = networkPluginName.substr(networkPrefix.length());
+					const auto dbPluginName = dbPrefix + pluginName;
+					auto iter = dbConfigSet.find(dbPluginName);
 
-				if (enabled && iter == dbConfigSet.end())
-					CATAPULT_THROW_RUNTIME_ERROR_1("mongo plugin must be enabled", pluginName);
+					if (enabled && iter == dbConfigSet.end())
+						CATAPULT_THROW_RUNTIME_ERROR_1("mongo plugin must be enabled", pluginName);
 
-				if (!enabled && iter != dbConfigSet.end())
-					CATAPULT_THROW_RUNTIME_ERROR_1("mongo plugin must not be enabled", pluginName);
-			}
+					if (!enabled && iter != dbConfigSet.end())
+						CATAPULT_THROW_RUNTIME_ERROR_1("mongo plugin must not be enabled", pluginName);
+				}
+			});
 
 			// create mongo writer
 			// keep the minimum high enough in order to avoid deadlock while waiting for mongo operations due to blocking io threads
