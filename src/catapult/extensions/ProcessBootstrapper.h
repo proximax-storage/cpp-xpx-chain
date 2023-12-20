@@ -39,6 +39,8 @@ namespace catapult { namespace extensions {
 		Recovery
 	};
 
+	using ConfigValidatorFunc = consumer<const config::BlockchainConfiguration&>;
+
 	/// Process bootstrapper.
 	class ProcessBootstrapper {
 	public:
@@ -94,6 +96,12 @@ namespace catapult { namespace extensions {
 		/// Adds static \a nodes to the bootstrapper.
 		void addStaticNodes(const std::vector<ionet::Node>& nodes);
 
+		/// Adds config \a validator to the bootstrapper.
+		void addConfigValidator(ConfigValidatorFunc validator);
+
+		/// Validates blockchain configuration.
+		void validateConfig(const config::BlockchainConfiguration& config);
+
 	private:
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		std::string m_resourcesPath;
@@ -106,6 +114,7 @@ namespace catapult { namespace extensions {
 		plugins::PluginManager m_pluginManager;
 		std::vector<ionet::Node> m_nodes;
 		CacheHolder m_cacheHolder;
+		std::vector<ConfigValidatorFunc> m_configValidators;
 	};
 
 	/// Adds static nodes from \a path to \a bootstrapper.

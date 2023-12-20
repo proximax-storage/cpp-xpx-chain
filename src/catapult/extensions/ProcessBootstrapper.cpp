@@ -121,6 +121,17 @@ namespace catapult { namespace extensions {
 		m_nodes.insert(m_nodes.end(), nodes.cbegin(), nodes.cend());
 	}
 
+	void ProcessBootstrapper::addConfigValidator(ConfigValidatorFunc validator) {
+		m_configValidators.push_back(validator);
+	}
+
+	void ProcessBootstrapper::validateConfig(const config::BlockchainConfiguration& config) {
+		for (const auto& validator: m_configValidators)
+			validator(config);
+
+		m_configValidators.clear();
+	}
+
 	void AddStaticNodesFromPath(ProcessBootstrapper& bootstrapper, const std::string& path) {
 		auto nodes = config::LoadPeersFromPath(path, bootstrapper.config().Immutable.NetworkIdentifier);
 		bootstrapper.addStaticNodes(nodes);
