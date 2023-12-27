@@ -1,17 +1,19 @@
 # only one of them can be enabled simultaneously
 if(SANITIZE_ADDRESS)
     message(STATUS "SANITIZE_ADDRESS enabled")
+
+    set(IGNORELIST -fsanitize-ignorelist=${CMAKE_CURRENT_LIST_DIR}/asan_ignorelist.txt)
     set(FLAGS
+        ${IGNORELIST}
         -fsanitize=address
         -fsanitize-address-use-after-scope
         -g
         -O1
         -DNDEBUG
-        -fsanitize-ignorelist=${CMAKE_CURRENT_LIST_DIR}/asan_suppressions.txt
         )
     foreach(FLAG IN LISTS FLAGS)
-        add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
-        add_cache_flag(CMAKE_C_FLAGS ${FLAG})
+        add_cache_flag(CMAKE_CXX_FLAGS ${IGNORELIST} ${FLAG})
+        add_cache_flag(CMAKE_C_FLAGS ${IGNORELIST} ${FLAG})
     endforeach()
 
     set(_ENV "verbosity=1:debug=1:detect_leaks=1:check_initialization_order=1:alloc_dealloc_mismatch=true:use_odr_indicator=true")
@@ -41,7 +43,7 @@ elseif(SANITIZE_THREAD)
     add_cache_flag(CMAKE_EXE_LINKER_FLAGS "-fsanitize=thread")
     add_cache_flag(CMAKE_SHARED_LINKER_FLAGS "-fsanitize=thread")
 
-    set(_ENV "verbosity=1:exitcode=32:suppressions=${CMAKE_CURRENT_LIST_DIR}/tsan_suppressions.txt")
+    set(_ENV "suppressions=${CMAKE_CURRENT_LIST_DIR}/tsan_suppressions.txt verbosity=1 exitcode=32")
     set(ENV{TSAN_OPTIONS} "${_ENV}")
     message(STATUS "
     [Warning] Define TSAN_OPTIONS ENV var:
@@ -51,16 +53,17 @@ elseif(SANITIZE_THREAD)
 elseif(SANITIZE_UNDEFINED)
     message(STATUS "SANITIZE_UNDEFINED enabled")
 
+    set(IGNORELIST -fsanitize-ignorelist=${CMAKE_CURRENT_LIST_DIR}/ubsan_ignorelist.txt)
     set(FLAGS
+        ${IGNORELIST}
         -fsanitize=undefined
         -fno-omit-frame-pointer
         -g
         -O1
-        -fsanitize-ignorelist=${CMAKE_CURRENT_LIST_DIR}/ubsan_ignorelist.txt
         )
     foreach(FLAG IN LISTS FLAGS)
-        add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
-        add_cache_flag(CMAKE_C_FLAGS ${FLAG})
+        add_cache_flag(CMAKE_CXX_FLAGS ${IGNORELIST} ${FLAG})
+        add_cache_flag(CMAKE_C_FLAGS ${IGNORELIST} ${FLAG})
     endforeach()
 
     set(_ENV "print_stacktrace=1:suppressions=${CMAKE_CURRENT_LIST_DIR}/ubsan_ignorelist.txt")

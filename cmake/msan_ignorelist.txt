@@ -1,1 +1,10 @@
-src:src/catapult/cache/SubCachePluginAdapter.h
+# Ignore external libraries
+src:*/external/*
+
+# Ignore system libraries
+src:*/usr/*
+
+fun:*testing*internal*GetTestCase*
+#fun:testing::internal::*
+#fun:*GetTestCase*
+#src:*Stress.h
