@@ -7,6 +7,7 @@ option(SANITIZE_THREAD "Enable thread sanitizer" OFF)
 option(SANITIZE_UNDEFINED "Enable undefined behavior sanitizer" OFF)
 option(SIRIUS_DRIVE_MULTI "changes for sirius drive-multi" ON)
 option(XPX_STORAGE_SDK_NOT_BUILD_EXAMPLES "Not Build XPX-STORAGE SDK examples." ON)
+option(CPP_XPX_CHAIN "it is catapult project" ON)
 
 if (SIRIUS_DRIVE_MULTI)
 	add_definitions(-DSIRIUS_DRIVE_MULTI)
