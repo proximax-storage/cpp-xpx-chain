@@ -88,7 +88,7 @@ namespace catapult { namespace test {
 			// - deserialize block statement
 			mocks::MockMemoryStream stream(blockStatementPair.first);
 			auto pBlockStatement = std::make_shared<model::BlockStatement>();
-			io::ReadBlockStatement(stream, *pBlockStatement, pBlockElement->Block.Version);
+			io::ReadBlockStatement(stream, *pBlockStatement, pBlockElement->Block.EntityVersion());
 			const_cast<model::BlockElement&>(*pBlockElement).OptionalStatement = std::move(pBlockStatement);
 			return pBlockElement;
 		}

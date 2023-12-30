@@ -34,7 +34,7 @@ namespace catapult { namespace subscribers {
 			auto pBlockElement = io::ReadBlockElement(inputStream);
 			if (0 != io::Read8(inputStream)) {
 				auto pStatement = std::make_shared<model::BlockStatement>();
-				io::ReadBlockStatement(inputStream, *pStatement, pBlockElement->Block.Version);
+				io::ReadBlockStatement(inputStream, *pStatement, pBlockElement->Block.EntityVersion());
 				pBlockElement->OptionalStatement = pStatement; // TODO(warchant): cyclic reference?
 			}
 
