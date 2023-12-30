@@ -40,22 +40,22 @@ namespace catapult { namespace observers {
 				auto& cache = m_context.Cache.sub<cache::AccountStateCache>();
 				auto feeMosaic = model::Mosaic{ m_currencyMosaicId, amount };
 				ProcessForwardedAccountState(cache, key, [&feeMosaic, &context = m_context](auto& accountState) {
-				  ApplyFee(accountState, context.Mode, feeMosaic, context.StatementBuilder());
+				  ApplyFee(accountState, context, feeMosaic, context.StatementBuilder());
 				});
 			}
 
 		private:
 			static void ApplyFee(
 					state::AccountState& accountState,
-					NotifyMode notifyMode,
+					const ObserverContext& context,
 					const model::Mosaic& feeMosaic,
 					ObserverStatementBuilder& statementBuilder) {
-				if (NotifyMode::Rollback == notifyMode) {
-					accountState.Balances.debit(feeMosaic.MosaicId, feeMosaic.Amount);
+				if (NotifyMode::Rollback == context.Mode) {
+					accountState.Balances.debit(feeMosaic.MosaicId, feeMosaic.Amount, context.Height);
 					return;
 				}
 
-				accountState.Balances.credit(feeMosaic.MosaicId, feeMosaic.Amount);
+				accountState.Balances.credit(feeMosaic.MosaicId, feeMosaic.Amount, context.Height);
 
 				// add fee receipt
 				auto receiptType = model::Receipt_Type_Harvest_Fee;
