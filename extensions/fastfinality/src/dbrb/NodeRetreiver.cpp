@@ -124,7 +124,7 @@ namespace catapult { namespace dbrb {
 			auto iter = m_nodes.find(id);
 			if (iter == m_nodes.end() || iter->second.Signature != signedNode.Signature || iter->second.Node.endpoint().Host != signedNode.Node.endpoint().Host || iter->second.Node.endpoint().Port != signedNode.Node.endpoint().Port) {
 				m_nodes[id] = signedNode;
-				CATAPULT_LOG(debug) << "[DBRB] Added node " << signedNode.Node;
+				CATAPULT_LOG(debug) << "[DBRB] Added node " << signedNode.Node << " " << id;
 			}
 
 			if (id == m_id)
@@ -134,7 +134,7 @@ namespace catapult { namespace dbrb {
 			if (pWriters) {
 				auto identities = pWriters->identities();
 				if ((identities.find(id) == identities.cend()) && !signedNode.Node.endpoint().Host.empty()) {
-					CATAPULT_LOG(debug) << "[DBRB] Connecting to " << signedNode.Node;
+					CATAPULT_LOG(debug) << "[DBRB] Connecting to " << signedNode.Node << " " << id;
 					pWriters->connect(signedNode.Node, [node = signedNode.Node](const auto& result) {
 						CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[DBRB] connection attempt to " << node << " completed with " << result.Code;
 					});
