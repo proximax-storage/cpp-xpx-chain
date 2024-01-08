@@ -39,7 +39,7 @@ namespace catapult { namespace fastfinality {
 			return;
 		}
 
-		const auto& committee = pluginManager.getCommitteeManager().committee();
+		const auto& committee = pluginManager.getCommitteeManager(model::Block::Current_Version).committee();
 		if (committee.Round < 0) {
 			CATAPULT_LOG(warning) << "rejecting proposal, committee is not yet selected";
 			return;

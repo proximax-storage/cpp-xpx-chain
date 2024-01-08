@@ -141,6 +141,8 @@ namespace catapult { namespace local {
 			auto supplementalData = CreateDeterministicSupplementalData();
 
 			// - seed with nemesis block, so that nemesis accounts have proper balances
+			auto initializers = pluginManager.createPluginInitializer();
+			pluginManager.configHolder()->SetPluginInitializer(std::move(initializers));
 			test::LocalNodeTestState state(pluginManager.configHolder()->Config(), pluginManager.createCache(), test::Basic_MemoryBlockStorage_NemesisBlockData);
 			SeedCacheWithNemesis(state.ref(), pluginManager);
 			RandomSeedCache(state.ref().Cache, cacheHeight);

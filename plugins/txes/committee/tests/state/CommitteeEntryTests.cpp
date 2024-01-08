@@ -70,13 +70,13 @@ namespace catapult { namespace state {
 		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), true, 5.0, 0.0);
 
 		// Sanity check:
-		EXPECT_EQ(5.0, entry.activity());
+		EXPECT_EQ(5.0, entry.activityObsolete());
 
 		// Act:
-		entry.setActivity(10.0);
+		entry.setActivityObsolete(10.0);
 
 		// Assert:
-		EXPECT_EQ(10.0, entry.activity());
+		EXPECT_EQ(10.0, entry.activityObsolete());
 	}
 
 	TEST(TEST_CLASS, CanSetGreed) {
@@ -84,12 +84,12 @@ namespace catapult { namespace state {
 		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), false, 5.0, 0.5);
 
 		// Sanity check:
-		EXPECT_EQ(0.5, entry.greed());
+		EXPECT_EQ(0.5, entry.greedObsolete());
 
 		// Act:
-		entry.setGreed(1.0);
+		entry.setGreedObsolete(1.0);
 
 		// Assert:
-		EXPECT_EQ(1.0, entry.greed());
+		EXPECT_EQ(1.0, entry.greedObsolete());
 	}
 }}

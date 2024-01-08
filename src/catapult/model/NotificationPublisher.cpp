@@ -96,8 +96,15 @@ namespace catapult { namespace model {
 
 				// raise an entity notification
 				switch (block.EntityVersion()) {
+				case 5: {
+					sub.notify(BlockCommitteeNotification<2>(block.round(), block.FeeInterest, block.FeeInterestDenominator));
+
+					[[fallthrough]];
+				}
+
 				case 4: {
-					sub.notify(BlockCommitteeNotification<1>(block.round(), block.FeeInterest, block.FeeInterestDenominator));
+					if (block.EntityVersion() == 4)
+						sub.notify(BlockCommitteeNotification<1>(block.round(), block.FeeInterest, block.FeeInterestDenominator));
 
 					auto pCosignature = block.CosignaturesPtr();
 					auto cosignaturesCount = block.CosignaturesCount();

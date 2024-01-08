@@ -19,8 +19,8 @@ namespace catapult { namespace state {
 			+ sizeof(uint64_t) // last signing block height
 			+ sizeof(uint64_t) // effective balance
 			+ 1 // can harvest
-			+ sizeof(double) // activity
-			+ sizeof(double); // greed
+			+ sizeof(double) // activityObsolete
+			+ sizeof(double); // greedObsolete
 
 		class TestContext {
 		public:
@@ -58,9 +58,9 @@ namespace catapult { namespace state {
 			pData += sizeof(uint64_t);
 			EXPECT_EQ(entry.canHarvest(), *reinterpret_cast<const bool*>(pData));
 			pData += 1;
-			EXPECT_EQ(entry.activity(), *reinterpret_cast<const double_t*>(pData));
+			EXPECT_EQ(entry.activityObsolete(), *reinterpret_cast<const double_t*>(pData));
 			pData += sizeof(double);
-			EXPECT_EQ(entry.greed(), *reinterpret_cast<const double_t*>(pData));
+			EXPECT_EQ(entry.greedObsolete(), *reinterpret_cast<const double_t*>(pData));
 			pData += sizeof(double);
 
 			EXPECT_EQ(pExpectedEnd, pData);
@@ -134,11 +134,11 @@ namespace catapult { namespace state {
 			memcpy(pData, &effectiveBalance, sizeof(uint64_t));
 			pData += sizeof(uint64_t);
 			*pData++ = entry.canHarvest();
-			auto activity = entry.activity();
-			memcpy(pData, &activity, sizeof(double));
+			auto activityObsolete = entry.activityObsolete();
+			memcpy(pData, &activityObsolete, sizeof(double));
 			pData += sizeof(double);
-			auto greed = entry.greed();
-			memcpy(pData, &greed, sizeof(double));
+			auto greedObsolete = entry.greedObsolete();
+			memcpy(pData, &greedObsolete, sizeof(double));
 			pData += sizeof(double);
 
 			return buffer;

@@ -23,8 +23,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "lastSigningBlockHeight" << ToInt64(entry.lastSigningBlockHeight())
 				<< "effectiveBalance" << ToInt64(entry.effectiveBalance())
 				<< "canHarvest" << entry.canHarvest()
-				<< "activity" << entry.activity()
-				<< "greed" << entry.greed();
+				<< "activity" << entry.activityObsolete()
+				<< "greed" << entry.greedObsolete();
 
 		return doc
 				<< bson_stream::close_document
@@ -45,10 +45,10 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto lastSigningBlockHeight = GetValue64<Height>(dbCommitteeEntry["lastSigningBlockHeight"]);
 		auto effectiveBalance = GetValue64<Importance>(dbCommitteeEntry["effectiveBalance"]);
 		auto canHarvest = dbCommitteeEntry["canHarvest"].get_bool().value;
-		auto activity = dbCommitteeEntry["activity"].get_double().value;
-		auto greed = dbCommitteeEntry["greed"].get_double().value;
+		auto activityObsolete = dbCommitteeEntry["activity"].get_double().value;
+		auto greedObsolete = dbCommitteeEntry["greed"].get_double().value;
 
-		return state::CommitteeEntry(key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed, disabledHeight);
+		return state::CommitteeEntry(key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, disabledHeight);
 	}
 
 	// endregion

@@ -223,7 +223,8 @@ namespace catapult { namespace fastfinality {
 					cache::ImportanceView importanceView(view->asReadOnly());
 					return importanceView.getAccountImportanceOrDefault(identityKey, height).unwrap();
 				};
-				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
+				pluginManager.getCommitteeManager(4).setLastBlockElementSupplier(lastBlockElementSupplier);
+				pluginManager.getCommitteeManager(5).setLastBlockElementSupplier(lastBlockElementSupplier);
 
 				RegisterPullConfirmedBlockHandler(pFsmShared, state.packetHandlers());
 				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
@@ -248,24 +249,11 @@ namespace catapult { namespace fastfinality {
 					CreateRemoteNodeStateRetriever(pFsmShared, pConfigHolder, lastBlockElementSupplier),
 					pConfigHolder,
 					lastBlockElementSupplier,
-					importanceGetter,
-					pluginManager.getCommitteeManager());
+					importanceGetter);
 				actions.ResetLocalChain = CreateDefaultResetLocalChainAction();
-				actions.DownloadBlocks = CreateDefaultDownloadBlocksAction(
-					pFsmShared,
-					state,
-					blockRangeConsumer,
-					pluginManager.getCommitteeManager());
-				actions.DetectStage = CreateDefaultDetectStageAction(
-					pFsmShared,
-					pConfigHolder,
-					state.timeSupplier(),
-					lastBlockElementSupplier,
-					pluginManager.getCommitteeManager());
-				actions.SelectCommittee = CreateDefaultSelectCommitteeAction(
-					pFsmShared,
-					pluginManager.getCommitteeManager(),
-					pConfigHolder);
+				actions.DownloadBlocks = CreateDefaultDownloadBlocksAction(pFsmShared, state, blockRangeConsumer);
+				actions.DetectStage = CreateDefaultDetectStageAction(pFsmShared, state.timeSupplier(), lastBlockElementSupplier, state);
+				actions.SelectCommittee = CreateDefaultSelectCommitteeAction(pFsmShared, state);
 				actions.ProposeBlock = CreateDefaultProposeBlockAction(
 					pFsmShared,
 					state.cache(),
@@ -274,15 +262,15 @@ namespace catapult { namespace fastfinality {
 					lastBlockElementSupplier);
 				actions.ValidateProposal = CreateDefaultValidateProposalAction(pFsmShared, state, lastBlockElementSupplier, pValidatorPool);
 				actions.WaitForProposal = CreateDefaultWaitForProposalAction(pFsmShared);
-				actions.WaitForPrevotePhaseEnd = CreateDefaultWaitForPrevotePhaseEndAction(pFsmShared, pluginManager.getCommitteeManager(), pConfigHolder);
+				actions.WaitForPrevotePhaseEnd = CreateDefaultWaitForPrevotePhaseEndAction(pFsmShared, state);
 				actions.AddPrevote = CreateDefaultAddPrevoteAction(pFsmShared);
 				actions.AddPrecommit = CreateDefaultAddPrecommitAction(pFsmShared);
-				actions.WaitForPrecommitPhaseEnd = CreateDefaultWaitForPrecommitPhaseEndAction(pFsmShared, pluginManager.getCommitteeManager(), pConfigHolder);
-				actions.UpdateConfirmedBlock = CreateDefaultUpdateConfirmedBlockAction(pFsmShared, pluginManager.getCommitteeManager());
+				actions.WaitForPrecommitPhaseEnd = CreateDefaultWaitForPrecommitPhaseEndAction(pFsmShared, state);
+				actions.UpdateConfirmedBlock = CreateDefaultUpdateConfirmedBlockAction(pFsmShared, state);
 				actions.RequestConfirmedBlock = CreateDefaultRequestConfirmedBlockAction(pFsmShared, state, lastBlockElementSupplier);
 				actions.CommitConfirmedBlock = CreateDefaultCommitConfirmedBlockAction(pFsmShared, blockRangeConsumer, state);
 				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsmShared, pConfigHolder);
-				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, pConfigHolder, pluginManager.getCommitteeManager());
+				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, state);
 
 				m_pTransactionSender.reset();
 				pFsmShared->start();

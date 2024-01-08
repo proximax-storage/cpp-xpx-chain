@@ -26,6 +26,10 @@ namespace catapult { namespace validators {
 
 	DECLARE_STATEFUL_VALIDATOR(EntityVersion, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(EntityVersion, [](const auto& notification, const auto& context) {
+			// TODO: remove after block version 5 is added to mainnet network config.
+			if (notification.EntityType == model::Entity_Type_Block && notification.EntityVersion == 5)
+				return ValidationResult::Success;
+
 			const auto& supportedVersions = context.Config.SupportedEntityVersions;
 			auto entityIter = supportedVersions.find(notification.EntityType);
 

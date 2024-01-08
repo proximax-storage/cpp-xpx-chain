@@ -260,6 +260,8 @@ namespace catapult { namespace extensions {
 
 		// Act: load the state
 		auto pPluginManager = test::CreatePluginManagerWithRealPlugins(config);
+		auto initializers = pPluginManager->createPluginInitializer();
+		pPluginManager->configHolder()->SetPluginInitializer(std::move(initializers));
 		const_cast<std::string&>(config.User.DataDirectory) = stateDirectory.str();
 		test::LocalNodeTestState loadedState(config, pPluginManager->createCache());
 		auto heights = LoadStateFromDirectory(stateDirectory, loadedState.ref(), *pPluginManager);

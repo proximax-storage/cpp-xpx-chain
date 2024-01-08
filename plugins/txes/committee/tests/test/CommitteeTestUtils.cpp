@@ -16,26 +16,26 @@ namespace catapult { namespace test {
 			const Height& lastSigningBlockHeight,
 			const Importance& effectiveBalance,
 			bool canHarvest,
-			double activity,
-			double greed) {
-		return state::CommitteeEntry(key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed, disabledHeight);
+			double activityObsolete,
+			double greedObsolete) {
+		return state::CommitteeEntry(key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, disabledHeight);
 	}
 
 	state::AccountData CreateAccountData(
 			const Height& lastSigningBlockHeight,
 			const Importance& effectiveBalance,
 			bool canHarvest,
-			double activity,
-			double greed) {
-		return state::AccountData(lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed);
+			double activityObsolete,
+			double greedObsolete) {
+		return state::AccountData(lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, Timestamp(0), 0u, 1u, 1u);
 	}
 
 	void AssertEqualAccountData(const state::AccountData& data1, const state::AccountData& data2) {
 		EXPECT_EQ(data1.LastSigningBlockHeight, data2.LastSigningBlockHeight);
 		EXPECT_EQ(data1.EffectiveBalance, data2.EffectiveBalance);
-		EXPECT_EQ(data1.Greed, data2.Greed);
+		EXPECT_EQ(data1.GreedObsolete, data2.GreedObsolete);
 		EXPECT_EQ(data1.CanHarvest, data2.CanHarvest);
-		EXPECT_EQ(data1.Activity, data2.Activity);
+		EXPECT_EQ(data1.ActivityObsolete, data2.ActivityObsolete);
 	}
 
 	void AssertEqualCommitteeEntry(const state::CommitteeEntry& entry1, const state::CommitteeEntry& entry2) {

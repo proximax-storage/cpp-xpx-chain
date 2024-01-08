@@ -136,8 +136,8 @@ namespace catapult { namespace state {
 			// Arrange:
 			TestContext context;
 			auto originalEntry = test::CreateCommitteeEntry();
-			originalEntry.setActivity(0.0);
-			originalEntry.setGreed(0.0);
+			originalEntry.setActivityObsolete(0.0);
+			originalEntry.setGreedObsolete(0.0);
 			auto buffer = CreateEntryBuffer(originalEntry, version);
 
 			// Act:
