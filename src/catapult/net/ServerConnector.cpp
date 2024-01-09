@@ -65,7 +65,7 @@ namespace catapult { namespace net {
 							if (ionet::ConnectResult::Connected != result)
 								return pRequest->callback(PeerConnectCode::Socket_Error, nullptr);
 
-							pThis->verify(node.identityKey(), pConnectedSocket, pRequest);
+							pThis->verify(node, pConnectedSocket, pRequest);
 						});
 
 				pRequest->setTimeoutHandler([cancel]() {
@@ -76,19 +76,22 @@ namespace catapult { namespace net {
 
 		private:
 			template<typename TRequest>
-			void verify(const Key& publicKey, const PacketSocketPointer& pConnectedSocket, const std::shared_ptr<TRequest>& pRequest) {
+			void verify(const ionet::Node& node, const PacketSocketPointer& pConnectedSocket, const std::shared_ptr<TRequest>& pRequest) {
 				m_sockets.insert(pConnectedSocket);
 				pRequest->setTimeoutHandler([pConnectedSocket]() {
 					pConnectedSocket->close();
 					CATAPULT_LOG(debug) << "verify failed due to timeout";
 				});
 
-				VerifiedPeerInfo serverPeerInfo{ publicKey, m_settings.OutgoingSecurityMode };
-				VerifyServer(pConnectedSocket, serverPeerInfo, m_keyPair, [pThis = shared_from_this(), pConnectedSocket, pRequest](
+				VerifiedPeerInfo serverPeerInfo{ node.identityKey(), m_settings.OutgoingSecurityMode };
+				VerifyServer(pConnectedSocket, serverPeerInfo, m_keyPair, [pThis = shared_from_this(), pConnectedSocket, pRequest, node](
 						auto verifyResult,
 						const auto& verifiedPeerInfo) {
 					if (VerifyResult::Success != verifyResult) {
 						CATAPULT_LOG(warning) << "VerifyServer failed with " << verifyResult;
+						if (VerifyResult::Failure_Challenge == verifyResult)
+							CATAPULT_LOG(warning) << "failed verify signature of " << node << " with pubkey " << verifiedPeerInfo.PublicKey;
+
 						return pRequest->callback(PeerConnectCode::Verify_Error, nullptr);
 					}
 

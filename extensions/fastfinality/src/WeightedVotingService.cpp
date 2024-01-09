@@ -192,18 +192,39 @@ namespace catapult { namespace fastfinality {
 
 					switch (pPacket->Type) {
 						case ionet::PacketType::Push_Proposed_Block: {
-							PushProposedBlock(pFsmShared, pluginManager, *pPacket);
+							PushProposedBlock(*pFsmShared, pluginManager, *pPacket);
 							break;
 						}
 						case ionet::PacketType::Push_Prevote_Messages: {
-							PushPrevoteMessages(pFsmShared, *pPacket);
+							PushPrevoteMessages(*pFsmShared, *pPacket);
 							break;
 						}
 						case ionet::PacketType::Push_Precommit_Messages: {
-							PushPrecommitMessages(pFsmShared, *pPacket);
+							PushPrecommitMessages(*pFsmShared, *pPacket);
 							break;
 						}
 					}
+				});
+
+				pFsmShared->dbrbProcess()->setValidationCallback([pFsmWeak, &pluginManager](const std::shared_ptr<ionet::Packet>& pPacket) {
+					auto pFsmShared = pFsmWeak.lock();
+					if (!pFsmShared || pFsmShared->stopped())
+						return false;
+
+					switch (pPacket->Type) {
+						case ionet::PacketType::Push_Proposed_Block: {
+							std::shared_ptr<model::Block> pBlock;
+							return ValidateProposedBlock(*pFsmShared, pluginManager, *pPacket, pBlock);
+						}
+						case ionet::PacketType::Push_Prevote_Messages: {
+							return ValidatePrevoteMessages(*pFsmShared, *pPacket);
+						}
+						case ionet::PacketType::Push_Precommit_Messages: {
+							return ValidatePrecommitMessages(*pFsmShared, *pPacket);
+						}
+					}
+
+					return false;
 				});
 
 				const auto& pConfigHolder = pluginManager.configHolder();

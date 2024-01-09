@@ -92,6 +92,10 @@ namespace catapult { namespace fastfinality {
 			return m_committeeData;
 		}
 
+		const auto& committeeData() const {
+			return m_committeeData;
+		}
+
 		void resetCommitteeData() {
 			m_committeeData.setCommitteeRound(CommitteeRound{});
 			m_committeeData.setBlockProposer(nullptr);
