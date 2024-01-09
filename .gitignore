@@ -28,6 +28,7 @@ npm-*.log*
 .project
 .settings
 internal
+cmake-build*
 
 # IntelliJ project files
 .idea

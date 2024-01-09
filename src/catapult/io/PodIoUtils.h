@@ -53,6 +53,12 @@ namespace catapult { namespace io {
 
 	/// Writes \a value into \a output.
 	template<typename TIo>
+	void Write64Signed(TIo& output, int64_t value) {
+		output.write({ reinterpret_cast<const uint8_t*>(&value), sizeof(int64_t) });
+	}
+
+	/// Writes \a value into \a output.
+	template<typename TIo>
 	void Write32(TIo& output, uint32_t value) {
 		output.write({ reinterpret_cast<const uint8_t*>(&value), sizeof(uint32_t) });
 	}
@@ -98,6 +104,14 @@ namespace catapult { namespace io {
 	auto Read64(TIo& input) {
 		uint64_t result;
 		input.read({ reinterpret_cast<uint8_t*>(&result), sizeof(uint64_t) });
+		return result;
+	}
+
+	/// Reads value from \a input.
+	template<typename TIo>
+	auto Read64Signed(TIo& input) {
+		int64_t result;
+		input.read({ reinterpret_cast<uint8_t*>(&result), sizeof(int64_t) });
 		return result;
 	}
 

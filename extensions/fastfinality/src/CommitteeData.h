@@ -7,6 +7,7 @@
 #pragma once
 #include "CommitteeRound.h"
 #include "WeightedVotingChainPackets.h"
+#include "catapult/chain/CommitteeManager.h"
 #include "catapult/model/EntityHasher.h"
 #include <atomic>
 #include <map>
@@ -30,7 +31,7 @@ namespace catapult { namespace fastfinality {
 		CommitteeData()
 			: m_round(CommitteeRound{})
 			, m_pBlockProposer(nullptr)
-			, m_totalSumOfVotes(0.0)
+			, m_totalSumOfVotes{}
 			, m_sumOfPrevotesSufficient(false)
 		{}
 
@@ -71,7 +72,7 @@ namespace catapult { namespace fastfinality {
 			return m_localCommittee;
 		}
 
-		void setTotalSumOfVotes(double sum) {
+		void setTotalSumOfVotes(chain::HarvesterWeight sum) {
 			m_totalSumOfVotes = sum;
 		}
 
@@ -193,7 +194,7 @@ namespace catapult { namespace fastfinality {
 
 		const crypto::KeyPair* m_pBlockProposer;
 		std::set<const crypto::KeyPair*> m_localCommittee;
-		double m_totalSumOfVotes;
+		chain::HarvesterWeight m_totalSumOfVotes;
 
 		std::shared_ptr<std::promise<bool>> m_pProposedBlockPromise;
 		std::shared_ptr<model::Block> m_pProposedBlock;

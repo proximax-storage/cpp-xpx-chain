@@ -138,6 +138,9 @@ namespace catapult { namespace model {
 	/// Active harvesters.
 	DEFINE_CORE_NOTIFICATION(Active_Harvesters_v1, 0x0012, All);
 
+	/// Block cosignatures.
+	DEFINE_CORE_NOTIFICATION(Block_Committee_v2, 0x0013, All);
+
 #undef DEFINE_CORE_NOTIFICATION
 
 	// endregion

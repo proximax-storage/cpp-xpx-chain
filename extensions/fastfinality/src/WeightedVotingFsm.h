@@ -96,7 +96,7 @@ namespace catapult { namespace fastfinality {
 			m_committeeData.setCommitteeRound(CommitteeRound{});
 			m_committeeData.setBlockProposer(nullptr);
 			m_committeeData.localCommittee().clear();
-			m_committeeData.setTotalSumOfVotes(0.0);
+			m_committeeData.setTotalSumOfVotes(chain::HarvesterWeight{});
 			m_committeeData.setProposedBlock(nullptr);
 			m_committeeData.setConfirmedBlock(nullptr);
 			m_committeeData.clearVotes();
