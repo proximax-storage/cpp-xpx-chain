@@ -276,6 +276,7 @@ namespace catapult { namespace dbrb {
 		// Disseminating Commit message.
 		CATAPULT_LOG(trace) << "[DBRB] ACKNOWLEDGED: Disseminating Commit message with payload " << data.Payload->Type << " from " << data.Sender;
 		auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, data.Certificate, data.CertificateView, m_currentView);
+		data.CommitMessageReceived = true;
 		disseminate(pMessage, m_currentView.Data);
 	}
 
