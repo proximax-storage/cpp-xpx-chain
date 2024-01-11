@@ -73,9 +73,8 @@ namespace catapult { namespace fastfinality {
 			const RemoteNodeStateRetriever& retriever,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
-			const std::function<uint64_t (const Key&)>& importanceGetter,
-			const chain::CommitteeManager& committeeManager) {
-		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, &committeeManager]() {
+			const std::function<uint64_t (const Key&)>& importanceGetter) {
+		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter]() {
 			TRY_GET_FSM()
 
 			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
@@ -186,19 +185,12 @@ namespace catapult { namespace fastfinality {
 	}
 
 	namespace {
-		constexpr auto UNITS_IN_THE_LAST_PLACE = 2;
-
-		bool IsSumOfVotesSufficient(double actual, double min) {
-			return actual >= min
-				|| std::abs(actual - min) <= std::numeric_limits<double>::epsilon() * std::abs(actual + min) * UNITS_IN_THE_LAST_PLACE
-				|| std::abs(actual - min) <= std::numeric_limits<double>::min();
-		}
 
 		bool ValidateBlockCosignatures(
 				const std::shared_ptr<model::Block>& pBlock,
 				const chain::CommitteeManager& committeeManager,
-				double committeeApproval,
-				double totalSumOfVotes = 0.0) {
+				const model::NetworkConfiguration& config,
+				chain::HarvesterWeight totalSumOfVotes) {
 			const auto& committee = committeeManager.committee();
 			if (pBlock->Signer != committee.BlockProposer) {
 				CATAPULT_LOG(warning) << "rejecting block, signer " << pBlock->Signer
@@ -217,7 +209,7 @@ namespace catapult { namespace fastfinality {
 				return false;
 			}
 
-			auto blockProposerWeight = committeeManager.weight(committee.BlockProposer);
+			auto blockProposerWeight = committeeManager.weight(committee.BlockProposer, config);
 			auto actualSumOfVotes = blockProposerWeight;
 			auto pCosignature = pBlock->CosignaturesPtr();
 			for (auto i = 0u; i < numCosignatures; ++i, ++pCosignature) {
@@ -231,18 +223,19 @@ namespace catapult { namespace fastfinality {
 					return false;
 				}
 
-				actualSumOfVotes += committeeManager.weight(pCosignature->Signer);
+				committeeManager.add(actualSumOfVotes, committeeManager.weight(pCosignature->Signer, config));
 			}
 
-			if (totalSumOfVotes == 0.0) {
+			if (committeeManager.eq(totalSumOfVotes, committeeManager.zeroWeight())) {
 				totalSumOfVotes = blockProposerWeight;
 				for (const auto& cosigner : committee.Cosigners)
-					totalSumOfVotes += committeeManager.weight(cosigner);
+					committeeManager.add(totalSumOfVotes, committeeManager.weight(cosigner, config));
 			}
 
-			auto minSumOfVotes = committeeApproval * totalSumOfVotes;
-			if (!IsSumOfVotesSufficient(actualSumOfVotes, minSumOfVotes)) {
-				CATAPULT_LOG(warning) << "rejecting block, sum of votes insufficient: " << std::fixed << std::setprecision(30) << actualSumOfVotes << " < " << minSumOfVotes;
+			auto minSumOfVotes = totalSumOfVotes;
+			committeeManager.mul(minSumOfVotes, config.CommitteeApproval);
+			if (!committeeManager.ge(actualSumOfVotes, minSumOfVotes)) {
+				CATAPULT_LOG(warning) << "rejecting block, sum of votes insufficient: " << committeeManager.str(actualSumOfVotes) << " < " << committeeManager.str(minSumOfVotes);
 				return false;
 			}
 
@@ -253,9 +246,8 @@ namespace catapult { namespace fastfinality {
 	action CreateDefaultDownloadBlocksAction(
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 			extensions::ServiceState& state,
-			const consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&>& rangeConsumer,
-			chain::CommitteeManager& committeeManager) {
-		return [pFsmWeak, &state, rangeConsumer, &committeeManager]() {
+			const consumer<model::BlockRange&&, const disruptor::ProcessingCompleteFunc&>& rangeConsumer) {
+		return [pFsmWeak, &state, rangeConsumer]() {
 			TRY_GET_FSM()
 
 			const auto& nodeConfig = state.config().Node;
@@ -294,13 +286,14 @@ namespace catapult { namespace fastfinality {
 				bool success = false;
 				for (const auto& pBlock : blocks) {
 					const auto& config = state.config(pBlock->Height).Network;
+					auto& committeeManager = state.pluginManager().getCommitteeManager(pBlock->EntityVersion());
 					committeeManager.reset();
 					while (committeeManager.committee().Round < pBlock->round())
 						committeeManager.selectCommittee(config);
-					CATAPULT_LOG(debug) << "selected committee for round " << pBlock->round();
+					CATAPULT_LOG(debug) << "block " << pBlock->Height << ": selected committee for round " << pBlock->round();
 					committeeManager.logCommittee();
 
-					if (ValidateBlockCosignatures(pBlock, committeeManager, config.CommitteeApproval)) {
+					if (ValidateBlockCosignatures(pBlock, committeeManager, config, committeeManager.zeroWeight())) {
 						std::lock_guard<std::mutex> guard(pFsmShared->mutex());
 
 						auto pPromise = std::make_shared<thread::promise<bool>>();
@@ -342,20 +335,20 @@ namespace catapult { namespace fastfinality {
 
 	action CreateDefaultDetectStageAction(
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const chain::TimeSupplier& timeSupplier,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
-			chain::CommitteeManager& committeeManager) {
-		return [pFsmWeak, pConfigHolder, timeSupplier, lastBlockElementSupplier, &committeeManager]() {
+			extensions::ServiceState& state) {
+		return [pFsmWeak, timeSupplier, lastBlockElementSupplier, &state]() {
 			TRY_GET_FSM()
 
 		  	pFsmShared->resetChainSyncData();
 			pFsmShared->setNodeWorkState(NodeWorkState::Running);
+			auto& committeeManager = state.pluginManager().getCommitteeManager(model::Block::Current_Version);
 			committeeManager.reset();
 
 			auto pLastBlockElement = lastBlockElementSupplier();
 			const auto& block = pLastBlockElement->Block;
-			const auto& config = pConfigHolder->Config(block.Height + Height(1)).Network;
+			const auto& config = state.pluginManager().config(block.Height + Height(1));
 
 			auto roundStart = block.Timestamp + Timestamp(chain::CommitteePhaseCount * block.committeePhaseTime());
 			auto currentTime = timeSupplier();
@@ -394,13 +387,13 @@ namespace catapult { namespace fastfinality {
 
 	action CreateDefaultSelectCommitteeAction(
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
-			chain::CommitteeManager& committeeManager,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return [pFsmWeak, &committeeManager, pConfigHolder]() {
+			extensions::ServiceState& state) {
+		return [pFsmWeak, &state]() {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto round = committeeData.committeeRound();
+			auto pConfigHolder = state.pluginManager().configHolder();
 			bool isInDbrbSystem = pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight(), true);
 			if (!isInDbrbSystem) {
 				pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
@@ -410,13 +403,14 @@ namespace catapult { namespace fastfinality {
 			if (CommitteePhase::None == round.StartPhase)
 				CATAPULT_THROW_RUNTIME_ERROR("committee start phase is not set")
 
+			auto& committeeManager = state.pluginManager().getCommitteeManager(model::Block::Current_Version);
 			if (committeeManager.committee().Round > round.Round)
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid committee round", committeeManager.committee().Round, round.Round)
 
 			const auto& config = pConfigHolder->Config(committeeData.currentBlockHeight()).Network;
 			while (committeeManager.committee().Round < round.Round)
 				committeeManager.selectCommittee(config);
-			CATAPULT_LOG(debug) << "selected committee for round " << round.Round;
+			CATAPULT_LOG(debug) << "block " << committeeData.currentBlockHeight() << ": selected committee for round " << round.Round;
 			committeeManager.logCommittee();
 
 			const auto& committee = committeeManager.committee();
@@ -445,9 +439,9 @@ namespace catapult { namespace fastfinality {
 				}
 			});
 
-			double totalSumOfVotes = committeeManager.weight(committee.BlockProposer);
+			auto totalSumOfVotes = committeeManager.weight(committee.BlockProposer, config);
 			for (const auto& cosigner : committee.Cosigners)
-				totalSumOfVotes += committeeManager.weight(cosigner);
+				committeeManager.add(totalSumOfVotes, committeeManager.weight(cosigner, config));
 			committeeData.setTotalSumOfVotes(totalSumOfVotes);
 
 			CATAPULT_LOG(debug) << "committee selection result: is block proposer = " << isBlockProposer << ", is cosigner = " << isCosigner << ", start phase = " << round.StartPhase << ", phase time = " << round.PhaseTimeMillis << "ms";
@@ -644,7 +638,7 @@ namespace catapult { namespace fastfinality {
 				return;
 			}
 
-			const auto& committee = state.pluginManager().getCommitteeManager().committee();
+			const auto& committee = state.pluginManager().getCommitteeManager(model::Block::Current_Version).committee();
 			if (pProposedBlock->Signer != committee.BlockProposer) {
 				CATAPULT_LOG(warning) << "rejecting proposal, signer " << pProposedBlock->Signer
 					<< " invalid, expected " << committee.BlockProposer;
@@ -707,39 +701,38 @@ namespace catapult { namespace fastfinality {
 	namespace {
 		bool IsSumOfVotesSufficient(
 				const VoteMap& votes,
-				double committeeApproval,
-				double totalSumOfVotes,
+				const model::NetworkConfiguration& config,
+				chain::HarvesterWeight totalSumOfVotes,
 				const chain::CommitteeManager& committeeManager) {
-			double actualSumOfVotes = 0.0;
+			auto actualSumOfVotes = committeeManager.zeroWeight();
 			for (const auto& pair : votes)
-				actualSumOfVotes += committeeManager.weight(pair.first);
+				committeeManager.add(actualSumOfVotes, committeeManager.weight(pair.first, config));
 
-			auto minSumOfVotes = committeeApproval * totalSumOfVotes;
-			auto sumOfVotesSufficient = IsSumOfVotesSufficient(actualSumOfVotes, minSumOfVotes);
-			if (!sumOfVotesSufficient)
-				CATAPULT_LOG(debug) << "sum of votes insufficient: " << std::fixed << std::setprecision(30) << actualSumOfVotes << " < " << minSumOfVotes << ", vote count " << votes.size();
+			auto minSumOfVotes = totalSumOfVotes;
+			committeeManager.mul(minSumOfVotes, config.CommitteeApproval);
+			auto sumOfVotesSufficient = committeeManager.ge(actualSumOfVotes, minSumOfVotes);
+			CATAPULT_LOG(debug) << "sum of votes " << (sumOfVotesSufficient ? "" : "IN") << "SUFFICIENT [" << committeeManager.str(actualSumOfVotes) << ", " << committeeManager.str(minSumOfVotes) << "], vote count " << votes.size();
 			return sumOfVotesSufficient;
 		}
 	}
 
 	action CreateDefaultWaitForPrevotePhaseEndAction(
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
-			chain::CommitteeManager& committeeManager,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return [pFsmWeak, &committeeManager, pConfigHolder]() {
+			extensions::ServiceState& state) {
+		return [pFsmWeak, &state]() {
 			TRY_GET_FSM()
 
 			auto phaseEndTimeMillis = GetPhaseEndTimeMillis(CommitteePhase::Prevote, pFsmShared->committeeData().committeeRound().PhaseTimeMillis);
-			DelayAction(pFsmWeak, pFsmShared->timer(), phaseEndTimeMillis, [pFsmWeak, &committeeManager, pConfigHolder] {
+			DelayAction(pFsmWeak, pFsmShared->timer(), phaseEndTimeMillis, [pFsmWeak, &state] {
 				TRY_GET_FSM()
 
 				auto& committeeData = pFsmShared->committeeData();
-				const auto& config = pConfigHolder->Config(committeeData.currentBlockHeight()).Network;
+				const auto& config = state.pluginManager().config(committeeData.currentBlockHeight());
 				bool sumOfPrevotesSufficient = IsSumOfVotesSufficient(
 						committeeData.prevotes(),
-						config.CommitteeApproval,
+						config,
 						committeeData.totalSumOfVotes(),
-						committeeManager);
+						state.pluginManager().getCommitteeManager(model::Block::Current_Version));
 
 				committeeData.setSumOfPrevotesSufficient(sumOfPrevotesSufficient);
 				if (sumOfPrevotesSufficient) {
@@ -802,22 +795,21 @@ namespace catapult { namespace fastfinality {
 
 	action CreateDefaultWaitForPrecommitPhaseEndAction(
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
-			chain::CommitteeManager& committeeManager,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return [pFsmWeak, &committeeManager, pConfigHolder]() {
+			extensions::ServiceState& state) {
+		return [pFsmWeak, &state]() {
 			TRY_GET_FSM()
 
 			auto phaseEndTimeMillis = GetPhaseEndTimeMillis(CommitteePhase::Precommit, pFsmShared->committeeData().committeeRound().PhaseTimeMillis);
-			DelayAction(pFsmWeak, pFsmShared->timer(), phaseEndTimeMillis, [pFsmWeak, &committeeManager, pConfigHolder] {
+			DelayAction(pFsmWeak, pFsmShared->timer(), phaseEndTimeMillis, [pFsmWeak, &state] {
 				TRY_GET_FSM()
 
 				const auto& committeeData = pFsmShared->committeeData();
-				const auto& config = pConfigHolder->Config(committeeData.currentBlockHeight()).Network;
+				const auto& config = state.pluginManager().config(committeeData.currentBlockHeight());
 				bool sumOfPrecommitsSufficient = IsSumOfVotesSufficient(
 						committeeData.precommits(),
-						config.CommitteeApproval,
+						config,
 						committeeData.totalSumOfVotes(),
-						committeeManager);
+						state.pluginManager().getCommitteeManager(model::Block::Current_Version));
 
 				if (sumOfPrecommitsSufficient && committeeData.sumOfPrevotesSufficient()) {
 					pFsmShared->processEvent(SumOfPrecommitsSufficient{});
@@ -830,15 +822,15 @@ namespace catapult { namespace fastfinality {
 
 	action CreateDefaultUpdateConfirmedBlockAction(
 		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
-		chain::CommitteeManager& committeeManager) {
-		return [pFsmWeak, &committeeManager]() {
+			extensions::ServiceState& state) {
+		return [pFsmWeak, &state]() {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto votes = committeeData.precommits();
 			std::vector<model::Cosignature> cosignatures;
 			cosignatures.reserve(votes.size());
-			const auto& blockProposer = committeeManager.committee().BlockProposer;
+			const auto& blockProposer = state.pluginManager().getCommitteeManager(model::Block::Current_Version).committee().BlockProposer;
 			for (const auto &pair : votes) {
 				if (pair.first != blockProposer)
 					cosignatures.push_back(pair.second.BlockCosignature);
@@ -877,9 +869,7 @@ namespace catapult { namespace fastfinality {
 				auto packetIoPairs = state.packetIoPickers().pickMultiple(timeout);
 				CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling confirmed block";
 				auto expectedHeight = lastBlockElementSupplier()->Block.Height + Height(1);
-				const auto& getCommitteeManager = state.pluginManager().getCommitteeManager();
 				auto& committeeData = pFsmShared->committeeData();
-				auto committeeApproval = state.config(committeeData.currentBlockHeight()).Network.CommitteeApproval;
 				for (const auto& packetIoPair : packetIoPairs) {
 					auto pRemoteApi = CreateRemoteNodeApi(*packetIoPair.io(), state.pluginManager().transactionRegistry());
 					std::shared_ptr<model::Block> pBlock;
@@ -895,13 +885,15 @@ namespace catapult { namespace fastfinality {
 							return;
 						}
 
-						const auto& committee = getCommitteeManager.committee();
+						const auto& committeeManager = state.pluginManager().getCommitteeManager(model::Block::Current_Version);
+						const auto& committee = committeeManager.committee();
 						if (pBlock->round() != committee.Round) {
 							CATAPULT_LOG(warning) << "rejecting block, round " << pBlock->round() << " invalid, expected " << committee.Round;
 							continue;
 						}
 
-						if (!ValidateBlockCosignatures(pBlock, getCommitteeManager, committeeApproval, committeeData.totalSumOfVotes()))
+						const auto& config = state.config(committeeData.currentBlockHeight()).Network;
+						if (!ValidateBlockCosignatures(pBlock, committeeManager, config, committeeData.totalSumOfVotes()))
 							continue;
 
 						committeeData.setConfirmedBlock(pBlock);
@@ -952,7 +944,7 @@ namespace catapult { namespace fastfinality {
 			DelayAction(pFsmWeak, pFsmShared->timer(), GetPhaseEndTimeMillis(CommitteePhase::Commit, committeeData.committeeRound().PhaseTimeMillis), [pFsmWeak, success, &state] {
 				TRY_GET_FSM()
 
-				auto maxChainHeight = state.maxChainHeight();
+				const auto& maxChainHeight = state.maxChainHeight();
 				if (success && (maxChainHeight > Height(0)) && (pFsmShared->committeeData().confirmedBlock()->Height >= maxChainHeight)) {
 					pFsmShared->processEvent(Hold{});
 				} else if (success) {
@@ -990,17 +982,16 @@ namespace catapult { namespace fastfinality {
 
 	action CreateDefaultResetRoundAction(
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			chain::CommitteeManager& committeeManager) {
-		return [pFsmWeak, pConfigHolder, &committeeManager]() {
+			extensions::ServiceState& state) {
+		return [pFsmWeak, &state]() {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto currentRound = committeeData.committeeRound();
 			pFsmShared->resetCommitteeData();
-			committeeManager.reset();
+			state.pluginManager().getCommitteeManager(model::Block::Current_Version).reset();
 
-			const auto& config = pConfigHolder->Config(committeeData.currentBlockHeight()).Network;
+			const auto& config = state.pluginManager().config(committeeData.currentBlockHeight());
 			auto nextRoundStart = currentRound.RoundStart + std::chrono::milliseconds(GetPhaseEndTimeMillis(CommitteePhase::Commit, currentRound.PhaseTimeMillis));
 			uint64_t nextPhaseTimeMillis = currentRound.PhaseTimeMillis;
 			chain::DecreasePhaseTime(nextPhaseTimeMillis, config);

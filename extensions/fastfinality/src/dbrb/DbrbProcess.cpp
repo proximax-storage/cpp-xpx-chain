@@ -64,6 +64,10 @@ namespace catapult { namespace dbrb {
 		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Deliver_Message, handler);
 	}
 
+	void DbrbProcess::setValidationCallback(const ValidationCallback& callback) {
+		m_validationCallback = callback;
+	}
+
 	void DbrbProcess::setDeliverCallback(const DeliverCallback& callback) {
 		m_deliverCallback = callback;
 	}
@@ -189,6 +193,11 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onPrepareMessageReceived(const PrepareMessage& message) {
 		CATAPULT_LOG(trace) << "[DBRB] PREPARE: received payload " << message.Payload->Type << " from " << message.Sender;
+		if (!m_validationCallback(message.Payload)) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (message invalid).";
+			return;
+		}
+
 		if (!m_currentView.isMember(m_id)) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (node is not a participant).";
 			return;

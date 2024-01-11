@@ -417,13 +417,12 @@ namespace catapult { namespace cache {
 
 		/// Returns \c true if the cache is enabled, otherwise \c false.
 		bool enabled() const {
-			const auto& blockchainConfig = m_pConfigHolder->Config(height());
-			if (blockchainConfig.Network.Plugins.count(PluginConfig::Name)) {
-				const auto& pluginConfig = blockchainConfig.Network.template GetPluginConfiguration<PluginConfig>();
-				return m_cacheEnabledPredicate(pluginConfig);
-			}
+			return m_cacheEnabledPredicate(pluginConfig());
+		}
 
-			return false;
+		const PluginConfig& pluginConfig() const {
+			const auto& blockchainConfig = m_pConfigHolder->Config(height());
+			return blockchainConfig.Network.template GetPluginConfiguration<PluginConfig>();
 		}
 
 	private:

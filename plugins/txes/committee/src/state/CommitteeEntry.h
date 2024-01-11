@@ -7,27 +7,57 @@
 #pragma once
 #include "catapult/types.h"
 #include <cmath>
+#include <utility>
 
 namespace catapult { namespace state {
 
 	struct AccountData {
 	public:
-		// Creates a account data around \a lastSigningBlockHeight, \a effectiveBalance, \a canHarvest,
-		// \a activity and \a greed.
-		explicit AccountData(
+		AccountData(
 				Height lastSigningBlockHeight,
 				Importance effectiveBalance,
 				bool canHarvest,
-				double activity,
-				double greed,
-				Timestamp expirationTime = Timestamp(0))
+				double activityObsolete,
+				double greedObsolete,
+				Timestamp expirationTime,
+				int64_t activity,
+				uint32_t feeInterest,
+				uint32_t feeInterestDenominator)
 			: LastSigningBlockHeight(std::move(lastSigningBlockHeight))
 			, EffectiveBalance(std::move(effectiveBalance))
 			, CanHarvest(canHarvest)
-			, Activity(activity)
-			, Greed(greed)
+			, ActivityObsolete(activityObsolete)
+			, GreedObsolete(greedObsolete)
 			, ExpirationTime(std::move(expirationTime))
+			, Activity(activity)
+			, FeeInterest(feeInterest)
+			, FeeInterestDenominator(feeInterestDenominator)
 		{}
+
+	public:
+		/// Safely increases the account activity by \a delta.
+		/// If data overflow is detected then activity is set to maximum value.
+		void increaseActivity(int64_t delta) {
+			if (delta < 0) {
+				decreaseActivity(-delta);
+			} else if (Activity > 0 && std::numeric_limits<int64_t>::max() - Activity < delta) {
+				Activity = std::numeric_limits<int64_t>::max();
+			} else {
+				Activity += delta;
+			}
+		}
+
+		/// Safely decreases the account activity by \a delta.
+		/// If data underflow is detected then activity is set to minimum value.
+		void decreaseActivity(int64_t delta) {
+			if (delta < 0) {
+				increaseActivity(-delta);
+			} else if (Activity < 0 && Activity - std::numeric_limits<int64_t>::min() < delta) {
+				Activity = std::numeric_limits<int64_t>::min();
+			} else {
+				Activity -= delta;
+			}
+		}
 
 	public:
 		/// The latest height of the account signing a block.
@@ -39,41 +69,53 @@ namespace catapult { namespace state {
 		/// Whether the account is eligible harvester.
 		bool CanHarvest;
 
-		/// Account activity. Account weight is 1 / (1 + exp(-Activity)).
-		double Activity;
+		/// Obsolete account activity due to switching from double to uint64.
+		double ActivityObsolete;
 
-		/// The account greed.
-		double Greed;
+		/// Obsolete account greed due to switching from double to uint64.
+		double GreedObsolete;
 
 		/// The time after which the harvester is considered inactive and is not selected into committee.
 		Timestamp ExpirationTime;
+
+		/// Account activity. Account weight is 1 / (1 + exp(-Activity)).
+		int64_t Activity;
+
+		/// The part of the transaction fee harvester is willing to get.
+		/// From 0 up to FeeInterestDenominator. The customer gets
+		/// (FeeInterest / FeeInterestDenominator)'th part of the maximum transaction fee.
+		uint32_t FeeInterest;
+
+		/// Denominator of the transaction fee.
+		uint32_t FeeInterestDenominator;
 	};
 
 	// Committee entry.
 	class CommitteeEntry {
 	public:
-		// Creates a committee entry around \a key, \a lastSigningBlockHeight, \a effectiveBalance, \a canHarvest
-		//	\a activity and \a greed.
-		explicit CommitteeEntry(
+		CommitteeEntry(
 				const Key& key,
 				const Key& owner,
 				const Height& lastSigningBlockHeight,
 				const Importance& effectiveBalance,
 				bool canHarvest,
-				double activity,
-				double greed,
+				double activityObsolete,
+				double greedObsolete,
 				Height disabledHeight = Height(0),
 				VersionType version = 1,
-				Timestamp expirationTime = Timestamp(0))
+				Timestamp expirationTime = Timestamp(0),
+				int64_t activity = 0u,
+				uint32_t feeInterest = 0u,
+				uint32_t feeInterestDenominator = 0u)
 			: m_key(key)
 			, m_owner(owner)
 			, m_disabledHeight(std::move(disabledHeight))
-			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed, expirationTime)
+			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, std::move(expirationTime), activity, feeInterest, feeInterestDenominator)
 			, m_version(version)
 		{}
 
 		// Creates a committee entry around \a key and \a data.
-		explicit CommitteeEntry(const Key& key, const Key& owner, const AccountData& data, const Height& disabledHeight = Height(0), VersionType version = 1)
+		CommitteeEntry(const Key& key, const Key& owner, const AccountData& data, const Height& disabledHeight = Height(0), VersionType version = 1)
 			: m_key(key)
 			, m_owner(owner)
 			, m_disabledHeight(disabledHeight)
@@ -82,7 +124,7 @@ namespace catapult { namespace state {
 		{}
 
 		// Creates a committee entry around \a key and \a data.
-		explicit CommitteeEntry(const Key& key, const Key& owner, AccountData&& data, const Height& disabledHeight = Height(0), VersionType version = 1)
+		CommitteeEntry(const Key& key, const Key& owner, AccountData&& data, const Height& disabledHeight = Height(0), VersionType version = 1)
 			: m_key(key)
 			, m_owner(owner)
 			, m_disabledHeight(disabledHeight)
@@ -154,24 +196,24 @@ namespace catapult { namespace state {
 			m_data.CanHarvest = canHarvest;
 		}
 
-		/// Gets the account activity.
-		double activity() const {
-			return m_data.Activity;
+		/// Gets the account activity (obsolete).
+		double activityObsolete() const {
+			return m_data.ActivityObsolete;
 		}
 
-		/// Sets the account \a activity.
-		void setActivity(double activity) {
-			m_data.Activity = activity;
+		/// Sets the account \a activityObsolete.
+		void setActivityObsolete(double activityObsolete) {
+			m_data.ActivityObsolete = activityObsolete;
 		}
 
-		/// Gets the account greed.
-		double greed() const {
-			return m_data.Greed;
+		/// Gets the account greed (obsolete).
+		double greedObsolete() const {
+			return m_data.GreedObsolete;
 		}
 
-		/// Sets the account \a greed.
-		void setGreed(double greed) {
-			m_data.Greed = greed;
+		/// Sets the account \a greedObsolete.
+		void setGreedObsolete(double greedObsolete) {
+			m_data.GreedObsolete = greedObsolete;
 		}
 
 		const Timestamp& expirationTime() const {
@@ -180,6 +222,36 @@ namespace catapult { namespace state {
 
 		void setExpirationTime(const Timestamp& expirationTime) {
 			m_data.ExpirationTime = expirationTime;
+		}
+
+		/// Gets the account activity.
+		int64_t activity() const {
+			return m_data.Activity;
+		}
+
+		/// Sets the account \a activity.
+		void setActivity(int64_t activity) {
+			m_data.Activity = activity;
+		}
+
+		/// Gets the fee interest.
+		uint32_t feeInterest() const {
+			return m_data.FeeInterest;
+		}
+
+		/// Sets \a feeInterest.
+		void setFeeInterest(uint32_t feeInterest) {
+			m_data.FeeInterest = feeInterest;
+		}
+
+		/// Gets the fee interest denominator.
+		uint32_t feeInterestDenominator() const {
+			return m_data.FeeInterestDenominator;
+		}
+
+		/// Sets \a feeInterestDenominator.
+		void setFeeInterestDenominator(uint32_t feeInterestDenominator) {
+			m_data.FeeInterestDenominator = feeInterestDenominator;
 		}
 
 	private:

@@ -302,20 +302,21 @@ namespace catapult { namespace plugins {
 
 	// region committee
 
-	/// Sets a committee manager.
-	void PluginManager::setCommitteeManager(const std::shared_ptr<chain::CommitteeManager>& pManager) {
-		if (!!m_pCommitteeManager)
-			CATAPULT_THROW_RUNTIME_ERROR("committee manager already set");
+	/// Sets a committee manager for \a blockVersion.
+	void PluginManager::setCommitteeManager(VersionType blockVersion, const std::shared_ptr<chain::CommitteeManager>& pManager) {
+		if (m_committeeManagers.find(blockVersion) != m_committeeManagers.end())
+			CATAPULT_THROW_RUNTIME_ERROR_1("committee manager already set for block version", blockVersion);
 
-		m_pCommitteeManager = pManager;
+		m_committeeManagers[blockVersion] = pManager;
 	}
 
-	/// Gets committee manager.
-	chain::CommitteeManager& PluginManager::getCommitteeManager() const {
-		if (!m_pCommitteeManager)
-			CATAPULT_THROW_RUNTIME_ERROR("committee manager not set");
+	/// Gets committee manager for \a blockVersion.
+	chain::CommitteeManager& PluginManager::getCommitteeManager(VersionType blockVersion) const {
+		auto iter = m_committeeManagers.find(blockVersion);
+		if (iter == m_committeeManagers.end())
+			CATAPULT_THROW_RUNTIME_ERROR_1("committee manager not set for block version", blockVersion);
 
-		return *m_pCommitteeManager;
+		return *iter->second;
 	}
 
 	// endregion

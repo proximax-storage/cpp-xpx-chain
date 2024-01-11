@@ -92,11 +92,15 @@ namespace catapult { namespace fastfinality {
 			return m_committeeData;
 		}
 
+		const auto& committeeData() const {
+			return m_committeeData;
+		}
+
 		void resetCommitteeData() {
 			m_committeeData.setCommitteeRound(CommitteeRound{});
 			m_committeeData.setBlockProposer(nullptr);
 			m_committeeData.localCommittee().clear();
-			m_committeeData.setTotalSumOfVotes(0.0);
+			m_committeeData.setTotalSumOfVotes(chain::HarvesterWeight{});
 			m_committeeData.setProposedBlock(nullptr);
 			m_committeeData.setConfirmedBlock(nullptr);
 			m_committeeData.clearVotes();
