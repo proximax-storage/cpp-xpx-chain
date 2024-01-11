@@ -35,14 +35,13 @@ namespace catapult { namespace net {
 		}
 
 		void SignChallenge(const crypto::KeyPair& keyPair, std::initializer_list<const RawBuffer> buffers, Signature& computedSignature) {
-			CATAPULT_LOG(trace) << "preparing challenge response";
 			crypto::Sign(keyPair, buffers, computedSignature);
-			CATAPULT_LOG(trace) << "signature " << computedSignature << ", pubkey " << keyPair.publicKey();
+			CATAPULT_LOG(trace) << "prepared challenge response: signature " << computedSignature << ", pubkey " << keyPair.publicKey();
 		}
 
 		bool VerifyChallenge(const Key& publicKey, std::initializer_list<const RawBuffer> buffers, const Signature& signature) {
 			auto isVerified = crypto::Verify(publicKey, buffers, signature);
-			CATAPULT_LOG(trace) << "verify signature " << signature << ", pubkey " << publicKey << ", result: " << isVerified;
+			CATAPULT_LOG(trace) << "verify signature " << signature << "with pubkey " << publicKey << ", result: " << isVerified;
 			return isVerified;
 		}
 	}

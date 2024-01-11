@@ -64,6 +64,10 @@ namespace catapult { namespace dbrb {
 		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Deliver_Message, handler);
 	}
 
+	void DbrbProcess::setValidationCallback(const ValidationCallback& callback) {
+		m_validationCallback = callback;
+	}
+
 	void DbrbProcess::setDeliverCallback(const DeliverCallback& callback) {
 		m_deliverCallback = callback;
 	}
@@ -189,6 +193,11 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onPrepareMessageReceived(const PrepareMessage& message) {
 		CATAPULT_LOG(trace) << "[DBRB] PREPARE: received payload " << message.Payload->Type << " from " << message.Sender;
+		if (!m_validationCallback(message.Payload)) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (message invalid).";
+			return;
+		}
+
 		if (!m_currentView.isMember(m_id)) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (node is not a participant).";
 			return;
@@ -267,6 +276,7 @@ namespace catapult { namespace dbrb {
 		// Disseminating Commit message.
 		CATAPULT_LOG(trace) << "[DBRB] ACKNOWLEDGED: Disseminating Commit message with payload " << data.Payload->Type << " from " << data.Sender;
 		auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, data.Certificate, data.CertificateView, m_currentView);
+		data.CommitMessageReceived = true;
 		disseminate(pMessage, m_currentView.Data);
 	}
 
