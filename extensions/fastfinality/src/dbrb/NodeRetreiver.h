@@ -5,34 +5,40 @@
 **/
 
 #pragma once
-#include "SignedNode.h"
 #include "catapult/dbrb/DbrbDefinitions.h"
+#include "catapult/ionet/Node.h"
 #include <optional>
 #include <mutex>
 
-namespace catapult { namespace net {
-	class PacketIoPickerContainer;
-	class PacketWriters;
-}}
+namespace catapult {
+	namespace net {
+		class PacketIoPickerContainer;
+		class PacketWriters;
+	}
+	namespace ionet {
+		class NodeContainer;
+	}
+}
 
 namespace catapult { namespace dbrb {
 
-	class NodeRetreiver {
+	class NodeRetreiver : public std::enable_shared_from_this<NodeRetreiver> {
 	public:
-		explicit NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier, const ProcessId& id, std::weak_ptr<net::PacketWriters> pWriters);
+		explicit NodeRetreiver(
+			const ProcessId& id,
+			std::weak_ptr<net::PacketWriters> pWriters,
+			const ionet::NodeContainer& nodeContainer);
 
 	public:
 		void requestNodes(const std::set<ProcessId>& requestedIds);
-		void addNodes(const std::vector<SignedNode>& nodes);
-		void broadcastNodes() const;
-		std::optional<SignedNode> getNode(const ProcessId& id) const;
+		std::optional<ionet::Node> getNode(const ProcessId& id) const;
+		void removeNode(const ProcessId& id);
 
 	private:
-		const net::PacketIoPickerContainer& m_packetIoPickers;
-		std::map<ProcessId, SignedNode> m_nodes;
-		model::NetworkIdentifier m_networkIdentifier;
 		ProcessId m_id;
 		std::weak_ptr<net::PacketWriters> m_pWriters;
+		const ionet::NodeContainer& m_nodeContainer;
+		std::map<ProcessId, ionet::Node> m_nodes;
 		mutable std::mutex m_mutex;
 	};
 }}

@@ -27,10 +27,10 @@ namespace catapult { namespace dbrb {
 
 	public:
 		explicit DbrbProcess(
-			const std::weak_ptr<net::PacketWriters>& pWriters,
-			const net::PacketIoPickerContainer& packetIoPickers,
-			const ionet::Node& thisNode,
+			const ProcessId& id,
 			const crypto::KeyPair& keyPair,
+			const ionet::NodeContainer& nodeContainer,
+			const std::weak_ptr<net::PacketWriters>& pWriters,
 			std::shared_ptr<thread::IoThreadPool> pPool,
 			std::shared_ptr<TransactionSender> pTransactionSender,
 			const dbrb::DbrbViewFetcher& dbrbViewFetcher);
@@ -70,15 +70,13 @@ namespace catapult { namespace dbrb {
 	protected:
 		/// Process identifier.
 		ProcessId m_id;
-		/// This node.
-		SignedNode m_node;
 		View m_currentView;
 		std::map<Hash256, BroadcastData> m_broadcastData;
 		NetworkPacketConverter m_converter;
 		ValidationCallback m_validationCallback;
 		DeliverCallback m_deliverCallback;
 		const crypto::KeyPair& m_keyPair;
-		NodeRetreiver m_nodeRetreiver;
+		std::shared_ptr<NodeRetreiver> m_pNodeRetreiver;
 		std::shared_ptr<MessageSender> m_pMessageSender;
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 		boost::asio::io_context::strand m_strand;

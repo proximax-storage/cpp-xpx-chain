@@ -67,6 +67,10 @@ module Catapult
       def self.peer_port(node_type, index)
         node_type == :peer_node ? PEER_PORT + 10 * (index + 1) : PEER_PORT
       end
+
+      def self.dbrb_port(node_type, index)
+        node_type == :peer_node ? PEER_PORT + 3 + 10 * (index + 1) : PEER_PORT + 3
+      end
     end
 
   end

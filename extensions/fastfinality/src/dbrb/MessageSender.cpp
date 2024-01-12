@@ -22,9 +22,9 @@ namespace catapult { namespace dbrb {
 		getPacketIos(recipients);
 		std::vector<thread::future<bool>> completionStatusFutures;
 		for (const auto& recipient : recipients) {
-			auto signedNode = m_nodeRetreiver.getNode(recipient);
-			if (signedNode) {
-				const auto& node = signedNode.value().Node;
+			auto result = m_nodeRetreiver.getNode(recipient);
+			if (result) {
+				const auto& node = result.value();
 				auto iter = m_packetIoPairs.find(node.identityKey());
 				if (iter != m_packetIoPairs.end()) {
 					CATAPULT_LOG(trace) << "[DBRB] sending " << *pPacket << " to " << node;
@@ -34,8 +34,10 @@ namespace catapult { namespace dbrb {
 						if (code != ionet::SocketOperationCode::Success) {
 							CATAPULT_LOG(error) << "[DBRB] sending " << *pPacket << " to " << node << " completed with " << code;
 							auto pThis = pThisWeak.lock();
-							if (pThis)
+							if (pThis) {
 								pThis->m_packetIoPairs.erase(node.identityKey());
+								pThis->m_nodeRetreiver.removeNode(node.identityKey());
+							}
 						}
 						pPromise->set_value(true);
 					});
@@ -53,25 +55,17 @@ namespace catapult { namespace dbrb {
 	}
 
 	NodePacketIoPairMap& MessageSender::getPacketIos(const std::set<ProcessId>& recipients) {
-		std::set<ProcessId> notFoundNodes;
+		auto pWriters = m_pWriters.lock();
+		if (!pWriters)
+			return m_packetIoPairs;
+
 		for (const auto& recipient : recipients) {
-			auto signedNode = m_nodeRetreiver.getNode(recipient);
-			if (signedNode) {
-				const auto& node = signedNode.value().Node;
-				if (m_packetIoPairs.find(node.identityKey()) == m_packetIoPairs.end() && !node.endpoint().Host.empty()) {
-					auto pWriters = m_pWriters.lock();
-					if (pWriters) {
-						auto nodePacketIoPair = pWriters->pickOne(node.identityKey());
-						if (nodePacketIoPair.io())
-							m_packetIoPairs.emplace(node.identityKey(), std::make_shared<ionet::NodePacketIoPair>(nodePacketIoPair));
-					}
-				}
-			} else {
-				notFoundNodes.emplace(recipient);
+			if (m_packetIoPairs.find(recipient) == m_packetIoPairs.end()) {
+				auto nodePacketIoPair = pWriters->pickOne(recipient);
+				if (nodePacketIoPair.io())
+					m_packetIoPairs.emplace(recipient, std::make_shared<ionet::NodePacketIoPair>(nodePacketIoPair));
 			}
 		}
-
-		m_nodeRetreiver.requestNodes(notFoundNodes);
 
 		return m_packetIoPairs;
 	}

@@ -6,7 +6,6 @@
 
 #include "WeightedVotingService.h"
 #include "WeightedVotingFsm.h"
-#include "dbrb/DbrbPacketHandlers.h"
 #include "catapult/api/RemoteRequestDispatcher.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/crypto/KeyUtils.h"
@@ -178,8 +177,7 @@ namespace catapult { namespace fastfinality {
 						pDbrbPool,
 						pWeightedVotingFsmPool](const std::shared_ptr<thread::IoThreadPool>&) {
 					pTransactionSender->init(&keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local), pUnlockedAccounts);
-					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(pWritersWeak, state.packetIoPickers(), config::ToLocalDbrbNode(config),
-						keyPair, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher());
+					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(keyPair.publicKey(), keyPair, state.nodes(), pWritersWeak, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher());
 					return std::make_shared<WeightedVotingFsm>(pWeightedVotingFsmPool, config, pDbrbProcess);
 				});
 				locator.registerService(Fsm_Service_Name, pFsmShared);
@@ -249,8 +247,6 @@ namespace catapult { namespace fastfinality {
 
 				RegisterPullConfirmedBlockHandler(pFsmShared, state.packetHandlers());
 				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
-				dbrb::RegisterPushNodesHandler(pFsmShared->dbrbProcess(), config.Immutable.NetworkIdentifier, state.packetHandlers());
-				dbrb::RegisterPullNodesHandler(pFsmShared->dbrbProcess(), state.packetHandlers());
 
 				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, 2u);
 				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, [&acceptor = *pReaders](
