@@ -995,10 +995,9 @@ namespace catapult { namespace fastfinality {
 			pFsmShared->resetCommitteeData();
 			state.pluginManager().getCommitteeManager(model::Block::Current_Version).reset();
 
-			const auto& config = state.pluginManager().config(committeeData.currentBlockHeight());
 			auto nextRoundStart = currentRound.RoundStart + std::chrono::milliseconds(GetPhaseEndTimeMillis(CommitteePhase::Commit, currentRound.PhaseTimeMillis));
 			uint64_t nextPhaseTimeMillis = currentRound.PhaseTimeMillis;
-			chain::DecreasePhaseTime(nextPhaseTimeMillis, config);
+			chain::DecreasePhaseTime(nextPhaseTimeMillis, state.pluginManager().config(committeeData.currentBlockHeight() + Height(1)));
 			committeeData.incrementCurrentBlockHeight();
 			committeeData.setCommitteeRound(CommitteeRound{
 				0u,
