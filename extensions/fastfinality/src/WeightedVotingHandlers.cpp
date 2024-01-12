@@ -31,7 +31,15 @@ namespace catapult { namespace fastfinality {
 			return pBlock;
 		}
 
-		bool ValidateProposedBlock(const WeightedVotingFsm& fsm, const plugins::PluginManager& pluginManager, const model::Block& block) {
+		bool ValidateProposedBlock(WeightedVotingFsm& fsm, const plugins::PluginManager& pluginManager, const model::Block& block) {
+			auto& committeeData = fsm.committeeData();
+			auto expectedHeight = committeeData.currentBlockHeight();
+			if (expectedHeight != block.Height) {
+				CATAPULT_LOG(warning) << "rejecting proposal, proposed block height " << block.Height << " does not equal to expected height " << expectedHeight;
+				committeeData.setUnexpectedProposedBlockHeight(true);
+				return false;
+			}
+
 			const auto& committee = pluginManager.getCommitteeManager(model::Block::Current_Version).committee();
 			if (committee.Round < 0) {
 				CATAPULT_LOG(warning) << "rejecting proposal, committee is not yet selected";
@@ -57,7 +65,7 @@ namespace catapult { namespace fastfinality {
 		}
 	}
 
-	bool ValidateProposedBlock(const WeightedVotingFsm& fsm, const plugins::PluginManager& pluginManager, const ionet::Packet& packet, std::shared_ptr<model::Block>& pBlock) {
+	bool ValidateProposedBlock(WeightedVotingFsm& fsm, const plugins::PluginManager& pluginManager, const ionet::Packet& packet, std::shared_ptr<model::Block>& pBlock) {
 		pBlock = GetBlockFromPacket(pluginManager, packet);
 		if (!pBlock)
 			return false;

@@ -78,7 +78,11 @@ namespace catapult { namespace chain {
 		};
 
 		int64_t CalculateWeight(const state::AccountData& accountData, const config::CommitteeConfiguration& config) {
-			return static_cast<int64_t>(config.WeightScaleFactor / (1.0 + std::exp(static_cast<double>(-accountData.Activity) / config.ActivityScaleFactor)));
+			auto weight = static_cast<int64_t>(config.WeightScaleFactor / (1.0 + std::exp(static_cast<double>(-accountData.Activity) / config.ActivityScaleFactor)));
+			if (weight == 0)
+				weight = 1;
+
+			return weight;
 		}
 
 		void LogAccountData(const cache::AccountMap& accounts, const config::CommitteeConfiguration& config) {
@@ -231,8 +235,11 @@ namespace catapult { namespace chain {
 			auto stake = static_cast<double>(accountData.EffectiveBalance.unwrap()) / static_cast<double>(hit);
 			auto fRate = stake * weight;
 			auto nRate = std::numeric_limits<int64_t>::max();
-			if (fRate < static_cast<double>(std::numeric_limits<int64_t>::max()))
+			if (fRate < static_cast<double>(std::numeric_limits<int64_t>::max())) {
 				nRate = static_cast<int64_t>(fRate);
+				if (nRate == 0)
+					nRate = 1;
+			}
 
 			CATAPULT_LOG(debug) << "rate of " << key << ": " << nRate;
 

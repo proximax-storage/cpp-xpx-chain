@@ -633,7 +633,7 @@ namespace catapult { namespace fastfinality {
 			if (!pProposedBlock)
 				CATAPULT_THROW_RUNTIME_ERROR("no proposal to validate")
 
-			if (pProposedBlock->Height != lastBlockElementSupplier()->Block.Height + Height(1)) {
+			if (pProposedBlock->Height != committeeData.currentBlockHeight()) {
 				pFsmShared->processEvent(UnexpectedBlockHeight{});
 				return;
 			}
@@ -691,7 +691,11 @@ namespace catapult { namespace fastfinality {
 					if (std::future_status::ready == status) {
 						pFsmShared->processEvent(ProposalReceived{});
 					}else {
-						pFsmShared->processEvent(ProposalNotReceived{});
+						if (committeeData.unexpectedProposedBlockHeight()) {
+							pFsmShared->processEvent(UnexpectedBlockHeight{});
+						} else {
+							pFsmShared->processEvent(ProposalNotReceived{});
+						}
 					}
 				} catch(...) {}
 			}

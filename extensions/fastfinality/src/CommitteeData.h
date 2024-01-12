@@ -33,6 +33,7 @@ namespace catapult { namespace fastfinality {
 			, m_pBlockProposer(nullptr)
 			, m_totalSumOfVotes{}
 			, m_sumOfPrevotesSufficient(false)
+			, m_unexpectedProposedBlockHeight(false)
 		{}
 
 	public:
@@ -186,6 +187,16 @@ namespace catapult { namespace fastfinality {
 			return m_currentBlockHeight;
 		}
 
+		void setUnexpectedProposedBlockHeight(bool value) {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			m_unexpectedProposedBlockHeight = value;
+		}
+
+		bool unexpectedProposedBlockHeight() const {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			return m_unexpectedProposedBlockHeight;
+		}
+
 	private:
 		Key m_beneficiary;
 		std::shared_ptr<harvesting::UnlockedAccounts> m_pUnlockedAccounts;
@@ -208,5 +219,7 @@ namespace catapult { namespace fastfinality {
 		mutable std::mutex m_mutex;
 
 		Height m_currentBlockHeight;
+
+		bool m_unexpectedProposedBlockHeight;
 	};
 }}

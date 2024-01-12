@@ -29,7 +29,7 @@ namespace catapult { namespace fastfinality {
 
 	/// Validates a push proposed block message.
 	bool ValidateProposedBlock(
-		const WeightedVotingFsm& fsm,
+		WeightedVotingFsm& fsm,
 		const plugins::PluginManager& pluginManager,
 		const ionet::Packet& packet,
 		std::shared_ptr<model::Block>& pBlock);
