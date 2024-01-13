@@ -145,7 +145,7 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		m_pMessageSender->send(pPacket, recipients);
+		m_pMessageSender->enqueue(pPacket, recipients);
 	}
 
 	void DbrbProcess::send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient) {
@@ -382,6 +382,7 @@ namespace catapult { namespace dbrb {
 			if (!pThis)
 				return;
 
+			pThis->m_pMessageSender->clearQueue();
 			pThis->m_broadcastData.clear();
 
 			pThis->m_pNodeRetreiver->requestNodes(view.Data);
