@@ -100,23 +100,7 @@ namespace catapult { namespace config {
 		auto endpoint = ionet::NodeEndpoint();
 		endpoint.Host = localNodeConfig.Host;
 		endpoint.Port = config.Node.Port;
-
-		auto metadata = ionet::NodeMetadata(config.Immutable.NetworkIdentifier);
-		metadata.Name = localNodeConfig.FriendlyName;
-		metadata.Version = ionet::NodeVersion(localNodeConfig.Version);
-		metadata.Roles = localNodeConfig.Roles;
-
-		return ionet::Node(identityKey, endpoint, metadata);
-	}
-
-	ionet::Node ToLocalDbrbNode(const BlockchainConfiguration& config) {
-		const auto& localNodeConfig = config.Node.Local;
-
-		auto identityKey = crypto::KeyPair::FromString(config.User.BootKey).publicKey();
-
-		auto endpoint = ionet::NodeEndpoint();
-		endpoint.Host = localNodeConfig.Host;
-		endpoint.Port = config.Node.DbrbPort;
+		endpoint.DbrbPort = config.Node.DbrbPort;
 
 		auto metadata = ionet::NodeMetadata(config.Immutable.NetworkIdentifier);
 		metadata.Name = localNodeConfig.FriendlyName;

@@ -17,28 +17,21 @@
 namespace catapult { namespace dbrb {
 
 	DbrbProcess::DbrbProcess(
-		const std::weak_ptr<net::PacketWriters>& pWriters,
-		const net::PacketIoPickerContainer& packetIoPickers,
-		const ionet::Node& thisNode,
+		const ProcessId& id,
 		const crypto::KeyPair& keyPair,
+		const ionet::NodeContainer& nodeContainer,
+		const std::weak_ptr<net::PacketWriters>& pWriters,
 		std::shared_ptr<thread::IoThreadPool> pPool,
 		std::shared_ptr<TransactionSender> pTransactionSender,
 		const dbrb::DbrbViewFetcher& dbrbViewFetcher)
-			: m_id(thisNode.identityKey())
+			: m_id(id)
 			, m_keyPair(keyPair)
-			, m_nodeRetreiver(packetIoPickers, thisNode.metadata().NetworkIdentifier, m_id, pWriters)
-			, m_pMessageSender(std::make_shared<MessageSender>(pWriters, m_nodeRetreiver))
+			, m_pNodeRetreiver(std::make_shared<NodeRetreiver>(m_id, pWriters, nodeContainer))
+			, m_pMessageSender(std::make_shared<MessageSender>(pWriters, *m_pNodeRetreiver))
 			, m_pPool(std::move(pPool))
 			, m_strand(m_pPool->ioContext())
 			, m_pTransactionSender(std::move(pTransactionSender))
-			, m_dbrbViewFetcher(dbrbViewFetcher) {
-		m_node.Node = thisNode;
-		auto pPackedNode = ionet::PackNode(thisNode);
-		// Skip NetworkNode fields: size, host and friendly name.
-		auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(pPackedNode.get()) + sizeof(uint32_t), sizeof(ionet::NetworkNode) - sizeof(uint32_t) - 2 * sizeof(uint8_t) } });
-		crypto::Sign(m_keyPair, hash, m_node.Signature);
-		m_nodeRetreiver.addNodes({ m_node });
-	}
+			, m_dbrbViewFetcher(dbrbViewFetcher) {}
 
 	void DbrbProcess::registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers) {
 		auto handler = [pThisWeak = weak_from_this(), &converter = m_converter, &strand = m_strand](const auto& packet, auto& context) {
@@ -73,7 +66,7 @@ namespace catapult { namespace dbrb {
 	}
 
 	NodeRetreiver& DbrbProcess::nodeRetreiver() {
-		return m_nodeRetreiver;
+		return *m_pNodeRetreiver;
 	}
 
 	boost::asio::io_context::strand& DbrbProcess::strand() {
@@ -152,7 +145,7 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		m_pMessageSender->send(pPacket, recipients);
+		m_pMessageSender->enqueue(pPacket, recipients);
 	}
 
 	void DbrbProcess::send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient) {
@@ -389,9 +382,10 @@ namespace catapult { namespace dbrb {
 			if (!pThis)
 				return;
 
+			pThis->m_pMessageSender->clearQueue();
 			pThis->m_broadcastData.clear();
 
-			pThis->m_nodeRetreiver.requestNodes(view.Data);
+			pThis->m_pNodeRetreiver->requestNodes(view.Data);
 			pThis->m_currentView = view;
 			CATAPULT_LOG(debug) << "[DBRB] Current view is now set to " << pThis->m_currentView;
 
@@ -417,8 +411,6 @@ namespace catapult { namespace dbrb {
 				if (isRegistrationRequired)
 					pThis->m_pTransactionSender->sendAddDbrbProcessTransaction();
 			}
-
-			pThis->m_nodeRetreiver.broadcastNodes();
 		});
 
 		return isTemporaryProcess || isBootstrapProcess;

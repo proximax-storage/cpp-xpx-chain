@@ -5,6 +5,7 @@
 **/
 
 #include "fastfinality/src/WeightedVotingFsm.h"
+#include "catapult/ionet/NodeContainer.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockCommitteeManager.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
@@ -42,10 +43,11 @@ namespace catapult { namespace fastfinality {
 
 		public:
 			explicit MockDbrbProcess()
-				: DbrbProcess(std::make_shared<mocks::MockPacketWriters>(),
-					{},
-					{ Key(), {}, {} },
+				: DbrbProcess(
+					Key(),
 					crypto::KeyPair::FromPrivate({}),
+					{},
+					std::make_shared<mocks::MockPacketWriters>(),
 					test::CreateStartedIoThreadPool(1),
 					nullptr,
 					mocks::MockDbrbViewFetcher())

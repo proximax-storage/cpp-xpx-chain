@@ -25,8 +25,8 @@
 namespace catapult { namespace config {
 
 	/// Loads peers from the specified stream (\a input) for the network identified by \a networkIdentifier.
-	std::vector<ionet::Node> LoadPeersFromStream(std::istream& input, model::NetworkIdentifier networkIdentifier);
+	std::vector<ionet::Node> LoadPeersFromStream(std::istream& input, model::NetworkIdentifier networkIdentifier, bool dbrbPortOptional = true);
 
 	/// Loads peers from the specified \a path for the network identified by \a networkIdentifier.
-	std::vector<ionet::Node> LoadPeersFromPath(const std::string& path, model::NetworkIdentifier networkIdentifier);
+	std::vector<ionet::Node> LoadPeersFromPath(const std::string& path, model::NetworkIdentifier networkIdentifier, bool dbrbPortOptional = true);
 }}

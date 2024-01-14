@@ -106,6 +106,7 @@ namespace catapult { namespace fastfinality {
 			m_committeeData.clearVotes();
 			m_committeeData.setSumOfPrevotesSufficient(false);
 			m_committeeData.stopWaitForProposedBlock();
+			m_committeeData.setUnexpectedProposedBlockHeight(false);
 		}
 
 		bool stopped() const {

@@ -20,11 +20,12 @@ module Catapult
         @host_address = Global.component_address(type, index)
         @host         = self.class.host(type, index)
         @port         = self.class.port(type, index)
+        @dbrb_port    = self.class.dbrb_port(type, index)
         @name         = self.class.name(type, index)
       end
       private :initialize
 
-      attr_reader :type, :index, :host, :host_address, :port, :name
+      attr_reader :type, :index, :host, :host_address, :port, :dbrb_port, :name
 
       TYPES = [:api_node, :peer_node]
       def self.all_peers(input_attributes)
@@ -47,6 +48,10 @@ module Catapult
 
       def self.port(type, index)
         Global::CatapultPort.peer_port(type, index)
+      end
+
+      def self.dbrb_port(type, index)
+        Global::CatapultPort.dbrb_port(type, index)
       end
 
     end

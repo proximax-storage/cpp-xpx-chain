@@ -633,7 +633,7 @@ namespace catapult { namespace fastfinality {
 			if (!pProposedBlock)
 				CATAPULT_THROW_RUNTIME_ERROR("no proposal to validate")
 
-			if (pProposedBlock->Height != lastBlockElementSupplier()->Block.Height + Height(1)) {
+			if (pProposedBlock->Height != committeeData.currentBlockHeight()) {
 				pFsmShared->processEvent(UnexpectedBlockHeight{});
 				return;
 			}
@@ -691,7 +691,11 @@ namespace catapult { namespace fastfinality {
 					if (std::future_status::ready == status) {
 						pFsmShared->processEvent(ProposalReceived{});
 					}else {
-						pFsmShared->processEvent(ProposalNotReceived{});
+						if (committeeData.unexpectedProposedBlockHeight()) {
+							pFsmShared->processEvent(UnexpectedBlockHeight{});
+						} else {
+							pFsmShared->processEvent(ProposalNotReceived{});
+						}
 					}
 				} catch(...) {}
 			}
@@ -991,10 +995,9 @@ namespace catapult { namespace fastfinality {
 			pFsmShared->resetCommitteeData();
 			state.pluginManager().getCommitteeManager(model::Block::Current_Version).reset();
 
-			const auto& config = state.pluginManager().config(committeeData.currentBlockHeight());
 			auto nextRoundStart = currentRound.RoundStart + std::chrono::milliseconds(GetPhaseEndTimeMillis(CommitteePhase::Commit, currentRound.PhaseTimeMillis));
 			uint64_t nextPhaseTimeMillis = currentRound.PhaseTimeMillis;
-			chain::DecreasePhaseTime(nextPhaseTimeMillis, config);
+			chain::DecreasePhaseTime(nextPhaseTimeMillis, state.pluginManager().config(committeeData.currentBlockHeight() + Height(1)));
 			committeeData.incrementCurrentBlockHeight();
 			committeeData.setCommitteeRound(CommitteeRound{
 				0u,

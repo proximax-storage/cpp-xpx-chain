@@ -41,7 +41,7 @@ namespace catapult { namespace net {
 
 		bool VerifyChallenge(const Key& publicKey, std::initializer_list<const RawBuffer> buffers, const Signature& signature) {
 			auto isVerified = crypto::Verify(publicKey, buffers, signature);
-			CATAPULT_LOG(trace) << "verify signature " << signature << "with pubkey " << publicKey << ", result: " << isVerified;
+			CATAPULT_LOG(trace) << "verify signature " << signature << " with pubkey " << publicKey << ", result: " << isVerified;
 			return isVerified;
 		}
 	}

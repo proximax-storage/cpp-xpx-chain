@@ -50,7 +50,6 @@ namespace catapult { namespace fastfinality {
 
 	public:
 		bool tryParseResult(const ionet::Packet& packet, ResultType& result) const {
-
 			const auto* pResponse = static_cast<const RemoteNodeStatePacket*>(&packet);
 			const auto* pResponseData = reinterpret_cast<const Key*>(pResponse + 1);
 
