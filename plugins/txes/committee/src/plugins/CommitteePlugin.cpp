@@ -8,6 +8,7 @@
 #include "CommitteePlugin.h"
 #include "src/cache/CommitteeCacheSubCachePlugin.h"
 #include "src/chain/WeightedVotingCommitteeManager.h"
+#include "src/chain/WeightedVotingCommitteeManagerV2.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/AddHarvesterTransactionPlugin.h"
 #include "src/plugins/RemoveHarvesterTransactionPlugin.h"
@@ -34,7 +35,9 @@ namespace catapult { namespace plugins {
 		});
 
 		auto pCommitteeManager = std::make_shared<chain::WeightedVotingCommitteeManager>(pAccountCollector);
-		manager.setCommitteeManager(pCommitteeManager);
+		manager.setCommitteeManager(4, pCommitteeManager);
+		auto pCommitteeManagerV2 = std::make_shared<chain::WeightedVotingCommitteeManagerV2>(pAccountCollector);
+		manager.setCommitteeManager(5, pCommitteeManagerV2);
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
@@ -47,11 +50,12 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateRemoveHarvesterValidator());
 		});
 
-		manager.addObserverHook([pCommitteeManager, pAccountCollector](auto& builder) {
+		manager.addObserverHook([pCommitteeManager, pCommitteeManagerV2, pAccountCollector](auto& builder) {
 			builder
 				.add(observers::CreateAddHarvesterObserver())
 				.add(observers::CreateRemoveHarvesterObserver())
-				.add(observers::CreateUpdateHarvestersObserver(pCommitteeManager, pAccountCollector))
+				.add(observers::CreateUpdateHarvestersV1Observer(pCommitteeManager, pAccountCollector))
+				.add(observers::CreateUpdateHarvestersV2Observer(pCommitteeManagerV2, pAccountCollector))
 				.add(observers::CreateActiveHarvestersObserver());
 		});
 	}

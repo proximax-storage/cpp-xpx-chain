@@ -258,10 +258,10 @@ namespace catapult { namespace plugins {
 		// region committee
 
 		/// Sets a committee manager.
-		void setCommitteeManager(const std::shared_ptr<chain::CommitteeManager>& pManager);
+		void setCommitteeManager(VersionType blockVersion, const std::shared_ptr<chain::CommitteeManager>& pManager);
 
 		/// Gets committee manager.
-		chain::CommitteeManager& getCommitteeManager() const;
+		chain::CommitteeManager& getCommitteeManager(VersionType blockVersion) const;
 
 		// endregion
 
@@ -341,7 +341,7 @@ namespace catapult { namespace plugins {
 
 		bool m_shouldEnableVerifiableState;
 
-		std::shared_ptr<chain::CommitteeManager> m_pCommitteeManager;
+		std::map<VersionType, std::shared_ptr<chain::CommitteeManager>> m_committeeManagers;
 		std::shared_ptr<dbrb::DbrbViewFetcher> m_pDbrbViewFetcher;
 		std::shared_ptr<state::StorageState> m_pStorageState;
 

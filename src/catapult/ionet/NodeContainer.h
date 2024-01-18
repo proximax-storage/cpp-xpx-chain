@@ -57,6 +57,9 @@ namespace catapult { namespace ionet {
 		/// Iterates over all nodes and passes them to \a consumer.
 		void forEach(const consumer<const Node&, const NodeInfo&>& consumer) const;
 
+		/// Returns existing nodes with \a identityKeys.
+		std::vector<Node> getNodes(std::set<Key> identityKeys) const;
+
 	private:
 		const NodeContainerData& m_nodeContainerData;
 		utils::SpinReaderWriterLock::ReaderLockGuard m_readLock;

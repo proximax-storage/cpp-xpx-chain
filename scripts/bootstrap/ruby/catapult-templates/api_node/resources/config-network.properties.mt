@@ -35,11 +35,11 @@ enableWeightedVoting = true
 committeeSize = 3
 committeeApproval = 1
 committeePhaseTime = 5s
-minCommitteePhaseTime = 3750ms
-maxCommitteePhaseTime = 1m
+minCommitteePhaseTime = 1s
+maxCommitteePhaseTime = 1s
 committeeSilenceInterval = 100ms
 committeeRequestInterval = 500ms
-committeeChainHeightRequestInterval = 30s
+committeeChainHeightRequestInterval = 3s
 committeeTimeAdjustment = 1.1
 committeeEndSyncApproval = 0.45
 committeeBaseTotalImportance = 100
@@ -92,6 +92,12 @@ initialActivity = 0.367976785
 activityDelta = 0.00001
 activityCommitteeCosignedDelta = 0.01
 activityCommitteeNotCosignedDelta = 0.02
+
+minGreedFeeInterest = 1
+minGreedFeeInterestDenominator = 10
+
+activityScaleFactor = 1000000000
+weightScaleFactor = 1000000000000000000
 
 [plugin:catapult.plugins.config]
 

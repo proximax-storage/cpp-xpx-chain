@@ -40,6 +40,7 @@ namespace catapult { namespace ionet {
 
 		pNetworkNode->Size = packedNodeSize;
 		pNetworkNode->Port = endpoint.Port;
+		pNetworkNode->DbrbPort = endpoint.DbrbPort;
 		pNetworkNode->IdentityKey = node.identityKey();
 		pNetworkNode->NetworkIdentifier = metadata.NetworkIdentifier;
 		pNetworkNode->Version = metadata.Version;
@@ -61,6 +62,7 @@ namespace catapult { namespace ionet {
 
 		auto endpoint = NodeEndpoint();
 		endpoint.Port = networkNode.Port;
+		endpoint.DbrbPort = networkNode.DbrbPort;
 		endpoint.Host = std::string(pNetworkNodeData, networkNode.HostSize);
 		pNetworkNodeData += networkNode.HostSize;
 

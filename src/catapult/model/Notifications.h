@@ -287,27 +287,18 @@ namespace catapult { namespace model {
 		uint32_t FeeInterestDenominator;
 	};
 
-	/// Notifies the cosignatures of a block.
-	template<VersionType version>
-	struct BlockCommitteeNotification;
-
-	template<>
-	struct BlockCommitteeNotification<1> : public Notification {
+	/// Notifies of the round of a block.
+	template<typename TDerivedNotification>
+	struct BasicBlockCommitteeNotification : public Notification {
 	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Block_Committee_v1_Notification;
-
-	public:
-		/// Creates a block notification around \a signer, \a numCosignatures, \a pCosignatures,
-		/// \a feeInterest and \a feeInterestDenominator.
-		 BlockCommitteeNotification(
-			int64_t round,
-			uint32_t feeInterest,
-			uint32_t feeInterestDenominator)
-				: Notification(Notification_Type, sizeof(BlockCommitteeNotification<1>))
-				, Round(round)
-				, FeeInterest(feeInterest)
-				, FeeInterestDenominator(feeInterestDenominator)
+		BasicBlockCommitteeNotification(
+				int64_t round,
+				uint32_t feeInterest,
+				uint32_t feeInterestDenominator)
+			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
+			, Round(round)
+			, FeeInterest(feeInterest)
+			, FeeInterestDenominator(feeInterestDenominator)
 		{}
 
 	public:
@@ -319,6 +310,33 @@ namespace catapult { namespace model {
 
 		/// Denominator of the transaction fee.
 		uint32_t FeeInterestDenominator;
+	};
+
+	template<VersionType version>
+	struct BlockCommitteeNotification;
+
+	template<>
+	struct BlockCommitteeNotification<1> : public BasicBlockCommitteeNotification<BlockCommitteeNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Committee_v1_Notification;
+
+	public:
+		 BlockCommitteeNotification(int64_t round, uint32_t feeInterest, uint32_t feeInterestDenominator)
+			: BasicBlockCommitteeNotification(round, feeInterest, feeInterestDenominator)
+		{}
+	};
+
+	template<>
+	struct BlockCommitteeNotification<2> : public BasicBlockCommitteeNotification<BlockCommitteeNotification<2>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Committee_v2_Notification;
+
+	public:
+		 BlockCommitteeNotification(int64_t round, uint32_t feeInterest, uint32_t feeInterestDenominator)
+			: BasicBlockCommitteeNotification(round, feeInterest, feeInterestDenominator)
+		{}
 	};
 
 	// endregion

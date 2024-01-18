@@ -74,7 +74,7 @@ namespace catapult { namespace config {
 			return roles;
 		}
 
-		std::vector<ionet::Node> LoadPeersFromProperties(const pt::ptree& properties, model::NetworkIdentifier networkIdentifier) {
+		std::vector<ionet::Node> LoadPeersFromProperties(const pt::ptree& properties, model::NetworkIdentifier networkIdentifier, bool dbrbPortOptional) {
 			if (!GetOptional<std::string>(properties, "knownPeers").empty())
 				CATAPULT_THROW_RUNTIME_ERROR("knownPeers must be an array");
 
@@ -84,7 +84,8 @@ namespace catapult { namespace config {
 				const auto& metadataJson = GetChild(peerJson.second, "metadata");
 
 				auto identityKey = crypto::ParseKey(Get<std::string>(peerJson.second, "publicKey"));
-				auto endpoint = ionet::NodeEndpoint{ Get<std::string>(endpointJson, "host"), Get<unsigned short>(endpointJson, "port") };
+				auto dbrbPort = dbrbPortOptional ? GetOptional<unsigned short>(endpointJson, "dbrbPort") : Get<unsigned short>(endpointJson, "dbrbPort");
+				auto endpoint = ionet::NodeEndpoint{ Get<std::string>(endpointJson, "host"), Get<unsigned short>(endpointJson, "port"), dbrbPort };
 				auto metadata = ionet::NodeMetadata(networkIdentifier, GetOptional<std::string>(metadataJson, "name"));
 				metadata.Roles = ParseRoles(Get<std::string>(metadataJson, "roles"));
 				peers.push_back({ identityKey, endpoint, metadata });
@@ -94,14 +95,14 @@ namespace catapult { namespace config {
 		}
 	}
 
-	std::vector<ionet::Node> LoadPeersFromStream(std::istream& input, model::NetworkIdentifier networkIdentifier) {
+	std::vector<ionet::Node> LoadPeersFromStream(std::istream& input, model::NetworkIdentifier networkIdentifier, bool dbrbPortOptional) {
 		pt::ptree properties;
 		pt::read_json(input, properties);
-		return LoadPeersFromProperties(properties, networkIdentifier);
+		return LoadPeersFromProperties(properties, networkIdentifier, dbrbPortOptional);
 	}
 
-	std::vector<ionet::Node> LoadPeersFromPath(const std::string& path, model::NetworkIdentifier networkIdentifier) {
+	std::vector<ionet::Node> LoadPeersFromPath(const std::string& path, model::NetworkIdentifier networkIdentifier, bool dbrbPortOptional) {
 		std::ifstream inputStream(path);
-		return LoadPeersFromStream(inputStream, networkIdentifier);
+		return LoadPeersFromStream(inputStream, networkIdentifier, dbrbPortOptional);
 	}
 }}

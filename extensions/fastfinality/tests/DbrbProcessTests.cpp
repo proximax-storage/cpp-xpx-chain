@@ -22,6 +22,7 @@ namespace catapult { namespace fastfinality {
 			for (uint8_t i = 0u; i < count; ++i) {
 				const auto processId = Key{ {i} };
 				auto pProcess = std::make_shared<MockDbrbProcess>(processId, fakeDissemination);
+				pProcess->setValidationCallback([](const auto&){ return true; });
 				MockDbrbProcess::DbrbProcessPool.emplace_back(std::move(pProcess));
 				viewData.insert(processId);
 			}
@@ -72,7 +73,7 @@ namespace catapult { namespace fastfinality {
 
 	// region PrepareMessage
 
-	TEST(TEST_CLASS, PrepareMessageReceivererIsNotParticipant) {
+	TEST(TEST_CLASS, PrepareMessageReceiverIsNotParticipant) {
 		// Arrange:
 		CreateMockDbrbProcesses(2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();

@@ -38,6 +38,9 @@ namespace catapult { namespace ionet {
 		/// Port.
 		uint16_t Port;
 
+		/// Dbrb Port.
+		uint16_t DbrbPort;
+
 		/// Network identifier.
 		model::NetworkIdentifier NetworkIdentifier;
 

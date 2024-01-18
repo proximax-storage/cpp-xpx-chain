@@ -7,6 +7,7 @@
 #pragma once
 #include "CommitteeRound.h"
 #include "WeightedVotingChainPackets.h"
+#include "catapult/chain/CommitteeManager.h"
 #include "catapult/model/EntityHasher.h"
 #include <atomic>
 #include <map>
@@ -30,8 +31,9 @@ namespace catapult { namespace fastfinality {
 		CommitteeData()
 			: m_round(CommitteeRound{})
 			, m_pBlockProposer(nullptr)
-			, m_totalSumOfVotes(0.0)
+			, m_totalSumOfVotes{}
 			, m_sumOfPrevotesSufficient(false)
+			, m_unexpectedProposedBlockHeight(false)
 		{}
 
 	public:
@@ -71,7 +73,7 @@ namespace catapult { namespace fastfinality {
 			return m_localCommittee;
 		}
 
-		void setTotalSumOfVotes(double sum) {
+		void setTotalSumOfVotes(chain::HarvesterWeight sum) {
 			m_totalSumOfVotes = sum;
 		}
 
@@ -185,6 +187,16 @@ namespace catapult { namespace fastfinality {
 			return m_currentBlockHeight;
 		}
 
+		void setUnexpectedProposedBlockHeight(bool value) {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			m_unexpectedProposedBlockHeight = value;
+		}
+
+		bool unexpectedProposedBlockHeight() const {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			return m_unexpectedProposedBlockHeight;
+		}
+
 	private:
 		Key m_beneficiary;
 		std::shared_ptr<harvesting::UnlockedAccounts> m_pUnlockedAccounts;
@@ -193,7 +205,7 @@ namespace catapult { namespace fastfinality {
 
 		const crypto::KeyPair* m_pBlockProposer;
 		std::set<const crypto::KeyPair*> m_localCommittee;
-		double m_totalSumOfVotes;
+		chain::HarvesterWeight m_totalSumOfVotes;
 
 		std::shared_ptr<std::promise<bool>> m_pProposedBlockPromise;
 		std::shared_ptr<model::Block> m_pProposedBlock;
@@ -207,5 +219,7 @@ namespace catapult { namespace fastfinality {
 		mutable std::mutex m_mutex;
 
 		Height m_currentBlockHeight;
+
+		bool m_unexpectedProposedBlockHeight;
 	};
 }}

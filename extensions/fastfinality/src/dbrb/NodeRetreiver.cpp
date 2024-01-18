@@ -5,9 +5,7 @@
 **/
 
 #include "NodeRetreiver.h"
-#include "DbrbChainPackets.h"
-#include "catapult/api/RemoteRequestDispatcher.h"
-#include "catapult/net/PacketIoPickerContainer.h"
+#include "catapult/ionet/NodeContainer.h"
 #include "catapult/net/PacketWriters.h"
 #include "catapult/utils/TimeSpan.h"
 #include <thread>
@@ -17,162 +15,92 @@ namespace catapult { namespace dbrb {
 	namespace {
 		constexpr utils::LogLevel MapToLogLevel(net::PeerConnectCode connectCode) {
 			if (connectCode == net::PeerConnectCode::Accepted)
-				return utils::LogLevel::Info;
+				return utils::LogLevel::Debug;
 			else
 				return utils::LogLevel::Warning;
 		}
-
-		void BroadcastNodes(const std::vector<SignedNode>& nodes, const net::PacketIoPickerContainer& packetIoPickers) {
-			if (nodes.empty())
-				return;
-
-			auto packetIoPairs = packetIoPickers.pickMultiple(utils::TimeSpan::FromSeconds(60));
-			CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pushing " << nodes.size() << " DBRB node(s)";
-			if (packetIoPairs.empty())
-				return;
-
-			auto nodeCount = utils::checked_cast<size_t, uint16_t>(nodes.size());
-
-			std::vector<std::pair<model::UniqueEntityPtr<ionet::NetworkNode>, Signature>> networkNodes;
-			networkNodes.reserve(nodeCount);
-			auto payloadSize = utils::checked_cast<size_t, uint32_t>(nodeCount * Signature_Size);
-			for (const auto& node : nodes) {
-				networkNodes.emplace_back(ionet::PackNode(node.Node), node.Signature);
-				payloadSize += networkNodes.back().first->Size;
-			}
-
-			auto pPacket = ionet::CreateSharedPacket<DbrbPushNodesPacket>(payloadSize);
-			pPacket->NodeCount = nodeCount;
-			auto* pBuffer = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
-			for (const auto& [pNetworkNode, signature] : networkNodes) {
-				memcpy(pBuffer, pNetworkNode.get(), pNetworkNode->Size);
-				pBuffer += pNetworkNode->Size;
-				memcpy(pBuffer, signature.data(), Signature_Size);
-				pBuffer += Signature_Size;
-			}
-
-			for (const auto& packetIoPair : packetIoPairs) {
-				auto pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(packetIoPair);
-				pPacketIoPair->io()->write(ionet::PacketPayload(pPacket), [pPacket, pPacketIoPair](ionet::SocketOperationCode code) {
-					if (code != ionet::SocketOperationCode::Success)
-						CATAPULT_LOG(warning) << "[DBRB] sending " << *pPacket << " to " << pPacketIoPair->node() << " completed with " << code;
-				});
-			}
-		}
 	}
 
-	NodeRetreiver::NodeRetreiver(const net::PacketIoPickerContainer& packetIoPickers, model::NetworkIdentifier networkIdentifier, std::weak_ptr<net::PacketWriters> pWriters)
-		: m_packetIoPickers(packetIoPickers)
-		, m_networkIdentifier(networkIdentifier)
+	NodeRetreiver::NodeRetreiver(
+			const ProcessId& id,
+			std::weak_ptr<net::PacketWriters> pWriters,
+			const ionet::NodeContainer& nodeContainer)
+		: m_id(id)
 		, m_pWriters(std::move(pWriters))
+		, m_nodeContainer(nodeContainer)
 	{}
 
 	void NodeRetreiver::requestNodes(const std::set<ProcessId>& requestedIds) {
-		std::set<ProcessId> ids;
+		std::lock_guard<std::mutex> guard(m_mutex);
 
-		{
-			std::lock_guard<std::mutex> guard(m_mutex);
-			for (const auto& id : requestedIds) {
-				if (m_nodes.find(id) == m_nodes.end())
-					ids.emplace(id);
-			}
+		auto pWriters = m_pWriters.lock();
+		if (!pWriters)
+			return;
+
+		std::ostringstream out;
+		out << "\nDBRB nodes:";
+		for (const auto& pair : m_nodes)
+			out << "\n" << pair.second.identityKey() << " " << pair.second;
+		CATAPULT_LOG(trace) << out.str();
+
+		std::set<ProcessId> ids;
+		for (const auto& id : requestedIds) {
+			if (m_nodes.find(id) == m_nodes.end())
+				ids.emplace(id);
 		}
+		ids.erase(m_id);
+		CATAPULT_LOG(trace) << "[DBRB] requesting " << ids.size() << " nodes";
 
 		if (ids.empty())
 			return;
 
-		auto packetIoPairs = m_packetIoPickers.pickMultiple(utils::TimeSpan::FromSeconds(60));
-		CATAPULT_LOG(debug) << "found " << packetIoPairs.size() << " peer(s) for pulling " << ids.size() << " DBRB node(s)";
-		if (!packetIoPairs.empty()) {
-			std::vector<SignedNode> newNodes;
-			for (const auto& packetIoPair : packetIoPairs) {
-				api::RemoteRequestDispatcher dispatcher(*packetIoPair.io());
-				std::vector<SignedNode> nodes;
-				try {
-					nodes = dispatcher.dispatch(DbrbPullNodesTraits(m_networkIdentifier), ids).get();
-					for (auto& signedNode : nodes) {
-						auto& node = signedNode.Node;
-						if (node.endpoint().Host.empty() && node.identityKey() == packetIoPair.node().identityKey()) {
-							auto endpoint = ionet::NodeEndpoint{ packetIoPair.node().endpoint().Host, node.endpoint().Port };
-							CATAPULT_LOG(debug) << "[DBRB] auto detected host '" << endpoint.Host << "' for " << node.identityKey();
-							node = ionet::Node(node.identityKey(), endpoint, node.metadata());
-							break;
-						}
-					}
-				} catch (const std::exception& error) {
-					CATAPULT_LOG(error) << error.what();
-				}
+		auto nodes = m_nodeContainer.view().getNodes(ids);
 
-				for (const auto& node : nodes) {
-					newNodes.emplace_back(node);
-					ids.erase(node.Node.identityKey());
-				}
-
-				if (ids.empty())
-					break;
-			}
-
-			addNodes(newNodes);
-		}
-	}
-
-	void NodeRetreiver::addNodes(const std::vector<SignedNode>& nodes) {
-		std::lock_guard<std::mutex> guard(m_mutex);
-		for (const auto& signedNode : nodes) {
-			const auto& id = signedNode.Node.identityKey();
-			auto iter = m_nodes.find(id);
-			if (iter != m_nodes.end() && iter->second.Signature == signedNode.Signature && iter->second.Node.endpoint().Host == signedNode.Node.endpoint().Host &&
-				iter->second.Node.endpoint().Port == signedNode.Node.endpoint().Port)
+		for (auto& node : nodes) {
+			const auto& id = node.identityKey();
+			if (node.endpoint().Host.empty()) {
+				CATAPULT_LOG(warning) << "[DBRB] empty host returned for " << node << " " << id;
 				continue;
-
-			auto pWriters = m_pWriters.lock();
-			if (pWriters) {
-				bool notConnected = true;
-				auto identities = pWriters->identities();
-				for (const auto& identityKey : identities) {
-					if (signedNode.Node.identityKey() == identityKey) {
-						notConnected = false;
-						break;
-					}
-				}
-
-				if (notConnected) {
-					m_nodes[id] = signedNode;
-					CATAPULT_LOG(debug) << "[DBRB] Added node " << signedNode.Node;
-					if (!signedNode.Node.endpoint().Host.empty()) {
-						CATAPULT_LOG(debug) << "[DBRB] Connecting to " << signedNode.Node;
-						pWriters->connect(signedNode.Node, [node = signedNode.Node](const auto& result) {
-							CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[DBRB] connection attempt to " << node << " completed with " << result.Code;
-						});
-					}
-				}
 			}
+
+			const auto& endpoint = node.endpoint();
+			node = ionet::Node(node.identityKey(), ionet::NodeEndpoint{ endpoint.Host, endpoint.DbrbPort }, node.metadata());
+			m_nodes[id] = node;
+			CATAPULT_LOG(trace) << "[DBRB] Added node " << node << " " << id;
+			auto identities = pWriters->identities();
+			if ((identities.find(id) != identities.cend())) {
+				CATAPULT_LOG(trace) << "[DBRB] Already connected to " << node << " " << id;
+				continue;
+			}
+
+			CATAPULT_LOG(trace) << "[DBRB] Connecting to " << node << " " << id;
+			pWriters->connect(node, [pThisWeak = weak_from_this(), node](const auto& result) {
+				CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[DBRB] connection attempt to " << node << " " << node.identityKey() << " completed with " << result.Code;
+				if (result.Code != net::PeerConnectCode::Accepted && result.Code != net::PeerConnectCode::Already_Connected) {
+					auto pThis = pThisWeak.lock();
+					if (pThis)
+						pThis->removeNode(node.identityKey());
+				}
+			});
 		}
 	}
 
-	void NodeRetreiver::broadcastNodes() const {
-		std::vector<SignedNode> nodes;
-
-		{
-			std::lock_guard<std::mutex> guard(m_mutex);
-			nodes.reserve(m_nodes.size());
-			for (const auto& [_, node] : m_nodes)
-				nodes.emplace_back(node);
-		}
-
-		BroadcastNodes(nodes, m_packetIoPickers);
-	}
-
-	std::optional<SignedNode> NodeRetreiver::getNode(const ProcessId& id) const {
-		std::optional<SignedNode> node;
-
-		{
-			std::lock_guard<std::mutex> guard(m_mutex);
-			auto iter = m_nodes.find(id);
-			if (iter != m_nodes.end())
-				node = iter->second;
-		}
+	std::optional<ionet::Node> NodeRetreiver::getNode(const ProcessId& id) const {
+		std::lock_guard<std::mutex> guard(m_mutex);
+		std::optional<ionet::Node> node;
+		auto iter = m_nodes.find(id);
+		if (iter != m_nodes.end())
+			node = iter->second;
 
 		return node;
+	}
+
+	void NodeRetreiver::removeNode(const ProcessId& id) {
+		std::lock_guard<std::mutex> guard(m_mutex);
+		auto iter = m_nodes.find(id);
+		if (iter != m_nodes.end()) {
+			CATAPULT_LOG(trace) << "[DBRB] removing node " << iter->second << " " << id;
+			m_nodes.erase(iter);
+		}
 	}
 }}

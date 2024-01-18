@@ -5,6 +5,7 @@
 **/
 
 #include "fastfinality/src/WeightedVotingFsm.h"
+#include "catapult/ionet/NodeContainer.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockCommitteeManager.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
@@ -42,16 +43,17 @@ namespace catapult { namespace fastfinality {
 
 		public:
 			explicit MockDbrbProcess()
-				: DbrbProcess(std::make_shared<mocks::MockPacketWriters>(),
-					{},
-					{ Key(), {}, {} },
+				: DbrbProcess(
+					Key(),
 					crypto::KeyPair::FromPrivate({}),
+					{},
+					std::make_shared<mocks::MockPacketWriters>(),
 					test::CreateStartedIoThreadPool(1),
 					nullptr,
 					mocks::MockDbrbViewFetcher())
 			{}
 
-			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) override { return true; }
+			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) override { return true; }
 
 			void broadcast(const dbrb::Payload& payload) override {}
 			void processMessage(const dbrb::Message& message) override {}
@@ -102,14 +104,13 @@ namespace catapult { namespace fastfinality {
 						pThis->m_counter++;
 						auto defaultCheckLocalChainAction = fastfinality::CreateDefaultCheckLocalChainAction(
 							pThis->m_pFsm,
-								[pThis]() -> thread::future<std::vector<RemoteNodeState>> {
-									auto states = pThis->m_states;
-									return thread::make_ready_future(std::move(states));
-								},
+							[pThis]() -> std::vector<RemoteNodeState> {
+								auto states = pThis->m_states;
+								return std::move(states);
+							},
 							pThis->m_pConfigHolder,
-								[pThis] { return pThis->m_pLastBlockElement; },
-								[pThis](const Key& key) -> uint64_t { return pThis->m_importances[key]; },
-							pThis->m_committeeManager);
+							[pThis] { return pThis->m_pLastBlockElement; },
+							[pThis](const Key& key) -> uint64_t { return pThis->m_importances[key]; });
 
 						defaultCheckLocalChainAction();
 					} else {

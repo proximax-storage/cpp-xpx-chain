@@ -7,6 +7,7 @@
 #pragma once
 #include "catapult/utils/Hashers.h"
 #include "src/state/CommitteeEntry.h"
+#include "src/config/CommitteeConfiguration.h"
 #include <unordered_map>
 #include <map>
 
@@ -19,12 +20,20 @@ namespace catapult { namespace cache {
 	class CommitteeAccountCollector {
 	public:
 		/// Adds an account stored in \a entry.
-		void addAccount(const state::CommitteeEntry& entry) {
+		void addAccount(const state::CommitteeEntry& entry, const config::CommitteeConfiguration& config) {
 			auto disabledHeight = entry.disabledHeight();
 			if (disabledHeight != Height(0)) {
 				m_disabledAccounts[disabledHeight].push_back(entry.key());
 			} else {
-				m_accounts.insert_or_assign(entry.key(), entry.data());
+				auto [iter, success] = m_accounts.insert_or_assign(entry.key(), entry.data());
+				if (!success)
+					CATAPULT_THROW_RUNTIME_ERROR("Committee account collector failed to add an account");
+
+				if (entry.version() < 3 || !iter->second.FeeInterestDenominator) {
+					iter->second.Activity = config.InitialActivityInt;
+					iter->second.FeeInterest = config.MinGreedFeeInterest;
+					iter->second.FeeInterestDenominator = config.MinGreedFeeInterestDenominator;
+				}
 			}
 		}
 
