@@ -253,7 +253,7 @@ namespace catapult { namespace harvesting {
 				uint64_t referenceTarget = static_cast<uint64_t>(chain::CalculateTarget(
 						utils::TimeSpan::FromMilliseconds(1000),
 						difficulty,
-						importanceView.getAccountImportanceOrDefault(publicKey, pLastBlock->Height),
+						importanceView.getAccountImportanceOrDefault(publicKey, pLastBlock->Height, false),
 						Config.Network,
 						1, 2));
 				uint64_t seconds = hit / referenceTarget;

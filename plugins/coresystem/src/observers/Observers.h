@@ -51,7 +51,8 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(TotalTransactions, model::BlockNotification<1>)();
 
 	/// Observes block notifications and clean up snapshot from modified accounts.
-	DECLARE_OBSERVER(SnapshotCleanUp, model::BlockNotification<1>)();
+	DECLARE_OBSERVER(SnapshotCleanUp, model::BlockNotification<1>)(
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pHolder);
 
 	// endregion
 

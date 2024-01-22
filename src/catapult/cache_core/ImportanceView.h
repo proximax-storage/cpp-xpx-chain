@@ -34,14 +34,14 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Tries to populate \a importance with the importance for \a publicKey at \a height.
-		bool tryGetAccountImportance(const Key& publicKey, Height height, Importance& importance) const;
+		bool tryGetAccountImportance(const Key& publicKey, Height height, Importance& importance, bool ProperEffectiveBalanceCalculation) const;
 
 		/// Gets the importance for \a publicKey at \a height or a default importance if no importance is set.
-		Importance getAccountImportanceOrDefault(const Key& publicKey, Height height) const;
+		Importance getAccountImportanceOrDefault(const Key& publicKey, Height height, bool properEffectiveBalanceCalculation) const;
 
 		/// Returns \c true if \a publicKey can harvest at \a height, given a minimum harvesting balance of
 		/// \a minHarvestingBalance.
-		bool canHarvest(const Key& publicKey, Height height, Amount minHarvestingBalance, Amount maxHarvestingBalance) const;
+		bool canHarvest(const Key& publicKey, Height height, Amount minHarvestingBalance, Amount maxHarvestingBalance, bool ProperEffectiveBalanceCalculation) const;
 
 	private:
 		const ReadOnlyAccountStateCache& m_cache;

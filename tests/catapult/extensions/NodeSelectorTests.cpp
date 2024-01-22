@@ -294,7 +294,8 @@ namespace catapult { namespace extensions {
 			static KeyStatistics CreateStatistics(
 					const std::vector<ionet::Node>& nodes,
 					const std::vector<uint64_t>& rawWeights,
-					uint64_t numIterations) {
+					uint64_t numIterations,
+					bool) {
 				KeyStatistics keyStatistics;
 				for (auto i = 0u; i < numIterations; ++i) {
 					auto index = 0u;
@@ -324,7 +325,8 @@ namespace catapult { namespace extensions {
 			static KeyStatistics CreateStatistics(
 					const std::vector<ionet::Node>& nodes,
 					const std::vector<uint64_t>& rawWeights,
-					uint64_t numIterations) {
+					uint64_t numIterations,
+					bool) {
 				// both interaction stats and importances are chosen in such a way that they yield the same node weight
 				KeyStatistics keyStatistics;
 				ionet::NodeContainer container;

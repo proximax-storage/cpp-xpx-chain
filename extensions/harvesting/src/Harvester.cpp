@@ -98,11 +98,11 @@ namespace catapult { namespace harvesting {
 		hitContext.FeeInterestDenominator = config.Node.FeeInterestDenominator;
 
 		const auto& accountStateCache = m_cache.sub<cache::AccountStateCache>();
-		chain::BlockHitPredicate hitPredicate(m_pConfigHolder, [&accountStateCache](const auto& key, auto height) {
+		chain::BlockHitPredicate hitPredicate(m_pConfigHolder, [&accountStateCache, enableProperCalculation = config.Network.ProperEffectiveBalanceCalculation](const auto& key, auto height) {
 			auto lockedCacheView = accountStateCache.createView(height);
 			cache::ReadOnlyAccountStateCache readOnlyCache(*lockedCacheView);
 			cache::ImportanceView view(readOnlyCache);
-			return view.getAccountImportanceOrDefault(key, height);
+			return view.getAccountImportanceOrDefault(key, height, enableProperCalculation);
 		});
 
 		auto unlockedAccountsView = m_unlockedAccounts.view();

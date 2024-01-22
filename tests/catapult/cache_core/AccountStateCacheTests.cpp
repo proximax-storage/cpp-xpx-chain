@@ -646,7 +646,7 @@ namespace catapult { namespace cache {
 			// Assert: the second add had no effect (the importance is still 123)
 			ASSERT_TRUE(!!pAccountState);
 			EXPECT_EQ(&addedAccountState, pAccountState);
-			EXPECT_EQ(Amount(123), pAccountState->Balances.getEffectiveBalance(Height(0), 0));
+			EXPECT_EQ(Amount(123), pAccountState->Balances.getEffectiveBalance<false>(Height(0), 0));
 		}
 	}
 

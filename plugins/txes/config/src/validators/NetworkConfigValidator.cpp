@@ -93,7 +93,9 @@ namespace catapult { namespace validators {
 							|| networkConfig.MaxMosaicAtomicUnits < currentNetworkConfig.MaxMosaicAtomicUnits) {
 							return Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid;
 						}
-
+						if((networkConfig.MaxRollbackBlocks != currentNetworkConfig.MaxRollbackBlocks || networkConfig.ImportanceGrouping != currentNetworkConfig.ImportanceGrouping)
+							&& (context.Config.ActivationHeight.unwrap() + currentNetworkConfig.MaxRollbackBlocks*2 + currentNetworkConfig.ImportanceGrouping) <= height.unwrap())
+							return Failure_NetworkConfig_ImportanceGroupingOrMaxRollbackCannotChangeBeforePreviousConfigurationIsPastEffective;
 					}
 				} catch (...) {
 					return Failure_NetworkConfig_BlockChain_Config_Malformed;

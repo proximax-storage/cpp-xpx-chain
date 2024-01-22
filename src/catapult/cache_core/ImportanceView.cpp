@@ -56,21 +56,29 @@ namespace catapult { namespace cache {
 		}
 	}
 
-	bool ImportanceView::tryGetAccountImportance(const Key& publicKey, Height height, Importance& importance) const {
+	bool ImportanceView::tryGetAccountImportance(const Key& publicKey, Height height, Importance& importance, bool properEffectiveBalanceCalculation) const {
 		return FindAccountStateWithImportance(m_cache, publicKey, height, [&](const auto& accountState) {
-			importance = Importance(accountState.Balances.getEffectiveBalance(height, m_cache.importanceGrouping()).unwrap());
+			if(properEffectiveBalanceCalculation)
+				importance = Importance(accountState.Balances.template getEffectiveBalance<true>(height, m_cache.importanceGrouping()).unwrap());
+			else
+				importance = Importance(accountState.Balances.template getEffectiveBalance<false>(height, m_cache.importanceGrouping()).unwrap());
 			return true;
 		});
 	}
 
-	Importance ImportanceView::getAccountImportanceOrDefault(const Key& publicKey, Height height) const {
+	Importance ImportanceView::getAccountImportanceOrDefault(const Key& publicKey, Height height, bool properEffectiveBalanceCalculation) const {
 		Importance importance;
-		return tryGetAccountImportance(publicKey, height, importance) ? importance : Importance(0);
+		return tryGetAccountImportance(publicKey, height, importance, properEffectiveBalanceCalculation) ? importance : Importance(0);
 	}
 
-	bool ImportanceView::canHarvest(const Key& publicKey, Height height, Amount minHarvestingBalance, Amount maxHarvestingBalance) const {
+	bool ImportanceView::canHarvest(const Key& publicKey, Height height, Amount minHarvestingBalance, Amount maxHarvestingBalance, bool ProperEffectiveBalanceCalculation) const {
 		return FindAccountStateWithImportance(m_cache, publicKey, height, [&](const auto& accountState) {
-			auto balance = accountState.Balances.getEffectiveBalance(height, m_cache.importanceGrouping());
+			Amount balance;
+			if(ProperEffectiveBalanceCalculation)
+				balance = accountState.Balances.template getEffectiveBalance<true>(height, m_cache.importanceGrouping());
+			else
+				balance = accountState.Balances.template getEffectiveBalance<false>(height, m_cache.importanceGrouping());
+
 		return balance >= minHarvestingBalance && balance <= maxHarvestingBalance;
 		});
 	}

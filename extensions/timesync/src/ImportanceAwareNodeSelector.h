@@ -53,14 +53,16 @@ namespace catapult { namespace timesync {
 		ionet::NodeSet selectNodes(
 				const cache::ImportanceView& importanceView,
 				const ionet::NodeContainerView& nodeContainerView,
-				const Height& height) const;
+				const Height& height,
+				bool enableProperCalculation) const;
 
 	private:
 		std::pair<bool, Importance> isCandidate(
 				const cache::ImportanceView& importanceView,
 				const ionet::Node& node,
 				const ionet::NodeInfo& nodeInfo,
-				Height height) const;
+				Height height,
+				bool enableProperCalculation) const;
 
 	private:
 		ionet::ServiceIdentifier m_serviceId;

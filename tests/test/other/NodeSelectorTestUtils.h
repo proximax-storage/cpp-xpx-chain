@@ -28,8 +28,8 @@ namespace catapult { namespace test {
 	template<typename TTraits>
 	class NodeSelectorProbabilityTests {
 	public:
-		static void AssertSelectsCandidatesBasedOnWeight() {
-			test::RunNonDeterministicTest(TTraits::Description, []() {
+		static void AssertSelectsCandidatesBasedOnWeight(const bool properEffectiveBalanceCalculation) {
+			test::RunNonDeterministicTest(TTraits::Description, [properEffectiveBalanceCalculation]() {
 				// Arrange:
 				constexpr size_t Max_Percentage_Deviation = 10;
 				constexpr uint64_t Num_Iterations = 10'000;
@@ -41,7 +41,7 @@ namespace catapult { namespace test {
 					nodes.push_back(test::CreateNamedNode(keys[i], "Node" + std::to_string(i + 1)));
 
 				// Act:
-				auto keyStatistics = TTraits::CreateStatistics(nodes, rawWeights, Num_Iterations);
+				auto keyStatistics = TTraits::CreateStatistics(nodes, rawWeights, Num_Iterations, properEffectiveBalanceCalculation);
 				auto index = 0u;
 				for (const auto& key : keys) {
 					auto expectedSelectionCount = rawWeights[index] * Num_Iterations / Cumulative_Weight;
@@ -68,7 +68,7 @@ namespace catapult { namespace test {
 }}
 
 #define MAKE_NODE_SELECTOR_PROBABILITY_TEST(TRAITS_NAME, TEST_NAME) \
-	TEST(TEST_CLASS, TEST_NAME) { test::NodeSelectorProbabilityTests<TRAITS_NAME##Traits>::AssertSelectsCandidatesBasedOnWeight(); }
-
+	TEST(TEST_CLASS, TEST_NAME##ImproperEffective) { test::NodeSelectorProbabilityTests<TRAITS_NAME##Traits>::AssertSelectsCandidatesBasedOnWeight(false); } \
+	TEST(TEST_CLASS, TEST_NAME##ProperEffective) { test::NodeSelectorProbabilityTests<TRAITS_NAME##Traits>::AssertSelectsCandidatesBasedOnWeight(false); }
 #define DEFINE_NODE_SELECTOR_PROBABILITY_TESTS(TRAITS_NAME) \
 	MAKE_NODE_SELECTOR_PROBABILITY_TEST(TRAITS_NAME, SelectsCandidatesBasedOnWeight_##TRAITS_NAME)

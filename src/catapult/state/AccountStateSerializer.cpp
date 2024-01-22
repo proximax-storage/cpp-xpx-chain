@@ -113,8 +113,10 @@ namespace catapult { namespace state {
 		model::BalanceSnapshot ReadBalanceSnapshot(io::InputStream& input, uint32_t stateVersion) {
 			model::BalanceSnapshot snapshot;
 			snapshot.Amount = io::Read<Amount>(input);
-			if(stateVersion == 2)
+			if(stateVersion != 1)
 				snapshot.LockedAmount = io::Read<Amount>(input);
+			else
+				snapshot.LockedAmount = Amount(0);
 			snapshot.BalanceHeight = io::Read<Height>(input);
 			return snapshot;
 		}

@@ -127,8 +127,8 @@ namespace catapult { namespace cache {
 		void AssertCannotFindImportance(const ImportanceView& view, const Key& key, Height height) {
 			// Act:
 			Importance importance;
-			auto foundImportance = view.tryGetAccountImportance(key, height, importance);
-			auto importanceOrDefault = view.getAccountImportanceOrDefault(key, height);
+			auto foundImportance = view.tryGetAccountImportance(key, height, importance, false);
+			auto importanceOrDefault = view.getAccountImportanceOrDefault(key, height, false);
 
 			// Assert:
 			EXPECT_FALSE(foundImportance);
@@ -160,8 +160,8 @@ namespace catapult { namespace cache {
 
 			// Act:
 			Importance importance;
-			auto foundImportance = pView->tryGetAccountImportance(key, height, importance);
-			auto importanceOrDefault = pView->getAccountImportanceOrDefault(key, height);
+			auto foundImportance = pView->tryGetAccountImportance(key, height, importance, false);
+			auto importanceOrDefault = pView->getAccountImportanceOrDefault(key, height, false);
 
 			// Assert:
 			EXPECT_TRUE(foundImportance);
@@ -179,8 +179,8 @@ namespace catapult { namespace cache {
 
 			// Act:
 			Importance importance;
-			auto foundImportance = pView->tryGetAccountImportance(key, height, importance);
-			auto importanceOrDefault = pView->getAccountImportanceOrDefault(key, height);
+			auto foundImportance = pView->tryGetAccountImportance(key, height, importance, false);
+			auto importanceOrDefault = pView->getAccountImportanceOrDefault(key, height, false);
 
 			// Assert:
 			EXPECT_TRUE(foundImportance);
@@ -212,7 +212,7 @@ namespace catapult { namespace cache {
 		struct CanHarvestViaMemberTraits {
 			static bool CanHarvest(const AccountStateCache& cache, const Key& publicKey, Height height, Amount minBalance, Amount maxBalance) {
 				auto pView = test::CreateImportanceView(cache);
-				return pView->canHarvest(publicKey, height, minBalance, maxBalance);
+				return pView->canHarvest(publicKey, height, minBalance, maxBalance, false);
 			}
 		};
 
@@ -282,19 +282,19 @@ namespace catapult { namespace cache {
 		struct TryGetTraits {
 			static void Act(const ImportanceView& view, const Key& publicKey) {
 				Importance importance;
-				view.tryGetAccountImportance(publicKey, Height(111), importance);
+				view.tryGetAccountImportance(publicKey, Height(111), importance, false);
 			}
 		};
 
 		struct GetTraits {
 			static void Act(const ImportanceView& view, const Key& publicKey) {
-				view.getAccountImportanceOrDefault(publicKey, Height(111));
+				view.getAccountImportanceOrDefault(publicKey, Height(111), false);
 			}
 		};
 
 		struct CanHarvestTraits {
 			static void Act(const ImportanceView& view, const Key& publicKey) {
-				view.canHarvest(publicKey, Height(111), Amount(), Amount(UINT64_MAX));
+				view.canHarvest(publicKey, Height(111), Amount(), Amount(UINT64_MAX), false);
 			}
 		};
 	}

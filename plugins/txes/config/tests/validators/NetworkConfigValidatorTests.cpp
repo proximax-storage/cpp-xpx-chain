@@ -75,6 +75,8 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxBlockChainConfigSize = utils::FileSize::FromMegabytes(maxBlockChainConfigSizeMb);
 			pluginConfig.MaxSupportedEntityVersionsSize = utils::FileSize::FromMegabytes(maxSupportedEntityVersionsSizeMb);
 			config.Network.SetPluginConfiguration(pluginConfig);
+			config.Network.MaxRollbackBlocks = 360;
+			config.Network.ImportanceGrouping = 5760;
 			config.Network.Plugins.emplace(PLUGIN_NAME(config), utils::ConfigurationBag({}));
 			auto pConfigHolder = config::CreateMockConfigurationHolderWithNemesisConfig(config.ToConst());
 			return std::make_shared<plugins::PluginManager>(pConfigHolder, plugins::StorageConfiguration());

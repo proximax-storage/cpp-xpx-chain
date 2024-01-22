@@ -120,7 +120,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateBalanceTransferObserver())
 				.add(observers::CreateHarvestFeeObserver(pConfigHolder))
 				.add(observers::CreateTotalTransactionsObserver())
-				.add(observers::CreateSnapshotCleanUpObserver())
+				.add(observers::CreateSnapshotCleanUpObserver(pConfigHolder))
 				.add(observers::CreateBlockSignerImportanceObserver())
 				.add(observers::CreateBlockchainStateTrackingObserver());
 		});

@@ -21,6 +21,7 @@
 
 #pragma once
 #include "catapult/types.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include <functional>
 #include <iosfwd>
 
@@ -61,7 +62,8 @@ namespace catapult { namespace harvesting {
 	DelegatePrioritizer CreateDelegatePrioritizer(
 			DelegatePrioritizationPolicy policy,
 			const cache::CatapultCache& cache,
-			const Key& primaryAccountPublicKey);
+			const Key& primaryAccountPublicKey,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pHolder);
 
 	// endregion
 }}

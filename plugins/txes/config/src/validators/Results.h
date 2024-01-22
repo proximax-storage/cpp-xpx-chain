@@ -76,6 +76,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because ApplyHeightDelta is zero.
 	DEFINE_CATAPULT_CONFIG_RESULT(Required_Plugins_Not_Matching, 21);
 
+	/// Validation failed because we need to wait for 2 times the previous maxrollback plus importance grouping before being able to modify the importance grouping and maxrollback values.
+	DEFINE_CATAPULT_CONFIG_RESULT(ImportanceGroupingOrMaxRollbackCannotChangeBeforePreviousConfigurationIsPastEffective, 22);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

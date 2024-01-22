@@ -23,6 +23,17 @@
 
 namespace catapult { namespace model {
 
+	struct BalancePair {
+		Amount Unlocked;
+		Amount Locked;
+		BalancePair() = default;
+		BalancePair(const Amount& unlocked, const Amount& locked) : Unlocked(unlocked), Locked(locked) {}
+
+		Amount Sum() {
+			return Locked + Unlocked;
+		}
+	};
+
 #pragma pack(push, 1)
 
 	/// Binary layout for a balance snapshot.
@@ -41,11 +52,12 @@ namespace catapult { namespace model {
 			return LockedAmount + Amount;
 		}
 
-		std::pair<catapult::Amount, catapult::Amount> GetCompoundEffectiveAmount() const
+		BalancePair GetCompoundEffectiveAmount() const
 		{
-			return std::make_pair(Amount, LockedAmount);
+			return BalancePair(Amount, LockedAmount);
 		}
 	};
+
 
 #pragma pack(pop)
 }}

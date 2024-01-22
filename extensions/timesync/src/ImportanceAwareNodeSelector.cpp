@@ -74,9 +74,10 @@ namespace catapult { namespace timesync {
 	ionet::NodeSet ImportanceAwareNodeSelector::selectNodes(
 			const cache::ImportanceView& importanceView,
 			const ionet::NodeContainerView& nodeContainerView,
-			const Height& height) const {
-		auto candidatesInfo = Filter(nodeContainerView, [this, &importanceView, height](const auto& node, const auto& nodeInfo) {
-			return this->isCandidate(importanceView, node, nodeInfo, height);
+			const Height& height,
+			bool enableProperCalculation) const {
+		auto candidatesInfo = Filter(nodeContainerView, [this, &importanceView, height, enableProperCalculation](const auto& node, const auto& nodeInfo) {
+			return this->isCandidate(importanceView, node, nodeInfo, height, enableProperCalculation);
 		});
 
 		return m_selector(candidatesInfo.WeightedCandidates, candidatesInfo.CumulativeImportance.unwrap(), m_maxNodes);
@@ -86,8 +87,9 @@ namespace catapult { namespace timesync {
 			const cache::ImportanceView& importanceView,
 			const ionet::Node& node,
 			const ionet::NodeInfo& nodeInfo,
-			Height height) const {
-		auto importance = importanceView.getAccountImportanceOrDefault(node.identityKey(), std::move(height));
+			Height height,
+			bool enableProperCalculation) const {
+		auto importance = importanceView.getAccountImportanceOrDefault(node.identityKey(), std::move(height), enableProperCalculation);
 		auto isCandidate = importance >= m_minImportance
 				&& !!nodeInfo.getConnectionState(m_serviceId)
 				&& ionet::NodeSource::Local != nodeInfo.source();

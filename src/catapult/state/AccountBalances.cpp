@@ -20,6 +20,7 @@
 
 #include "AccountBalances.h"
 #include "AccountState.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include <unordered_map>
 
 namespace catapult { namespace state {
@@ -29,7 +30,8 @@ namespace catapult { namespace state {
 			return Amount(0) == amount;
 		}
 
-		inline auto minSnapshot(const std::list<model::BalanceSnapshot>& snapshots, const Height& height, const uint64_t& importanceGrouping) {
+		inline auto minSnapshot(const std::list<model::BalanceSnapshot>& snapshots, const Height& height, const uint64_t& importanceGrouping)
+		{
 			auto importanceGroupingHeight = Height(importanceGrouping);
 			auto effectiveHeight = Height(0);
 
@@ -375,59 +377,139 @@ namespace catapult { namespace state {
 		m_localSnapshots.splice(m_localSnapshots.end(), m_remoteSnapshots);
 	}
 
-	void AccountBalances::maybeCleanUpSnapshots(const Height& height, const model::NetworkConfiguration& config) {
-		auto unstableHeight = Height(config.ImportanceGrouping + config.MaxRollbackBlocks);
+	void AccountBalances::maybeCleanUpSnapshots(const Height& height, const model::NetworkConfiguration& activeConfig, const StableBalanceSnapshot& unstableHeight) {
 
-		if (height <= unstableHeight) {
+		auto effectiveUnstableHeight = unstableHeight.GetUnstableHeight(activeConfig.ProperEffectiveBalanceCalculation ? 2 : 1);
+		if (height <= effectiveUnstableHeight)
 			return;
-		}
 
-		auto stableHeight = height - unstableHeight;
-
-		while(!m_localSnapshots.empty() && m_localSnapshots.front().BalanceHeight <= stableHeight) {
-			m_localSnapshots.pop_front();
+		auto stableHeight = height - effectiveUnstableHeight;
+		//Dry run to find out how many snapshots are behind stableHeight;
+		if(activeConfig.ProperEffectiveBalanceCalculation) {
+			int count = 0;
+			for(auto& snapshot : m_localSnapshots) {
+				if(m_localSnapshots.front().BalanceHeight <= stableHeight)
+					count++;
+			}
+			while(!m_localSnapshots.empty() && m_localSnapshots.front().BalanceHeight <= stableHeight && count > 1) {
+				m_localSnapshots.pop_front();
+				count--;
+			}
+		} else{
+			while(!m_localSnapshots.empty() && m_localSnapshots.front().BalanceHeight <= stableHeight) {
+				m_localSnapshots.pop_front();
+			}
 		}
 	}
 
+	///TODO: Optimize
+	template<>
+	const model::BalanceSnapshot* AccountBalances::ReferenceSnapshot<true>(const catapult::Height& effectiveHeight) const{
+		///Only the latest snapshot prior to effectiveHeight is kept.
+		const model::BalanceSnapshot* referenceSnapshot = nullptr;
+
+		/// In any case, for use cases where a balance might be forced to change in the past for some reason, we will assume remote snapshots take priority.
+		/// We use at most the last snapshot prior to effectiveHeight, if that is the lowest that will always represent the effective balance. If it is a remote snapshot it takes priority.
+
+		/// AFTER figuring out which one is the reference we need to figure out which snapshot is the lowest. This is always the effective one regardless.
+
+		for (auto it = m_localSnapshots.rbegin(); it != m_localSnapshots.rend(); ++it) {
+			if(!referenceSnapshot || referenceSnapshot->GetEffectiveAmount() > it->GetEffectiveAmount())
+				referenceSnapshot = &(*it);
+			if(it->BalanceHeight <= effectiveHeight)
+				break;
+		}
+		// If there is a remote snapshot that is lower, we override our selection with it.
+		for (auto it = m_remoteSnapshots.rbegin(); it != m_remoteSnapshots.rend(); ++it) {
+			if(!referenceSnapshot || referenceSnapshot->GetEffectiveAmount() > it->GetEffectiveAmount())
+				referenceSnapshot = &(*it);
+			if(it->BalanceHeight <= effectiveHeight)
+				break;
+		}
+
+		return referenceSnapshot;
+	}
+
+	template<>
+	const model::BalanceSnapshot* AccountBalances::ReferenceSnapshot<false>(const catapult::Height& effectiveHeight) const{
+
+		const model::BalanceSnapshot* referenceSnapshot = nullptr;
+
+		if(m_remoteSnapshots.empty() && m_localSnapshots.empty())
+			return referenceSnapshot;
+
+		auto minElementDepreciator = [&effectiveHeight](const model::BalanceSnapshot& l, const model::BalanceSnapshot& r){
+			return l.BalanceHeight <= effectiveHeight || l.GetEffectiveAmount() < r.GetEffectiveAmount();
+		};
+
+		if (m_remoteSnapshots.empty()) {
+			referenceSnapshot = &*std::min_element(
+					m_localSnapshots.begin(),
+					m_localSnapshots.end(), minElementDepreciator);
+		}  else if (m_localSnapshots.empty()) {
+			referenceSnapshot = &*std::min_element(
+					m_remoteSnapshots.begin(),
+					m_remoteSnapshots.end(),
+					minElementDepreciator);
+		} else {
+			referenceSnapshot = std::min(
+					&*std::min_element(m_remoteSnapshots.begin(), m_remoteSnapshots.end(), minElementDepreciator),
+					&*std::min_element(m_localSnapshots.begin(), m_localSnapshots.end(), minElementDepreciator),
+					[](auto x, auto y) { return x->GetEffectiveAmount() < y->GetEffectiveAmount(); });
+		}
+
+		return referenceSnapshot;
+	}
+
+	model::BalancePair AccountBalances::GetTrackedBalance() const{
+		model::BalancePair result;
+		auto iter = m_balances.find(m_trackedMosaicId);
+		auto lockedIter = m_lockedBalances.find(m_trackedMosaicId);
+		result.Unlocked = m_balances.end() == iter ? Amount(0) : iter->second;
+		result.Locked = m_lockedBalances.end() == lockedIter ? Amount(0) : lockedIter->second;
+		return result;
+	}
+
+	template<bool ProperEffectiveBalanceSorting>
 	Amount AccountBalances::getEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const {
-		if (m_localSnapshots.empty() && m_remoteSnapshots.empty()) {
-			auto iter = m_balances.find(m_trackedMosaicId);
-			auto lockedIter = m_lockedBalances.find(m_trackedMosaicId);
-			auto lockedAmount = m_lockedBalances.end() == lockedIter ? Amount(0) : lockedIter->second;
-			return m_balances.end() == iter ? lockedAmount : iter->second+lockedAmount;
+		auto importanceGroupingHeight = Height(importanceGrouping);
+		auto effectiveHeight = Height(0);
+
+		if (height > importanceGroupingHeight) {
+			effectiveHeight = height - importanceGroupingHeight;
 		}
 
-		if (m_remoteSnapshots.empty()) {
-			return minSnapshot(m_localSnapshots, height, importanceGrouping)->GetEffectiveAmount();
-		} else if (m_localSnapshots.empty()) {
-			return minSnapshot(m_remoteSnapshots, height, importanceGrouping)->GetEffectiveAmount();
-		} else {
-			return std::min(
-				minSnapshot(m_localSnapshots, height, importanceGrouping)->GetEffectiveAmount(),
-				minSnapshot(m_remoteSnapshots, height, importanceGrouping)->GetEffectiveAmount()
-			);
+		auto referenceSnapshot = ReferenceSnapshot<ProperEffectiveBalanceSorting>(effectiveHeight);
+		/// If there is no reference snapshot. We return balance as there was never an interaction, or it was removed due to previous calculation approach.
+		if (!referenceSnapshot) {
+			return GetTrackedBalance().Sum();
 		}
+		/// If there is a reference snapshot then that is our effective balance.
+		return referenceSnapshot->GetEffectiveAmount();
+	}
+	template<bool ProperEffectiveBalanceSorting>
+	model::BalancePair AccountBalances::getCompoundEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const {
+		auto importanceGroupingHeight = Height(importanceGrouping);
+		auto effectiveHeight = Height(0);
+
+		if (height > importanceGroupingHeight) {
+			effectiveHeight = height - importanceGroupingHeight;
+		}
+
+		auto referenceSnapshot = ReferenceSnapshot<ProperEffectiveBalanceSorting>(effectiveHeight);
+		/// If there is no reference snapshot. We return balance as there was never an interaction, or it was removed due to previous calculation approach.
+		if (!referenceSnapshot) {
+			return GetTrackedBalance();
+		}
+		/// If there is a reference snapshot then that is our effective balance.
+		return referenceSnapshot->GetCompoundEffectiveAmount();
 	}
 
-	std::pair<Amount, Amount> AccountBalances::getCompoundEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const {
-		if (m_localSnapshots.empty() && m_remoteSnapshots.empty()) {
-			auto iter = m_balances.find(m_trackedMosaicId);
-			auto lockedIter = m_lockedBalances.find(m_trackedMosaicId);
-			auto lockedAmount = m_lockedBalances.end() == lockedIter ? Amount(0) : lockedIter->second;
-			return m_balances.end() == iter ? std::make_pair(Amount(), lockedAmount) : std::make_pair(iter->second, lockedAmount);
-		}
-
-		if (m_remoteSnapshots.empty()) {
-			return minSnapshot(m_localSnapshots, height, importanceGrouping)->GetCompoundEffectiveAmount();
-		} else if (m_localSnapshots.empty()) {
-			return minSnapshot(m_remoteSnapshots, height, importanceGrouping)->GetCompoundEffectiveAmount();
-		} else {
-			return std::min(
-					minSnapshot(m_localSnapshots, height, importanceGrouping)->GetCompoundEffectiveAmount(),
-					minSnapshot(m_remoteSnapshots, height, importanceGrouping)->GetCompoundEffectiveAmount()
-			);
-		}
-	}
+	// Instantiate available functions;
+	template Amount AccountBalances::getEffectiveBalance<true>(const Height& height, const uint64_t& importanceGrouping) const;
+	template Amount AccountBalances::getEffectiveBalance<false>(const Height& height, const uint64_t& importanceGrouping) const;
+	template model::BalancePair AccountBalances::getCompoundEffectiveBalance<true>(const Height& height, const uint64_t& importanceGrouping) const;
+	template model::BalancePair AccountBalances::getCompoundEffectiveBalance<false>(const Height& height, const uint64_t& importanceGrouping) const;
 
 	void AccountBalances::pushSnapshot(const model::BalanceSnapshot& snapshot, bool committed) {
 		if (!m_accountState)
@@ -450,5 +532,13 @@ namespace catapult { namespace state {
 
 	void AccountBalances::clearChanges() {
 		m_changesTracker.clear();
+	}
+	StableBalanceSnapshot::StableBalanceSnapshot(
+			const uint64_t importanceGrouping,
+			const uint32_t maxRollbackBlocks)
+		: ImportanceGrouping(importanceGrouping), MaxRollbackBlocks(maxRollbackBlocks) {}
+
+	Height StableBalanceSnapshot::GetUnstableHeight(int multiplier) const {
+		return Height((MaxRollbackBlocks * multiplier) + ImportanceGrouping);
 	}
 }}

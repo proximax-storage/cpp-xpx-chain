@@ -97,9 +97,10 @@ namespace catapult { namespace harvesting {
 			  		const auto& signingPublicKey = descriptor.signingKeyPair().publicKey();
 
 					auto address = model::PublicKeyToAddress(signingPublicKey, readOnlyAccountStateCache.networkIdentifier());
-					auto minHarvesterBalance = m_ConfigHolder->Config(height).Network.MinHarvesterBalance;
-				  	auto maxHarvesterBalance = m_ConfigHolder->Config(height).Network.MaxHarvesterBalance;
-					auto shouldPruneAccount = !view.canHarvest(signingPublicKey, height, minHarvesterBalance, maxHarvesterBalance);
+					const auto& config = m_ConfigHolder->Config(height).Network;
+					auto minHarvesterBalance = config.MinHarvesterBalance;
+				  	auto maxHarvesterBalance = config.MaxHarvesterBalance;
+					auto shouldPruneAccount = !view.canHarvest(signingPublicKey, height, minHarvesterBalance, maxHarvesterBalance, config.ProperEffectiveBalanceCalculation);
 
 #ifdef DEBUG
 					if(shouldPruneAccount)

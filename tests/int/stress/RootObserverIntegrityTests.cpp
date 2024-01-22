@@ -206,7 +206,7 @@ namespace catapult { namespace extensions {
 
 				cache::ReadOnlyAccountStateCache readOnly(cacheView.sub<cache::AccountStateCache>());
 				cache::ImportanceView importanceView(readOnly);
-				EXPECT_EQ(expectedBalance.unwrap(), importanceView.getAccountImportanceOrDefault({ { accountId } }, cacheView.height()).unwrap()) << message;
+				EXPECT_EQ(expectedBalance.unwrap(), importanceView.getAccountImportanceOrDefault({ { accountId } }, cacheView.height(), false).unwrap()) << message;
 			}
 
 			void assertLinearEffectiveBalance(const AssertOptions& options) {

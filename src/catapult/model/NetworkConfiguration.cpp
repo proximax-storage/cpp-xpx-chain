@@ -94,6 +94,8 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(DockStakeRewardInterval);
 		config.EnableStateTracking = false;
 		TRY_LOAD_CHAIN_PROPERTY(EnableStateTracking);
+		config.ProperEffectiveBalanceCalculation = false;
+		TRY_LOAD_CHAIN_PROPERTY(ProperEffectiveBalanceCalculation);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

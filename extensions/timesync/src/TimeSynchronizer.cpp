@@ -82,8 +82,8 @@ namespace catapult { namespace timesync {
 			const cache::ImportanceView& importanceView,
 			Height height,
 			const TimeSynchronizationSamples& samples) {
-		return utils::Sum(samples, [&importanceView, height](const auto& sample) {
-			return importanceView.getAccountImportanceOrDefault(sample.node().identityKey(), height).unwrap();
+		return utils::Sum(samples, [&importanceView, height, properBalanceCalculation = m_state.pluginManager().configHolder()->Config(height).Network.ProperEffectiveBalanceCalculation](const auto& sample) {
+			return importanceView.getAccountImportanceOrDefault(sample.node().identityKey(), height, properBalanceCalculation).unwrap();
 		});
 	}
 
@@ -94,12 +94,12 @@ namespace catapult { namespace timesync {
 			double scaling) {
 		auto totalChainImportance = GetTotalChainImportance(m_state, height).unwrap();
 		auto warningThresholdMillis = m_warningThresholdMillis;
-		return utils::Sum(samples, [&importanceView, height, scaling, totalChainImportance, warningThresholdMillis](const auto& sample) {
+		return utils::Sum(samples, [&importanceView, height, scaling, totalChainImportance, warningThresholdMillis, properBalanceCalculation = m_state.pluginManager().configHolder()->Config(height).Network.ProperEffectiveBalanceCalculation](const auto& sample) {
 			int64_t offset = sample.timeOffsetToRemote();
 			CATAPULT_LOG_LEVEL(MapToLogLevel(warningThresholdMillis, offset))
 					<< sample.node().metadata().Name << ": network time offset to local node is " << offset << "ms";
 
-			auto importance = importanceView.getAccountImportanceOrDefault(sample.node().identityKey(), height);
+			auto importance = importanceView.getAccountImportanceOrDefault(sample.node().identityKey(), height, properBalanceCalculation);
 			return scaling * offset * importance.unwrap() / totalChainImportance;
 		});
 	}

@@ -112,7 +112,7 @@ namespace catapult { namespace timesync {
 			SeedNodeContainerOptions SeedNodeOptions;
 		};
 
-		void AssertNoNodesAreSelected(const Options& options) {
+		void AssertNoNodesAreSelected(const Options& options, const bool properEffectiveBalanceCalculation) {
 			// Arrange:
 			auto keys = test::GenerateRandomDataVector<Key>(3);
 			std::vector<Importance> importances(3, options.NodeImportance);
@@ -125,7 +125,7 @@ namespace catapult { namespace timesync {
 			ImportanceAwareNodeSelector selector(options.NodeServiceIdentifier, 5, Importance(1000));
 
 			// Act:
-			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(100));
+			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(100), properEffectiveBalanceCalculation);
 
 			// Assert:
 			EXPECT_TRUE(selectNodes.empty());
@@ -138,7 +138,8 @@ namespace catapult { namespace timesync {
 		options.NodeImportance = Importance(123);
 
 		// Assert:
-		AssertNoNodesAreSelected(options);
+		AssertNoNodesAreSelected(options, false);
+		AssertNoNodesAreSelected(options, true);
 	}
 
 	TEST(TEST_CLASS, ReturnsEmptySetIfNoNodeHasAnActiveConnectionStateForAnyService) {
@@ -146,7 +147,8 @@ namespace catapult { namespace timesync {
 		options.SeedNodeOptions.IsActive = false;
 
 		// Assert:
-		AssertNoNodesAreSelected(options);
+		AssertNoNodesAreSelected(options, false);
+		AssertNoNodesAreSelected(options, true);
 	}
 
 	TEST(TEST_CLASS, ReturnsEmptySetIfNodeHasActiveConnectionStateOnlyForNonMatchingService) {
@@ -154,7 +156,8 @@ namespace catapult { namespace timesync {
 		options.NodeServiceIdentifier = ionet::ServiceIdentifier(321);
 
 		// Assert:
-		AssertNoNodesAreSelected(options);
+		AssertNoNodesAreSelected(options, false);
+		AssertNoNodesAreSelected(options, true);
 	}
 
 	TEST(TEST_CLASS, ReturnsEmptySetIfNodeIsLocal) {
@@ -162,7 +165,8 @@ namespace catapult { namespace timesync {
 		options.SeedNodeOptions.NodeSource = ionet::NodeSource::Local;
 
 		// Assert:
-		AssertNoNodesAreSelected(options);
+		AssertNoNodesAreSelected(options, false);
+		AssertNoNodesAreSelected(options, true);
 	}
 
 	// endregion
@@ -171,7 +175,7 @@ namespace catapult { namespace timesync {
 
 	namespace {
 		template<typename TAssert>
-		void AssertSelectedNodes(const std::vector<Key>& keys, const std::vector<Importance>& importances, TAssert assertKeys) {
+		void AssertSelectedNodes(const std::vector<Key>& keys, const std::vector<Importance>& importances, TAssert assertKeys, const bool properEffectiveBalanceCalculation) {
 			// Arrange:
 			auto pCache = CreateAccountStateCache();
 			SeedAccountStateCache(*pCache, keys, importances);
@@ -182,7 +186,7 @@ namespace catapult { namespace timesync {
 			ImportanceAwareNodeSelector selector(Default_Service_Identifier, 3, Importance(1000));
 
 			// Act:
-			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(1));
+			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(1), properEffectiveBalanceCalculation);
 
 			// Assert:
 			assertKeys(test::ExtractNodeIdentities(selectNodes));
@@ -200,7 +204,12 @@ namespace catapult { namespace timesync {
 			// Assert:
 			EXPECT_EQ(3u, keys.size());
 			EXPECT_EQ(expectedKeys, keys);
-		});
+		}, false);
+		AssertSelectedNodes(allKeys, importances, [&expectedKeys](const auto& keys) {
+			// Assert:
+			EXPECT_EQ(3u, keys.size());
+			EXPECT_EQ(expectedKeys, keys);
+		}, true);
 	}
 
 	// endregion
@@ -240,7 +249,7 @@ namespace catapult { namespace timesync {
 		ImportanceAwareNodeSelector selector(Default_Service_Identifier, 3, Importance(1000), customSelector);
 
 		// Act:
-		selector.selectNodes(*pView, nodeContainer.view(), Height(Default_Importance_Height.unwrap() + 1));
+		selector.selectNodes(*pView, nodeContainer.view(), Height(Default_Importance_Height.unwrap() + 1), false);
 
 		// Assert:
 		EXPECT_EQ(1u, capture.NumSelectorCalls);
@@ -266,7 +275,8 @@ namespace catapult { namespace timesync {
 			static KeyStatistics CreateStatistics(
 					const std::vector<ionet::Node>& nodes,
 					const std::vector<uint64_t>& rawWeights,
-					uint64_t numIterations) {
+					uint64_t numIterations,
+					const bool properEffectiveBalanceCalculation) {
 				uint64_t cummulativeWeight = 0u;
 				std::vector<Importance> importances;
 				for (auto weight : rawWeights) {
@@ -288,7 +298,7 @@ namespace catapult { namespace timesync {
 
 				KeyStatistics keyStatistics;
 				for (auto i = 0u; i < numIterations; ++i) {
-					auto selectedNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(1));
+					auto selectedNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(1), properEffectiveBalanceCalculation);
 					if (1u != selectedNodes.size())
 						CATAPULT_THROW_RUNTIME_ERROR_1("unexpected number of nodes were selected", selectedNodes.size());
 

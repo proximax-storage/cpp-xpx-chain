@@ -60,8 +60,8 @@ namespace catapult { namespace harvesting {
 			};
 		}
 
-		DelegatePrioritizer CreateImportancePrioritizer(const cache::CatapultCache& cache, const Key& primaryAccountPublicKey) {
-			return [&cache, primaryAccountPublicKey](const auto& delegatePublicKey) {
+		DelegatePrioritizer CreateImportancePrioritizer(const cache::CatapultCache& cache, const Key& primaryAccountPublicKey, std::shared_ptr<config::BlockchainConfigurationHolder> pHolder) {
+			return [&cache, primaryAccountPublicKey, pHolder](const auto& delegatePublicKey) {
 				// prevent primary account from getting pruned
 				if (primaryAccountPublicKey == delegatePublicKey)
 					return std::numeric_limits<uint64_t>::max();
@@ -70,7 +70,7 @@ namespace catapult { namespace harvesting {
 				auto height = cacheView.height() + Height(1); // harvesting *next* block
 				auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
 				cache::ImportanceView view(readOnlyAccountStateCache);
-				return view.getAccountImportanceOrDefault(delegatePublicKey, height).unwrap();
+				return view.getAccountImportanceOrDefault(delegatePublicKey, height, pHolder->Config(height).Network.ProperEffectiveBalanceCalculation).unwrap();
 			};
 		}
 	}
@@ -78,13 +78,14 @@ namespace catapult { namespace harvesting {
 	DelegatePrioritizer CreateDelegatePrioritizer(
 			DelegatePrioritizationPolicy policy,
 			const cache::CatapultCache& cache,
-			const Key& primaryAccountPublicKey) {
+			const Key& primaryAccountPublicKey,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pHolder) {
 		switch (policy) {
 		case DelegatePrioritizationPolicy::Age:
 			return CreateAgePrioritizer();
 
 		case DelegatePrioritizationPolicy::Importance:
-			return CreateImportancePrioritizer(cache, primaryAccountPublicKey);
+			return CreateImportancePrioritizer(cache, primaryAccountPublicKey, pHolder);
 		}
 
 		CATAPULT_THROW_INVALID_ARGUMENT_1("cannot create delegate prioritizer for unknown policy", static_cast<uint16_t>(policy));

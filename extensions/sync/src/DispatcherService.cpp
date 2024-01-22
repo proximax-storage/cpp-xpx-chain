@@ -135,8 +135,8 @@ namespace catapult { namespace sync {
 				const chain::ExecutionConfiguration& executionConfig) {
 			BlockHitPredicateFactory blockHitPredicateFactory = [&state](const cache::ReadOnlyCatapultCache& cache) {
 				cache::ImportanceView view(cache.sub<cache::AccountStateCache>());
-				return chain::BlockHitPredicate(state.pluginManager().configHolder(), [view](const auto& publicKey, auto height) {
-					return view.getAccountImportanceOrDefault(publicKey, height);
+				return chain::BlockHitPredicate(state.pluginManager().configHolder(), [view, holder = state.pluginManager().configHolder()](const auto& publicKey, auto height) {
+					return view.getAccountImportanceOrDefault(publicKey, height, holder->Config(height).Network.ProperEffectiveBalanceCalculation);
 				});
 			};
 			return CreateBlockChainProcessor(

@@ -60,14 +60,14 @@ namespace catapult { namespace harvesting {
 					configuredAccountVersion);
 		}
 
-		std::shared_ptr<UnlockedAccounts> CreateUnlockedAccounts(const HarvestingConfiguration& config, const cache::CatapultCache& cache, BlockGeneratorAccountDescriptor&& blockGeneratorAccountDescriptor) {
+		std::shared_ptr<UnlockedAccounts> CreateUnlockedAccounts(const HarvestingConfiguration& config, const cache::CatapultCache& cache, const std::shared_ptr<config::BlockchainConfigurationHolder> pHolder,  BlockGeneratorAccountDescriptor&& blockGeneratorAccountDescriptor) {
 			// unlock configured account if it's eligible to harvest the next block
 			auto harvesterSigningPublicKey = blockGeneratorAccountDescriptor.signingKeyPair().publicKey();
 			auto harvesterVrfPublicKey = blockGeneratorAccountDescriptor.vrfKeyPair().publicKey();
 
 			//Prioritizer may get silent invalid public key is if autoharvesting is not enabled
 			auto pUnlockedAccounts = std::make_shared<UnlockedAccounts>(config.MaxUnlockedAccounts,
-				CreateDelegatePrioritizer(config.DelegatePrioritizationPolicy, cache, harvesterSigningPublicKey));
+				CreateDelegatePrioritizer(config.DelegatePrioritizationPolicy, cache, harvesterSigningPublicKey, pHolder));
 			if (config.IsAutoHarvestingEnabled) {
 				auto unlockResult = pUnlockedAccounts->modifier().add(std::move(blockGeneratorAccountDescriptor));
 				CATAPULT_LOG(info)
@@ -99,7 +99,7 @@ namespace catapult { namespace harvesting {
 			auto blockGeneratorAccountDescriptor = CreateBlockGeneratorAccountDescriptor(config, configAccountVersion);
 			auto harvesterSigningPublicKey = blockGeneratorAccountDescriptor.signingKeyPair().publicKey();
 			if(config.IsAutoHarvestingEnabled && harvesterSigningPublicKey != harvesterPublicKey) CATAPULT_THROW_AND_LOG_0(utils::property_malformed_error, "AutoHarvestingKeyMismatch: Derived public key does not match provided public key");
-			auto pUnlockedAccounts = CreateUnlockedAccounts(config, state.cache(), std::move(blockGeneratorAccountDescriptor));
+			auto pUnlockedAccounts = CreateUnlockedAccounts(config, state.cache(), state.pluginManager().configHolder(), std::move(blockGeneratorAccountDescriptor));
 
 			auto pUnlockedAccountsUpdater = std::make_shared<UnlockedAccountsUpdater>(
 					state.cache(),

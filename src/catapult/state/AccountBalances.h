@@ -29,6 +29,7 @@
 #include "MosaicUnlockRequest.h"
 #include <boost/iterator/zip_iterator.hpp>
 #include <list>
+#include <set>
 #include "catapult/utils/SimpleMutationTracker.h"
 
 namespace catapult { namespace state {
@@ -39,8 +40,21 @@ namespace catapult { namespace state {
 		Locked,
 		Max
 	};
+
+	struct StableBalanceSnapshot {
+		uint64_t ImportanceGrouping;
+		uint32_t MaxRollbackBlocks;
+		StableBalanceSnapshot(
+				const uint64_t importanceGrouping,
+				const uint32_t maxRollbackBlocks);
+		Height GetUnstableHeight(int multiplier = 1) const;
+	};
+
 	/// Container holding information about account.
 	class AccountBalances {
+	private:
+		template<bool ProperEffectiveBalanceSorting>
+		const model::BalanceSnapshot* ReferenceSnapshot(const Height& effectiveHeight) const;
 	public:
 		/// Creates an empty account balances.
 		explicit AccountBalances(AccountState* accountState);
@@ -79,9 +93,7 @@ namespace catapult { namespace state {
 			return pushSnapshot(snapshot, true /* committed */);
 		}
 
-
-
-
+		model::BalancePair GetTrackedBalance() const;
 
 		/// Gets the optimized mosaic id.
 		MosaicId optimizedMosaicId() const;
@@ -154,14 +166,16 @@ namespace catapult { namespace state {
 			m_localSnapshots.clear();
 		}
 
-		/// Check do we need to clean up the deque at \a height with \a config
-		void maybeCleanUpSnapshots(const Height& height, const model::NetworkConfiguration& config);
+		/// Check do we need to clean up the deque at \a height with \a holder and \a configHeights
+		void maybeCleanUpSnapshots(const Height& height, const model::NetworkConfiguration& config, const StableBalanceSnapshot& unstableHeight);
 
 		/// Get effective balance of account at \a height with \a importanceGrouping
+		template<bool ProperEffectiveBalanceSorting>
 		Amount getEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const;
 
 		/// Get effective balance of account at \a height with \a importanceGrouping
-		std::pair<Amount, Amount> getCompoundEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const;
+		template<bool ProperEffectiveBalanceSorting>
+		model::BalancePair getCompoundEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const;
 
 		/// Clears all changes
 		void clearChanges();

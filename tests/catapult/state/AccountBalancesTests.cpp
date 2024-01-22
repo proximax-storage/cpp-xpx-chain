@@ -202,7 +202,7 @@ namespace catapult { namespace state {
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
 		EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id3));
-		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance<false>(Height(0), 0));
 		EXPECT_EQ(0, balances.snapshots().size());
 	}
 
@@ -947,7 +947,18 @@ namespace catapult { namespace state {
 		balances.credit(Test_Mosaic_Id3, Amount(12345));
 
 		// Assert:
-		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance<false>(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceOfOldBalance_ProperCalculation) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345));
+
+		/// Note: Only snapshot available is after importance height.
+		// Assert:
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance<true>(Height(0), 0));
 	}
 
 	TEST(TEST_CLASS, GetEffectiveBalanceOfBalanceFromNemesisBlock) {
@@ -957,7 +968,18 @@ namespace catapult { namespace state {
 		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
 
 		// Assert:
-		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance<false>(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceOfBalanceFromNemesisBlock_ProperCalculation) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
+
+		// Note: No snapshots available, so we get the account balance.
+		// Assert:
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance<true>(Height(0), 0));
 	}
 
 	TEST(TEST_CLASS, GetEffectiveBalanceOfBalanceFromNotNemesisBlock) {
@@ -968,7 +990,18 @@ namespace catapult { namespace state {
 
 		// Assert:
 		// We expect zero because previous balance of account on nemesis block was zero
-		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance<false>(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceOfBalanceFromNotNemesisBlock_ProperCalculation) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(2));
+
+		// Assert:
+		// We expect zero because previous balance of account on nemesis block was zero, snapshot at height 1 gets selected as it is the smallest.
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance<true>(Height(0), 0));
 	}
 
 	TEST(TEST_CLASS, GetEffectiveBalanceDefaultCase) {
@@ -979,23 +1012,51 @@ namespace catapult { namespace state {
 		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(2));
 
 		// Assert:
-		EXPECT_EQ(Amount(12345 + 12345 + 12345), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(12345 + 12345 + 12345), balances.getEffectiveBalance<false>(Height(0), 0));
 
 		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(3));
 		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(4));
 
 		// Assert:
-		EXPECT_EQ(Amount(12345 + 12345), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(12345 + 12345), balances.getEffectiveBalance<false>(Height(0), 0));
 
 		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(5));
 
 		// Assert:
-		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance<false>(Height(0), 0));
 
 		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(6));
 
 		// Assert:
-		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance<false>(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceDefaultCase_ProperCalculation) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345 + 12345 + 12345), Height(1));
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(2));
+
+		// Lowest balance that gets considered is always selected
+		// Assert: All balances are considered as effective height is 0.
+		EXPECT_EQ(Amount(12345 + 12345 + 12345), balances.getEffectiveBalance<true>(Height(0), 0));
+
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(3));
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(4));
+
+		// Assert: All balances are considered as effective height is 0.
+		EXPECT_EQ(Amount(12345 + 12345), balances.getEffectiveBalance<true>(Height(0), 0));
+
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(5));
+
+		// Assert: All balances are considered as effective height is 0.
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance<true>(Height(0), 0));
+
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(6));
+
+		// Assert: All balances are considered as effective height is 0.
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance<true>(Height(0), 0));
 	}
 
 	TEST(TEST_CLASS, GetEffectiveBalanceWithRollback) {
@@ -1006,12 +1067,28 @@ namespace catapult { namespace state {
 		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(1));
 
 		// Assert:
-		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance<false>(Height(0), 0));
 
 		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
 
 		// Assert:
-		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance<false>(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithRollback_ProperCalculation) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345));
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance<true>(Height(0), 0));
+
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance<true>(Height(0), 0));
 	}
 
 	TEST(TEST_CLASS, GetEffectiveBalanceWithRollback_WithCommitAfterDebit) {
@@ -1025,13 +1102,36 @@ namespace catapult { namespace state {
 		balances.commitSnapshots();
 
 		// Assert:
-		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance<false>(Height(0), 0));
 		EXPECT_EQ(3, balances.snapshots().size());
 
 		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
 
 		// Assert:
-		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance<false>(Height(0), 0));
+
+		balances.commitSnapshots();
+		EXPECT_EQ(1, balances.snapshots().size());
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithRollback_WithCommitAfterDebit_ProperCalculation) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345 * 3));
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(1));
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(2));
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(3));
+		balances.commitSnapshots();
+
+		// Assert:
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance<true>(Height(0), 0));
+		EXPECT_EQ(3, balances.snapshots().size());
+
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance<true>(Height(0), 0));
 
 		balances.commitSnapshots();
 		EXPECT_EQ(1, balances.snapshots().size());
@@ -1047,12 +1147,36 @@ namespace catapult { namespace state {
 		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(4));
 
 		// Assert:
-		EXPECT_EQ(Amount(12345 * 4), balances.getEffectiveBalance(Height(4), 0));
-		EXPECT_EQ(Amount(12345 * 3), balances.getEffectiveBalance(Height(4), 1));
-		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance(Height(4), 2));
-		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 3));
-		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 4));
-		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 5));
+		EXPECT_EQ(Amount(12345 * 4), balances.getEffectiveBalance<false>(Height(4), 0));
+		EXPECT_EQ(Amount(12345 * 3), balances.getEffectiveBalance<false>(Height(4), 1));
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance<false>(Height(4), 2));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<false>(Height(4), 3));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<false>(Height(4), 4));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<false>(Height(4), 5));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_ProperCalculation) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(2));
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(3));
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(4));
+
+		// Assert:
+		// At height 4 we consider at most the snapshot at height 4 since IG is 0 and stable height is 4.
+		EXPECT_EQ(Amount(12345 * 4), balances.getEffectiveBalance<true>(Height(4), 0));
+		// We consider from snapshot 3 since IG is 1 and stable height 3.
+		EXPECT_EQ(Amount(12345 * 3), balances.getEffectiveBalance<true>(Height(4), 1));
+		// We consider from snapshot 2 since IG is 2 and stable height 2.
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance<true>(Height(4), 2));
+		// We consider from snapshot 1 since IG is 3 and stable height 1.
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<true>(Height(4), 3));
+		// We consider at most snapshot 1 since IG is 4 and stable height 0.
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<true>(Height(4), 4));
+		// We consider at most snapshot 1 since IG is 5 and stable height -1.
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<true>(Height(4), 5));
 	}
 
 	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_SeveralDebitAndCredit) {
@@ -1067,12 +1191,35 @@ namespace catapult { namespace state {
 		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(6));
 
 		// Assert:
-		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance(Height(6), 0));
-		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(6), 1));
-		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(6), 2));
-		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(6), 3));
-		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance(Height(6), 4));
-		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance(Height(6), 5));
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance<false>(Height(6), 0));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<false>(Height(6), 1));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<false>(Height(6), 2));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<false>(Height(6), 3));
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance<false>(Height(6), 4));
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance<false>(Height(6), 5));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_SeveralDebitAndCredit_ProperCalculation) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1)); //12345
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(2)); // 0
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(3)); // 12345
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(4)); // 12345 + 12345
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(5)); // 12345
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(6)); // 12345 + 12345
+
+		// Assert:
+		// Effective height is 6, we consider only snapshot 6.
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance<true>(Height(6), 0));
+		// Effective height 5, both 5 and 6 get considered
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<true>(Height(6), 1));
+		// Effective height 4
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<true>(Height(6), 2));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<true>(Height(6), 3));
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance<true>(Height(6), 4));
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance<true>(Height(6), 5));
 	}
 
 	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_OnlyDebit) {
@@ -1081,27 +1228,58 @@ namespace catapult { namespace state {
 		balances.track(Test_Mosaic_Id3);
 		balances.credit(Test_Mosaic_Id3, Amount(12345 * 5));
 		// Assert:
-		EXPECT_EQ(Amount(12345 * 5), balances.getEffectiveBalance(Height(1), 6));
+		EXPECT_EQ(Amount(12345 * 5), balances.getEffectiveBalance<false>(Height(1), 6));
 
 		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(1));
 		// Assert:
-		EXPECT_EQ(Amount(12345 * 4), balances.getEffectiveBalance(Height(1), 6));
+		EXPECT_EQ(Amount(12345 * 4), balances.getEffectiveBalance<false>(Height(1), 6));
 
 		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(2));
 		// Assert:
-		EXPECT_EQ(Amount(12345 * 3), balances.getEffectiveBalance(Height(2), 6));
+		EXPECT_EQ(Amount(12345 * 3), balances.getEffectiveBalance<false>(Height(2), 6));
 
 		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(3));
 		// Assert:
-		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance(Height(3), 6));
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance<false>(Height(3), 6));
 
 		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(4));
 		// Assert:
-		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 6));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<false>(Height(4), 6));
 
 		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(5));
 		// Assert:
-		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance(Height(5), 6));
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance<false>(Height(5), 6));
+	}
+
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_OnlyDebit_ProperCalculation) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345 * 5));
+		// Assert:
+		// All snapshots get considered always
+		EXPECT_EQ(Amount(12345 * 5), balances.getEffectiveBalance<true>(Height(1), 6));
+
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(1));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 4), balances.getEffectiveBalance<true>(Height(1), 6));
+
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(2));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 3), balances.getEffectiveBalance<true>(Height(2), 6));
+
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(3));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance<true>(Height(3), 6));
+
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(4));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance<true>(Height(4), 6));
+
+		balances.debit(Test_Mosaic_Id3, Amount(12345), Height(5));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance<true>(Height(5), 6));
 	}
 
 	// endregion

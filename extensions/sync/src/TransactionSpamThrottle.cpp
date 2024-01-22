@@ -81,7 +81,7 @@ namespace catapult { namespace sync {
 				const auto& signer = transactionInfo.pEntity->Signer;
 				auto readOnlyAccountStateCache = context.UnconfirmedCatapultCache.sub<cache::AccountStateCache>();
 				cache::ImportanceView importanceView(readOnlyAccountStateCache);
-				auto importance = importanceView.getAccountImportanceOrDefault(signer, context.CacheHeight);
+				auto importance = importanceView.getAccountImportanceOrDefault(signer, context.CacheHeight, config.Network.ProperEffectiveBalanceCalculation);
 				auto effectiveImportance = GetEffectiveImportance(transactionInfo.pEntity->MaxFee, importance, throttleConfig);
 				auto maxTransactions = GetMaxTransactions(cacheSize, throttleConfig.MaxCacheSize, effectiveImportance, throttleConfig.TotalImportance);
 				return context.TransactionsCache.count(signer) >= maxTransactions;

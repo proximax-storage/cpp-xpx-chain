@@ -185,11 +185,11 @@ namespace catapult { namespace test {
 			Timestamp timestamp,
 			Difficulty difficulty) {
 
-		chain::BlockHitPredicate hitPredicate(m_pConfigHolder, [&accountStateCache = *m_pAccountStateCache](const auto& key, auto height) {
+		chain::BlockHitPredicate hitPredicate(m_pConfigHolder, [&accountStateCache = *m_pAccountStateCache, holder = m_pConfigHolder](const auto& key, auto height) {
 		  auto lockedCacheView = accountStateCache.createView(height);
 		  cache::ReadOnlyAccountStateCache readOnlyCache(*lockedCacheView);
 		  cache::ImportanceView view(readOnlyCache);
-		  return view.getAccountImportanceOrDefault(key, height);
+		  return view.getAccountImportanceOrDefault(key, height, holder->Config(height).Network.ProperEffectiveBalanceCalculation);
 		});
 
 		auto i = 0u;

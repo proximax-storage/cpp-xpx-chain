@@ -61,10 +61,11 @@ namespace catapult { namespace timesync {
 				const cache::AccountStateCache& cache,
 				const ImportanceAwareNodeSelector& selector,
 				const ionet::NodeContainer& nodes,
-				Height height) {
+				Height height,
+				bool enableProperCalculation) {
 			auto view = cache.createView(height);
 			cache::ImportanceView importanceView(view->asReadOnly());
-			auto selectedNodes = selector.selectNodes(importanceView, nodes.view(), height);
+			auto selectedNodes = selector.selectNodes(importanceView, nodes.view(), height, enableProperCalculation);
 			CATAPULT_LOG(debug) << "timesync: number of selected nodes: " << selectedNodes.size();
 			return selectedNodes;
 		}
@@ -121,7 +122,7 @@ namespace catapult { namespace timesync {
 
 			// select nodes
 			const auto& cache = state.cache().sub<cache::AccountStateCache>();
-			auto selectedNodes = SelectNodes(cache, selector, state.nodes(), height);
+			auto selectedNodes = SelectNodes(cache, selector, state.nodes(), height, state.pluginManager().configHolder()->Config(height).Network.ProperEffectiveBalanceCalculation);
 
 			// retrieve samples from selected nodes
 			auto samplesFuture = RetrieveSamples(selectedNodes, resultSupplier, state.timeSupplier());

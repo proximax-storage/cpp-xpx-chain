@@ -82,6 +82,9 @@ namespace catapult { namespace model {
 		/// Maximum atomic units (total-supply * 10 ^ divisibility) of a mosaic allowed in the network.
 		Amount MaxMosaicAtomicUnits;
 
+		/// Enables correct effective balance calculation.
+		bool ProperEffectiveBalanceCalculation;
+
 		/// Maximum atomic units (total-supply * 10 ^ divisibility) of the currency mosaic in the network. Regulates inflation
 		Amount MaxCurrencyMosaicAtomicUnits;
 

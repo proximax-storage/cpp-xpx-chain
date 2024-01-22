@@ -26,6 +26,7 @@
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
 #include "tests/TestHarness.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace harvesting {
 
@@ -67,9 +68,9 @@ namespace catapult { namespace harvesting {
 		auto primaryAccountPublicKey = test::GenerateRandomByteArray<Key>();
 		auto importantAccountPublicKey = test::GenerateRandomByteArray<Key>();
 		auto cache = CreateCatapultCacheWithImportantAccount(importantAccountPublicKey);
-
+		test::MutableBlockchainConfiguration mutableConfig;
 		// Act:
-		auto prioritizer = CreateDelegatePrioritizer(DelegatePrioritizationPolicy::Age, cache, primaryAccountPublicKey);
+		auto prioritizer = CreateDelegatePrioritizer(DelegatePrioritizationPolicy::Age, cache, primaryAccountPublicKey, config::CreateRealMockConfigurationHolderWithNemesisConfig(mutableConfig.ToConst()));
 
 		// Assert:
 		EXPECT_EQ(0u, prioritizer(primaryAccountPublicKey));
@@ -82,9 +83,10 @@ namespace catapult { namespace harvesting {
 		auto primaryAccountPublicKey = test::GenerateRandomByteArray<Key>();
 		auto importantAccountPublicKey = test::GenerateRandomByteArray<Key>();
 		auto cache = CreateCatapultCacheWithImportantAccount(importantAccountPublicKey);
+		test::MutableBlockchainConfiguration mutableConfig;
 
 		// Act:
-		auto prioritizer = CreateDelegatePrioritizer(DelegatePrioritizationPolicy::Importance, cache, primaryAccountPublicKey);
+		auto prioritizer = CreateDelegatePrioritizer(DelegatePrioritizationPolicy::Importance, cache, primaryAccountPublicKey, config::CreateRealMockConfigurationHolderWithNemesisConfig(mutableConfig.ToConst()));
 
 		// Assert:
 		EXPECT_EQ(std::numeric_limits<uint64_t>::max(), prioritizer(primaryAccountPublicKey));
@@ -96,10 +98,11 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		auto primaryAccountPublicKey = test::GenerateRandomByteArray<Key>();
 		auto cache = CreateCatapultCacheWithImportantAccount(test::GenerateRandomByteArray<Key>());
+		test::MutableBlockchainConfiguration mutableConfig;
 
 		// Act + Assert:
 		EXPECT_THROW(
-				CreateDelegatePrioritizer(static_cast<DelegatePrioritizationPolicy>(100), cache, primaryAccountPublicKey),
+				CreateDelegatePrioritizer(static_cast<DelegatePrioritizationPolicy>(100), cache, primaryAccountPublicKey, config::CreateRealMockConfigurationHolderWithNemesisConfig(mutableConfig.ToConst())),
 				catapult_invalid_argument);
 	}
 

@@ -34,8 +34,8 @@ namespace catapult { namespace observers {
 				auto& cache = context.Cache.sub<cache::AccountStateCache>();
 				auto accountStateOpt = cache::FindAccountStateByPublicKeyOrAddress(cache.asReadOnly(), notification.Signer);
 				const auto& config = context.Config;
-				auto balances = accountStateOpt->Balances.getCompoundEffectiveBalance(context.Height, config.Network.ImportanceGrouping);
-				auto receipt = model::SignerBalanceReceipt(model::Receipt_Type_Block_Signer_Importance, balances.first, balances.second);
+				auto balances = accountStateOpt->Balances.getCompoundEffectiveBalance<true>(context.Height, config.Network.ImportanceGrouping);
+				auto receipt = model::SignerBalanceReceipt(model::Receipt_Type_Block_Signer_Importance, balances.Unlocked, balances.Locked);
 				context.StatementBuilder().addBlockchainStateReceipt(receipt);
 			}
 		}

@@ -31,7 +31,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS SnapshotCleanUpObserverTests
 
-		DEFINE_COMMON_OBSERVER_TESTS(SnapshotCleanUp)
+		DEFINE_COMMON_OBSERVER_TESTS(SnapshotCleanUp, config::CreateMockConfigurationHolder())
 
 		const uint64_t Effective_Balance_Range = 10;
 		const uint64_t Max_Rollback_Blocks = 1;
@@ -47,7 +47,7 @@ namespace catapult { namespace observers {
 
 				test::AccountObserverTestContext context(mode, contextHeight, config);
 
-				auto pObserver = CreateSnapshotCleanUpObserver();
+				auto pObserver = CreateSnapshotCleanUpObserver(config::CreateRealMockConfigurationHolderWithNemesisConfig(mutableConfig.ToConst()));
 
 				auto signer = test::GenerateRandomByteArray<Key>();
 				for (auto i = 0u; i < Effective_Balance_Range + Max_Rollback_Blocks + 1; ++i) {
