@@ -48,6 +48,8 @@ namespace catapult { namespace state {
 				const uint64_t importanceGrouping,
 				const uint32_t maxRollbackBlocks);
 		Height GetUnstableHeight(int multiplier = 1) const;
+		bool operator==(const StableBalanceSnapshot& rhs) const;
+		bool operator!=(const StableBalanceSnapshot& rhs) const;
 	};
 
 	/// Container holding information about account.

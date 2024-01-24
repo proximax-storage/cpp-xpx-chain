@@ -541,4 +541,10 @@ namespace catapult { namespace state {
 	Height StableBalanceSnapshot::GetUnstableHeight(int multiplier) const {
 		return Height((MaxRollbackBlocks * multiplier) + ImportanceGrouping);
 	}
+	bool StableBalanceSnapshot::operator==(const StableBalanceSnapshot& rhs) const {
+		return ImportanceGrouping == rhs.ImportanceGrouping && MaxRollbackBlocks == rhs.MaxRollbackBlocks;
+	}
+	bool StableBalanceSnapshot::operator!=(const StableBalanceSnapshot& rhs) const {
+		return !(rhs == *this);
+	}
 }}
