@@ -1,16 +1,20 @@
 # https://github.com/google/sanitizers/wiki/ThreadSanitizerSuppressions
 
 # ignore these libraries
-#called_from_lib:libzmq.so
-called_from_lib:tests.catapult.*
-called_from_lib:^libboost_thread.so*
+called_from_lib:libboost_log.so*
+called_from_lib:libboost_thread.so*
+called_from_lib:libmongoc-*.so*
+called_from_lib:libmongocxx.so*
+called_from_lib:libbson-*.so*
+called_from_lib:libbsoncxx*.so*
 
-race:^zmq::.*
-race:^boost::*
+race:zmq
+race:boost::*
+race:boost::thread::*
 race:stl_algobase.h
 
 # ignore these functions
 race:catapult::test::TryWaitFor
 
 # Ignore SubCachePluginAdapter::~SubCachePluginAdapter()
-race:*~SubCachePluginAdapter*
+race:*~*SubCachePluginAdapter*
