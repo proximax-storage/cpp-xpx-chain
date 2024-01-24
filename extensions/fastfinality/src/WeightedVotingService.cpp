@@ -5,13 +5,17 @@
 **/
 
 #include "WeightedVotingService.h"
+
+#include <utility>
 #include "WeightedVotingFsm.h"
-#include "catapult/api/RemoteRequestDispatcher.h"
+#include "dbrb/DbrbPacketHandlers.h"
+#include "catapult/api/ApiTypes.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "catapult/extensions/NetworkUtils.h"
 #include "catapult/extensions/ServiceLocator.h"
+#include "catapult/handlers/ChainHandlers.h"
 #include "catapult/harvesting_core/HarvestingUtFacadeFactory.h"
 #include "catapult/harvesting_core/UnlockedAccounts.h"
 #include "catapult/io/BlockStorageCache.h"
@@ -24,7 +28,6 @@ namespace catapult { namespace fastfinality {
 	namespace {
 		constexpr auto Writers_Service_Name = "weightedvoting.writers";
 		constexpr auto Readers_Service_Name = "weightedvoting.readers";
-		constexpr auto Fsm_Service_Name = "weightedvoting.fsm";
 		constexpr auto Service_Id = ionet::ServiceIdentifier(0x54654144);
 
 		std::shared_ptr<harvesting::UnlockedAccounts> CreateUnlockedAccounts(const harvesting::HarvestingConfiguration& config) {
@@ -34,13 +37,104 @@ namespace catapult { namespace fastfinality {
 				auto publicKey = keyPair.publicKey();
 
 				auto unlockResult = pUnlockedAccounts->modifier().add(std::move(keyPair));
-				CATAPULT_LOG(info)
-					<< "Added account " << publicKey
-					<< " for harvesting with result " << unlockResult;
+				CATAPULT_LOG(info) << "Added account " << publicKey << " for harvesting with result " << unlockResult;
 			}
 
 			return pUnlockedAccounts;
 		}
+
+		class RemoteRequestDispatcher {
+		public:
+			/// Creates a remote request dispatcher around \a io.
+			explicit RemoteRequestDispatcher(ionet::NodePacketIoPair nodePacketIoPair, dbrb::MessageSender& messageSender)
+				: m_nodePacketIoPair(std::move(nodePacketIoPair))
+				, m_messageSender(messageSender)
+			{}
+
+		public:
+			const ionet::NodePacketIoPair& nodePacketIoPair() {
+				return m_nodePacketIoPair;
+			}
+
+		public:
+			/// Dispatches \a args to the underlying io.
+			template<typename TFuncTraits, typename... TArgs>
+			thread::future<typename TFuncTraits::ResultType> dispatch(const TFuncTraits& traits, TArgs&&... args) {
+				auto pPromise = std::make_shared<thread::promise<typename TFuncTraits::ResultType>>();
+				auto future = pPromise->get_future();
+				auto packetPayload = TFuncTraits::CreateRequestPacketPayload(std::forward<TArgs>(args)...);
+				send(traits, packetPayload, [pPromise](auto result, auto&& value) {
+					if (RemoteChainResult::Success == result) {
+						pPromise->set_value(std::forward<decltype(value)>(value));
+						return;
+					}
+
+					std::ostringstream message;
+					message << GetErrorMessage(result) << " for " << TFuncTraits::Friendly_Name << " request";
+					CATAPULT_LOG(error) << message.str();
+					pPromise->set_exception(std::make_exception_ptr(api::catapult_api_error(message.str().data())));
+				});
+
+				return future;
+			}
+
+		private:
+			template<typename TFuncTraits, typename TCallback>
+			void send(const TFuncTraits& traits, const ionet::PacketPayload& packetPayload, const TCallback& callback) {
+				using ResultType = typename TFuncTraits::ResultType;
+				m_nodePacketIoPair.io()->write(packetPayload, [traits, callback, &io = *m_nodePacketIoPair.io(), &node = m_nodePacketIoPair.node(), &messageSender = m_messageSender](auto code) {
+					if (ionet::SocketOperationCode::Success != code) {
+						CATAPULT_LOG(trace) << "[REQUEST DISPATCHER] removing node " << node << " " << node.identityKey();
+						messageSender.removeNode(node.identityKey());
+						return callback(RemoteChainResult::Write_Error, ResultType());
+					}
+
+					io.read([traits, callback, &node, &messageSender](auto readCode, const auto* pResponsePacket) {
+						if (ionet::SocketOperationCode::Success != readCode) {
+							CATAPULT_LOG(trace) << "[REQUEST DISPATCHER] removing node " << node << " " << node.identityKey();
+							messageSender.removeNode(node.identityKey());
+							return callback(RemoteChainResult::Read_Error, ResultType());
+						}
+
+						if (TFuncTraits::Packet_Type != pResponsePacket->Type) {
+							CATAPULT_LOG(warning) << "received packet of type " << pResponsePacket->Type << " but expected type " << TFuncTraits::Packet_Type;
+							return callback(RemoteChainResult::Malformed_Packet, ResultType());
+						}
+
+						ResultType result;
+						if (!traits.tryParseResult(*pResponsePacket, result)) {
+							CATAPULT_LOG(warning) << "unable to parse " << pResponsePacket->Type << " packet (size = " << pResponsePacket->Size << ")";
+							return callback(RemoteChainResult::Malformed_Packet, ResultType());
+						}
+
+						return callback(RemoteChainResult::Success, std::move(result));
+					});
+				});
+			}
+
+		private:
+			enum class RemoteChainResult {
+				Success,
+				Write_Error,
+				Read_Error,
+				Malformed_Packet
+			};
+
+			static constexpr const char* GetErrorMessage(RemoteChainResult result) {
+				switch (result) {
+				case RemoteChainResult::Write_Error:
+					return "write to remote node failed";
+				case RemoteChainResult::Read_Error:
+					return "read from remote node failed";
+				default:
+					return "remote node returned malformed packet";
+				}
+			}
+
+		private:
+			ionet::NodePacketIoPair m_nodePacketIoPair;
+			dbrb::MessageSender& m_messageSender;
+		};
 
 		auto CreateRemoteNodeStateRetriever(
 				const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
@@ -67,45 +161,36 @@ namespace catapult { namespace fastfinality {
 					const auto maxBlocksPerSyncAttempt = config.Node.MaxBlocksPerSyncAttempt;
 					const auto targetHeight = chainHeight + Height(maxBlocksPerSyncAttempt);
 
-					auto dbrbBootstrapProcesses = config.Network.DbrbBootstrapProcesses;
-					if (dbrbBootstrapProcesses.empty())
-						dbrbBootstrapProcesses = pConfigHolder->Config(chainHeight + Height(1)).Network.DbrbBootstrapProcesses;
-					auto minOpinionNumber = dbrb::View{dbrbBootstrapProcesses}.quorumSize() - 1;
+					const auto& pDbrbProcess = pFsmShared->dbrbProcess();
+					const auto& view = pDbrbProcess->currentView();
+					auto minOpinionNumber = view.quorumSize() - 1;
+					auto pMessageSender = pDbrbProcess->messageSender();
+					pMessageSender->clearQueue();
+					for (const auto& identityKey : view.Data) {
+						if (identityKey == pDbrbProcess->id())
+							continue;
 
-					const auto& view = pFsmShared->dbrbProcess()->currentView();
-					auto& packetIoPairMap = pFsmShared->dbrbProcess()->messageSender().getPacketIos(view.Data);
-					CATAPULT_LOG(debug) << "found " << packetIoPairMap.size() << " peer(s) for pulling remote node states, min opinion number " << minOpinionNumber;
-					if (packetIoPairMap.size() < minOpinionNumber) {
-						pPromise->set_value(std::vector<RemoteNodeState>());
-						return;
-					}
-
-					for (const auto& pair : packetIoPairMap) {
-						auto pPacketIoPair = pair.second;
-						api::RemoteRequestDispatcher dispatcher{*pPacketIoPair->io()};
-						remoteNodeStateFutures.push_back(dispatcher.dispatch(RemoteNodeStateTraits{}, targetHeight).then([pPacketIoPair](auto&& stateFuture) {
-							auto remoteNodeState = stateFuture.get();
-							remoteNodeState.NodeKey = pPacketIoPair->node().identityKey();
-							return remoteNodeState;
-						}));
-					}
-
-					auto nodeStates = thread::when_all(std::move(remoteNodeStateFutures)).then([](auto&& completedFutures) {
-						return thread::get_all_ignore_exceptional(completedFutures.get());
-					}).get();
-					CATAPULT_LOG(debug) << "retrieved " << nodeStates.size() << " node states, min opinion number " << minOpinionNumber;
-
-					if (nodeStates.empty()) {
-						packetIoPairMap.clear();
-					} else {
-						for (auto iter = packetIoPairMap.begin(); iter != packetIoPairMap.end();) {
-							if (std::find_if(nodeStates.begin(), nodeStates.end(), [&iter](const auto& nodeState) { return iter->first == nodeState.NodeKey; }) == nodeStates.end()) {
-								iter = packetIoPairMap.erase(iter);
-							} else {
-								iter++;
-							}
+						auto nodePacketIoPair = pMessageSender->getNodePacketIoPair(identityKey);
+						if (nodePacketIoPair) {
+							auto pDispatcher = std::make_shared<RemoteRequestDispatcher>(std::move(nodePacketIoPair), *pMessageSender);
+							remoteNodeStateFutures.push_back(pDispatcher->dispatch(RemoteNodeStateTraits{}, targetHeight).then([pMessageSender, pDispatcher, identityKey](auto&& stateFuture) {
+								auto remoteNodeState = stateFuture.get();
+								remoteNodeState.NodeKey = identityKey;
+								pMessageSender->pushNodePacketIoPair(identityKey, pDispatcher->nodePacketIoPair());
+								return remoteNodeState;
+							}));
+						} else {
+							CATAPULT_LOG(debug) << "got no packet io to request node state from " << identityKey;
 						}
 					}
+
+					std::vector<RemoteNodeState> nodeStates;
+					if (!remoteNodeStateFutures.empty()) {
+						nodeStates = thread::when_all(std::move(remoteNodeStateFutures)).then([](auto&& completedFutures) {
+							return thread::get_all_ignore_exceptional(completedFutures.get());
+						}).get();
+					}
+					CATAPULT_LOG(debug) << "retrieved " << nodeStates.size() << " node states, min opinion number " << minOpinionNumber;
 
 					if (nodeStates.size() < minOpinionNumber)
 						nodeStates.clear();
@@ -113,7 +198,9 @@ namespace catapult { namespace fastfinality {
 					pPromise->set_value(std::move(nodeStates));
 				});
 
-				return pPromise->get_future().get();
+				auto value = pPromise->get_future().get();
+
+				return value;
 			};
 		}
 
@@ -125,13 +212,22 @@ namespace catapult { namespace fastfinality {
 			return harvesting::CreateHarvesterBlockGenerator(strategy, utFacadeFactory, state.utCache());
 		}
 
+		auto CreatePullBlocksHandlerConfiguration(const config::NodeConfiguration& nodeConfig) {
+			handlers::PullBlocksHandlerConfiguration config {
+				nodeConfig.MaxBlocksPerSyncAttempt,
+				nodeConfig.MaxChainBytesPerSyncAttempt.bytes32(),
+			};
+
+			return config;
+		}
+
 		class WeightedVotingServiceRegistrar : public extensions::ServiceRegistrar {
 		public:
 			explicit WeightedVotingServiceRegistrar(
-					const harvesting::HarvestingConfiguration& harvestingConfig,
+					harvesting::HarvestingConfiguration  harvestingConfig,
 					const dbrb::DbrbConfiguration& dbrbConfig,
 					std::shared_ptr<dbrb::TransactionSender> pTransactionSender)
-				: m_harvestingConfig(harvestingConfig)
+				: m_harvestingConfig(std::move(harvestingConfig))
 				, m_dbrbConfig(dbrbConfig)
 				, m_pTransactionSender(std::move(pTransactionSender))
 			{}
@@ -177,10 +273,9 @@ namespace catapult { namespace fastfinality {
 						pDbrbPool,
 						pWeightedVotingFsmPool](const std::shared_ptr<thread::IoThreadPool>&) {
 					pTransactionSender->init(&keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local), pUnlockedAccounts);
-					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(keyPair.publicKey(), keyPair, state.nodes(), pWritersWeak, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher());
-					return std::make_shared<WeightedVotingFsm>(pWeightedVotingFsmPool, config, pDbrbProcess);
+					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(config::ToLocalNode(config), keyPair, state.nodes(), pWritersWeak, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher());
+					return std::make_shared<WeightedVotingFsm>(pWeightedVotingFsmPool, config, pDbrbProcess, state.pluginManager());
 				});
-				locator.registerService(Fsm_Service_Name, pFsmShared);
 
 				const auto& pluginManager = state.pluginManager();
 				pFsmShared->dbrbProcess()->registerPacketHandlers(pFsmShared->packetHandlers());
@@ -191,6 +286,10 @@ namespace catapult { namespace fastfinality {
 					switch (pPacket->Type) {
 						case ionet::PacketType::Push_Proposed_Block: {
 							PushProposedBlock(*pFsmShared, pluginManager, *pPacket);
+							break;
+						}
+						case ionet::PacketType::Push_Confirmed_Block: {
+							PushConfirmedBlock(*pFsmShared, pluginManager, *pPacket);
 							break;
 						}
 						case ionet::PacketType::Push_Prevote_Messages: {
@@ -204,15 +303,22 @@ namespace catapult { namespace fastfinality {
 					}
 				});
 
-				pFsmShared->dbrbProcess()->setValidationCallback([pFsmWeak, &pluginManager](const std::shared_ptr<ionet::Packet>& pPacket) {
+				const auto& storage = state.storage();
+				auto lastBlockElementSupplier = [&storage]() {
+					auto storageView = storage.view();
+					return storageView.loadBlockElement(storageView.chainHeight());
+				};
+				pFsmShared->dbrbProcess()->setValidationCallback([pFsmWeak, &pluginManager, &state, lastBlockElementSupplier, pValidatorPool](const std::shared_ptr<ionet::Packet>& pPacket) {
 					auto pFsmShared = pFsmWeak.lock();
 					if (!pFsmShared || pFsmShared->stopped())
 						return false;
 
 					switch (pPacket->Type) {
 						case ionet::PacketType::Push_Proposed_Block: {
-							std::shared_ptr<model::Block> pBlock;
-							return ValidateProposedBlock(*pFsmShared, pluginManager, *pPacket, pBlock);
+							return ValidateProposedBlock(*pFsmShared, *pPacket, state, lastBlockElementSupplier, pValidatorPool);
+						}
+						case ionet::PacketType::Push_Confirmed_Block: {
+							return ValidateConfirmedBlock(*pFsmShared, *pPacket, state, lastBlockElementSupplier, pValidatorPool);
 						}
 						case ionet::PacketType::Push_Prevote_Messages: {
 							return ValidatePrevoteMessages(*pFsmShared, *pPacket);
@@ -226,12 +332,7 @@ namespace catapult { namespace fastfinality {
 				});
 
 				const auto& pConfigHolder = pluginManager.configHolder();
-				const auto& storage = state.storage();
 				auto blockRangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Pull);
-				auto lastBlockElementSupplier = [&storage]() {
-					auto storageView = storage.view();
-					return storageView.loadBlockElement(storageView.chainHeight());
-				};
 				auto blockElementGetter = [&storage](const Height& height) {
 					return storage.view().loadBlockElement(height);
 				};
@@ -245,8 +346,9 @@ namespace catapult { namespace fastfinality {
 				pluginManager.getCommitteeManager(4).setLastBlockElementSupplier(lastBlockElementSupplier);
 				pluginManager.getCommitteeManager(5).setLastBlockElementSupplier(lastBlockElementSupplier);
 
-				RegisterPullConfirmedBlockHandler(pFsmShared, state.packetHandlers());
 				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
+				handlers::RegisterPullBlocksHandler(pFsmShared->packetHandlers(), state.storage(), CreatePullBlocksHandlerConfiguration(config.Node));
+				dbrb::RegisterPushNodesHandler(pFsmShared->dbrbProcess(), config.Immutable.NetworkIdentifier, pFsmShared->packetHandlers());
 
 				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, 2u);
 				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, [&acceptor = *pReaders](
@@ -277,14 +379,13 @@ namespace catapult { namespace fastfinality {
 					pConfigHolder,
 					CreateHarvesterBlockGenerator(state),
 					lastBlockElementSupplier);
-				actions.ValidateProposal = CreateDefaultValidateProposalAction(pFsmShared, state, lastBlockElementSupplier, pValidatorPool);
 				actions.WaitForProposal = CreateDefaultWaitForProposalAction(pFsmShared);
-				actions.WaitForPrevotePhaseEnd = CreateDefaultWaitForPrevotePhaseEndAction(pFsmShared, state);
+				actions.WaitForPrevotes = CreateDefaultWaitForPrevotesAction(pFsmShared);
+				actions.WaitForPrecommits = CreateDefaultWaitForPrecommitsAction(pFsmShared);
 				actions.AddPrevote = CreateDefaultAddPrevoteAction(pFsmShared);
 				actions.AddPrecommit = CreateDefaultAddPrecommitAction(pFsmShared);
-				actions.WaitForPrecommitPhaseEnd = CreateDefaultWaitForPrecommitPhaseEndAction(pFsmShared, state);
 				actions.UpdateConfirmedBlock = CreateDefaultUpdateConfirmedBlockAction(pFsmShared, state);
-				actions.RequestConfirmedBlock = CreateDefaultRequestConfirmedBlockAction(pFsmShared, state, lastBlockElementSupplier);
+				actions.WaitForConfirmedBlock = CreateDefaultWaitForConfirmedBlockAction(pFsmShared, state);
 				actions.CommitConfirmedBlock = CreateDefaultCommitConfirmedBlockAction(pFsmShared, blockRangeConsumer, state);
 				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsmShared, pConfigHolder);
 				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, state);
@@ -299,6 +400,54 @@ namespace catapult { namespace fastfinality {
 			std::shared_ptr<dbrb::TransactionSender> m_pTransactionSender;
 
 		};
+
+		class WeightedVotingShutdownServiceRegistrar : public extensions::ServiceRegistrar {
+		public:
+			explicit WeightedVotingShutdownServiceRegistrar(std::shared_ptr<dbrb::TransactionSender> pTransactionSender)
+				: m_pTransactionSender(std::move(pTransactionSender))
+			{}
+
+			class DbrbNodeRemover {
+			public:
+				explicit DbrbNodeRemover(std::shared_ptr<dbrb::TransactionSender> pTransactionSender, const plugins::PluginManager& pluginManager, const dbrb::ProcessId& id)
+					: m_pTransactionSender(std::move(pTransactionSender))
+					, m_pluginManager(pluginManager)
+					, m_id(id)
+				{}
+
+			public:
+				void shutdown() {
+					if (m_pluginManager.config().EnableRemovingDbrbProcessOnShutdown) {
+						m_pTransactionSender->disableAddDbrbProcessTransaction();
+						auto view = m_pluginManager.dbrbViewFetcher().getView(utils::NetworkTime());
+						if (m_pTransactionSender->isAddDbrbProcessTransactionSent() || view.find(m_id) != view.cend()) {
+							auto future = m_pTransactionSender->sendRemoveDbrbProcessTransaction();
+							future.wait_for(std::chrono::minutes(1));
+						}
+					}
+				}
+
+			private:
+				std::shared_ptr<dbrb::TransactionSender> m_pTransactionSender;
+				const plugins::PluginManager& m_pluginManager;
+				dbrb::ProcessId m_id;
+			};
+
+			extensions::ServiceRegistrarInfo info() const override {
+				return { "WeightedVoting", extensions::ServiceRegistrarPhase::Shutdown_Handlers };
+			}
+
+			void registerServiceCounters(extensions::ServiceLocator& locator) override {
+			}
+
+			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
+				auto pServiceGroup = state.pool().pushServiceGroup("DBRB node remover");
+				pServiceGroup->registerService(std::make_shared<DbrbNodeRemover>(m_pTransactionSender, state.pluginManager(), locator.keyPair().publicKey()));
+			}
+
+		private:
+			std::shared_ptr<dbrb::TransactionSender> m_pTransactionSender;
+		};
 	}
 
 	DECLARE_SERVICE_REGISTRAR(WeightedVoting)(
@@ -306,5 +455,9 @@ namespace catapult { namespace fastfinality {
 			const dbrb::DbrbConfiguration& dbrbConfig,
 			std::shared_ptr<dbrb::TransactionSender> pTransactionSender) {
 		return std::make_unique<WeightedVotingServiceRegistrar>(harvestingConfig, dbrbConfig, std::move(pTransactionSender));
+	}
+
+	DECLARE_SERVICE_REGISTRAR(WeightedVotingShutdown)(std::shared_ptr<dbrb::TransactionSender> pTransactionSender) {
+		return std::make_unique<WeightedVotingShutdownServiceRegistrar>(std::move(pTransactionSender));
 	}
 }}

@@ -686,19 +686,12 @@ namespace catapult { namespace model {
 
 	// region harvesters
 
-	/// Notification of active harvesters.
-	template<VersionType version>
-	struct ActiveHarvestersNotification;
-
-	template<>
-	struct ActiveHarvestersNotification<1> :  public Notification {
+	/// Notifies of the round of a block.
+	template<typename TDerivedNotification>
+	struct BasicHarvestersNotification : public Notification {
 	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Active_Harvesters_v1_Notification;
-
-	public:
-		explicit ActiveHarvestersNotification(const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
-			: Notification(Notification_Type, sizeof(MosaicActiveNotification<1>))
+		BasicHarvestersNotification(const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
+			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 			, HarvesterKeysPtr(pHarvesterKeys)
 			, HarvesterKeysCount(harvesterKeysCount)
 		{}
@@ -709,6 +702,55 @@ namespace catapult { namespace model {
 
 		/// Harvester key count.
 		uint16_t HarvesterKeysCount;
+	};
+
+	/// Notification of active harvesters.
+	template<VersionType version>
+	struct ActiveHarvestersNotification;
+
+	template<>
+	struct ActiveHarvestersNotification<1> :  public BasicHarvestersNotification<ActiveHarvestersNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Active_Harvesters_v1_Notification;
+
+	public:
+		ActiveHarvestersNotification(const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
+			: BasicHarvestersNotification(pHarvesterKeys, harvesterKeysCount)
+		{}
+	};
+
+	template<>
+	struct ActiveHarvestersNotification<2> :  public BasicHarvestersNotification<ActiveHarvestersNotification<2>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Active_Harvesters_v2_Notification;
+
+	public:
+		ActiveHarvestersNotification(const Key& bootKey, const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
+			: BasicHarvestersNotification(pHarvesterKeys, harvesterKeysCount)
+			, BootKey(bootKey)
+		{}
+
+	public:
+		/// Boot key of the node where the harvesters are set up.
+		Key BootKey;
+	};
+
+	/// Notification of active harvesters.
+	template<VersionType version>
+	struct InactiveHarvestersNotification;
+
+	template<>
+	struct InactiveHarvestersNotification<1> :  public BasicHarvestersNotification<InactiveHarvestersNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Inactive_Harvesters_v1_Notification;
+
+	public:
+		InactiveHarvestersNotification(const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
+			: BasicHarvestersNotification(pHarvesterKeys, harvesterKeysCount)
+		{}
 	};
 
 	// endregion

@@ -18,6 +18,7 @@ namespace catapult { namespace mocks {
 
 	public:
 		const chain::Committee& selectCommittee(const model::NetworkConfiguration& config) override;
+		Key getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const override;
 		void reset() override;
 		chain::HarvesterWeight weight(const Key& accountKey, const model::NetworkConfiguration& config) const override;
 		chain::HarvesterWeight zeroWeight() const override;

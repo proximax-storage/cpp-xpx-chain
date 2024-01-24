@@ -12,6 +12,8 @@ namespace catapult { namespace model {
 
 	DEFINE_NOTIFICATION_TYPE(All, Dbrb, AddDbrbProcess_v1, 0x0001);
 
+	DEFINE_NOTIFICATION_TYPE(All, Dbrb, RemoveDbrbProcess_v1, 0x0002);
+
 	template<VersionType version>
 	struct AddDbrbProcessNotification;
 
@@ -28,6 +30,25 @@ namespace catapult { namespace model {
 
 	public:
 		/// The ID of the process to add.
+		dbrb::ProcessId ProcessId;
+	};
+
+	template<VersionType version>
+	struct RemoveDbrbProcessNotification;
+
+	template<>
+	struct RemoveDbrbProcessNotification<1> : public Notification {
+	public:
+		static constexpr auto Notification_Type = Dbrb_RemoveDbrbProcess_v1_Notification;
+
+	public:
+		explicit RemoveDbrbProcessNotification(const dbrb::ProcessId& processId)
+			: Notification(Notification_Type, sizeof(RemoveDbrbProcessNotification<1>))
+			, ProcessId(processId)
+		{}
+
+	public:
+		/// The ID of the process to remove.
 		dbrb::ProcessId ProcessId;
 	};
 }}

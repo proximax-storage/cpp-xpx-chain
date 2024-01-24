@@ -1,5 +1,5 @@
 /**
-*** Copyright 2022 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -14,12 +14,12 @@ namespace catapult { namespace model {
 
 	/// Binary layout for an add DBRB process transaction body.
 	template<typename THeader>
-	struct AddDbrbProcessTransactionBody : public THeader {
+	struct RemoveDbrbProcessTransactionBody : public THeader {
 	private:
-		using TransactionType = AddDbrbProcessTransactionBody<THeader>;
+		using TransactionType = RemoveDbrbProcessTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_AddDbrbProcess, 2)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_RemoveDbrbProcess, 1)
 
 	public:
 		uint16_t HarvesterKeysCount;
@@ -39,7 +39,7 @@ namespace catapult { namespace model {
 		}
 	};
 
-	DEFINE_EMBEDDABLE_TRANSACTION(AddDbrbProcess)
+	DEFINE_EMBEDDABLE_TRANSACTION(RemoveDbrbProcess)
 
 #pragma pack(pop)
 }}
