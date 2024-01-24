@@ -23,7 +23,7 @@
 
 namespace catapult { namespace test {
 
-	constexpr inline Timestamp Nemesis_Timestamp = Timestamp(225584173131);
+	constexpr inline Timestamp Basic_Extended_Nemesis_Timestamp = Timestamp(225584173131);
 
 	constexpr inline uint8_t Extended_Basic_MemoryBlockStorage_NemesisBlockData[] = {
 		0xA3, 0x56, 0x00, 0x00, 0x3C, 0x61, 0x12, 0xCF, 0x43, 0x4D, 0x18, 0xA1, 0xD6, 0x84, 0x30, 0xAB,

@@ -30,10 +30,12 @@ namespace catapult { namespace fastfinality {
 		explicit WeightedVotingFsm(
 				std::shared_ptr<thread::IoThreadPool> pPool,
 				const config::BlockchainConfiguration& config,
-				std::shared_ptr<dbrb::DbrbProcess> pDbrbProcess)
+				std::shared_ptr<dbrb::DbrbProcess> pDbrbProcess,
+				const plugins::PluginManager& pluginManager)
 			: m_pPool(std::move(pPool))
 			, m_timer(m_pPool->ioContext())
 			, m_sm(boost::sml::sm<WeightedVotingTransitionTable>(m_actions))
+			, m_committeeData(pluginManager)
 			, m_strand(m_pPool->ioContext())
 			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
@@ -105,8 +107,12 @@ namespace catapult { namespace fastfinality {
 			m_committeeData.setConfirmedBlock(nullptr);
 			m_committeeData.clearVotes();
 			m_committeeData.setSumOfPrevotesSufficient(false);
-			m_committeeData.stopWaitForProposedBlock();
+			m_committeeData.setSumOfPrecommitsSufficient(false);
 			m_committeeData.setUnexpectedProposedBlockHeight(false);
+			m_committeeData.setUnexpectedConfirmedBlockHeight(false);
+			m_committeeData.removeBootKeys();
+			m_committeeData.removeValidatedProposedBlockSignatures();
+			m_committeeData.removeValidatedConfirmedBlockSignatures();
 		}
 
 		bool stopped() const {

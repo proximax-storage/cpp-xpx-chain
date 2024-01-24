@@ -20,6 +20,7 @@ namespace catapult { namespace chain {
 
 	public:
 		const Committee& selectCommittee(const model::NetworkConfiguration& config) override;
+		Key getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const override;
 
 		void reset() override;
 

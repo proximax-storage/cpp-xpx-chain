@@ -12,10 +12,8 @@ namespace catapult { namespace fastfinality {
 
 	namespace {
 		dbrb::CommitMessage CreateCommitMessage(const std::vector<dbrb::ProcessId>& nodes) {
-			dbrb::View certificateView;
-			dbrb::View currentView;
-			certificateView.Data = dbrb::ViewData{ nodes[1], nodes[3] };
-			currentView.Data = dbrb::ViewData{ nodes[0], nodes[2], nodes[4] };
+			dbrb::View view;
+			view.Data = dbrb::ViewData{ nodes[0], nodes[2], nodes[4] };
 			auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 			auto payloadHash = dbrb::CalculatePayloadHash(payload);
 			std::map<dbrb::ProcessId, catapult::Signature> certificate{
@@ -24,7 +22,7 @@ namespace catapult { namespace fastfinality {
 				{ nodes[2], test::GenerateRandomArray<Signature_Size>() },
 				{ nodes[3], test::GenerateRandomArray<Signature_Size>() },
 			};
-			return dbrb::CommitMessage(nodes[0], payloadHash, certificate, certificateView, currentView);
+			return dbrb::CommitMessage(nodes[0], payloadHash, certificate, view);
 		}
 
 		template<typename TMessage>
@@ -87,8 +85,7 @@ namespace catapult { namespace fastfinality {
 			},
 			[](const dbrb::CommitMessage& originalMessage, const dbrb::CommitMessage& unpackedMessage) {
 			 	EXPECT_EQ(originalMessage.PayloadHash, unpackedMessage.PayloadHash);
-				EXPECT_EQ(originalMessage.CertificateView, unpackedMessage.CertificateView);
-				EXPECT_EQ(originalMessage.CurrentView, unpackedMessage.CurrentView);
+				EXPECT_EQ(originalMessage.View, unpackedMessage.View);
 			});
 	}
 

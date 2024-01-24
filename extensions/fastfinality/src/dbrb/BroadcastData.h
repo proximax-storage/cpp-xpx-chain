@@ -11,9 +11,6 @@ namespace catapult { namespace dbrb {
 
 	/// Struct representing data about Payload that is being broadcasted.
 	struct BroadcastData {
-		/// The sender of the data.
-		ProcessId Sender;
-
 		/// Payload that is being broadcasted.
 		dbrb::Payload Payload;
 
@@ -24,9 +21,8 @@ namespace catapult { namespace dbrb {
 		/// Filled when Acknowledged quorum is collected.
 		CertificateType Certificate;
 
-		/// View associated with the Certificate.
-		/// Set when Acknowledged quorum is collected.
-		View CertificateView;
+		/// View associated with the broadcast operation.
+		View BroadcastView;
 
 		/// Quorum manager.
 		dbrb::QuorumManager QuorumManager;

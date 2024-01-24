@@ -57,10 +57,9 @@ namespace catapult { namespace dbrb {
 			auto pBuffer = pMessagePacket->payload();
 			auto payloadHash = Read<Hash256>(pBuffer);
 			auto certificate = Read<CertificateType>(pBuffer);
-			auto certificateView = Read<View>(pBuffer);
-			auto currentView = Read<View>(pBuffer);
+			auto view = Read<View>(pBuffer);
 
-			auto pMessage = std::make_shared<CommitMessage>(pMessagePacket->Sender, payloadHash, certificate, certificateView, currentView);
+			auto pMessage = std::make_shared<CommitMessage>(pMessagePacket->Sender, payloadHash, certificate, view);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -162,15 +161,14 @@ namespace catapult { namespace dbrb {
 	}
 
 	std::shared_ptr<MessagePacket> CommitMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
-		auto payloadSize = Hash256_Size + sizeof(uint32_t) + Certificate.size() * (ProcessId_Size + Signature_Size) + CertificateView.packedSize() + CurrentView.packedSize();
+		auto payloadSize = Hash256_Size + sizeof(uint32_t) + Certificate.size() * (ProcessId_Size + Signature_Size) + View.packedSize();
 		auto pPacket = ionet::CreateSharedPacket<CommitMessagePacket>(payloadSize);
 		pPacket->Sender = Sender;
 
 		auto pBuffer = pPacket->payload();
 		Write(pBuffer, PayloadHash);
 		Write(pBuffer, Certificate);
-		Write(pBuffer, CertificateView);
-		Write(pBuffer, CurrentView);
+		Write(pBuffer, View);
 
 		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 

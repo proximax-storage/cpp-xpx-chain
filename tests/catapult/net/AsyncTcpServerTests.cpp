@@ -205,8 +205,8 @@ namespace catapult { namespace net {
 				for (auto i = 0u; i < numAttempts; ++i) {
 					auto pContext = std::make_shared<SpawnContext>(m_ioContext, i);
 					boost::asio::post(m_ioContext, [this, pContext{std::move(pContext)}]() {
-						// set a 50ms deadline on the async_connect
-						pContext->setDeadline(50);
+						// set a 100ms deadline on the async_connect
+						pContext->setDeadline(100);
 						pContext->connect([this](auto status) {
 							switch (status) {
 							case ConnectionStatus::Success:

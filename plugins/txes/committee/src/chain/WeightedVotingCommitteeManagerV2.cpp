@@ -86,10 +86,10 @@ namespace catapult { namespace chain {
 		}
 
 		void LogAccountData(const cache::AccountMap& accounts, const config::CommitteeConfiguration& config) {
-			CATAPULT_LOG(debug) << "Harvester account data:";
+			CATAPULT_LOG(trace) << "Harvester account data:";
 			for (const auto& pair : accounts) {
 				const auto& data = pair.second;
-				CATAPULT_LOG(debug) << "committee account " << pair.first << " data: "
+				CATAPULT_LOG(trace) << "committee account " << pair.first << " data: "
 					<< CalculateWeight(data, config) << "|" << data.Activity << "|" << data.FeeInterest << "|" << data.FeeInterestDenominator << "|" << data.LastSigningBlockHeight << "|"
 					<< data.CanHarvest << "|" << data.EffectiveBalance;
 			}
@@ -191,6 +191,23 @@ namespace catapult { namespace chain {
 		}
 	}
 
+	Key WeightedVotingCommitteeManagerV2::getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const {
+		auto accountIter = m_accounts.find(harvestKey);
+		if (accountIter != m_accounts.cend() && accountIter->second.BootKey != Key()) {
+			CATAPULT_LOG(trace) << "Boot key found: " << harvestKey << " - " << accountIter->second.BootKey;
+			return accountIter->second.BootKey;
+		}
+
+		auto bootstrapIter = config.BootstrapHarvesters.find(harvestKey);
+		if (bootstrapIter != config.BootstrapHarvesters.cend()) {
+			CATAPULT_LOG(trace) << "Boot key of bootstrap harvester found: " << harvestKey << " - " << bootstrapIter->second;
+			return bootstrapIter->second;
+		}
+
+		CATAPULT_LOG(warning) << "Boot key not found for " << harvestKey;
+		return {};
+	}
+
 	const Committee& WeightedVotingCommitteeManagerV2::selectCommittee(const model::NetworkConfiguration& networkConfig) {
 		auto previousRound = m_committee.Round;
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
@@ -222,8 +239,19 @@ namespace catapult { namespace chain {
 			if (!accountData.CanHarvest)
 				continue;
 
-			if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp && (networkConfig.EmergencyHarvesters.find(key) == networkConfig.EmergencyHarvesters.cend()))
-				continue;
+			if (networkConfig.BootstrapHarvesters.empty()) {
+				if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp && (networkConfig.EmergencyHarvesters.find(key) == networkConfig.EmergencyHarvesters.cend()))
+					continue;
+			} else {
+				auto iter = networkConfig.BootstrapHarvesters.find(key);
+				if (iter == networkConfig.BootstrapHarvesters.cend()) {
+					if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp)
+						continue;
+
+					if (accountData.BootKey == Key())
+						continue;
+				}
+			}
 
 			auto weight = static_cast<double>(CalculateWeight(accountData, config));
 			const auto& hash = previousRound < 0 ?
@@ -241,7 +269,7 @@ namespace catapult { namespace chain {
 					nRate = 1;
 			}
 
-			CATAPULT_LOG(debug) << "rate of " << key << ": " << nRate;
+			CATAPULT_LOG(trace) << "rate of " << key << ": " << nRate;
 
 			rates.emplace(nRate, key);
 		}

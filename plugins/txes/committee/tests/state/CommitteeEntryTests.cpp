@@ -65,7 +65,7 @@ namespace catapult { namespace state {
 		EXPECT_EQ(true, entry.canHarvest());
 	}
 
-	TEST(TEST_CLASS, CanSetActivity) {
+	TEST(TEST_CLASS, CanSetActivityObsolete) {
 		// Arrange:
 		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), true, 5.0, 0.0);
 
@@ -79,7 +79,7 @@ namespace catapult { namespace state {
 		EXPECT_EQ(10.0, entry.activityObsolete());
 	}
 
-	TEST(TEST_CLASS, CanSetGreed) {
+	TEST(TEST_CLASS, CanSetGreedObsolete) {
 		// Arrange:
 		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), false, 5.0, 0.5);
 
@@ -91,5 +91,76 @@ namespace catapult { namespace state {
 
 		// Assert:
 		EXPECT_EQ(1.0, entry.greedObsolete());
+	}
+
+	TEST(TEST_CLASS, CanSetExpirationTime) {
+		// Arrange:
+		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), false, 5.0, 0.5);
+
+		// Sanity check:
+		EXPECT_EQ(Timestamp(0), entry.expirationTime());
+
+		// Act:
+		entry.setExpirationTime(Timestamp(5));
+
+		// Assert:
+		EXPECT_EQ(Timestamp(5), entry.expirationTime());
+	}
+
+	TEST(TEST_CLASS, CanSetActivity) {
+		// Arrange:
+		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), false, 5.0, 0.5);
+
+		// Sanity check:
+		EXPECT_EQ(0, entry.activity());
+
+		// Act:
+		entry.setActivity(15);
+
+		// Assert:
+		EXPECT_EQ(15, entry.activity());
+	}
+
+	TEST(TEST_CLASS, CanSetFeeInterest) {
+		// Arrange:
+		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), false, 5.0, 0.5);
+
+		// Sanity check:
+		EXPECT_EQ(0, entry.feeInterest());
+
+		// Act:
+		entry.setFeeInterest(25);
+
+		// Assert:
+		EXPECT_EQ(25, entry.feeInterest());
+	}
+
+	TEST(TEST_CLASS, CanSetFeeInterestDenominator) {
+		// Arrange:
+		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), false, 5.0, 0.5);
+
+		// Sanity check:
+		EXPECT_EQ(0, entry.feeInterestDenominator());
+
+		// Act:
+		entry.setFeeInterestDenominator(35);
+
+		// Assert:
+		EXPECT_EQ(35, entry.feeInterestDenominator());
+	}
+
+	TEST(TEST_CLASS, CanSetBootKey) {
+		// Arrange:
+		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), false, 5.0, 0.5);
+		auto bootKey = test::GenerateRandomByteArray<Key>();
+
+		// Sanity check:
+		EXPECT_EQ(Key(), entry.bootKey());
+
+		// Act:
+		entry.setBootKey(bootKey);
+
+		// Assert:
+		EXPECT_EQ(bootKey, entry.bootKey());
 	}
 }}

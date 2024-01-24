@@ -54,8 +54,4 @@ namespace catapult { namespace dbrb {
 	bool View::operator>=(const View& other) const {
 		return (*this > other) || (*this == other);
 	}
-
-	bool View::areComparable(const View& a, const View& b) {
-		return (a == b || a < b || a > b);
-	}
 }}

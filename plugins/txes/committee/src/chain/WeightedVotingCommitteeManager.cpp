@@ -189,6 +189,10 @@ namespace catapult { namespace chain {
 		}
 	}
 
+	Key WeightedVotingCommitteeManager::getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const {
+		return Key();
+	}
+
 	const Committee& WeightedVotingCommitteeManager::selectCommittee(const model::NetworkConfiguration& networkConfig) {
 		auto previousRound = m_committee.Round;
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();

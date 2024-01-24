@@ -12,12 +12,7 @@
 
 namespace catapult { namespace validators {
 
-		/// A validator implementation that applies to Install message notification and validates that:
-		/// - respective install transaction is not already in the cache
-		/// - view sequence is properly formed
-		/// - message hash stored in the cache is valid
-		/// - replaced view from the notification equals to the most recent view stored in the cache
-		/// - there are enough signatures to form a quorum
-		/// - all signatures are valid
+		/// A validator implementation that applies to add DBRB process notification and validates that:
+		/// - if the process is already registered then it is expired
 		DECLARE_STATEFUL_VALIDATOR(AddDbrbProcess, model::AddDbrbProcessNotification<1>)();
 }}
