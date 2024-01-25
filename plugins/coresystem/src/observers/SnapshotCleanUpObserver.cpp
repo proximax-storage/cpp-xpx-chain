@@ -33,9 +33,8 @@ namespace catapult { namespace observers {
 				{
 					auto existingConfigurations = configCache.heights();
 					auto currentConfigIter = existingConfigurations.find(context.Height);
-					auto rCurrentConfigIter = ++std::make_reverse_iterator(currentConfigIter);
 
-					for (auto rit = rCurrentConfigIter; rit != existingConfigurations.rend(); ++rit) {
+					for (auto rit = ++std::make_reverse_iterator(currentConfigIter); rit != existingConfigurations.rend(); ++rit) {
 						auto& previousConfig = holder->Config(*rit).Network;
 						auto nIGMRB = state::StableBalanceSnapshot(previousConfig.ImportanceGrouping, previousConfig.MaxRollbackBlocks);
 						if(IGMRB != nIGMRB) {

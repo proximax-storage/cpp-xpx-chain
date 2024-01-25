@@ -388,7 +388,7 @@ namespace catapult { namespace state {
 		if(activeConfig.ProperEffectiveBalanceCalculation) {
 			int count = 0;
 			for(auto& snapshot : m_localSnapshots) {
-				if(m_localSnapshots.front().BalanceHeight <= stableHeight)
+				if(snapshot.BalanceHeight <= stableHeight)
 					count++;
 			}
 			while(!m_localSnapshots.empty() && m_localSnapshots.front().BalanceHeight <= stableHeight && count > 1) {

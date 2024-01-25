@@ -4,7 +4,7 @@ publicKey = {{network_public_key}}
 
 [chain]
 
-blockGenerationTargetTime = 0s
+blockGenerationTargetTime = 1s
 blockTimeSmoothingFactor = 1000
 
 greedDelta = 0.5
@@ -27,6 +27,8 @@ blockPruneInterval = 360
 maxTransactionsPerBlock = 200'000
 
 enableUnconfirmedTransactionMinFeeValidation = true
+
+properEffectiveBalanceCalculation = true
 
 [plugin:catapult.plugins.accountlink]
 dummy = to trigger plugin load
