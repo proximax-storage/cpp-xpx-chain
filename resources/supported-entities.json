@@ -113,7 +113,7 @@
 		{
 			"name": "Aggregate_Complete",
 			"type": "16705",
-			"supportedVersions": [2, 3]
+			"supportedVersions": [2, 3, 4]
 		},
 		{
 			"name": "Aggregate_Bonded",
