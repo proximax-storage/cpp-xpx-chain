@@ -21,12 +21,12 @@ namespace catapult { namespace fastfinality {
 				return event.IsBlockProposer && (event.Phase == CommitteePhase::Propose);
 			};
 
-			auto isPhaseProposeAndIsNotBlockProposer = [](const auto& event) {
-				return !event.IsBlockProposer && (event.Phase == CommitteePhase::Propose);
+			auto isPhaseProposeAndIsCosigner = [](const auto& event) {
+				return event.IsCosigner && (event.Phase == CommitteePhase::Propose);
 			};
 
-			auto isNotPhasePropose = [](const auto& event) {
-				return event.Phase != CommitteePhase::Propose;
+			auto isNotPhaseProposeOrNotInCommittee = [](const auto& event) {
+				return (event.Phase != CommitteePhase::Propose) || !(event.IsBlockProposer || event.IsCosigner);
 			};
 
 #define ACTION(NAME) [] (WeightedVotingActions& actions) { actions.NAME(); }
@@ -53,36 +53,33 @@ namespace catapult { namespace fastfinality {
 				sml::state<StageDetection> + sml::event<StageDetectionSucceeded> = sml::state<CommitteeSelection>,
 
 				sml::state<CommitteeSelection> + sml::on_entry<sml::_> / ACTION(SelectCommittee),
-				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isPhaseProposeAndIsBlockProposer ] = sml::state<BlockProposing>,
-				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isPhaseProposeAndIsNotBlockProposer ] = sml::state<ProposalWaiting>,
-				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isNotPhasePropose ] = sml::state<ConfirmedBlockRequest>,
+				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isPhaseProposeAndIsBlockProposer ] = sml::state<BlockGeneration>,
+				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isPhaseProposeAndIsCosigner ] = sml::state<ProposalWaiting>,
+				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isNotPhaseProposeOrNotInCommittee ] = sml::state<ConfirmedBlockWaiting>,
+				sml::state<CommitteeSelection> + sml::event<NotEnoughBootKeys> = sml::state<ConfirmedBlockWaiting>,
 				sml::state<CommitteeSelection> + sml::event<NotRegisteredInDbrbSystem> = sml::state<LocalChainCheck>,
 
-				sml::state<BlockProposing> + sml::on_entry<sml::_> / ACTION(ProposeBlock),
-				sml::state<BlockProposing> + sml::event<BlockProposingFailed> = sml::state<ConfirmedBlockRequest>,
-				sml::state<BlockProposing> + sml::event<BlockProposingSucceeded> / ACTION(AddPrevote) = sml::state<Prevote>,
+				sml::state<BlockGeneration> + sml::on_entry<sml::_> / ACTION(ProposeBlock),
+				sml::state<BlockGeneration> + sml::event<BlockGenerationFailed> = sml::state<ConfirmedBlockWaiting>,
+				sml::state<BlockGeneration> + sml::event<BlockGenerationSucceeded> = sml::state<ProposalWaiting>,
 
 				sml::state<ProposalWaiting> + sml::on_entry<sml::_> / ACTION(WaitForProposal),
-				sml::state<ProposalWaiting> + sml::event<ProposalNotReceived> = sml::state<ConfirmedBlockRequest>,
-				sml::state<ProposalWaiting> + sml::event<ProposalReceived> = sml::state<ProposalValidation>,
+				sml::state<ProposalWaiting> + sml::event<UnexpectedBlockHeight> = sml::state<LocalChainCheck>,
+				sml::state<ProposalWaiting> + sml::event<ProposalNotReceived> = sml::state<ConfirmedBlockWaiting>,
+				sml::state<ProposalWaiting> + sml::event<ProposalReceived> / ACTION(AddPrevote) = sml::state<Prevote>,
 
-				sml::state<ProposalValidation> + sml::on_entry<sml::_> / ACTION(ValidateProposal),
-				sml::state<ProposalValidation> + sml::event<UnexpectedBlockHeight> = sml::state<LocalChainCheck>,
-				sml::state<ProposalValidation> + sml::event<ProposalInvalid> = sml::state<ConfirmedBlockRequest>,
-				sml::state<ProposalValidation> + sml::event<ProposalValid> / ACTION(AddPrevote) = sml::state<Prevote>,
-
-				sml::state<Prevote> + sml::on_entry<sml::_> / ACTION(WaitForPrevotePhaseEnd),
-				sml::state<Prevote> + sml::event<SumOfPrevotesInsufficient> = sml::state<ConfirmedBlockRequest>,
+				sml::state<Prevote> + sml::on_entry<sml::_> / ACTION(WaitForPrevotes),
+				sml::state<Prevote> + sml::event<SumOfPrevotesInsufficient> = sml::state<ConfirmedBlockWaiting>,
 				sml::state<Prevote> + sml::event<SumOfPrevotesSufficient> / ACTION(AddPrecommit) = sml::state<Precommit>,
 
-				sml::state<Precommit> + sml::on_entry<sml::_> / ACTION(WaitForPrecommitPhaseEnd),
-				sml::state<Precommit> + sml::event<SumOfPrecommitsInsufficient> = sml::state<ConfirmedBlockRequest>,
-				sml::state<Precommit> + sml::event<SumOfPrecommitsSufficient> / ACTION(UpdateConfirmedBlock) = sml::state<Commit>,
+				sml::state<Precommit> + sml::on_entry<sml::_> / ACTION(WaitForPrecommits),
+				sml::state<Precommit> + sml::event<SumOfPrecommitsInsufficient> = sml::state<ConfirmedBlockWaiting>,
+				sml::state<Precommit> + sml::event<SumOfPrecommitsSufficient> / ACTION(UpdateConfirmedBlock) = sml::state<ConfirmedBlockWaiting>,
 
-				sml::state<ConfirmedBlockRequest> + sml::on_entry<sml::_> / ACTION(RequestConfirmedBlock),
-				sml::state<ConfirmedBlockRequest> + sml::event<UnexpectedBlockHeight> = sml::state<LocalChainCheck>,
-				sml::state<ConfirmedBlockRequest> + sml::event<ConfirmedBlockNotReceived> / ACTION(IncrementRound) = sml::state<CommitteeSelection>,
-				sml::state<ConfirmedBlockRequest> + sml::event<ConfirmedBlockReceived> = sml::state<Commit>,
+				sml::state<ConfirmedBlockWaiting> + sml::on_entry<sml::_> / ACTION(WaitForConfirmedBlock),
+				sml::state<ConfirmedBlockWaiting> + sml::event<UnexpectedBlockHeight> = sml::state<LocalChainCheck>,
+				sml::state<ConfirmedBlockWaiting> + sml::event<ConfirmedBlockNotReceived> / ACTION(IncrementRound) = sml::state<CommitteeSelection>,
+				sml::state<ConfirmedBlockWaiting> + sml::event<ConfirmedBlockReceived> = sml::state<Commit>,
 
 				sml::state<Commit> + sml::on_entry<sml::_> / ACTION(CommitConfirmedBlock),
 				sml::state<Commit> + sml::event<CommitBlockFailed> / ACTION(IncrementRound) = sml::state<CommitteeSelection>,

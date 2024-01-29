@@ -20,9 +20,4 @@ namespace catapult { namespace dbrb {
 		const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
 		model::NetworkIdentifier networkIdentifier,
 		ionet::ServerPacketHandlers& handlers);
-
-	/// Registers a pull DBRB nodes handler in \a handlers constructing response from \a pNodeRetreiverWeak.
-	void RegisterPullNodesHandler(
-		const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
-		ionet::ServerPacketHandlers& handlers);
 }}

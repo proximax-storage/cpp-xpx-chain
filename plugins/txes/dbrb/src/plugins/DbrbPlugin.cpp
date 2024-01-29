@@ -11,6 +11,7 @@
 #include "src/model/AddDbrbProcessTransaction.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/AddDbrbProcessTransactionPlugin.h"
+#include "src/plugins/RemoveDbrbProcessTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/CacheHandlers.h"
 
@@ -24,6 +25,7 @@ namespace catapult { namespace plugins {
 		const auto& pConfigHolder = manager.configHolder();
 		const auto& immutableConfig = manager.immutableConfig();
 		manager.addTransactionSupport(CreateAddDbrbProcessTransactionPlugin());
+		manager.addTransactionSupport(CreateRemoveDbrbProcessTransactionPlugin());
 
 		auto pDbrbViewFetcher = std::make_shared<cache::DbrbViewFetcherImpl>();
 		manager.addCacheSupport(std::make_unique<cache::DbrbViewCacheSubCachePlugin>(manager.cacheConfig(cache::DbrbViewCache::Name), pConfigHolder, pDbrbViewFetcher));
@@ -50,7 +52,8 @@ namespace catapult { namespace plugins {
 		manager.addObserverHook([](auto& builder) {
 			builder
 				.add(observers::CreateAddDbrbProcessObserver())
-				.add(observers::CreateDbrbProcessPruningObserver());
+				.add(observers::CreateDbrbProcessPruningObserver())
+				.add(observers::CreateRemoveDbrbProcessObserver());
 		});
 	}
 }}

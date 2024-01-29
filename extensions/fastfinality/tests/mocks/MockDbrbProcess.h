@@ -7,10 +7,10 @@
 #include "tests/test/core/mocks/MockDbrbViewFetcher.h"
 #include "extensions/fastfinality/src/dbrb/DbrbProcess.h"
 #include "plugins/txes/dbrb/src/cache/DbrbViewFetcherImpl.h"
-#include "src/catapult/crypto/KeyPair.h"
-#include "src/catapult/dbrb/DbrbDefinitions.h"
-#include "src/catapult/dbrb/Messages.h"
-#include "src/catapult/net/PacketIoPickerContainer.h"
+#include "catapult/crypto/KeyPair.h"
+#include "catapult/dbrb/DbrbDefinitions.h"
+#include "catapult/dbrb/Messages.h"
+#include "catapult/ionet/NodeContainer.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
 
@@ -25,16 +25,16 @@ namespace catapult { namespace mocks {
 				const dbrb::ProcessId& processId,
 				bool fakeDissemination = false,
 				std::weak_ptr<net::PacketWriters> pWriters = std::weak_ptr<mocks::MockPacketWriters>(),
-				const net::PacketIoPickerContainer& packetIoPickers = {},
+				const ionet::NodeContainer& nodeContainer = {},
 				const crypto::KeyPair& keyPair = crypto::KeyPair::FromPrivate({}),
 				const std::shared_ptr<thread::IoThreadPool>& pPool = test::CreateStartedIoThreadPool(1),
 				const dbrb::DbrbViewFetcher& dbrbViewFetcher = MockDbrbViewFetcher());
 
 		void setCurrentView(const dbrb::View& view);
 
-		void broadcast(const dbrb::Payload& payload) override;
+		void broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) override;
 		void processMessage(const dbrb::Message& message) override;
-		Signature sign(const dbrb::Payload& payload);
+		Signature sign(const dbrb::Payload& payload, const dbrb::View& view);
 
 		void disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients) override;
 		void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient) override;
@@ -45,7 +45,6 @@ namespace catapult { namespace mocks {
 
 		const std::set<Hash256>& deliveredPayloads();
 		const dbrb::ProcessId& id();
-		const dbrb::View& currentView();
 		std::map<Hash256, dbrb::BroadcastData>& broadcastData();
 		const DisseminationHistory& disseminationHistory();
 		dbrb::QuorumManager& getQuorumManager(const Hash256& payloadHash);

@@ -25,21 +25,20 @@ namespace catapult { namespace fastfinality {
 
 	struct CommitteeSelectionResult{
 		bool IsBlockProposer;
+		bool IsCosigner;
 		CommitteePhase Phase;
 	};
 
+	struct NotEnoughBootKeys{};
 	struct NotRegisteredInDbrbSystem{};
 
 	struct UnexpectedBlockHeight{};
 
-	struct BlockProposingFailed{};
-	struct BlockProposingSucceeded{};
+	struct BlockGenerationFailed{};
+	struct BlockGenerationSucceeded{};
 
 	struct ProposalReceived{};
 	struct ProposalNotReceived{};
-
-	struct ProposalInvalid{};
-	struct ProposalValid{};
 
 	struct SumOfPrevotesInsufficient{};
 	struct SumOfPrevotesSufficient{};

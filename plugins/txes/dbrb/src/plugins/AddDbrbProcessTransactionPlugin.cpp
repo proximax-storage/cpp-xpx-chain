@@ -24,6 +24,12 @@ namespace catapult { namespace plugins {
 				break;
 			}
 
+			case 2: {
+				sub.notify(AddDbrbProcessNotification<1>(transaction.Signer));
+				sub.notify(ActiveHarvestersNotification<2>(transaction.Signer, transaction.HarvesterKeysPtr(), transaction.HarvesterKeysCount));
+				break;
+			}
+
 			default:
 				CATAPULT_LOG(debug) << "invalid version of AddDbrbProcessTransaction: " << transaction.EntityVersion();
 			}

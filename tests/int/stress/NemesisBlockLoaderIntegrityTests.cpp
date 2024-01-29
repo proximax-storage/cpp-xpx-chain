@@ -63,6 +63,8 @@ namespace catapult { namespace extensions {
 			test::AddNemesisPluginExtensions(const_cast<model::NetworkConfiguration&>(config.Network));
 
 			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(config);
+			auto initializers = pPluginManager->createPluginInitializer();
+			pPluginManager->configHolder()->SetPluginInitializer(std::move(initializers));
 			test::LocalNodeTestState localNodeState(config, pPluginManager->createCache());
 
 			{

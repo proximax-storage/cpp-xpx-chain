@@ -35,11 +35,18 @@ namespace catapult { namespace tools { namespace nemgen {
 				cppRawFile.write(headerBuffer);
 			}
 
+			std::string nemesisTimestampVariablePrefix;
+			if (cppVariableName.find("Extended_Basic_") != std::string::npos) {
+				nemesisTimestampVariablePrefix = "Extended_Basic_";
+			} else if (cppVariableName.find("Basic_") != std::string::npos) {
+				nemesisTimestampVariablePrefix = "Basic_";
+			}
+
 			std::string header =
 				"#pragma once\n"
 				"#include <stdint.h>\n\n"
 				"namespace catapult { namespace test {\n\n"
-				"\tconstexpr inline Timestamp Nemesis_Timestamp = Timestamp(";
+				"\tconstexpr inline Timestamp " + nemesisTimestampVariablePrefix + "Nemesis_Timestamp = Timestamp(";
 			cppRawFile.write(RawBuffer(reinterpret_cast<const uint8_t*>(header.data()), header.size()));
 
 			std::stringstream timestamp;

@@ -22,6 +22,7 @@ namespace catapult { namespace fastfinality {
 			for (uint8_t i = 0u; i < count; ++i) {
 				const auto processId = Key{ {i} };
 				auto pProcess = std::make_shared<MockDbrbProcess>(processId, fakeDissemination);
+				pProcess->setValidationCallback([](const auto&){ return true; });
 				MockDbrbProcess::DbrbProcessPool.emplace_back(std::move(pProcess));
 				viewData.insert(processId);
 			}
@@ -53,26 +54,34 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, PayloadDeliverySuccess) {
 		// Arrange:
-		CreateMockDbrbProcesses(3);
+		CreateMockDbrbProcesses(4);
 		const auto pBroadcaster = MockDbrbProcess::DbrbProcessPool.front();
 
 		const auto payload = CreatePayload();
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
+		auto view = pBroadcaster->currentView();
+		auto excludedId = MockDbrbProcess::DbrbProcessPool.back()->id();
+		view.Data.erase(excludedId);
 
 		// Act:
-		pBroadcaster->broadcast(payload);
+		pBroadcaster->broadcast(payload, view.Data);
 
 		// Assert:
 		const std::set<Hash256> expectedPayloads{ payloadHash };
-		for (const auto& pProcess : MockDbrbProcess::DbrbProcessPool)
-			AssertDeliveredPayloads(pProcess, expectedPayloads);
+		for (const auto& pProcess : MockDbrbProcess::DbrbProcessPool) {
+			if (pProcess->id() != excludedId) {
+				AssertDeliveredPayloads(pProcess, expectedPayloads);
+			} else {
+				AssertDeliveredPayloads(pProcess, {});
+			}
+		}
 
 		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	// region PrepareMessage
 
-	TEST(TEST_CLASS, PrepareMessageReceivererIsNotParticipant) {
+	TEST(TEST_CLASS, PrepareMessageReceiverIsNotParticipant) {
 		// Arrange:
 		CreateMockDbrbProcesses(2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
@@ -140,31 +149,6 @@ namespace catapult { namespace fastfinality {
 		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
-	TEST(TEST_CLASS, PrepareMessageDuplicatePayloadHash) {
-		// Arrange:
-		CreateMockDbrbProcesses(2, true);
-		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
-		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
-
-		const auto payload = CreatePayload();
-		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
-		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating duplicate entry in broadcastData.
-		data.Payload = payload;
-
-		const auto pMessage = CreateMessage<dbrb::PrepareMessage>(
-				pSender->id(),
-				payload,
-				pSender->currentView());
-
-		// Act:
-		pReceiver->processMessage(*pMessage);
-
-		// Assert:
-		ASSERT_TRUE(pReceiver->disseminationHistory().empty());
-
-		MockDbrbProcess::DbrbProcessPool.clear();
-	}
-
 	TEST(TEST_CLASS, PrepareMessageSuccess) {
 		// Arrange:
 		CreateMockDbrbProcesses(2, true);
@@ -197,9 +181,9 @@ namespace catapult { namespace fastfinality {
 
 		const auto payload = CreatePayload();
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
-		const auto payloadSignature = pSender->sign(payload);
-
 		auto suppliedView = pSender->currentView();
+		const auto payloadSignature = pSender->sign(payload, suppliedView);
+
 		suppliedView.Data.erase(pSender->id());	// Removing Sender from the supplied view.
 		const auto pMessage = CreateMessage<dbrb::AcknowledgedMessage>(
 				pSender->id(),
@@ -225,7 +209,7 @@ namespace catapult { namespace fastfinality {
 
 		const auto payload = CreatePayload();
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
-		const auto payloadSignature = pSender->sign(payload);
+		const auto payloadSignature = pSender->sign(payload, pSender->currentView());
 
 		// Not adding an entry in broadcastData.
 		const auto pMessage = CreateMessage<dbrb::AcknowledgedMessage>(
@@ -252,9 +236,10 @@ namespace catapult { namespace fastfinality {
 
 		const auto payload = CreatePayload();
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
-		const auto payloadSignature = pSender->sign(payload);
+		const auto payloadSignature = pSender->sign(payload, pSender->currentView());
 		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating correct entry in broadcastData.
 		data.Payload = payload;
+		data.BroadcastView = pSender->currentView();
 
 		const auto pMessage = CreateMessage<dbrb::AcknowledgedMessage>(
 				pSender->id(),
@@ -281,13 +266,14 @@ namespace catapult { namespace fastfinality {
 
 		const auto payload = CreatePayload();
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
-		const auto payloadSignature = pSender->sign(payload);
+		const auto payloadSignature = pSender->sign(payload, pSender->currentView());
 		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating correct entry in broadcastData.
 		data.Payload = payload;
+		data.BroadcastView = pSender->currentView();
 
 		// Adding Receiver's signature to the entry in broadcastData.
 		const auto& currentView = pReceiver->currentView();
-		data.Signatures[std::make_pair(currentView, pReceiver->id())] = pReceiver->sign(payload);
+		data.Signatures[std::make_pair(currentView, pReceiver->id())] = pReceiver->sign(payload, pSender->currentView());
 
 		// Adding Receiver to his list of AcknowledgedPayloads.
 		auto& acknowledgedPayloads = pReceiver->getQuorumManager(payloadHash).AcknowledgedPayloads;
@@ -329,7 +315,6 @@ namespace catapult { namespace fastfinality {
 				pSender->id(),
 				payloadHash,
 				dbrb::CertificateType(),
-				dbrb::View(),
 				suppliedView);
 
 		// Act:
@@ -349,13 +334,14 @@ namespace catapult { namespace fastfinality {
 
 		const auto payload = CreatePayload();
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
+		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating correct entry in broadcastData.
+		data.BroadcastView = pSender->currentView();
 
 		// Not adding an entry in broadcastData.
 		const auto pMessage = CreateMessage<dbrb::CommitMessage>(
 				pSender->id(),
 				payloadHash,
 				dbrb::CertificateType(),
-				dbrb::View(),
 				pSender->currentView());
 
 		// Act:
@@ -377,12 +363,12 @@ namespace catapult { namespace fastfinality {
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
 		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating correct entry in broadcastData.
 		data.Payload = payload;
+		data.BroadcastView = pSender->currentView();
 
 		const auto pMessage = CreateMessage<dbrb::CommitMessage>(
 				pSender->id(),
 				payloadHash,
 				dbrb::CertificateType(),
-				dbrb::View(),
 				pSender->currentView());
 
 		// Act:
@@ -405,6 +391,7 @@ namespace catapult { namespace fastfinality {
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
 		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating correct entry in broadcastData.
 		data.Payload = payload;
+		data.BroadcastView = pSender->currentView();
 
 		data.CommitMessageReceived = true;
 
@@ -412,7 +399,6 @@ namespace catapult { namespace fastfinality {
 				pSender->id(),
 				payloadHash,
 				dbrb::CertificateType(),
-				dbrb::View(),
 				pSender->currentView());
 
 		// Act:
@@ -437,6 +423,8 @@ namespace catapult { namespace fastfinality {
 
 		const auto payload = CreatePayload();
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
+		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating correct entry in broadcastData.
+		data.BroadcastView = pSender->currentView();
 
 		auto receiverView = pReceiver->currentView();
 		receiverView.Data.erase(pReceiver->id());
@@ -467,6 +455,9 @@ namespace catapult { namespace fastfinality {
 
 		auto suppliedView = pSender->currentView();
 		suppliedView.Data.erase(pSender->id());	// Removing Sender from the supplied view.
+		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating correct entry in broadcastData.
+		data.BroadcastView = suppliedView;
+
 		const auto pMessage = CreateMessage<dbrb::DeliverMessage>(
 				pSender->id(),
 				payloadHash,
@@ -490,6 +481,8 @@ namespace catapult { namespace fastfinality {
 
 		const auto payload = CreatePayload();
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
+		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating correct entry in broadcastData.
+		data.BroadcastView = pSender->currentView();
 
 		// Not adding an entry in broadcastData.
 		const auto pMessage = CreateMessage<dbrb::DeliverMessage>(
@@ -517,6 +510,7 @@ namespace catapult { namespace fastfinality {
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
 		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating correct entry in broadcastData.
 		data.Payload = payload;
+		data.BroadcastView = pSender->currentView();
 
 		const auto pMessage = CreateMessage<dbrb::DeliverMessage>(
 				pSender->id(),
@@ -544,6 +538,7 @@ namespace catapult { namespace fastfinality {
 		const auto payloadHash = dbrb::CalculatePayloadHash(payload);
 		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating correct entry in broadcastData.
 		data.Payload = payload;
+		data.BroadcastView = pSender->currentView();
 
 		// Adding Receiver to his list of DeliveredProcesses.
 		const auto& currentView = pReceiver->currentView();

@@ -92,6 +92,18 @@ namespace catapult { namespace ionet {
 			consumer(pair.second.Node, pair.second.Info);
 	}
 
+	std::vector<Node> NodeContainerView::getNodes(std::set<Key> identityKeys) const {
+		std::vector<Node> nodes;
+		const auto& container = m_nodeContainerData.NodeDataContainer;
+		for (const auto& key : identityKeys) {
+			auto iter = container.find(key);
+			if (iter != container.cend())
+				nodes.emplace_back(iter->second.Node);
+		}
+
+		return nodes;
+	}
+
 	// endregion
 
 	// region NodeContainerModifier

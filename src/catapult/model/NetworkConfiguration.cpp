@@ -119,6 +119,8 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(DbrbRegistrationGracePeriod);
 		config.EnableHarvesterExpiration = false;
 		TRY_LOAD_CHAIN_PROPERTY(EnableHarvesterExpiration);
+		config.EnableRemovingDbrbProcessOnShutdown = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableRemovingDbrbProcessOnShutdown);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 
@@ -137,16 +139,27 @@ namespace catapult { namespace model {
 			numPluginProperties += iter->second.size();
 		}
 
-		auto dbrbBootstrapProcesses = bag.getAllOrdered<bool>("dbrb.bootstrap.processes");
-		for (const auto& [key, enabled] : dbrbBootstrapProcesses) {
-			if (enabled)
-				config.DbrbBootstrapProcesses.emplace(crypto::ParseKey(key));
-		}
+		auto bootstrapHarvesters = bag.getAllOrdered<std::unordered_set<std::string>>("bootstrap.harvesters");
+		if (bootstrapHarvesters.empty()) {
+			auto dbrbBootstrapProcesses = bag.getAllOrdered<bool>("dbrb.bootstrap.processes");
+			for (const auto& [key, enabled] : dbrbBootstrapProcesses) {
+				if (enabled)
+					config.DbrbBootstrapProcesses.emplace(crypto::ParseKey(key));
+			}
 
-		auto emergencyHarvesters = bag.getAllOrdered<bool>("harvesters");
-		for (const auto& [key, enabled] : emergencyHarvesters) {
-			if (enabled)
-				config.EmergencyHarvesters.emplace(crypto::ParseKey(key));
+			auto emergencyHarvesters = bag.getAllOrdered<bool>("harvesters");
+			for (const auto& [key, enabled] : emergencyHarvesters) {
+				if (enabled)
+					config.EmergencyHarvesters.emplace(crypto::ParseKey(key));
+			}
+		} else {
+			for (const auto& pair : bootstrapHarvesters) {
+				auto bootKey = crypto::ParseKey(pair.first);
+				config.DbrbBootstrapProcesses.emplace(bootKey);
+				for (const auto& key : pair.second) {
+					config.BootstrapHarvesters.emplace(crypto::ParseKey(key), bootKey);
+				}
+			}
 		}
 
 		return config;

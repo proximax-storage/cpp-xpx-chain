@@ -99,10 +99,11 @@ namespace catapult { namespace cache {
 		void updateAccountCollector(const std::shared_ptr<CommitteeAccountCollector>& pAccountCollector) const {
 			pAccountCollector->accounts().clear();
 			pAccountCollector->disabledAccounts().clear();
+			const auto& config = pluginConfig();
 			for (const auto& key : keys()) {
 				auto iter = m_pCommitteeEntries->find(key);
 				auto pEntry = iter.get();
-				pAccountCollector->addAccount(*pEntry);
+				pAccountCollector->addAccount(*pEntry, config);
 			}
 		}
 

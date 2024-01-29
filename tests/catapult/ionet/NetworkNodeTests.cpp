@@ -33,6 +33,7 @@ namespace catapult { namespace ionet {
 		auto expectedSize =
 				sizeof(uint32_t) // size of network node
 				+ sizeof(uint16_t) // port
+				+ sizeof(uint16_t) // DBRB port
 				+ Key_Size // identity key
 				+ sizeof(model::NetworkIdentifier) // network identifier
 				+ sizeof(NodeVersion) // version
@@ -42,7 +43,7 @@ namespace catapult { namespace ionet {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(NetworkNode));
-		EXPECT_EQ(49u, sizeof(NetworkNode));
+		EXPECT_EQ(51u, sizeof(NetworkNode));
 	}
 
 	// endregion

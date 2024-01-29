@@ -6,6 +6,7 @@
 
 #include "View.h"
 #include "catapult/crypto/Hashes.h"
+#include "catapult/model/Block.h"
 #include "catapult/utils/Casting.h"
 
 namespace catapult { namespace dbrb {
@@ -117,7 +118,12 @@ namespace catapult { namespace dbrb {
 	}
 
 	Hash256 CalculatePayloadHash(const Payload& payload) {
-		return CalculateHash({{ reinterpret_cast<const uint8_t*>(payload.get()), payload->Size }});
+		auto size = payload->Size;
+		if (payload->Type == ionet::PacketType::Push_Confirmed_Block) {
+			const auto* pBlock = reinterpret_cast<const model::Block*>(payload->Data());
+			size -= pBlock->CosignaturesCount() * sizeof(model::Cosignature);
+		}
+		return CalculateHash({{ reinterpret_cast<const uint8_t*>(payload.get()), size }});
 	}
 
 	std::string ProcessIdToString(const ProcessId& processId) {

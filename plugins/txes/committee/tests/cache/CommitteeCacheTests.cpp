@@ -15,15 +15,21 @@ namespace catapult { namespace cache {
 	// region mixin traits based tests
 
 	namespace {
+		auto CreateConfigurationHolder() {
+			auto pConfigHolder = config::CreateMockConfigurationHolder(test::MutableBlockchainConfiguration().ToConst());
+			const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).SetPluginConfiguration(config::CommitteeConfiguration::Uninitialized());
+			return pConfigHolder;
+		}
+
 		struct CommitteeCacheMixinTraits {
 			class CacheType : public CommitteeCache {
 			public:
 				CacheType()
-					: CommitteeCache(CacheConfiguration(), std::make_shared<cache::CommitteeAccountCollector>(), config::CreateMockConfigurationHolder())
+					: CommitteeCache(CacheConfiguration(), std::make_shared<cache::CommitteeAccountCollector>(), CreateConfigurationHolder())
 				{}
 
 				CacheType(std::shared_ptr<cache::CommitteeAccountCollector> pAccountCollector)
-					: CommitteeCache(CacheConfiguration(), pAccountCollector, config::CreateMockConfigurationHolder())
+					: CommitteeCache(CacheConfiguration(), pAccountCollector, CreateConfigurationHolder())
 				{}
 			};
 

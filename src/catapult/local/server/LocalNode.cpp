@@ -133,10 +133,12 @@ namespace catapult { namespace local {
 					}
 				}
 
+				const auto& config = pConfigHolder->Config(Height(0));
+				m_pBootstrapper->validateConfig(config);
+
 				/// Load non system plugins
 				CATAPULT_LOG(debug) << "registering addon plugins";
-				const auto& networkConfig = pConfigHolder->Config(Height(0)).Network;
-				auto addonPlugins = LoadConfigurablePlugins(*m_pBootstrapper, networkConfig);
+				auto addonPlugins = LoadConfigurablePlugins(*m_pBootstrapper, config.Network);
 				m_pluginModules.insert(m_pluginModules.cend(), addonPlugins.begin(), addonPlugins.end());
 
 				/// We can now create the cache with all available plugins.
@@ -153,7 +155,7 @@ namespace catapult { namespace local {
 				/// Finally we can build and run the plugin initializers to manipulate the config.
 
 				auto initializers = m_pluginManager.createPluginInitializer();
-				initializers(const_cast<model::NetworkConfiguration&>(networkConfig));
+				initializers(const_cast<model::NetworkConfiguration&>(config.Network));
 				pConfigHolder->SetPluginInitializer(std::move(initializers));
 
 				CATAPULT_LOG(debug) << "registering counters";

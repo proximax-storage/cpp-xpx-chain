@@ -19,7 +19,7 @@ namespace catapult { namespace model {
 		using TransactionType = AddDbrbProcessTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_AddDbrbProcess, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_AddDbrbProcess, 2)
 
 	public:
 		uint16_t HarvesterKeysCount;
