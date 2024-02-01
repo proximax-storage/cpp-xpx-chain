@@ -107,6 +107,7 @@ namespace catapult { namespace local {
 				initSupportedEntities = std::make_unique<const config::SupportedEntityVersions>(std::get<1>(bundleConfig));
 				if(isFirstBoot) {
 					/// We set base config as the one in nemesis block.
+					CATAPULT_LOG(debug) << "no state found... assuming first boot";
 					initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(std::get<0>(bundleConfig));
 				}
 				else {
@@ -114,9 +115,11 @@ namespace catapult { namespace local {
 					/// We must retrieve the configuration from the active config file if available
 					/// At this point the configurations for the plugins are still uninitialized
 					if(extensions::HasActiveNetworkConfig(stateDir)) {
+						CATAPULT_LOG(debug) << "network configuration available, loading from stored state...";
 						auto config = extensions::LoadActiveNetworkConfig(stateDir, m_pluginManager.immutableConfig());
 						initNetworkConfig = std::make_unique<const model::NetworkConfiguration>(config);
 					} else {
+						CATAPULT_LOG(debug) << "network configuration unavailable, loading from resources...";
 						/// Not first boot but no config was saved yet, so we will load the file from resources folder. This happens when first transitioning to this feature, but booting from an incomplete snapshot.
 						initNetworkConfig = std::make_unique<model::NetworkConfiguration>(config::LoadIniConfiguration<model::NetworkConfiguration>(boost::filesystem::path(m_pBootstrapper->resourcesPath()) / config::Qualify("network"), m_pluginManager.immutableConfig()));
 					}

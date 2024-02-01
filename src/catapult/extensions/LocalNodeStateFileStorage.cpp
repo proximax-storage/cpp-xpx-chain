@@ -81,15 +81,19 @@ namespace catapult { namespace extensions {
 			// 1. load cache data
 			utils::StackLogger stopwatch("load state", utils::LogLevel::Warning);
 			for (const auto& pStorage : cache.storages()) {
-				auto inputStream = OpenInputStream(directory, GetStorageFilename(*pStorage));
+				auto storageName = GetStorageFilename(*pStorage);
+				auto inputStream = OpenInputStream(directory, storageName);
 				pStorage->loadAll(inputStream, Default_Loader_Batch_Size);
+				CATAPULT_LOG(debug) << "loading cache storage: " + storageName;
 			}
 
 			// 2. load supplemental data
 			Height chainHeight;
 			{
+				CATAPULT_LOG(debug) << "loading supplemental data state";
 				auto inputStream = OpenInputStream(directory, Supplemental_Data_Filename);
 				cache::LoadSupplementalData(inputStream, supplementalData, chainHeight);
+				CATAPULT_LOG(debug) << "loaded supplemental data state";
 			}
 
 			// 3. commit changes
@@ -121,11 +125,13 @@ namespace catapult { namespace extensions {
 		if (LoadStateFromDirectory(directory, stateRef.Cache, supplementalData)) {
 			stateRef.State = supplementalData.State;
 			stateRef.Score += supplementalData.ChainScore;
+			CATAPULT_LOG(debug) << "sucessfully loaded state from directory";
 		} else {
 			auto cacheDelta = stateRef.Cache.createDelta();
 			NemesisBlockLoader loader(cacheDelta, pluginManager, pluginManager.createObserver());
 			loader.executeAndCommit(stateRef, StateHashVerification::Enabled);
 			stateRef.Score += model::ChainScore(1); // set chain score to 1 after processing nemesis
+			CATAPULT_LOG(debug) << "no state. loaded nemesis.";
 		}
 
 		StateHeights heights;
