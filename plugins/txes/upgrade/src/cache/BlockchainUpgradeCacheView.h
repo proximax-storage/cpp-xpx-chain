@@ -37,7 +37,16 @@ namespace catapult { namespace cache {
 				, BlockchainUpgradeCacheViewMixins::Iteration(blockchainUpgradeSets.Primary)
 				, BlockchainUpgradeCacheViewMixins::ConstAccessor(blockchainUpgradeSets.Primary)
 				, BlockchainUpgradeCacheViewMixins::PatriciaTreeView(blockchainUpgradeSets.PatriciaTree.get())
+				, m_blockchainUpgradeEntries(blockchainUpgradeSets.Primary)
 		{}
+
+	public:
+		std::vector<state::BlockchainUpgradeEntry> getAll() const {
+			return m_blockchainUpgradeEntries.getAll();
+		}
+
+	private:
+		const BlockchainUpgradeCacheTypes::PrimaryTypes::BaseSetType& m_blockchainUpgradeEntries;
 	};
 
 	/// View on top of the catapult upgrade cache.

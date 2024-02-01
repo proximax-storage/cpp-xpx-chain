@@ -55,8 +55,6 @@ namespace catapult { namespace deltaset {
 		using StorageSetType = TStorageSet;
 		using MemorySetType = TMemorySet;
 
-		using value_type = typename MemorySetType::value_type;
-
 	private:
 		// use flags to support similar storage and memory sets with same iterator
 		using StorageFlag = std::integral_constant<ConditionalContainerMode, ConditionalContainerMode::Storage>;
@@ -174,25 +172,18 @@ namespace catapult { namespace deltaset {
 			}
 		}
 
-		/// Searches for \a key or previous key in this set or map.
-		ConditionalIterator findLowerOrEqual2(const typename TKeyTraits::KeyType& key) const {
+		std::vector<typename TKeyTraits::ValueType> getAll() const {
 			if (m_pContainer1) {
-				return ConditionalIterator(m_pContainer1->findLowerOrEqual(key), StorageFlag());
+				return m_pContainer1->getAll();
 			} else {
-				auto iter = m_pContainer2->lower_bound(key);
-				// This allows supporting both, sets and maps
-				//				const auto& iterKey = reinterpret_cast<const typename TKeyTraits::KeyType&>(*iter);
-				if (iter != m_pContainer2->end() && iter->first != key) {
-					iter = (iter == m_pContainer2->begin()) ? m_pContainer2->end() : --iter;
-				} else if (iter == m_pContainer2->end()) {
-					if (!m_pContainer2->empty()) {
-						--iter;
-					}
-				}
+				std::vector<typename TKeyTraits::ValueType> result;
+				for (const auto& element : *m_pContainer2)
+					result.template emplace_back(TKeyTraits::ToValue(element));
 
-				return ConditionalIterator(std::move(iter), MemoryFlag());
+				return result;
 			}
 		}
+
 	public:
 		/// Applies all changes in \a deltas to the underlying container.
 		void update(const DeltaElements<MemorySetType>& deltas) {

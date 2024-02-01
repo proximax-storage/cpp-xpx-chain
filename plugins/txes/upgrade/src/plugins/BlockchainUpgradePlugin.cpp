@@ -6,8 +6,7 @@
 
 #include "catapult/plugins/CacheHandlers.h"
 #include "BlockchainUpgradePlugin.h"
-#include "src/cache/BlockchainUpgradeCache.h"
-#include "src/cache/BlockchainUpgradeCacheStorage.h"
+#include "src/cache/BlockchainUpgradeCacheSubCachePlugin.h"
 #include "src/config/BlockchainUpgradeConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/BlockchainUpgradeTransactionPlugin.h"
@@ -22,8 +21,7 @@ namespace catapult { namespace plugins {
 
 		manager.addTransactionSupport(CreateBlockchainUpgradeTransactionPlugin());
 
-		manager.addCacheSupport<cache::BlockchainUpgradeCacheStorage>(
-			std::make_unique<cache::BlockchainUpgradeCache>(manager.cacheConfig(cache::BlockchainUpgradeCache::Name)));
+		manager.addCacheSupport(std::make_unique<cache::BlockchainUpgradeCacheSubCachePlugin>(manager.cacheConfig(cache::BlockchainUpgradeCache::Name), manager.configHolder()));
 
 		using CacheHandlersBlockchainUpgrade = CacheHandlers<cache::BlockchainUpgradeCacheDescriptor>;
 		CacheHandlersBlockchainUpgrade::Register<model::FacilityCode::BlockchainUpgrade>(manager);

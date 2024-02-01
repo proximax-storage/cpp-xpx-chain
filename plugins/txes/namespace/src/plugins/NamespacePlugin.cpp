@@ -163,11 +163,11 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateRootNamespaceMaxChildrenValidator());
 			});
 
-			manager.addObserverHook([](auto& builder) {
+			manager.addObserverHook([pConfigHolder](auto& builder) {
 				auto rentalFeeReceiptType = model::Receipt_Type_Namespace_Rental_Fee;
 				auto expiryReceiptType = model::Receipt_Type_Namespace_Expired;
 				builder
-					.add(observers::CreateRootNamespaceObserver())
+					.add(observers::CreateRootNamespaceObserver(pConfigHolder))
 					.add(observers::CreateChildNamespaceObserver())
 					.add(observers::CreateRentalFeeObserver<model::NamespaceRentalFeeNotification<1>>("Namespace", rentalFeeReceiptType))
 					.add(observers::CreateCacheBlockTouchObserver<cache::NamespaceCache>("Namespace", expiryReceiptType))

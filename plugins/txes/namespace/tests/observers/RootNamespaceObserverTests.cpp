@@ -28,7 +28,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS RootNamespaceObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(RootNamespace,)
+	DEFINE_COMMON_OBSERVER_TESTS(RootNamespace, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Grace_Period_Duration = 7u;
@@ -46,7 +46,7 @@ namespace catapult { namespace observers {
 				TSeedCacheFunc seedCache,
 				TCheckCacheFunc checkCache) {
 			// Arrange:
-			auto pObserver = CreateRootNamespaceObserver();
+			auto pObserver = CreateRootNamespaceObserver(config::CreateMockConfigurationHolder());
 
 			// - seed the cache
 			auto& namespaceCacheDelta = context.cache().sub<cache::NamespaceCache>();
