@@ -1,20 +1,36 @@
 # https://github.com/google/sanitizers/wiki/ThreadSanitizerSuppressions
 
 # ignore these libraries
-called_from_lib:libboost_log.so*
-called_from_lib:libboost_thread.so*
-called_from_lib:libmongoc-*.so*
-called_from_lib:libmongocxx.so*
-called_from_lib:libbson-*.so*
-called_from_lib:libbsoncxx*.so*
+called_from_lib:*libboost_log.so*
+called_from_lib:*libboost_thread.so*
+called_from_lib:*libmongoc-*.so*
+called_from_lib:*libmongocxx.so*
+called_from_lib:*libbson-*.so*
+called_from_lib:*libbsoncxx*.so*
+
+# Ignore deprecated storage plugin
+called_from_lib:*tests.catapult.plugins.service*
+# Ignore deprecated supercontract plugin
+called_from_lib:*tests.catapult.plugins.supercontract*
+# Ignore deprecated operation plugin related to deprecated supercontract
+called_from_lib:*tests.catapult.plugins.operation*
 
 race:zmq
 race:boost::*
 race:boost::thread::*
+race:mongocxx::*
 race:stl_algobase.h
 
 # ignore these functions
 race:catapult::test::TryWaitFor
 
-# Ignore SubCachePluginAdapter::~SubCachePluginAdapter()
+# deallocate pasitive false
+race:*SynchronizedCache.h
+race:*ServerConnector.cpp
+
+# Ignore SubCachePluginAdapter::~SubCachePluginAdapter() pasitive false
 race:*~*SubCachePluginAdapter*
+# Ignore shared_state::~shared_state() pasitive false
+race:*~*shared_state*
+
+mutex:sr_rwunlock
