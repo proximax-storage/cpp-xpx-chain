@@ -108,10 +108,8 @@ namespace catapult { namespace dbrb {
 			if (!pWriters)
 				return;
 
-			BufferType unsentMessages;
 			net::PeerConnectResult peerConnectResult;
 			for (const auto& pair : buffer) {
-				std::set<ProcessId> skippedNodes;
 				const auto& pPacket = pair.first;
 				const auto& recipients = pair.second;
 				std::vector<thread::future<bool>> completionStatusFutures;
@@ -137,9 +135,7 @@ namespace catapult { namespace dbrb {
 							pPromise->set_value(true);
 						});
 					} else {
-						CATAPULT_LOG(debug) << "=====================================> [MESSAGE SENDER] NOT FOUND packet io to send " << *pPacket << " to " << recipient;
-						if (pPacket->Type != ionet::PacketType::Dbrb_Push_Nodes)
-							skippedNodes.emplace(recipient);
+						CATAPULT_LOG(trace) << "[MESSAGE SENDER] NOT FOUND packet io to send " << *pPacket << " to " << recipient;
 					}
 				}
 
@@ -148,9 +144,6 @@ namespace catapult { namespace dbrb {
 						return thread::get_all_ignore_exceptional(completedFutures.get());
 					}).get();
 				}
-
-				if (!skippedNodes.empty())
-					unsentMessages.emplace_back(pPacket, skippedNodes);
 			}
 
 			buffer.clear();
@@ -163,11 +156,6 @@ namespace catapult { namespace dbrb {
 						m_buffer.clear();
 					}
 					m_clearQueue = false;
-				} else {
-					unsentMessages.insert(unsentMessages.end(), std::make_move_iterator(m_buffer.begin()), std::make_move_iterator(m_buffer.end()));
-					m_buffer.clear();
-					std::swap(unsentMessages, m_buffer);
-
 				}
 			}
 		}
