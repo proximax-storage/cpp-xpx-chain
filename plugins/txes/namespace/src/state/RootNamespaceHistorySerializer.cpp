@@ -163,7 +163,7 @@ namespace catapult { namespace state {
 			input.read(owner);
 			auto lifetimeStart = io::Read<Height>(input);
 			auto lifetimeEnd = io::Read<Height>(input);
-			history.push_back(owner, NamespaceLifetime(lifetimeStart, lifetimeEnd));
+			history.push_back(owner, NamespaceLifetime(lifetimeStart, lifetimeEnd), false);
 
 			auto alias = LoadAlias(input, version);
 			history.back().setAlias(history.id(), alias);

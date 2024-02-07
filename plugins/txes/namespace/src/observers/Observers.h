@@ -42,7 +42,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by root namespace notifications, including:
 	/// - creation of namespaces
-	DECLARE_OBSERVER(RootNamespace, model::RootNamespaceNotification<1>)();
+	DECLARE_OBSERVER(RootNamespace, model::RootNamespaceNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// Observes changes triggered by child namespace notifications, including:
 	/// - creation of namespaces

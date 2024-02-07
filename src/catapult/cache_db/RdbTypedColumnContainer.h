@@ -133,6 +133,18 @@ namespace catapult { namespace cache {
 			return iter;
 		}
 
+		/// Gets all elements.
+		std::vector<ValueType> getAll() const {
+			std::vector<std::string> values;
+			TContainer::getAll(values);
+
+			std::vector<ValueType> result;
+			for (const auto& value : values)
+				result.template emplace_back(TDescriptor::Serializer::DeserializeValue({ reinterpret_cast<const uint8_t*>(value.data()), value.size() }));
+
+			return result;
+		}
+
 		/// Prunes elements with keys smaller than \a key. Returns number of pruned elements.
 		size_t prune(const KeyType& key) {
 			return TContainer::prune(TDescriptor::Serializer::KeyToBoundary(key));
