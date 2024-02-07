@@ -54,9 +54,9 @@ namespace catapult { namespace observers {
 				model::TotalStakedReceipt totalStakedReceipt(model::Receipt_Type_Total_Staked, Amount(totalStakedRefData));
 				context.StatementBuilder().addBlockchainStateReceipt(totalStakedReceipt);
 				//Clear aged records
-				if (context.Height.unwrap() - config.MaxRollbackBlocks <= 0)
+				if (context.Height.unwrap() - (config.MaxRollbackBlocks*2) <= 0)
 					return;
-				auto clearHeight = context.Height-Height(config.MaxRollbackBlocks);
+				auto clearHeight = context.Height-Height(config.MaxRollbackBlocks*2);
 				auto heightRecord = lockFundCache.find(clearHeight);
 				auto agedRecord = heightRecord.tryGet();
 				if(agedRecord)
@@ -122,6 +122,7 @@ namespace catapult { namespace observers {
 			if(context.HasChange(model::StateChangeFlags::Blockchain_Init) || (context.HasChange(model::StateChangeFlags::Network_Config_Upgraded) && !context.Config.PreviousConfiguration->Network.GetPluginConfiguration<config::LockFundConfiguration>().Enabled))
 			{
 				PluginSetup(context);
+				return;
 			}
 
 			ProcessLockfundUpdate(notification, context);
