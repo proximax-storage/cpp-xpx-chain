@@ -23,7 +23,7 @@ namespace catapult { namespace config {
                                     {"port", "5000"},
                                     {"transactionTimeout", "1s"},
                                     {"storageDirectory", "/tmp/storage"},
-                                    {"sandboxDirectory", "/tmp/storage/sandbox"},
+                                    {"logOptions", "LogOptions"},
                                     {"useTcpSocket", "true"},
                             }
                         }
@@ -49,7 +49,7 @@ namespace catapult { namespace config {
                 EXPECT_EQ("", config.Port);
                 EXPECT_EQ(utils::TimeSpan::FromHours(0), config.TransactionTimeout);
                 EXPECT_EQ("", config.StorageDirectory);
-                EXPECT_EQ("", config.SandboxDirectory);
+                EXPECT_EQ("", config.LogOptions);
                 EXPECT_EQ(false, config.UseTcpSocket);
             }
 
@@ -60,8 +60,8 @@ namespace catapult { namespace config {
                 EXPECT_EQ("5000", config.Port);
                 EXPECT_EQ(utils::TimeSpan::FromSeconds(1), config.TransactionTimeout);
                 EXPECT_EQ("/tmp/storage", config.StorageDirectory);
-                EXPECT_EQ("/tmp/storage/sandbox", config.SandboxDirectory);
                 EXPECT_EQ(true, config.UseTcpSocket);
+                EXPECT_EQ("LogOptions", LogOptions);
             }
         };
     }
