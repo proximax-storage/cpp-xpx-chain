@@ -35,6 +35,15 @@ namespace catapult { namespace utils {
 		value = bag.get<T>(ConfigurationKey(section, GetIniPropertyName(cppVariableName).c_str()));
 	}
 
+	template<typename T>
+	void LoadIniPropertyCouldBeAbsent(const ConfigurationBag& bag, const char* section, const char* cppVariableName, T& value) {
+		try {
+			value = bag.get<T>(ConfigurationKey(section, GetIniPropertyName(cppVariableName).c_str()));
+		} catch (...) {
+			value = "";
+		}
+	}
+
 	/// If an ini property exists in \a bag loads it into \a value given a section name (\a section) and a cpp variable name
 	/// (\a cppVariableName) and returns \c true. Otherwise returns \c false, \a value remains unchanged.
 	template<typename T>
