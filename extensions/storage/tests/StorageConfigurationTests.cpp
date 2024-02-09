@@ -61,7 +61,7 @@ namespace catapult { namespace config {
                 EXPECT_EQ(utils::TimeSpan::FromSeconds(1), config.TransactionTimeout);
                 EXPECT_EQ("/tmp/storage", config.StorageDirectory);
                 EXPECT_EQ(true, config.UseTcpSocket);
-                EXPECT_EQ("LogOptions", LogOptions);
+                EXPECT_EQ("LogOptions", config.LogOptions);
             }
         };
     }

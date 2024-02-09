@@ -11,6 +11,7 @@
 namespace catapult { namespace storage {
 
 #define LOAD_PROPERTY(SECTION, NAME) utils::LoadIniProperty(bag, SECTION, #NAME, config.NAME)
+#define LOAD_PROPERTY_OPTIONAL(SECTION, NAME) utils::LoadIniPropertyCouldBeAbsent(bag, SECTION, #NAME, config.NAME)
 
 	StorageConfiguration StorageConfiguration::Uninitialized() {
 		return StorageConfiguration();
@@ -20,6 +21,7 @@ namespace catapult { namespace storage {
 		StorageConfiguration config;
 
 #define LOAD_DB_PROPERTY(NAME) LOAD_PROPERTY("replicator", NAME)
+#define LOAD_DB_PROPERTY_OPTIONAL(NAME) LOAD_PROPERTY_OPTIONAL("replicator", NAME)
 
 		LOAD_DB_PROPERTY(Key);
 		LOAD_DB_PROPERTY(Host);
@@ -27,7 +29,7 @@ namespace catapult { namespace storage {
 		LOAD_DB_PROPERTY(TransactionTimeout);
 		LOAD_DB_PROPERTY(StorageDirectory);
 		LOAD_DB_PROPERTY(UseTcpSocket);
-		LOAD_DB_PROPERTY(LogOptions);
+		LOAD_DB_PROPERTY_OPTIONAL(LogOptions);
 		LOAD_DB_PROPERTY(UseRpcReplicator);
 		LOAD_DB_PROPERTY(RpcHost);
 		LOAD_DB_PROPERTY(RpcPort);
