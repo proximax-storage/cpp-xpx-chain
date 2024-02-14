@@ -273,7 +273,7 @@ namespace catapult { namespace fastfinality {
 						pDbrbPool,
 						pWeightedVotingFsmPool](const std::shared_ptr<thread::IoThreadPool>&) {
 					pTransactionSender->init(&keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local), pUnlockedAccounts);
-					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(config::ToLocalNode(config), keyPair, state.nodes(), pWritersWeak, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher());
+					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(config::ToLocalNode(config), keyPair, state.nodes(), pWritersWeak, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher(), dbrbConfig);
 					return std::make_shared<WeightedVotingFsm>(pWeightedVotingFsmPool, config, pDbrbProcess, state.pluginManager());
 				});
 
@@ -368,7 +368,8 @@ namespace catapult { namespace fastfinality {
 					CreateRemoteNodeStateRetriever(pFsmShared, pConfigHolder, lastBlockElementSupplier),
 					pConfigHolder,
 					lastBlockElementSupplier,
-					importanceGetter);
+					importanceGetter,
+					m_dbrbConfig);
 				actions.ResetLocalChain = CreateDefaultResetLocalChainAction();
 				actions.DownloadBlocks = CreateDefaultDownloadBlocksAction(pFsmShared, state, blockRangeConsumer);
 				actions.DetectStage = CreateDefaultDetectStageAction(pFsmShared, state.timeSupplier(), lastBlockElementSupplier, state);

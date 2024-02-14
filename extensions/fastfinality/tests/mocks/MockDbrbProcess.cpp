@@ -18,7 +18,8 @@ namespace catapult { namespace mocks {
 		const ionet::NodeContainer& nodeContainer,
 		const crypto::KeyPair& keyPair,
 		const std::shared_ptr<thread::IoThreadPool>& pPool,
-		const dbrb::DbrbViewFetcher& dbrbViewFetcher)
+		const dbrb::DbrbViewFetcher& dbrbViewFetcher,
+		const dbrb::DbrbConfiguration& dbrbConfig)
 			: DbrbProcess(
 				ionet::Node{ processId, ionet::NodeEndpoint(), ionet::NodeMetadata() },
 				keyPair,
@@ -26,7 +27,8 @@ namespace catapult { namespace mocks {
 				std::move(pWriters),
 				pPool,
 				nullptr,
-				dbrbViewFetcher) {
+				dbrbViewFetcher,
+				dbrbConfig) {
 		m_fakeDissemination = fakeDissemination;
 		setDeliverCallback([this](const dbrb::Payload& payload) {
 			const auto payloadHash = dbrb::CalculatePayloadHash(payload);

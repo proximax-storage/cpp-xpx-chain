@@ -70,8 +70,9 @@ namespace catapult { namespace fastfinality {
 			const RemoteNodeStateRetriever& retriever,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
-			const std::function<uint64_t (const Key&)>& importanceGetter) {
-		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter]() {
+			const std::function<uint64_t (const Key&)>& importanceGetter,
+			const dbrb::DbrbConfiguration& dbrbConfig) {
+		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, dbrbConfig]() {
 			TRY_GET_FSM()
 
 			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
@@ -127,6 +128,14 @@ namespace catapult { namespace fastfinality {
 
 				chainSyncData.NodeIdentityKeys = std::move(importanceKeys.begin()->second);
 				pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
+
+			} else if (!dbrbConfig.IsDbrbProcess) {
+
+				DelayAction(pFsmWeak, pFsmShared->timer(), 4 * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
+					TRY_GET_FSM()
+
+					pFsmShared->processEvent(StartLocalChainCheck{});
+				});
 
 			} else {
 

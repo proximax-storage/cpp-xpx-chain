@@ -51,7 +51,8 @@ namespace catapult { namespace fastfinality {
 					std::make_shared<mocks::MockPacketWriters>(),
 					test::CreateStartedIoThreadPool(1),
 					nullptr,
-					mocks::MockDbrbViewFetcher())
+					mocks::MockDbrbViewFetcher(),
+					dbrb::DbrbConfiguration::Uninitialized())
 			{}
 
 			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) override { return true; }
@@ -97,6 +98,8 @@ namespace catapult { namespace fastfinality {
 				actions.CheckLocalChain = [pThis = shared_from_this()] {
 					if (pThis->m_counter == 0) {
 						pThis->m_counter++;
+						auto dbrbConfig = dbrb::DbrbConfiguration::Uninitialized();
+						const_cast<dbrb::DbrbConfiguration&>(dbrbConfig).IsDbrbProcess = true;
 						auto defaultCheckLocalChainAction = fastfinality::CreateDefaultCheckLocalChainAction(
 							pThis->m_pFsm,
 							[pThis]() -> std::vector<RemoteNodeState> {
@@ -105,7 +108,8 @@ namespace catapult { namespace fastfinality {
 							},
 							pThis->m_pConfigHolder,
 							[pThis] { return pThis->m_pLastBlockElement; },
-							[pThis](const Key& key) -> uint64_t { return pThis->m_importances[key]; });
+							[pThis](const Key& key) -> uint64_t { return pThis->m_importances[key]; },
+							dbrbConfig);
 
 						defaultCheckLocalChainAction();
 					} else {

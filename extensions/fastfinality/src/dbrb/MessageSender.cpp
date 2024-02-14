@@ -24,13 +24,14 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	MessageSender::MessageSender(ionet::Node thisNode, std::weak_ptr<net::PacketWriters> pWriters, const ionet::NodeContainer& nodeContainer)
+	MessageSender::MessageSender(ionet::Node thisNode, std::weak_ptr<net::PacketWriters> pWriters, const ionet::NodeContainer& nodeContainer, bool broadcastThisNode)
 		: m_pWriters(std::move(pWriters))
 		, m_running(true)
 		, m_clearQueue(false)
 		, m_workerThread(&MessageSender::workerThreadFunc, this)
 		, m_thisNode(std::move(thisNode))
 		, m_nodeContainer(nodeContainer)
+		, m_broadcastThisNode(broadcastThisNode)
 	{}
 
 	MessageSender::~MessageSender() {
@@ -229,7 +230,8 @@ namespace catapult { namespace dbrb {
 							pThis->m_nodes[node.identityKey()] = node;
 						}
 						CATAPULT_LOG(debug) << "[MESSAGE SENDER] Added node " << dbrbNode << " " << dbrbNode.identityKey();
-						pThis->broadcastNodes({ pThis->m_thisNode });
+						if (pThis->m_broadcastThisNode)
+							pThis->broadcastNodes({ pThis->m_thisNode });
 					}
 
 					{
