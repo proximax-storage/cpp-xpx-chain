@@ -415,6 +415,8 @@ namespace catapult { namespace fastfinality {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
+			committeeData.setUnexpectedProposedBlockHeight(false);
+			committeeData.setUnexpectedConfirmedBlockHeight(false);
 			auto round = committeeData.committeeRound();
 			auto pConfigHolder = state.pluginManager().configHolder();
 			bool isInDbrbSystem = pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight(), true);
