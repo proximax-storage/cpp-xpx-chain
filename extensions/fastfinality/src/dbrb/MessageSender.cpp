@@ -183,10 +183,10 @@ namespace catapult { namespace dbrb {
 		nodes = m_nodeContainer.view().getNodes(ids);
 		nodes.erase(std::remove_if(nodes.begin(), nodes.end(), [](const auto& node) { return node.endpoint().Host.empty(); }), nodes.end());
 		CATAPULT_LOG(debug) << "[MESSAGE SENDER] got " << nodes.size() << " discovered nodes";
-		if (!nodes.empty())
+		if (!nodes.empty()) {
 			addNodes(nodes);
-
-		broadcastNodes(nodes);
+			broadcastNodes(nodes);
+		}
 	}
 
 	void MessageSender::addNodes(const std::vector<ionet::Node>& nodes) {
@@ -242,6 +242,9 @@ namespace catapult { namespace dbrb {
 	}
 
 	void MessageSender::broadcastNodes(const std::vector<ionet::Node>& nodes) {
+		if (nodes.empty())
+			return;
+
 		auto nodeCount = utils::checked_cast<size_t, uint16_t>(nodes.size());
 		std::vector<model::UniqueEntityPtr<ionet::NetworkNode>> networkNodes;
 		networkNodes.reserve(nodeCount);
