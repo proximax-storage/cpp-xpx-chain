@@ -6,6 +6,8 @@
 
 #include "TransactionFeeCalculator.h"
 #include "catapult/model/Transaction.h"
+#include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
+#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 
 namespace catapult::model {
 
@@ -19,7 +21,13 @@ namespace catapult::model {
 			const Transaction& transaction,
 			uint32_t feeInterest,
 			uint32_t feeInterestDenominator) const {
-		auto fee = Amount(feeMultiplier.unwrap() * transaction.Size * feeInterest / feeInterestDenominator);
+
+        auto size = transaction.Size;
+        if (transaction.Type == model::Entity_Type_Aggregate_Bonded) {
+            size -= reinterpret_cast<const model::AggregateTransaction&>(transaction).CosignaturesCount() * sizeof(model::Cosignature);
+        }
+
+		auto fee = Amount(feeMultiplier.unwrap() * size * feeInterest / feeInterestDenominator);
 		if (isTransactionFeeUnlimited(transaction.Type, transaction.EntityVersion())) {
 			return std::min(transaction.MaxFee, fee);
 		}

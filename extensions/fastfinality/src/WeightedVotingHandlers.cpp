@@ -100,16 +100,23 @@ namespace catapult { namespace fastfinality {
 				const model::BlockElementSupplier& lastBlockElementSupplier,
 				const std::shared_ptr<thread::IoThreadPool>& pValidatorPool) {
 			auto blockConsumers = CreateBlockConsumers(state, lastBlockElementSupplier, pValidatorPool);
-
 			auto name = (isProposedBlock ? "proposed" : "confirmed");
-			std::vector<model::BlockElement> blocks{ model::BlockElement(block) };
-			for (const auto& blockConsumer : blockConsumers) {
-				auto result = blockConsumer(blocks);
-				if (disruptor::CompletionStatus::Aborted == result.CompletionStatus) {
-					auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
-					CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult)) << name << " block validation failed due to " << validationResult;
-					return false;
+			try {
+				std::vector<model::BlockElement> blocks{ model::BlockElement(block) };
+				for (const auto& blockConsumer : blockConsumers) {
+					auto result = blockConsumer(blocks);
+					if (disruptor::CompletionStatus::Aborted == result.CompletionStatus) {
+						auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
+						CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult)) << name << " block validation failed due to " << validationResult;
+						return false;
+					}
 				}
+			} catch (std::exception const& error) {
+				CATAPULT_LOG(warning) << "error validating " << name << " block: " << error.what();
+				return false;
+			} catch (...) {
+				CATAPULT_LOG(warning) << "error validating " << name << " block: unknown error";
+				return false;
 			}
 
 			return true;

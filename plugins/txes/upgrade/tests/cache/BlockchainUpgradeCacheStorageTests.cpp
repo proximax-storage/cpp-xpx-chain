@@ -6,6 +6,7 @@
 
 #include "src/cache/BlockchainUpgradeCacheStorage.h"
 #include "src/cache/BlockchainUpgradeCache.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -17,7 +18,7 @@ namespace catapult { namespace cache {
 		state::BlockchainUpgradeEntry originalEntry(Height{1}, BlockchainVersion{1});
 
 		// Act:
-		BlockchainUpgradeCache cache(CacheConfiguration{});
+		BlockchainUpgradeCache cache(CacheConfiguration{}, config::CreateMockConfigurationHolder());
 		auto delta = cache.createDelta(Height{1});
 		BlockchainUpgradeCacheStorage::LoadInto(originalEntry, *delta);
 		cache.commit();

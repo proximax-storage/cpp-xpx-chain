@@ -28,7 +28,8 @@ namespace catapult { namespace mocks {
 				const ionet::NodeContainer& nodeContainer = {},
 				const crypto::KeyPair& keyPair = crypto::KeyPair::FromPrivate({}),
 				const std::shared_ptr<thread::IoThreadPool>& pPool = test::CreateStartedIoThreadPool(1),
-				const dbrb::DbrbViewFetcher& dbrbViewFetcher = MockDbrbViewFetcher());
+				const dbrb::DbrbViewFetcher& dbrbViewFetcher = MockDbrbViewFetcher(),
+				const dbrb::DbrbConfiguration& dbrbConfig = dbrb::DbrbConfiguration::Uninitialized());
 
 		void setCurrentView(const dbrb::View& view);
 

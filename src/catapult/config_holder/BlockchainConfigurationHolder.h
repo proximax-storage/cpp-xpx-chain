@@ -62,11 +62,19 @@ namespace catapult { namespace config {
 		/// Must be used with a locked m_mutex
 		const BlockchainConfiguration* LastConfigOrNull(const Height& height) const;
 
+	public:
+		void InsertBlockchainVersion(const Height& height, const BlockchainVersion& version);
+		void RemoveBlockchainVersion(const Height& height);
+		BlockchainVersion Version(const Height& height);
+
 	protected:
 		std::map<Height, BlockchainConfiguration> m_configs;
 		cache::CatapultCache* m_pCache;
 		PluginInitializer m_pluginInitializer;
 		model::InflationCalculator m_InflationCalculator;
 		mutable std::shared_mutex m_mutex;
+
+		std::map<Height, BlockchainVersion> m_versions;
+		mutable std::shared_mutex m_versionMutex;
 	};
 }}

@@ -24,13 +24,14 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	MessageSender::MessageSender(ionet::Node thisNode, std::weak_ptr<net::PacketWriters> pWriters, const ionet::NodeContainer& nodeContainer)
+	MessageSender::MessageSender(ionet::Node thisNode, std::weak_ptr<net::PacketWriters> pWriters, const ionet::NodeContainer& nodeContainer, bool broadcastThisNode)
 		: m_pWriters(std::move(pWriters))
 		, m_running(true)
 		, m_clearQueue(false)
 		, m_workerThread(&MessageSender::workerThreadFunc, this)
 		, m_thisNode(std::move(thisNode))
 		, m_nodeContainer(nodeContainer)
+		, m_broadcastThisNode(broadcastThisNode)
 	{}
 
 	MessageSender::~MessageSender() {
@@ -108,10 +109,8 @@ namespace catapult { namespace dbrb {
 			if (!pWriters)
 				return;
 
-			BufferType unsentMessages;
 			net::PeerConnectResult peerConnectResult;
 			for (const auto& pair : buffer) {
-				std::set<ProcessId> skippedNodes;
 				const auto& pPacket = pair.first;
 				const auto& recipients = pair.second;
 				std::vector<thread::future<bool>> completionStatusFutures;
@@ -137,9 +136,7 @@ namespace catapult { namespace dbrb {
 							pPromise->set_value(true);
 						});
 					} else {
-						CATAPULT_LOG(debug) << "=====================================> [MESSAGE SENDER] NOT FOUND packet io to send " << *pPacket << " to " << recipient;
-						if (pPacket->Type != ionet::PacketType::Dbrb_Push_Nodes)
-							skippedNodes.emplace(recipient);
+						CATAPULT_LOG(trace) << "[MESSAGE SENDER] NOT FOUND packet io to send " << *pPacket << " to " << recipient;
 					}
 				}
 
@@ -148,9 +145,6 @@ namespace catapult { namespace dbrb {
 						return thread::get_all_ignore_exceptional(completedFutures.get());
 					}).get();
 				}
-
-				if (!skippedNodes.empty())
-					unsentMessages.emplace_back(pPacket, skippedNodes);
 			}
 
 			buffer.clear();
@@ -163,11 +157,6 @@ namespace catapult { namespace dbrb {
 						m_buffer.clear();
 					}
 					m_clearQueue = false;
-				} else {
-					unsentMessages.insert(unsentMessages.end(), std::make_move_iterator(m_buffer.begin()), std::make_move_iterator(m_buffer.end()));
-					m_buffer.clear();
-					std::swap(unsentMessages, m_buffer);
-
 				}
 			}
 		}
@@ -195,10 +184,10 @@ namespace catapult { namespace dbrb {
 		nodes = m_nodeContainer.view().getNodes(ids);
 		nodes.erase(std::remove_if(nodes.begin(), nodes.end(), [](const auto& node) { return node.endpoint().Host.empty(); }), nodes.end());
 		CATAPULT_LOG(debug) << "[MESSAGE SENDER] got " << nodes.size() << " discovered nodes";
-		if (!nodes.empty())
+		if (!nodes.empty()) {
 			addNodes(nodes);
-
-		broadcastNodes(nodes);
+			broadcastNodes(nodes);
+		}
 	}
 
 	void MessageSender::addNodes(const std::vector<ionet::Node>& nodes) {
@@ -241,7 +230,8 @@ namespace catapult { namespace dbrb {
 							pThis->m_nodes[node.identityKey()] = node;
 						}
 						CATAPULT_LOG(debug) << "[MESSAGE SENDER] Added node " << dbrbNode << " " << dbrbNode.identityKey();
-						pThis->broadcastNodes({ pThis->m_thisNode });
+						if (pThis->m_broadcastThisNode)
+							pThis->broadcastNodes({ pThis->m_thisNode });
 					}
 
 					{
@@ -254,6 +244,9 @@ namespace catapult { namespace dbrb {
 	}
 
 	void MessageSender::broadcastNodes(const std::vector<ionet::Node>& nodes) {
+		if (nodes.empty())
+			return;
+
 		auto nodeCount = utils::checked_cast<size_t, uint16_t>(nodes.size());
 		std::vector<model::UniqueEntityPtr<ionet::NetworkNode>> networkNodes;
 		networkNodes.reserve(nodeCount);

@@ -9,6 +9,7 @@
 #include "src/cache/DbrbViewCacheSubCachePlugin.h"
 #include "src/cache/DbrbViewFetcherImpl.h"
 #include "src/model/AddDbrbProcessTransaction.h"
+#include "src/model/RemoveDbrbProcessTransaction.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/AddDbrbProcessTransactionPlugin.h"
 #include "src/plugins/RemoveDbrbProcessTransactionPlugin.h"
@@ -42,7 +43,11 @@ namespace catapult { namespace plugins {
 		manager.setDbrbViewFetcher(pDbrbViewFetcher);
 
 		auto pTransactionFeeCalculator = manager.transactionFeeCalculator();
-		pTransactionFeeCalculator->addUnlimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, model::AddDbrbProcessTransaction::Current_Version);
+		for (auto version = 1u; version <= model::AddDbrbProcessTransaction::Current_Version; ++version)
+			pTransactionFeeCalculator->addUnlimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, version);
+		for (auto version = 1u; version <= model::RemoveDbrbProcessTransaction::Current_Version; ++version)
+			pTransactionFeeCalculator->addUnlimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, version);
+
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder

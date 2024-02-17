@@ -26,7 +26,7 @@ namespace catapult { namespace dbrb {
 
 	class MessageSender : public std::enable_shared_from_this<MessageSender> {
 	public:
-		explicit MessageSender(ionet::Node thisNode, std::weak_ptr<net::PacketWriters> pWriters, const ionet::NodeContainer& nodeContainer);
+		explicit MessageSender(ionet::Node thisNode, std::weak_ptr<net::PacketWriters> pWriters, const ionet::NodeContainer& nodeContainer, bool broadcastThisNode);
 		~MessageSender();
 
 		// Message sending
@@ -64,6 +64,7 @@ namespace catapult { namespace dbrb {
 
 		// Node discovery
 		ionet::Node m_thisNode;
+		bool m_broadcastThisNode;
 		const ionet::NodeContainer& m_nodeContainer;
 		std::map<ProcessId, ionet::Node> m_nodes;
 		std::unordered_set<ProcessId, utils::ArrayHasher<ProcessId>> m_connectionInProgress;

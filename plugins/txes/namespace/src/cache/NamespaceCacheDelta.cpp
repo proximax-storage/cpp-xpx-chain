@@ -40,6 +40,13 @@ namespace catapult { namespace cache {
 			for (const auto& pair : children)
 				namespaceById.remove(pair.first);
 		}
+
+		constexpr auto AliasFixVersion = catapult::BlockchainVersion{
+			uint64_t{1}	<< 48 |
+			uint64_t{2}	<< 32 |
+			uint64_t{0}	<< 16 |
+			uint64_t{0}
+		};
 	}
 
 	BasicNamespaceCacheDelta::BasicNamespaceCacheDelta(
@@ -67,6 +74,7 @@ namespace catapult { namespace cache {
 		auto nsLifetimeWithGracePeriod = state::NamespaceLifetime(ns.lifetime().Start, ns.lifetime().End, gracePeriodDuration);
 		AddIdentifierWithGroup(*m_pRootNamespaceIdsByExpiryHeight, nsLifetimeWithGracePeriod.GracePeriodEnd, ns.id());
 
+		bool setAliasOnRenew = (m_pConfigHolder->Version(height()) >= AliasFixVersion);
 		auto historyIter = m_pHistoryById->find(ns.id());
 		auto* pHistory = historyIter.get();
 		if (pHistory) {
@@ -79,13 +87,13 @@ namespace catapult { namespace cache {
 				incrementDeepSize(activeChildren.size());
 			}
 
-			pHistory->push_back(ns.owner(), nsLifetimeWithGracePeriod);
+			pHistory->push_back(ns.owner(), nsLifetimeWithGracePeriod, setAliasOnRenew);
 			incrementDeepSize();
 			return;
 		}
 
 		state::RootNamespaceHistory history(ns.id());
-		history.push_back(ns.owner(), nsLifetimeWithGracePeriod);
+		history.push_back(ns.owner(), nsLifetimeWithGracePeriod, setAliasOnRenew);
 		m_pHistoryById->insert(std::move(history));
 		incrementActiveSize();
 		incrementDeepSize();

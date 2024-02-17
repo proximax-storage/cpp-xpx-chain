@@ -33,7 +33,8 @@ namespace catapult { namespace dbrb {
 			const std::weak_ptr<net::PacketWriters>& pWriters,
 			std::shared_ptr<thread::IoThreadPool> pPool,
 			std::shared_ptr<TransactionSender> pTransactionSender,
-			const dbrb::DbrbViewFetcher& dbrbViewFetcher);
+			const dbrb::DbrbViewFetcher& dbrbViewFetcher,
+			const dbrb::DbrbConfiguration& dbrbConfig);
 
 	public:
 		/// Broadcast arbitrary \c payload into the system.

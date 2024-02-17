@@ -40,6 +40,11 @@ namespace catapult { namespace deltaset {
 		static constexpr const KeyType& ToKey(const StorageType& element) {
 			return element;
 		}
+
+		/// Converts a storage type (\a element) to a value type.
+		static constexpr const ValueType& ToValue(const StorageType& element) {
+			return element;
+		}
 	};
 
 	/// Key-related traits for stl map types.
@@ -52,6 +57,11 @@ namespace catapult { namespace deltaset {
 		/// Converts a storage type (\a element) to a key.
 		static constexpr const KeyType& ToKey(const StorageType& element) {
 			return element.first;
+		}
+
+		/// Converts a storage type (\a element) to a value type.
+		static constexpr const ValueType& ToValue(const StorageType& element) {
+			return element.second;
 		}
 	};
 

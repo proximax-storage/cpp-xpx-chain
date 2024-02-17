@@ -70,8 +70,9 @@ namespace catapult { namespace fastfinality {
 			const RemoteNodeStateRetriever& retriever,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
-			const std::function<uint64_t (const Key&)>& importanceGetter) {
-		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter]() {
+			const std::function<uint64_t (const Key&)>& importanceGetter,
+			const dbrb::DbrbConfiguration& dbrbConfig) {
+		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, dbrbConfig]() {
 			TRY_GET_FSM()
 
 			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
@@ -127,6 +128,14 @@ namespace catapult { namespace fastfinality {
 
 				chainSyncData.NodeIdentityKeys = std::move(importanceKeys.begin()->second);
 				pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
+
+			} else if (!dbrbConfig.IsDbrbProcess) {
+
+				DelayAction(pFsmWeak, pFsmShared->timer(), 4 * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
+					TRY_GET_FSM()
+
+					pFsmShared->processEvent(StartLocalChainCheck{});
+				});
 
 			} else {
 
@@ -271,7 +280,12 @@ namespace catapult { namespace fastfinality {
 						auto blockRange = pRemoteChainApi->blocksFrom(startHeight, blocksFromOptions).get();
 						blocks = model::EntityRange<model::Block>::ExtractEntitiesFromRange(std::move(blockRange));
 						pMessageSender->pushNodePacketIoPair(identityKey, packetIoPair);
+					} catch (std::exception const& error) {
+						CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
+						pMessageSender->removeNode(identityKey);
+						continue;
 					} catch (...) {
+						CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
 						pMessageSender->removeNode(identityKey);
 						continue;
 					}
@@ -410,6 +424,8 @@ namespace catapult { namespace fastfinality {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
+			committeeData.setUnexpectedProposedBlockHeight(false);
+			committeeData.setUnexpectedConfirmedBlockHeight(false);
 			auto round = committeeData.committeeRound();
 			auto pConfigHolder = state.pluginManager().configHolder();
 			bool isInDbrbSystem = pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight(), true);
@@ -593,10 +609,20 @@ namespace catapult { namespace fastfinality {
 					auto status = future.wait_until(timeout);
 					if (std::future_status::ready == status && future.get()) {
 						pFsmShared->processEvent(SumOfPrevotesSufficient{});
-					} else {
-						pFsmShared->processEvent(SumOfPrevotesInsufficient{});
+						return;
 					}
-				} catch(...) {}
+				} catch (std::exception const& error) {
+					CATAPULT_LOG(warning) << "error waiting for prevotes: " << error.what();
+				} catch (...) {
+					CATAPULT_LOG(warning) << "error waiting for prevotes: unknown error";
+				}
+
+				committeeData.calculateSumOfVotes();
+				if (committeeData.sumOfPrevotesSufficient()) {
+					pFsmShared->processEvent(SumOfPrevotesSufficient{});
+				} else {
+					pFsmShared->processEvent(SumOfPrevotesInsufficient{});
+				}
 			}
 		};
 	}
@@ -606,7 +632,7 @@ namespace catapult { namespace fastfinality {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
-			if (committeeData.sumOfPrecommitsSufficient()) {
+			if (committeeData.sumOfPrevotesSufficient() && committeeData.sumOfPrecommitsSufficient()) {
 				pFsmShared->processEvent(SumOfPrecommitsSufficient{});
 			} else {
 				auto future = committeeData.startWaitForPrecommits();
@@ -614,17 +640,22 @@ namespace catapult { namespace fastfinality {
 				auto timeout = committeeData.committeeRound().RoundStart + std::chrono::milliseconds(phaseEndTimeMillis);
 				try {
 					auto status = future.wait_until(timeout);
-					if (std::future_status::ready == status && future.get()) {
+					if (std::future_status::ready == status && future.get() && committeeData.sumOfPrevotesSufficient()) {
 						pFsmShared->processEvent(SumOfPrecommitsSufficient{});
-					} else {
-						committeeData.calculateSumOfVotes();
-						if (committeeData.sumOfPrevotesSufficient() && committeeData.sumOfPrecommitsSufficient()) {
-							pFsmShared->processEvent(SumOfPrecommitsSufficient{});
-						} else {
-							pFsmShared->processEvent(SumOfPrecommitsInsufficient{});
-						}
+						return;
 					}
-				} catch(...) {}
+				} catch (std::exception const& error) {
+					CATAPULT_LOG(warning) << "error waiting for precommits: " << error.what();
+				} catch (...) {
+					CATAPULT_LOG(warning) << "error waiting for precommits: unknown error";
+				}
+
+				committeeData.calculateSumOfVotes();
+				if (committeeData.sumOfPrevotesSufficient() && committeeData.sumOfPrecommitsSufficient()) {
+					pFsmShared->processEvent(SumOfPrecommitsSufficient{});
+				} else {
+					pFsmShared->processEvent(SumOfPrecommitsInsufficient{});
+				}
 			}
 		};
 	}
@@ -727,14 +758,19 @@ namespace catapult { namespace fastfinality {
 					auto status = future.wait_until(timeout);
 					if (std::future_status::ready == status && future.get()) {
 						pFsmShared->processEvent(ConfirmedBlockReceived{});
-					} else {
-						if (committeeData.unexpectedConfirmedBlockHeight()) {
-							pFsmShared->processEvent(UnexpectedBlockHeight{});
-						} else {
-							pFsmShared->processEvent(ConfirmedBlockNotReceived{});
-						}
+						return;
 					}
-				} catch(...) {}
+				} catch (std::exception const& error) {
+					CATAPULT_LOG(warning) << "error waiting for confirmed block: " << error.what();
+				} catch (...) {
+					CATAPULT_LOG(warning) << "error waiting for confirmed block: unknown error";
+				}
+
+				if (committeeData.unexpectedConfirmedBlockHeight()) {
+					pFsmShared->processEvent(UnexpectedBlockHeight{});
+				} else {
+					pFsmShared->processEvent(ConfirmedBlockNotReceived{});
+				}
 			}
 		};
 	}
