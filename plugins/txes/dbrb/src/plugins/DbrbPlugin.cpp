@@ -23,13 +23,11 @@ namespace catapult { namespace plugins {
 			config.template InitPluginConfiguration<config::DbrbConfiguration>();
 		});
 
-		const auto& pConfigHolder = manager.configHolder();
-		const auto& immutableConfig = manager.immutableConfig();
 		manager.addTransactionSupport(CreateAddDbrbProcessTransactionPlugin());
 		manager.addTransactionSupport(CreateRemoveDbrbProcessTransactionPlugin());
 
 		auto pDbrbViewFetcher = std::make_shared<cache::DbrbViewFetcherImpl>();
-		manager.addCacheSupport(std::make_unique<cache::DbrbViewCacheSubCachePlugin>(manager.cacheConfig(cache::DbrbViewCache::Name), pConfigHolder, pDbrbViewFetcher));
+		manager.addCacheSupport(std::make_unique<cache::DbrbViewCacheSubCachePlugin>(manager.cacheConfig(cache::DbrbViewCache::Name), manager.configHolder(), pDbrbViewFetcher));
 
 		using DbrbViewCacheHandlersService = CacheHandlers<cache::DbrbViewCacheDescriptor>;
 		DbrbViewCacheHandlersService::Register<model::FacilityCode::DbrbView>(manager);
@@ -44,12 +42,11 @@ namespace catapult { namespace plugins {
 
 		auto pTransactionFeeCalculator = manager.transactionFeeCalculator();
 		for (auto version = 1u; version <= model::AddDbrbProcessTransaction::Current_Version; ++version)
-			pTransactionFeeCalculator->addUnlimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, version);
+			pTransactionFeeCalculator->addLimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, version);
 		for (auto version = 1u; version <= model::RemoveDbrbProcessTransaction::Current_Version; ++version)
-			pTransactionFeeCalculator->addUnlimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, version);
+			pTransactionFeeCalculator->addLimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, version);
 
-
-		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 		  	builder
 				.add(validators::CreateAddDbrbProcessValidator());
 		});

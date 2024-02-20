@@ -686,7 +686,6 @@ namespace catapult { namespace model {
 
 	// region harvesters
 
-	/// Notifies of the round of a block.
 	template<typename TDerivedNotification>
 	struct BasicHarvestersNotification : public Notification {
 	public:
