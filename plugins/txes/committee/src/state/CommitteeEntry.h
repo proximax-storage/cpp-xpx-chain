@@ -22,7 +22,8 @@ namespace catapult { namespace state {
 				Timestamp expirationTime,
 				int64_t activity,
 				uint32_t feeInterest,
-				uint32_t feeInterestDenominator)
+				uint32_t feeInterestDenominator,
+				const Key& bootKey)
 			: LastSigningBlockHeight(std::move(lastSigningBlockHeight))
 			, EffectiveBalance(std::move(effectiveBalance))
 			, CanHarvest(canHarvest)
@@ -32,6 +33,7 @@ namespace catapult { namespace state {
 			, Activity(activity)
 			, FeeInterest(feeInterest)
 			, FeeInterestDenominator(feeInterestDenominator)
+			, BootKey(bootKey)
 		{}
 
 	public:
@@ -88,6 +90,9 @@ namespace catapult { namespace state {
 
 		/// Denominator of the transaction fee.
 		uint32_t FeeInterestDenominator;
+
+		/// Boot key of the node where the harvesters are set up.
+		Key BootKey;
 	};
 
 	// Committee entry.
@@ -106,11 +111,12 @@ namespace catapult { namespace state {
 				Timestamp expirationTime = Timestamp(0),
 				int64_t activity = 0u,
 				uint32_t feeInterest = 0u,
-				uint32_t feeInterestDenominator = 0u)
+				uint32_t feeInterestDenominator = 0u,
+				const Key& bootKey = Key())
 			: m_key(key)
 			, m_owner(owner)
 			, m_disabledHeight(std::move(disabledHeight))
-			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, std::move(expirationTime), activity, feeInterest, feeInterestDenominator)
+			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, std::move(expirationTime), activity, feeInterest, feeInterestDenominator, bootKey)
 			, m_version(version)
 		{}
 
@@ -252,6 +258,15 @@ namespace catapult { namespace state {
 		/// Sets \a feeInterestDenominator.
 		void setFeeInterestDenominator(uint32_t feeInterestDenominator) {
 			m_data.FeeInterestDenominator = feeInterestDenominator;
+		}
+
+		/// Gets the boot key.
+		const Key& bootKey() const {
+			return m_data.BootKey;
+		}
+
+		void setBootKey(const Key& bootKey) {
+			m_data.BootKey = bootKey;
 		}
 
 	private:

@@ -189,6 +189,24 @@ namespace catapult { namespace cache {
 			CATAPULT_THROW_DB_KEY_ERROR("could not retrieve value for getLowerOrEqual");
 	}
 
+	void RocksDatabase::getAll(size_t columnId, std::vector<std::string>& result) {
+		if (!m_pDb)
+			CATAPULT_THROW_INVALID_ARGUMENT("RocksDatabase has not been initialized");
+
+		auto iterator = m_pDb->NewIterator(rocksdb::ReadOptions(), m_handles[columnId]);
+
+		iterator->SeekToFirst();
+		while (iterator->Valid()) {
+			auto key = iterator->key().ToString();
+			if (key != "size" && key != "root")
+				result.emplace_back(iterator->value().ToString());
+			iterator->Next();
+		}
+
+		iterator->Reset();
+		delete iterator;
+	}
+
 	void RocksDatabase::put(size_t columnId, const rocksdb::Slice& key, const std::string& value) {
 		if (!m_pDb)
 			CATAPULT_THROW_INVALID_ARGUMENT("RocksDatabase has not been initialized");

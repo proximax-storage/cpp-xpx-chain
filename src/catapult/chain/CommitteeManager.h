@@ -48,6 +48,9 @@ namespace catapult { namespace chain {
 		/// Selects new committee and increments round.
 		virtual const Committee& selectCommittee(const model::NetworkConfiguration& config) = 0;
 
+		/// Selects new committee and increments round.
+		virtual Key getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const = 0;
+
 		/// Resets committee manager to start a new block generation cycle.
 		virtual void reset() = 0;
 

@@ -81,6 +81,9 @@ namespace catapult { namespace ionet {
     /* A remote node state has been requested by a peer. */ \
     ENUM_VALUE(Pull_Remote_Node_State, 17) \
 	\
+	/* A block confirmed by committee has been pushed by a peer. */ \
+	ENUM_VALUE(Push_Confirmed_Block, 18) \
+	\
 	/* DBRB only packets have types [550, 600) */ \
 	\
 	ENUM_VALUE(Dbrb_Reconfig_Message, 550) \
@@ -106,6 +109,10 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(Dbrb_Push_Nodes, 560) \
 	\
 	ENUM_VALUE(Dbrb_Pull_Nodes, 561) \
+	\
+	ENUM_VALUE(Dbrb_Remove_Node_Request, 562) \
+	\
+	ENUM_VALUE(Dbrb_Remove_Node_Response, 563) \
 	\
 	/* api only packets have types [500, 600) */ \
 	\

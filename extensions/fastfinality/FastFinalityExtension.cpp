@@ -20,6 +20,7 @@ namespace catapult { namespace fastfinality {
 			auto pTransactionSender = std::make_shared<dbrb::TransactionSender>();
 			bootstrapper.subscriptionManager().addPostBlockCommitSubscriber(std::make_unique<dbrb::BlockSubscriber>(pTransactionSender));
 			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingServiceRegistrar(harvestingConfig, dbrbConfig, pTransactionSender));
+			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingShutdownServiceRegistrar(pTransactionSender));
 		}
 	}
 }}

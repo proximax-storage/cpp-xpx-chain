@@ -72,8 +72,11 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetObserverNames() {
 				return {
 					"UpdateHarvestersV1Observer",
-					"ActiveHarvestersObserver",
+					"ActiveHarvestersV1Observer",
 					"UpdateHarvestersV2Observer",
+					"ActiveHarvestersV2Observer",
+					"InactiveHarvestersObserver",
+					"RemoveDbrbProcessByNetworkObserver",
 					"AddHarvesterObserver",
 					"RemoveHarvesterObserver",
 				};

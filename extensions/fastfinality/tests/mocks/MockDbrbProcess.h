@@ -24,20 +24,21 @@ namespace catapult { namespace mocks {
 		using DisseminationHistory = std::vector<std::pair<const std::shared_ptr<dbrb::Message>&, std::set<dbrb::ProcessId>>>;
 
 	public:
-		MockDbrbProcess(
+		explicit MockDbrbProcess(
 				const dbrb::ProcessId& processId,
 				bool fakeDissemination = false,
 				std::weak_ptr<net::PacketWriters> pWriters = std::weak_ptr<mocks::MockPacketWriters>(),
                 const ionet::NodeContainer& nodeContainer = {},
 				const crypto::KeyPair& keyPair = Key_Pair,
 				const std::shared_ptr<thread::IoThreadPool>& pPool = test::CreateStartedIoThreadPool(1),
-				const dbrb::DbrbViewFetcher& dbrbViewFetcher = MockDbrbViewFetcher());
+				const dbrb::DbrbViewFetcher& dbrbViewFetcher = MockDbrbViewFetcher(),
+				const dbrb::DbrbConfiguration& dbrbConfig = dbrb::DbrbConfiguration::Uninitialized());
 
 		void setCurrentView(const dbrb::View& view);
 
-		void broadcast(const dbrb::Payload& payload) override;
+		void broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) override;
 		void processMessage(const dbrb::Message& message) override;
-		Signature sign(const dbrb::Payload& payload);
+		Signature sign(const dbrb::Payload& payload, const dbrb::View& view);
 
 		void disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients) override;
 		void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient) override;
@@ -48,7 +49,6 @@ namespace catapult { namespace mocks {
 
 		const std::set<Hash256>& deliveredPayloads();
 		const dbrb::ProcessId& id();
-		const dbrb::View& currentView();
 		std::map<Hash256, dbrb::BroadcastData>& broadcastData();
 		const DisseminationHistory& disseminationHistory();
 		dbrb::QuorumManager& getQuorumManager(const Hash256& payloadHash);

@@ -18,4 +18,7 @@ namespace catapult { namespace observers {
 
 		/// Observes changes triggered by block notifications.
 		DECLARE_OBSERVER(DbrbProcessPruning, model::BlockNotification<1>)();
+
+		/// Observes changes triggered by remove DBRB process notifications.
+		DECLARE_OBSERVER(RemoveDbrbProcess, model::RemoveDbrbProcessNotification<1>)();
 }}

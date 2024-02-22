@@ -81,16 +81,6 @@ namespace catapult { namespace observers {
 			}
 		}
 
-		void LogAccountData(const cache::AccountMap& accounts) {
-			CATAPULT_LOG(debug) << "Harvester account data:";
-			for (const auto& pair : accounts) {
-				const auto& data = pair.second;
-				CATAPULT_LOG(debug) << "committee account " << pair.first << " data: "
-					<< data.Activity << "|" << data.FeeInterest << "|" << data.FeeInterestDenominator << "|" << data.LastSigningBlockHeight << "|"
-					<< data.CanHarvest << "|" << data.EffectiveBalance;
-			}
-		}
-
 		void UpdateHarvestersV2(
 				const model::BlockCommitteeNotification<2>& notification,
 				ObserverContext& context,
@@ -147,7 +137,11 @@ namespace catapult { namespace observers {
 
 				auto iter = committeeCache.find(key);
 				auto& entry = iter.get();
-				entry.setVersion(3);
+				if (networkConfig.BootstrapHarvesters.empty()) {
+					entry.setVersion(3);
+				} else {
+					entry.setVersion(4);
+				}
 				entry.setEffectiveBalance(effectiveBalance);
 				entry.setCanHarvest(canHarvest);
 				if (!entry.feeInterestDenominator()) {

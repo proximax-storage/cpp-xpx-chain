@@ -27,17 +27,18 @@ namespace catapult { namespace dbrb {
 
 	public:
 		explicit DbrbProcess(
-			const ProcessId& id,
+			const ionet::Node& thisNode,
 			const crypto::KeyPair& keyPair,
 			const ionet::NodeContainer& nodeContainer,
 			const std::weak_ptr<net::PacketWriters>& pWriters,
 			std::shared_ptr<thread::IoThreadPool> pPool,
 			std::shared_ptr<TransactionSender> pTransactionSender,
-			const dbrb::DbrbViewFetcher& dbrbViewFetcher);
+			const dbrb::DbrbViewFetcher& dbrbViewFetcher,
+			const dbrb::DbrbConfiguration& dbrbConfig);
 
 	public:
 		/// Broadcast arbitrary \c payload into the system.
-		virtual void broadcast(const Payload&);
+		virtual void broadcast(const Payload&, std::set<ProcessId> recipients);
 		virtual void processMessage(const Message& message);
 		virtual bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf);
 
@@ -47,16 +48,16 @@ namespace catapult { namespace dbrb {
 		void setDeliverCallback(const DeliverCallback& callback);
 
 	public:
-		NodeRetreiver& nodeRetreiver();
 		boost::asio::io_context::strand& strand();
-		MessageSender& messageSender();
+		std::shared_ptr<MessageSender> messageSender();
 		const View& currentView();
+		const ProcessId& id();
 
-	private:
+	protected:
 		virtual void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients);
 		virtual void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient);
 
-		Signature sign(const Payload&);
+		Signature sign(const Payload& payload, const View& view);
 		static bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
 
 		void onPrepareMessageReceived(const PrepareMessage&);
@@ -65,10 +66,9 @@ namespace catapult { namespace dbrb {
 		void onDeliverMessageReceived(const DeliverMessage&);
 
 		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);
-		void onDeliverQuorumCollected(const Payload&, const ProcessId&);
+		void onDeliverQuorumCollected(const Payload&);
 
 	protected:
-		/// Process identifier.
 		ProcessId m_id;
 		View m_currentView;
 		std::map<Hash256, BroadcastData> m_broadcastData;
@@ -76,7 +76,6 @@ namespace catapult { namespace dbrb {
 		ValidationCallback m_validationCallback;
 		DeliverCallback m_deliverCallback;
 		const crypto::KeyPair& m_keyPair;
-		std::shared_ptr<NodeRetreiver> m_pNodeRetreiver;
 		std::shared_ptr<MessageSender> m_pMessageSender;
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 		boost::asio::io_context::strand m_strand;

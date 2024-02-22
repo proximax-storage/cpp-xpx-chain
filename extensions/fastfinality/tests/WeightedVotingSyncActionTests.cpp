@@ -12,6 +12,7 @@
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
 #include "tests/test/core/mocks/MockDbrbViewFetcher.h"
+#include "tests/test/plugins/PluginManagerFactory.h"
 
 namespace catapult { namespace fastfinality {
 
@@ -44,20 +45,22 @@ namespace catapult { namespace fastfinality {
 		public:
 			explicit MockDbrbProcess()
 				: DbrbProcess(
-					Key(),
+					{},
 					crypto::KeyPair::FromPrivate({}),
 					{},
 					std::make_shared<mocks::MockPacketWriters>(),
 					test::CreateStartedIoThreadPool(1),
 					nullptr,
-					mocks::MockDbrbViewFetcher())
+					mocks::MockDbrbViewFetcher(),
+					dbrb::DbrbConfiguration::Uninitialized())
 			{}
 
 			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) override { return true; }
 
-			void broadcast(const dbrb::Payload& payload) override {}
+			void broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) override {}
 			void processMessage(const dbrb::Message& message) override {}
 
+		protected:
 			void disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients) override {}
 			void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient) override {}
 
@@ -74,7 +77,8 @@ namespace catapult { namespace fastfinality {
 					std::map<Key, uint64_t> importances,
 					uint8_t expectedAction)
 				: m_pPool(std::move(test::CreateStartedIoThreadPool()))
-				, m_pFsm(std::make_shared<fastfinality::WeightedVotingFsm>(m_pPool, pConfigHolder->Config(), std::make_shared<MockDbrbProcess>()))
+				, m_pluginManager(test::CreatePluginManager())
+				, m_pFsm(std::make_shared<fastfinality::WeightedVotingFsm>(m_pPool, pConfigHolder->Config(), std::make_shared<MockDbrbProcess>(), m_pluginManager))
 				, m_states(std::move(states))
 				, m_pConfigHolder(pConfigHolder)
 				, m_pLastBlockElement(pLastBlockElement)
@@ -102,6 +106,8 @@ namespace catapult { namespace fastfinality {
 				actions.CheckLocalChain = [pThis = shared_from_this()] {
 					if (pThis->m_counter == 0) {
 						pThis->m_counter++;
+						auto dbrbConfig = dbrb::DbrbConfiguration::Uninitialized();
+						const_cast<dbrb::DbrbConfiguration&>(dbrbConfig).IsDbrbProcess = true;
 						auto defaultCheckLocalChainAction = fastfinality::CreateDefaultCheckLocalChainAction(
 							pThis->m_pFsm,
 							[pThis]() -> std::vector<RemoteNodeState> {
@@ -110,7 +116,8 @@ namespace catapult { namespace fastfinality {
 							},
 							pThis->m_pConfigHolder,
 							[pThis] { return pThis->m_pLastBlockElement; },
-							[pThis](const Key& key) -> uint64_t { return pThis->m_importances[key]; });
+							[pThis](const Key& key) -> uint64_t { return pThis->m_importances[key]; },
+							dbrbConfig);
 
 						defaultCheckLocalChainAction();
 					} else {
@@ -130,7 +137,7 @@ namespace catapult { namespace fastfinality {
 
 		private:
 			std::shared_ptr<thread::IoThreadPool> m_pPool;
-
+			plugins::PluginManager m_pluginManager;
 			std::weak_ptr<WeightedVotingFsm> m_pFsm;
 			std::vector<fastfinality::RemoteNodeState> m_states;
 			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;

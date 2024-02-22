@@ -16,7 +16,7 @@ namespace catapult { namespace validators {
 		const auto& cache = context.Cache.sub<cache::DbrbViewCache>();
 		auto iter = cache.find(notification.ProcessId);
 		auto pEntry = iter.tryGet();
-		if (pEntry && context.BlockTime < pEntry->expirationTime() - Timestamp(context.Config.Network.DbrbRegistrationGracePeriod.millis()) )
+		if (pEntry && context.BlockTime < pEntry->expirationTime() - Timestamp(context.Config.Network.DbrbRegistrationGracePeriod.millis()))
 			return Failure_Dbrb_Process_Not_Expired;
 
 		return ValidationResult::Success;

@@ -10,8 +10,13 @@ namespace catapult { namespace mocks {
 	const chain::Committee& MockCommitteeManager::selectCommittee(const model::NetworkConfiguration& config) {
 		return chain::Committee(0);
 	}
-	
+
+	Key MockCommitteeManager::getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const {
+		return Key();
+	}
+
 	void MockCommitteeManager::reset() {}
+
 	chain::HarvesterWeight MockCommitteeManager::weight(const Key& accountKey, const model::NetworkConfiguration& config) const {
 		return Weight;
 	}

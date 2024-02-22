@@ -12,7 +12,7 @@ namespace catapult { namespace state {
 #define TEST_CLASS CommitteeEntrySerializerTests
 
 	namespace {
-		constexpr auto Entry_Size = sizeof(VersionType) // version
+		constexpr auto Entry_Size_v1 = sizeof(VersionType) // version
 			+ Key_Size // key
 			+ Key_Size // owner
 			+ sizeof(uint64_t) // disabled height
@@ -21,6 +21,56 @@ namespace catapult { namespace state {
 			+ 1 // can harvest
 			+ sizeof(double) // activityObsolete
 			+ sizeof(double); // greedObsolete
+
+		constexpr auto Entry_Size_v2 = sizeof(VersionType) // version
+			+ Key_Size // key
+			+ Key_Size // owner
+			+ sizeof(uint64_t) // disabled height
+			+ sizeof(uint64_t) // last signing block height
+			+ sizeof(uint64_t) // effective balance
+			+ 1 // can harvest
+			+ sizeof(double) // activityObsolete
+			+ sizeof(double) // greedObsolete
+			+ sizeof(Timestamp); // expiration time
+
+		constexpr auto Entry_Size_v3 = sizeof(VersionType) // version
+			+ Key_Size // key
+			+ Key_Size // owner
+			+ sizeof(uint64_t) // disabled height
+			+ sizeof(uint64_t) // last signing block height
+			+ sizeof(uint64_t) // effective balance
+			+ 1 // can harvest
+			+ sizeof(double) // activityObsolete
+			+ sizeof(double) // greedObsolete
+			+ sizeof(Timestamp) // expiration time
+			+ sizeof(int64_t) // activity
+			+ sizeof(uint32_t) // fee interest
+			+ sizeof(uint32_t); // fee interest denominator
+
+		constexpr auto Entry_Size_v4 = sizeof(VersionType) // version
+			+ Key_Size // key
+			+ Key_Size // owner
+			+ sizeof(uint64_t) // disabled height
+			+ sizeof(uint64_t) // last signing block height
+			+ sizeof(uint64_t) // effective balance
+			+ 1 // can harvest
+			+ sizeof(double) // activityObsolete
+			+ sizeof(double) // greedObsolete
+			+ sizeof(Timestamp) // expiration time
+			+ sizeof(int64_t) // activity
+			+ sizeof(uint32_t) // fee interest
+			+ sizeof(uint32_t) // fee interest denominator
+			+ Key_Size; // boot key
+
+		auto GetSize(VersionType version) {
+			switch (version) {
+				case 1: return Entry_Size_v1;
+				case 2: return Entry_Size_v2;
+				case 3: return Entry_Size_v3;
+				case 4: return Entry_Size_v4;
+				default: return size_t(0u);
+			}
+		}
 
 		class TestContext {
 		public:
@@ -63,6 +113,25 @@ namespace catapult { namespace state {
 			EXPECT_EQ(entry.greedObsolete(), *reinterpret_cast<const double_t*>(pData));
 			pData += sizeof(double);
 
+			if (version > 1) {
+				EXPECT_EQ(entry.expirationTime().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+				pData += sizeof(uint64_t);
+			}
+
+			if (version > 2) {
+				EXPECT_EQ(entry.activity(), *reinterpret_cast<const int64_t*>(pData));
+				pData += sizeof(int64_t);
+				EXPECT_EQ(entry.feeInterest(), *reinterpret_cast<const uint32_t*>(pData));
+				pData += sizeof(uint32_t);
+				EXPECT_EQ(entry.feeInterestDenominator(), *reinterpret_cast<const uint32_t*>(pData));
+				pData += sizeof(uint32_t);
+			}
+
+			if (version > 3) {
+				EXPECT_EQ_MEMORY(entry.bootKey().data(), pData, Key_Size);
+				pData += Key_Size;
+			}
+
 			EXPECT_EQ(pExpectedEnd, pData);
 		}
 
@@ -70,31 +139,34 @@ namespace catapult { namespace state {
 			// Arrange:
 			TestContext context;
 			auto entry = test::CreateCommitteeEntry();
+			entry.setVersion(version);
 
 			// Act:
 			CommitteeEntrySerializer::Save(entry, context.outputStream());
 
 			// Assert:
-			ASSERT_EQ(Entry_Size, context.buffer().size());
-			AssertEntryBuffer(entry, context.buffer().data(), Entry_Size, version);
+			ASSERT_EQ(GetSize(version), context.buffer().size());
+			AssertEntryBuffer(entry, context.buffer().data(), GetSize(version), version);
 		}
 
 		void AssertCanSaveMultipleEntries(VersionType version) {
 			// Arrange:
 			TestContext context;
 			auto entry1 = test::CreateCommitteeEntry();
+			entry1.setVersion(version);
 			auto entry2 = test::CreateCommitteeEntry();
+			entry2.setVersion(version);
 
 			// Act:
 			CommitteeEntrySerializer::Save(entry1, context.outputStream());
 			CommitteeEntrySerializer::Save(entry2, context.outputStream());
 
 			// Assert:
-			ASSERT_EQ(2 * Entry_Size, context.buffer().size());
+			ASSERT_EQ(2 * GetSize(version), context.buffer().size());
 			const auto* pBuffer1 = context.buffer().data();
-			const auto* pBuffer2 = pBuffer1 + Entry_Size;
-			AssertEntryBuffer(entry1, pBuffer1, Entry_Size, version);
-			AssertEntryBuffer(entry2, pBuffer2, Entry_Size, version);
+			const auto* pBuffer2 = pBuffer1 + GetSize(version);
+			AssertEntryBuffer(entry1, pBuffer1, GetSize(version), version);
+			AssertEntryBuffer(entry2, pBuffer2, GetSize(version), version);
 		}
 	}
 
@@ -104,8 +176,32 @@ namespace catapult { namespace state {
 		AssertCanSaveSingleEntry(1);
 	}
 
+	TEST(TEST_CLASS, CanSaveSingleEntry_v2) {
+		AssertCanSaveSingleEntry(2);
+	}
+
+	TEST(TEST_CLASS, CanSaveSingleEntry_v3) {
+		AssertCanSaveSingleEntry(3);
+	}
+
+	TEST(TEST_CLASS, CanSaveSingleEntry_v4) {
+		AssertCanSaveSingleEntry(4);
+	}
+
 	TEST(TEST_CLASS, CanSaveMultipleEntries_v1) {
 		AssertCanSaveMultipleEntries(1);
+	}
+
+	TEST(TEST_CLASS, CanSaveMultipleEntries_v2) {
+		AssertCanSaveMultipleEntries(2);
+	}
+
+	TEST(TEST_CLASS, CanSaveMultipleEntries_v3) {
+		AssertCanSaveMultipleEntries(3);
+	}
+
+	TEST(TEST_CLASS, CanSaveMultipleEntries_v4) {
+		AssertCanSaveMultipleEntries(4);
 	}
 
 	// endregion
@@ -115,7 +211,7 @@ namespace catapult { namespace state {
 	namespace {
 
 		std::vector<uint8_t> CreateEntryBuffer(const state::CommitteeEntry& entry, VersionType version) {
-			std::vector<uint8_t> buffer(Entry_Size);
+			std::vector<uint8_t> buffer(GetSize(version));
 
 			auto* pData = buffer.data();
 			memcpy(pData, &version, sizeof(VersionType));
@@ -141,6 +237,31 @@ namespace catapult { namespace state {
 			memcpy(pData, &greedObsolete, sizeof(double));
 			pData += sizeof(double);
 
+			if (version > 1) {
+				auto expirationTime = entry.expirationTime().unwrap();
+				memcpy(pData, &expirationTime, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+			}
+
+			if (version > 2) {
+				auto activity = entry.activity();
+				memcpy(pData, &activity, sizeof(int64_t));
+				pData += sizeof(int64_t);
+
+				auto feeInterest = entry.feeInterest();
+				memcpy(pData, &feeInterest, sizeof(uint32_t));
+				pData += sizeof(uint32_t);
+
+				auto feeInterestDenominator = entry.feeInterestDenominator();
+				memcpy(pData, &feeInterestDenominator, sizeof(uint32_t));
+				pData += sizeof(uint32_t);
+			}
+
+			if (version > 3) {
+				memcpy(pData, entry.bootKey().data(), Key_Size);
+				pData += Key_Size;
+			}
+
 			return buffer;
 		}
 
@@ -148,10 +269,12 @@ namespace catapult { namespace state {
 			// Arrange:
 			TestContext context;
 			auto originalEntry = test::CreateCommitteeEntry();
+			originalEntry.setVersion(version);
 			auto buffer = CreateEntryBuffer(originalEntry, version);
 
 			// Act:
 			auto result = test::CreateCommitteeEntry();
+			result.setVersion(version);
 			test::RunLoadValueTest<CommitteeEntrySerializer>(buffer, result);
 
 			// Assert:
@@ -161,6 +284,18 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanLoadSingleEntry_v1) {
 		AssertCanLoadSingleEntry(1);
+	}
+
+	TEST(TEST_CLASS, CanLoadSingleEntry_v2) {
+		AssertCanLoadSingleEntry(2);
+	}
+
+	TEST(TEST_CLASS, CanLoadSingleEntry_v3) {
+		AssertCanLoadSingleEntry(3);
+	}
+
+	TEST(TEST_CLASS, CanLoadSingleEntry_v4) {
+		AssertCanLoadSingleEntry(4);
 	}
 
 	// endregion

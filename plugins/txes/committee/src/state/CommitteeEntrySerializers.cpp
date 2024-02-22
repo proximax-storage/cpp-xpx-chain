@@ -33,12 +33,15 @@ namespace catapult { namespace state {
 				io::Write32(output, entry.feeInterest());
 				io::Write32(output, entry.feeInterestDenominator());
 			}
+
+			if (entry.version() > 3)
+				io::Write(output, entry.bootKey());
 		}
 
 		CommitteeEntry LoadCommitteeEntry(io::InputStream& input, const LoadCommitteeEntryCallback& callback) {
 			// read version
 			VersionType version = io::Read32(input);
-			if (version > 3)
+			if (version > 4)
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of CommitteeEntry", version);
 
 			Key key;
@@ -50,7 +53,7 @@ namespace catapult { namespace state {
 			auto effectiveBalance = Importance{io::Read64(input)};
 			auto canHarvest = io::Read8(input);
 
-			state::CommitteeEntry entry(key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, 0.0, 0.0, disabledHeight, version);
+			state::CommitteeEntry entry(key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, 0.0, 0.0, disabledHeight, version, Timestamp(0), 0, 0u, 0u, Key());
 
 			callback(entry, input);
 
@@ -58,6 +61,12 @@ namespace catapult { namespace state {
 				entry.setActivity(io::Read64Signed(input));
 				entry.setFeeInterest(io::Read32(input));
 				entry.setFeeInterestDenominator(io::Read32(input));
+			}
+
+			if (entry.version() > 3) {
+				Key bootKey;
+				input.read(bootKey);
+				entry.setBootKey(bootKey);
 			}
 
 			return entry;

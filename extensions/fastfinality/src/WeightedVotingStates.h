@@ -19,13 +19,12 @@ namespace catapult { namespace fastfinality {
 
 	struct StageDetection{};
 	struct CommitteeSelection{};
-	struct BlockProposing{};
+	struct BlockGeneration{};
 	struct ProposalWaiting{};
-	struct ProposalValidation{};
 	struct Prevote{};
 	struct Precommit{};
 	struct Commit{};
-	struct ConfirmedBlockRequest{};
+	struct ConfirmedBlockWaiting{};
 
 	struct OnHold{};
 }}
