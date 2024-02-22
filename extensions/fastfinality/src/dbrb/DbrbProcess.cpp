@@ -27,7 +27,7 @@ namespace catapult { namespace dbrb {
 		const dbrb::DbrbConfiguration& dbrbConfig)
 			: m_id(thisNode.identityKey())
 			, m_keyPair(keyPair)
-			, m_pMessageSender(std::make_shared<MessageSender>(thisNode, pWriters, nodeContainer, dbrbConfig.IsDbrbProcess))
+			, m_pMessageSender(std::make_shared<MessageSender>(thisNode, pWriters, nodeContainer, dbrbConfig.IsDbrbProcess, pTransactionSender, dbrbViewFetcher))
 			, m_pPool(std::move(pPool))
 			, m_strand(m_pPool->ioContext())
 			, m_pTransactionSender(std::move(pTransactionSender))
@@ -411,9 +411,10 @@ namespace catapult { namespace dbrb {
 
 			pThis->m_pMessageSender->clearQueue();
 			pThis->m_pMessageSender->clearBroadcastData();
+			pThis->m_pMessageSender->clearNodeRemovalData();
 			pThis->m_broadcastData.clear();
 
-			pThis->m_pMessageSender->requestNodes(view.Data);
+			pThis->m_pMessageSender->requestNodes(view.Data, pConfigHolder);
 			pThis->m_currentView = view;
 			CATAPULT_LOG(debug) << "[DBRB] Current view (" << view.Data.size() << ") is now set to " << view;
 

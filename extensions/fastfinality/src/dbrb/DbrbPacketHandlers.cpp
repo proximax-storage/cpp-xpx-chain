@@ -7,15 +7,22 @@
 #include "DbrbPacketHandlers.h"
 #include "DbrbChainPackets.h"
 #include "DbrbProcess.h"
+#include "catapult/crypto/Signer.h"
 #include "catapult/ionet/NetworkNode.h"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace dbrb {
+
+	namespace {
+		constexpr auto MAX_DELAY = Timestamp(15000);
+	}
 
 	void RegisterPushNodesHandler(
 			const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
 			model::NetworkIdentifier networkIdentifier,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			ionet::ServerPacketHandlers& handlers) {
-		handlers.registerHandler(ionet::PacketType::Dbrb_Push_Nodes, [pDbrbProcessWeak, networkIdentifier](const ionet::Packet& packet, auto& context) {
+		handlers.registerHandler(ionet::PacketType::Dbrb_Push_Nodes, [pDbrbProcessWeak, networkIdentifier, pConfigHolder](const ionet::Packet& packet, auto& context) {
 			auto pDbrbProcessShared = pDbrbProcessWeak.lock();
 			if (!pDbrbProcessShared)
 				return;
@@ -40,11 +47,52 @@ namespace catapult { namespace dbrb {
 				}
 			}
 			nodes.erase(std::remove_if(nodes.begin(), nodes.end(), [](const auto& node) { return node.endpoint().Host.empty(); }), nodes.end());
-			pDbrbProcessShared->messageSender()->addNodes(nodes);
+			if (nodes.empty())
+				return;
+
+			pDbrbProcessShared->messageSender()->addNodes(nodes, pConfigHolder);
 
 			auto pResponsePacket = ionet::CreateSharedPacket<DbrbPushNodesPacket>(packet.Size - sizeof(DbrbPushNodesPacket));
 			memcpy(pResponsePacket.get(), &packet, packet.Size);
 			pDbrbProcessShared->messageSender()->broadcastNodes(pResponsePacket);
+		});
+	}
+
+	void RegisterRemoveNodeRequestHandler(
+			const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
+			const crypto::KeyPair& keyPair,
+			ionet::ServerPacketHandlers& handlers) {
+		handlers.registerHandler(ionet::PacketType::Dbrb_Remove_Node_Request, [pDbrbProcessWeak, &keyPair](const ionet::Packet& packet, auto& context) {
+			auto pDbrbProcessShared = pDbrbProcessWeak.lock();
+			if (!pDbrbProcessShared)
+				return;
+
+			const auto* pRequestPacket = reinterpret_cast<const DbrbRemoveNodeRequestPacket*>(&packet);
+			auto now = utils::NetworkTime();
+			if (pDbrbProcessShared->messageSender()->isNodeAdded(pRequestPacket->ProcessId) || now < pRequestPacket->Timestamp || now - pRequestPacket->Timestamp > MAX_DELAY)
+				return;
+
+			auto pResponsePacket = ionet::CreateSharedPacket<DbrbRemoveNodeResponsePacket>();
+			pResponsePacket->Timestamp = pRequestPacket->Timestamp;
+			pResponsePacket->ProcessId = pRequestPacket->ProcessId;
+			auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(&pResponsePacket->Timestamp), sizeof(Timestamp) }, { pResponsePacket->ProcessId.data(), Key_Size } });
+			crypto::Sign(keyPair, hash, pResponsePacket->Signature);
+			pDbrbProcessShared->messageSender()->enqueue(pResponsePacket, { context.key() });
+		});
+	}
+
+	void RegisterRemoveNodeResponseHandler(
+			const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
+			ionet::ServerPacketHandlers& handlers) {
+		handlers.registerHandler(ionet::PacketType::Dbrb_Remove_Node_Response, [pDbrbProcessWeak](const ionet::Packet& packet, auto& context) {
+			auto pDbrbProcessShared = pDbrbProcessWeak.lock();
+			if (!pDbrbProcessShared)
+				return;
+
+			const auto* pPacket = reinterpret_cast<const DbrbRemoveNodeResponsePacket*>(&packet);
+			auto hash = CalculateHash({ { reinterpret_cast<const uint8_t*>(&pPacket->Timestamp), sizeof(Timestamp) }, { pPacket->ProcessId.data(), Key_Size } });
+			if (crypto::Verify(context.key(), hash, pPacket->Signature))
+				pDbrbProcessShared->messageSender()->addRemoveNodeResponse(pPacket->ProcessId, context.key(), pPacket->Timestamp, pPacket->Signature);
 		});
 	}
 }}

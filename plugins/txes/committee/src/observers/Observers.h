@@ -42,4 +42,8 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by inactive harvesters notifications
 	DECLARE_OBSERVER(InactiveHarvesters, model::InactiveHarvestersNotification<1>)();
+
+	/// Observes changes triggered by remove DBRB process by network notifications
+	DECLARE_OBSERVER(RemoveDbrbProcessByNetwork, model::RemoveDbrbProcessByNetworkNotification<1>)(
+		const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector);
 }}

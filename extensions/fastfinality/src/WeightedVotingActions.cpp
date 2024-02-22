@@ -84,6 +84,8 @@ namespace catapult { namespace fastfinality {
 
 			std::vector<RemoteNodeState> remoteNodeStates = retriever();
 
+			pFsmShared->dbrbProcess()->messageSender()->broadcastThisNode();
+
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
 				DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
@@ -305,15 +307,14 @@ namespace catapult { namespace fastfinality {
 						std::lock_guard<std::mutex> guard(pFsmShared->mutex());
 
 						auto pPromise = std::make_shared<thread::promise<bool>>();
-						auto blockHeight = pBlock->Height;
-						rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise, blockHeight](auto, const auto& result) {
+						rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise, pBlock](auto, const auto& result) {
 							bool success = (disruptor::CompletionStatus::Aborted != result.CompletionStatus);
 							if (success) {
-								CATAPULT_LOG(info) << "successfully committed block (height " << blockHeight << ")";
+								CATAPULT_LOG(info) << "successfully committed block (height " << pBlock->Height << ", signer " << pBlock->Signer << ")";
 							} else {
 								auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
 								CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult))
-									<< "block (height " << blockHeight << ") commit failed due to " << validationResult;
+									<< "block (height " << pBlock->Height << ") commit failed due to " << validationResult;
 							}
 
 							pPromise->set_value(std::move(success));
