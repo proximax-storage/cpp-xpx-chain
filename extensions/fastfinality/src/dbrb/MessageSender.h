@@ -18,6 +18,8 @@ namespace catapult {
 		class Packet;
 	}
 	namespace net { class PacketWriters; }
+	namespace dbrb { class TransactionSender; }
+	namespace config { class BlockchainConfigurationHolder; }
 }
 
 namespace catapult { namespace dbrb {
@@ -26,7 +28,13 @@ namespace catapult { namespace dbrb {
 
 	class MessageSender : public std::enable_shared_from_this<MessageSender> {
 	public:
-		explicit MessageSender(ionet::Node thisNode, std::weak_ptr<net::PacketWriters> pWriters, const ionet::NodeContainer& nodeContainer, bool broadcastThisNode);
+		explicit MessageSender(
+			ionet::Node thisNode,
+			std::weak_ptr<net::PacketWriters> pWriters,
+			const ionet::NodeContainer& nodeContainer,
+			bool broadcastThisNode,
+			std::shared_ptr<TransactionSender> pTransactionSender,
+			const dbrb::DbrbViewFetcher& dbrbViewFetcher);
 		~MessageSender();
 
 		// Message sending
@@ -40,14 +48,20 @@ namespace catapult { namespace dbrb {
 
 	public:
 		// Node discovery
-		void requestNodes(const std::set<ProcessId>& requestedIds);
-		void addNodes(const std::vector<ionet::Node>& nodes);
+		void requestNodes(const std::set<ProcessId>& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+		void addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 		void removeNode(const ProcessId& id);
 		void broadcastNodes(const Payload& payload);
+		void broadcastThisNode();
 		void clearBroadcastData();
+		bool isNodeAdded(const ProcessId& id);
+		void addRemoveNodeResponse(const ProcessId& idToRemove, const ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature);
 
 	private:
 		void broadcastNodes(const std::vector<ionet::Node>& nodes);
+
+	public:
+		void clearNodeRemovalData();
 
 	private:
 		std::weak_ptr<net::PacketWriters> m_pWriters;
@@ -70,5 +84,16 @@ namespace catapult { namespace dbrb {
 		std::unordered_set<ProcessId, utils::ArrayHasher<ProcessId>> m_connectionInProgress;
 		std::map<ProcessId, std::unordered_set<Hash256, utils::ArrayHasher<Hash256>>> m_broadcastedPackets;
 		mutable std::mutex m_nodeMutex;
+
+		// Node removing
+		struct NodeRemovalData {
+			catapult::Timestamp Timestamp;
+			ViewData View;
+			std::map<ProcessId, Signature> Votes;
+		};
+		std::map<ProcessId, NodeRemovalData> m_nodesToRemove;
+		std::shared_ptr<TransactionSender> m_pTransactionSender;
+		const dbrb::DbrbViewFetcher& m_dbrbViewFetcher;
+		mutable std::mutex m_removeNodeMutex;
 	};
 }}

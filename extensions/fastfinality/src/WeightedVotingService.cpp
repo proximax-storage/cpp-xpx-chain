@@ -348,7 +348,9 @@ namespace catapult { namespace fastfinality {
 
 				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
 				handlers::RegisterPullBlocksHandler(pFsmShared->packetHandlers(), state.storage(), CreatePullBlocksHandlerConfiguration(config.Node));
-				dbrb::RegisterPushNodesHandler(pFsmShared->dbrbProcess(), config.Immutable.NetworkIdentifier, pFsmShared->packetHandlers());
+				dbrb::RegisterPushNodesHandler(pFsmShared->dbrbProcess(), config.Immutable.NetworkIdentifier, pConfigHolder, pFsmShared->packetHandlers());
+				dbrb::RegisterRemoveNodeRequestHandler(pFsmShared->dbrbProcess(), locator.keyPair(), pFsmShared->packetHandlers());
+				dbrb::RegisterRemoveNodeResponseHandler(pFsmShared->dbrbProcess(), pFsmShared->packetHandlers());
 
 				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, 2u);
 				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, [&acceptor = *pReaders](

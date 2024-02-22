@@ -28,6 +28,7 @@
 #include "catapult/cache_tx/AggregatePtCache.h"
 #include "catapult/cache_tx/AggregateUtCache.h"
 #include "catapult/io/AggregateBlockStorage.h"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace subscribers {
 
@@ -106,9 +107,12 @@ namespace catapult { namespace subscribers {
 		public:
 			void notifyStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) override {
 				auto result = validators::ValidationResult(status);
+				auto time = std::chrono::system_clock::to_time_t(utils::ToTimePoint(transaction.Deadline));
+				char deadline[40];
+				std::strftime(deadline, 40 ,"%F %T", std::localtime(&time));
 				CATAPULT_LOG_LEVEL(validators::MapToLogLevel(result))
 						<< "rejected tx " << hash << " at height " << height << " due to result " << result
-						<< " (deadline " << transaction.Deadline << ")";
+						<< " (deadline " << deadline << ")";
 			}
 
 			void flush() override

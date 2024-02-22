@@ -379,6 +379,11 @@
 			"name": "removeDbrbProcess",
 			"type": "17004",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "removeDbrbProcessByNetwork",
+			"type": "17260",
+			"supportedVersions": [1]
 		}
 	]
 }

@@ -49,6 +49,11 @@ namespace catapult { namespace test {
 	std::vector<model::TransactionInfo> CreateTransactionInfosFromSizeMultiplierPairs(
 			const std::vector<std::pair<uint32_t, uint32_t>>& sizeMultiplierPairs);
 
+	/// Creates transaction infos from \a sizeMultiplierPairs such that each transaction has size equal to `pair::first`
+	/// and max fee equal to `pair::first * pair::second / 10`. If max fee is zero then entity size is set to 0x5000.
+	std::vector<model::TransactionInfo> CreateTransactionInfosFromSizeMultiplierPairsWithZeroFees(
+			const std::vector<std::pair<uint32_t, uint32_t>>& sizeMultiplierPairs);
+
 	/// Creates \a count transaction infos with optional extracted addresses.
 	std::vector<model::TransactionInfo> CreateTransactionInfosWithOptionalAddresses(size_t count);
 

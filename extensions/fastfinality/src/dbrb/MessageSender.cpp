@@ -6,12 +6,15 @@
 
 #include "MessageSender.h"
 #include "DbrbChainPackets.h"
+#include "TransactionSender.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/dbrb/Messages.h"
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/net/PacketWriters.h"
 #include "catapult/thread/Future.h"
 #include "catapult/thread/FutureUtils.h"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace dbrb {
 
@@ -24,7 +27,13 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	MessageSender::MessageSender(ionet::Node thisNode, std::weak_ptr<net::PacketWriters> pWriters, const ionet::NodeContainer& nodeContainer, bool broadcastThisNode)
+	MessageSender::MessageSender(
+			ionet::Node thisNode,
+			std::weak_ptr<net::PacketWriters> pWriters,
+			const ionet::NodeContainer& nodeContainer,
+			bool broadcastThisNode,
+			std::shared_ptr<TransactionSender> pTransactionSender,
+			const dbrb::DbrbViewFetcher& dbrbViewFetcher)
 		: m_pWriters(std::move(pWriters))
 		, m_running(true)
 		, m_clearQueue(false)
@@ -32,6 +41,8 @@ namespace catapult { namespace dbrb {
 		, m_thisNode(std::move(thisNode))
 		, m_nodeContainer(nodeContainer)
 		, m_broadcastThisNode(broadcastThisNode)
+		, m_pTransactionSender(std::move(pTransactionSender))
+		, m_dbrbViewFetcher(dbrbViewFetcher)
 	{}
 
 	MessageSender::~MessageSender() {
@@ -162,7 +173,7 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	void MessageSender::requestNodes(const std::set<ProcessId>& requestedIds) {
+	void MessageSender::requestNodes(const std::set<ProcessId>& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		std::vector<ionet::Node> nodes;
 		std::set<ProcessId> ids;
 
@@ -185,12 +196,12 @@ namespace catapult { namespace dbrb {
 		nodes.erase(std::remove_if(nodes.begin(), nodes.end(), [](const auto& node) { return node.endpoint().Host.empty(); }), nodes.end());
 		CATAPULT_LOG(debug) << "[MESSAGE SENDER] got " << nodes.size() << " discovered nodes";
 		if (!nodes.empty()) {
-			addNodes(nodes);
+			addNodes(nodes, pConfigHolder);
 			broadcastNodes(nodes);
 		}
 	}
 
-	void MessageSender::addNodes(const std::vector<ionet::Node>& nodes) {
+	void MessageSender::addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		auto pWriters = m_pWriters.lock();
 		if (!pWriters)
 			return;
@@ -220,7 +231,7 @@ namespace catapult { namespace dbrb {
 			}
 
 			CATAPULT_LOG(debug) << "[MESSAGE SENDER] Connecting to " << dbrbNode << " " << id;
-			pWriters->connect(dbrbNode, [pThisWeak = weak_from_this(), dbrbNode, node](const auto& result) {
+			pWriters->connect(dbrbNode, [pThisWeak = weak_from_this(), dbrbNode, node, pConfigHolder](const auto& result) {
 				CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[MESSAGE SENDER] connection attempt to " << dbrbNode << " " << dbrbNode.identityKey() << " completed with " << result.Code;
 				auto pThis = pThisWeak.lock();
 				if (pThis) {
@@ -230,8 +241,26 @@ namespace catapult { namespace dbrb {
 							pThis->m_nodes[node.identityKey()] = node;
 						}
 						CATAPULT_LOG(debug) << "[MESSAGE SENDER] Added node " << dbrbNode << " " << dbrbNode.identityKey();
-						if (pThis->m_broadcastThisNode)
-							pThis->broadcastNodes({ pThis->m_thisNode });
+						pThis->broadcastThisNode();
+					} else {
+						std::lock_guard<std::mutex> guard(pThis->m_removeNodeMutex);
+						auto timestamp = utils::NetworkTime();
+						auto view = View{ pThis->m_dbrbViewFetcher.getView(timestamp) };
+						auto nodeIter = pThis->m_nodesToRemove.find(node.identityKey());
+						if (nodeIter == pThis->m_nodesToRemove.cend() && view.isMember(node.identityKey())) {
+							view.Data.erase(node.identityKey());
+							auto bootstrapView = View{ pConfigHolder->Config().Network.DbrbBootstrapProcesses };
+							view.merge(bootstrapView);
+
+							if (!pThis->m_pTransactionSender->isRemoveDbrbProcessByNetworkTransactionSent(node.identityKey()) && view.isMember(pThis->m_thisNode.identityKey())) {
+								pThis->m_nodesToRemove.emplace(node.identityKey(), NodeRemovalData{ timestamp, view.Data, std::map<ProcessId, Signature>{} });
+								auto pRequest = ionet::CreateSharedPacket<DbrbRemoveNodeRequestPacket>();
+								pRequest->Timestamp = timestamp;
+								pRequest->ProcessId = node.identityKey();
+								view.Data.erase(pThis->m_thisNode.identityKey());
+								pThis->enqueue(pRequest, view.Data);
+							}
+						}
 					}
 
 					{
@@ -241,6 +270,11 @@ namespace catapult { namespace dbrb {
 				}
 			});
 		}
+	}
+
+	void MessageSender::broadcastThisNode() {
+		if (m_broadcastThisNode)
+			broadcastNodes({ m_thisNode });
 	}
 
 	void MessageSender::broadcastNodes(const std::vector<ionet::Node>& nodes) {
@@ -302,5 +336,31 @@ namespace catapult { namespace dbrb {
 	void MessageSender::clearBroadcastData() {
 		std::lock_guard<std::mutex> guard(m_nodeMutex);
 		m_broadcastedPackets.clear();
+	}
+
+	void MessageSender::clearNodeRemovalData() {
+		std::lock_guard<std::mutex> guard(m_removeNodeMutex);
+		m_nodesToRemove.clear();
+	}
+
+	bool MessageSender::isNodeAdded(const ProcessId& id) {
+		std::lock_guard<std::mutex> guard(m_nodeMutex);
+		return (m_nodes.find(id) != m_nodes.cend() || m_connectionInProgress.find(id) != m_connectionInProgress.cend());
+	}
+
+	void MessageSender::addRemoveNodeResponse(const ProcessId& idToRemove, const ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature) {
+		std::lock_guard<std::mutex> guard(m_removeNodeMutex);
+		auto iter = m_nodesToRemove.find(idToRemove);
+		if (iter == m_nodesToRemove.cend() || iter->second.Timestamp != timestamp || iter->second.View.find(respondentId) == iter->second.View.cend())
+			return;
+
+		auto& votes = iter->second.Votes;
+		votes.emplace(respondentId, signature);
+
+		// Add own vote.
+		if (votes.size() + 1 != (View{ iter->second.View }.quorumSize()))
+			return;
+
+		m_pTransactionSender->sendRemoveDbrbProcessByNetworkTransaction(idToRemove, timestamp, votes);
 	}
 }}

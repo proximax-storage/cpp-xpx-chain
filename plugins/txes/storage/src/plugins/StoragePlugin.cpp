@@ -53,7 +53,7 @@ namespace catapult { namespace plugins {
 		template<class TTransactionBody>
 		void setUnlimitedTransactionFee(model::TransactionFeeCalculator& feeCalculator) {
 			for (VersionType i = 1; i <= TTransactionBody::Current_Version; i++) {
-				feeCalculator.addUnlimitedFeeTransaction(TTransactionBody::Entity_Type, i);
+				feeCalculator.addLimitedFeeTransaction(TTransactionBody::Entity_Type, i);
 			}
 		}
 	}
