@@ -12,8 +12,8 @@ if(SANITIZE_ADDRESS)
         -DNDEBUG
         )
     foreach(FLAG IN LISTS FLAGS)
-        add_cache_flag(CMAKE_CXX_FLAGS ${IGNORELIST} ${FLAG})
-        add_cache_flag(CMAKE_C_FLAGS ${IGNORELIST} ${FLAG})
+        add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
+        add_cache_flag(CMAKE_C_FLAGS ${FLAG})
     endforeach()
 
     set(_ENV "verbosity=1:debug=1:detect_leaks=1:check_initialization_order=1:alloc_dealloc_mismatch=true:use_odr_indicator=true")
@@ -29,6 +29,8 @@ elseif(SANITIZE_THREAD)
 
     set(BLACKLIST -fsanitize-blacklist=${CMAKE_CURRENT_LIST_DIR}/tsan_blacklist.txt)
     set(FLAGS
+            -tsan-instrument-memory-accesses
+            -mllvm
             ${BLACKLIST}
             -gcolumn-info
             -g
@@ -36,8 +38,8 @@ elseif(SANITIZE_THREAD)
             -DNDEBUG
             )
     foreach(FLAG IN LISTS FLAGS)
-        add_cache_flag(CMAKE_CXX_FLAGS ${BLACKLIST} ${FLAG})
-        add_cache_flag(CMAKE_C_FLAGS ${BLACKLIST} ${FLAG})
+        add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
+        add_cache_flag(CMAKE_C_FLAGS ${FLAG})
     endforeach()
 
     add_cache_flag(CMAKE_EXE_LINKER_FLAGS "-fsanitize=thread")
@@ -62,8 +64,8 @@ elseif(SANITIZE_UNDEFINED)
         -O1
         )
     foreach(FLAG IN LISTS FLAGS)
-        add_cache_flag(CMAKE_CXX_FLAGS ${IGNORELIST} ${FLAG})
-        add_cache_flag(CMAKE_C_FLAGS ${IGNORELIST} ${FLAG})
+        add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
+        add_cache_flag(CMAKE_C_FLAGS ${FLAG})
     endforeach()
 
     set(_ENV "print_stacktrace=1:suppressions=${CMAKE_CURRENT_LIST_DIR}/ubsan_ignorelist.txt")
@@ -88,8 +90,8 @@ elseif(SANITIZE_MEMORY)
         -fsanitize-memory-track-origins=2
         )
     foreach(FLAG IN LISTS FLAGS)
-        add_cache_flag(CMAKE_CXX_FLAGS ${IGNORELIST} ${FLAG})
-        add_cache_flag(CMAKE_C_FLAGS ${IGNORELIST} ${FLAG})
+        add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
+        add_cache_flag(CMAKE_C_FLAGS ${FLAG})
     endforeach()
 
     set(_ENV "halt_on_error=1:report_umrs=1:suppressions=${CMAKE_CURRENT_LIST_DIR}/msan_ignorelist.txt")
