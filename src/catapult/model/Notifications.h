@@ -693,7 +693,6 @@ namespace catapult { namespace model {
 
 	// region harvesters
 
-	/// Notifies of the round of a block.
 	template<typename TDerivedNotification>
 	struct BasicHarvestersNotification : public Notification {
 	public:
@@ -758,6 +757,37 @@ namespace catapult { namespace model {
 		InactiveHarvestersNotification(const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
 			: BasicHarvestersNotification(pHarvesterKeys, harvesterKeysCount)
 		{}
+	};
+
+	template<VersionType version>
+	struct RemoveDbrbProcessByNetworkNotification;
+
+	template<>
+	struct RemoveDbrbProcessByNetworkNotification<1> : public Notification {
+	public:
+		static constexpr auto Notification_Type = Core_RemoveDbrbProcessByNetwork_v1_Notification;
+
+	public:
+		explicit RemoveDbrbProcessByNetworkNotification(const Key& processId, Timestamp timestamp, const Cosignature* votesPtr, uint16_t voteCount)
+			: Notification(Notification_Type, sizeof(RemoveDbrbProcessByNetworkNotification<1>))
+			, ProcessId(processId)
+			, Timestamp(std::move(timestamp))
+			, VotesPtr(votesPtr)
+			, VoteCount(voteCount)
+		{}
+
+	public:
+		/// The ID of the process to remove.
+		Key ProcessId;
+
+		/// The start time of vote collecting.
+		catapult::Timestamp Timestamp;
+
+		/// Votes.
+		const Cosignature* VotesPtr;
+
+		/// Vote count.
+		uint16_t VoteCount;
 	};
 
 	// endregion

@@ -371,6 +371,11 @@
 			"supportedVersions": [1]
 		},
 		{
+			"name": "removeDbrbProcessByNetwork",
+			"type": "17260",
+			"supportedVersions": [1]
+		},
+		{
 			"name": "deployContract",
 			"type": "16750",
 			"supportedVersions": [1]

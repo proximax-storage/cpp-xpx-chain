@@ -10,8 +10,6 @@
 
 namespace catapult { namespace storage {
 
-#define LOAD_PROPERTY(SECTION, NAME) utils::LoadIniProperty(bag, SECTION, #NAME, config.NAME)
-
 	StorageConfiguration StorageConfiguration::Uninitialized() {
 		return StorageConfiguration();
 	}
@@ -19,14 +17,13 @@ namespace catapult { namespace storage {
 	StorageConfiguration StorageConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
 		StorageConfiguration config;
 
-#define LOAD_DB_PROPERTY(NAME) LOAD_PROPERTY("replicator", NAME)
+#define LOAD_DB_PROPERTY(NAME) utils::LoadIniProperty(bag, "replicator", #NAME, config.NAME)
 
 		LOAD_DB_PROPERTY(Key);
 		LOAD_DB_PROPERTY(Host);
 		LOAD_DB_PROPERTY(Port);
 		LOAD_DB_PROPERTY(TransactionTimeout);
 		LOAD_DB_PROPERTY(StorageDirectory);
-		LOAD_DB_PROPERTY(SandboxDirectory);
 		LOAD_DB_PROPERTY(UseTcpSocket);
 		LOAD_DB_PROPERTY(UseRpcReplicator);
 		LOAD_DB_PROPERTY(RpcHost);
@@ -38,11 +35,15 @@ namespace catapult { namespace storage {
 
 #undef LOAD_DB_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 14);
+#define TRY_LOAD_DB_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "replicator", #NAME, config.NAME)
+
+		config.LogOptions = "";
+		TRY_LOAD_DB_PROPERTY(LogOptions);
+
+#undef TRY_LOAD_DB_PROPERTY
+
 		return config;
 	}
-
-#undef LOAD_PROPERTY
 
 	StorageConfiguration StorageConfiguration::LoadFromPath(const boost::filesystem::path& resourcesPath) {
 		return config::LoadIniConfiguration<StorageConfiguration>(resourcesPath / "config-storage.properties");

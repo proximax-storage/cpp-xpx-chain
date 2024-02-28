@@ -11,6 +11,8 @@
 namespace catapult {
 	namespace dbrb { class DbrbProcess; }
 	namespace ionet { class ServerPacketHandlers; }
+	namespace crypto { class KeyPair; }
+	namespace config { class BlockchainConfigurationHolder; }
 }
 
 namespace catapult { namespace dbrb {
@@ -19,5 +21,17 @@ namespace catapult { namespace dbrb {
 	void RegisterPushNodesHandler(
 		const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
 		model::NetworkIdentifier networkIdentifier,
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+		ionet::ServerPacketHandlers& handlers);
+
+	/// Registers a remove DBRB node request handler in \a handlers.
+	void RegisterRemoveNodeRequestHandler(
+		const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
+		const crypto::KeyPair& keyPair,
+		ionet::ServerPacketHandlers& handlers);
+
+	/// Registers a remove DBRB node response handler in \a handlers.
+	void RegisterRemoveNodeResponseHandler(
+		const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
 		ionet::ServerPacketHandlers& handlers);
 }}

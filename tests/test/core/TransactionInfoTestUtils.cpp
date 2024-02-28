@@ -74,6 +74,25 @@ namespace catapult { namespace test {
 		return transactionInfos;
 	}
 
+	std::vector<model::TransactionInfo> CreateTransactionInfosFromSizeMultiplierPairsWithZeroFees(
+			const std::vector<std::pair<uint32_t, uint32_t>>& sizeMultiplierPairs) {
+		std::vector<model::TransactionInfo> transactionInfos;
+		for (const auto& pair: sizeMultiplierPairs) {
+			auto pTransaction = GenerateRandomTransactionWithSize(pair.first);
+			pTransaction->MaxFee = Amount(pair.first * pair.second / 10);
+			if (pTransaction->MaxFee == Amount(0)) {
+				pTransaction->Type = static_cast<model::EntityType>(0x5000);
+				pTransaction->Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1u);
+			}
+			transactionInfos.push_back(model::TransactionInfo(std::move(pTransaction), Height()));
+
+			// give each info a unique entity hash so that they can all be added to a UT cache
+			FillWithRandomData(transactionInfos.back().EntityHash);
+		}
+
+		return transactionInfos;
+	}
+
 	std::vector<model::TransactionInfo> CreateTransactionInfosWithOptionalAddresses(size_t count) {
 		std::vector<model::TransactionInfo> transactionInfos;
 		for (auto i = 0u; i < count; ++i) {

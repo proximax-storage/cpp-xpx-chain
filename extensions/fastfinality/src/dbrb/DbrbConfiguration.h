@@ -20,6 +20,9 @@ namespace catapult { namespace dbrb {
 		/// Timeout for the transactions sent by the DBRB process.
 		utils::TimeSpan TransactionTimeout;
 
+		/// True if this node is a DBRB process.
+		bool IsDbrbProcess;
+
 	private:
 		DbrbConfiguration() = default;
 

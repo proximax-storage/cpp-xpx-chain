@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/ionet/Packet.h"
+#include "catapult/dbrb/DbrbDefinitions.h"
 
 namespace catapult { namespace dbrb {
 
@@ -15,6 +16,21 @@ namespace catapult { namespace dbrb {
 		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Push_Nodes;
 
 		uint16_t NodeCount;
+	};
+
+	struct DbrbRemoveNodeRequestPacket : public ionet::Packet {
+		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Remove_Node_Request;
+
+		catapult::Timestamp Timestamp;
+		dbrb::ProcessId ProcessId;
+	};
+
+	struct DbrbRemoveNodeResponsePacket : public ionet::Packet {
+		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Remove_Node_Response;
+
+		catapult::Timestamp Timestamp;
+		dbrb::ProcessId ProcessId;
+		catapult::Signature Signature;
 	};
 
 #pragma pack(pop)

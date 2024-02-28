@@ -11,8 +11,8 @@
 
 namespace catapult::model {
 
-	void TransactionFeeCalculator::addUnlimitedFeeTransaction(EntityType entityType, VersionType versionType) {
-		auto [entitiesIt, inserted] = m_unlimitedFeeTransactions.try_emplace(entityType, std::set<VersionType>());
+	void TransactionFeeCalculator::addLimitedFeeTransaction(EntityType entityType, VersionType versionType) {
+		auto [entitiesIt, _] = m_limitedFeeTransactions.try_emplace(entityType, std::set<VersionType>());
 		entitiesIt->second.insert(versionType);
 	}
 
@@ -23,23 +23,21 @@ namespace catapult::model {
 			uint32_t feeInterestDenominator) const {
 
         auto size = transaction.Size;
-        if (transaction.Type == model::Entity_Type_Aggregate_Bonded) {
+        if (transaction.Type == model::Entity_Type_Aggregate_Bonded)
             size -= reinterpret_cast<const model::AggregateTransaction&>(transaction).CosignaturesCount() * sizeof(model::Cosignature);
-        }
 
 		auto fee = Amount(feeMultiplier.unwrap() * size * feeInterest / feeInterestDenominator);
-		if (isTransactionFeeUnlimited(transaction.Type, transaction.EntityVersion())) {
+		if (isTransactionFeeLimited(transaction.Type, transaction.EntityVersion()))
 			return std::min(transaction.MaxFee, fee);
-		}
+
 		return fee;
 	}
 
-	bool TransactionFeeCalculator::isTransactionFeeUnlimited(EntityType entityType,
-															 VersionType versionType) const {
-		auto entityIt = m_unlimitedFeeTransactions.find(entityType);
-		if (entityIt == m_unlimitedFeeTransactions.end()) {
+	bool TransactionFeeCalculator::isTransactionFeeLimited(EntityType entityType, VersionType versionType) const {
+		auto entityIt = m_limitedFeeTransactions.find(entityType);
+		if (entityIt == m_limitedFeeTransactions.end())
 			return false;
-		}
+
 		return entityIt->second.find(versionType) != entityIt->second.end();
 	}
 

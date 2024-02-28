@@ -37,6 +37,8 @@ namespace catapult { namespace dbrb {
 		std::future<bool> sendRemoveDbrbProcessTransaction();
 		void disableAddDbrbProcessTransaction();
 		bool isAddDbrbProcessTransactionSent();
+		void sendRemoveDbrbProcessByNetworkTransaction(const ProcessId& id, const Timestamp& timestamp, const std::map<ProcessId, Signature>& votes);
+		bool isRemoveDbrbProcessByNetworkTransactionSent(const ProcessId& id);
 
 	public:
 		void handleBlock(const model::BlockElement& blockElement) override;
@@ -52,10 +54,11 @@ namespace catapult { namespace dbrb {
         handlers::TransactionRangeHandler m_transactionRangeHandler;
 		std::shared_ptr<harvesting::UnlockedAccounts> m_pHarvesterAccounts;
 		Hash256 m_addDbrbProcessTransactionHash;
-		Timestamp m_lastRegistrationTxTime;
+		Timestamp m_addDbrbProcessTxTime;
 		Hash256 m_removeDbrbProcessTransactionHash;
 		std::shared_ptr<std::promise<bool>> m_pRemoveDbrbProcessTxConfirmedPromise;
 		bool m_disableAddDbrbProcessTransaction = false;
 		std::mutex m_mutex;
+		std::map<ProcessId, std::pair<Hash256, Timestamp>> m_removalsByNetwork;
     };
 }}

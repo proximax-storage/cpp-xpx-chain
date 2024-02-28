@@ -70,8 +70,9 @@ namespace catapult { namespace fastfinality {
 			const RemoteNodeStateRetriever& retriever,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
-			const std::function<uint64_t (const Key&)>& importanceGetter) {
-		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter]() {
+			const std::function<uint64_t (const Key&)>& importanceGetter,
+			const dbrb::DbrbConfiguration& dbrbConfig) {
+		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, dbrbConfig]() {
 			TRY_GET_FSM()
 
 			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
@@ -82,6 +83,8 @@ namespace catapult { namespace fastfinality {
 			bool isInDbrbSystem = pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::NetworkTime(), localHeight, false);
 
 			std::vector<RemoteNodeState> remoteNodeStates = retriever();
+
+			pFsmShared->dbrbProcess()->messageSender()->broadcastThisNode();
 
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
@@ -127,6 +130,14 @@ namespace catapult { namespace fastfinality {
 
 				chainSyncData.NodeIdentityKeys = std::move(importanceKeys.begin()->second);
 				pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
+
+			} else if (!dbrbConfig.IsDbrbProcess) {
+
+				DelayAction(pFsmWeak, pFsmShared->timer(), 4 * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
+					TRY_GET_FSM()
+
+					pFsmShared->processEvent(StartLocalChainCheck{});
+				});
 
 			} else {
 
@@ -296,15 +307,14 @@ namespace catapult { namespace fastfinality {
 						std::lock_guard<std::mutex> guard(pFsmShared->mutex());
 
 						auto pPromise = std::make_shared<thread::promise<bool>>();
-						auto blockHeight = pBlock->Height;
-						rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise, blockHeight](auto, const auto& result) {
+						rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise, pBlock](auto, const auto& result) {
 							bool success = (disruptor::CompletionStatus::Aborted != result.CompletionStatus);
 							if (success) {
-								CATAPULT_LOG(info) << "successfully committed block (height " << blockHeight << ")";
+								CATAPULT_LOG(info) << "successfully committed block (height " << pBlock->Height << ", signer " << pBlock->Signer << ")";
 							} else {
 								auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
 								CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult))
-									<< "block (height " << blockHeight << ") commit failed due to " << validationResult;
+									<< "block (height " << pBlock->Height << ") commit failed due to " << validationResult;
 							}
 
 							pPromise->set_value(std::move(success));
@@ -415,6 +425,8 @@ namespace catapult { namespace fastfinality {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
+			committeeData.setUnexpectedProposedBlockHeight(false);
+			committeeData.setUnexpectedConfirmedBlockHeight(false);
 			auto round = committeeData.committeeRound();
 			auto pConfigHolder = state.pluginManager().configHolder();
 			bool isInDbrbSystem = pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight(), true);

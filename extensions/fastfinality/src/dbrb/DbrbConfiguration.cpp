@@ -25,7 +25,13 @@ namespace catapult { namespace dbrb {
 
 #undef LOAD_DB_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 1);
+#define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "dbrb", #NAME, config.NAME)
+
+		config.IsDbrbProcess = true;
+		TRY_LOAD_CHAIN_PROPERTY(IsDbrbProcess);
+
+#undef TRY_LOAD_CHAIN_PROPERTY
+
 		return config;
 	}
 
