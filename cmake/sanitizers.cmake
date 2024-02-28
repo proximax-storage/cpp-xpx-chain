@@ -53,6 +53,8 @@ elseif(SANITIZE_THREAD)
     export TSAN_OPTIONS=\"${_ENV}\"
     ")
 elseif(SANITIZE_UNDEFINED)
+    # if thre are issues with rocksDb try to re-build rocksDb lib with RTTI:
+    # make EXTRA_CXXFLAGS=-fPIC EXTRA_CFLAGS=-fPIC USE_RTTI=1 DEBUG_LEVEL=0
     message(STATUS "SANITIZE_UNDEFINED enabled")
 
     set(IGNORELIST -fsanitize-ignorelist=${CMAKE_CURRENT_LIST_DIR}/ubsan_ignorelist.txt)
@@ -76,9 +78,11 @@ elseif(SANITIZE_UNDEFINED)
     export UBSAN_OPTIONS=\"${_ENV}\"
     ")
 elseif(SANITIZE_MEMORY)
+    # some c++ std libs and google tests should be rebuild with MemorySanitizer too
+    # see https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo
     message(STATUS "SANITIZE_MEMORY enabled")
 
-    set(IGNORELIST -fsanitize-blacklist=${CMAKE_CURRENT_LIST_DIR}/msan_ignorelist.txt)
+    set(IGNORELIST -fsanitize-ignorelist=${CMAKE_CURRENT_LIST_DIR}/msan_ignorelist.txt)
     set(FLAGS
         ${IGNORELIST}
         -fsanitize=memory
@@ -88,13 +92,15 @@ elseif(SANITIZE_MEMORY)
         -fno-optimize-sibling-calls
         -O1
         -fsanitize-memory-track-origins=2
-        )
+        -fsanitize-memory-use-after-dtor
+        -fsanitize-undefined-trap-on-error
+    )
     foreach(FLAG IN LISTS FLAGS)
         add_cache_flag(CMAKE_CXX_FLAGS ${FLAG})
         add_cache_flag(CMAKE_C_FLAGS ${FLAG})
     endforeach()
 
-    set(_ENV "halt_on_error=1:report_umrs=1:suppressions=${CMAKE_CURRENT_LIST_DIR}/msan_ignorelist.txt")
+    set(_ENV "poison_in_dtor=0:halt_on_error=1:report_umrs=1:suppressions=${CMAKE_CURRENT_LIST_DIR}/msan_suppressions.txt")
     set(ENV{MSAN_OPTIONS} "${_ENV}")
     message(STATUS "
     [Warning] Define MSAN_OPTIONS ENV var:
