@@ -175,10 +175,11 @@ namespace catapult { namespace chain {
 					continue;
 
 				auto minTransactionFee = m_executionConfig.pTransactionFeeCalculator->calculateTransactionFee(
-						config.Node.MinFeeMultiplier,
-						entity,
-						config.Node.FeeInterest,
-						config.Node.FeeInterestDenominator);
+					config.Node.MinFeeMultiplier,
+					entity,
+					config.Node.FeeInterest,
+					config.Node.FeeInterestDenominator,
+					Height(-1));
 				if (entity.MaxFee < minTransactionFee) {
 					// don't log reverted transactions that could have been included by harvester with lower min fee multiplier
 					if (TransactionSource::New == transactionSource) {

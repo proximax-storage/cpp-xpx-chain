@@ -153,10 +153,11 @@ namespace catapult { namespace model {
 
 				// raise transaction notifications
 				auto fee = pBlockHeader ? m_transactionFeeCalculator.calculateTransactionFee(
-												  pBlockHeader->FeeMultiplier,
-												  transaction,
-												  pBlockHeader->FeeInterest,
-												  pBlockHeader->FeeInterestDenominator)
+						pBlockHeader->FeeMultiplier,
+						transaction,
+						pBlockHeader->FeeInterest,
+						pBlockHeader->FeeInterestDenominator,
+						pBlockHeader->Height)
 					: transaction.MaxFee;
 				sub.notify(TransactionNotification<1>(transaction.Signer, hash, transaction.Type, transaction.Deadline));
 				sub.notify(TransactionDeadlineNotification<1>(transaction.Deadline, attributes.MaxLifetime));

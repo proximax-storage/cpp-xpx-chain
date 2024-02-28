@@ -21,14 +21,32 @@
 #include "AggregatePlugin.h"
 #include "AggregateTransactionPlugin.h"
 #include "src/model/AggregateEntityType.h"
+#include "src/model/AggregateTransaction.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace plugins {
 
+	namespace {
+		constexpr auto FeeAggregateBondedFixVersion = catapult::BlockchainVersion{
+			uint64_t{1}	<< 48 |
+			uint64_t{5}	<< 32 |
+			uint64_t{1}	<< 16 |
+			uint64_t{0}
+		};
+	}
+
 	void RegisterAggregateSubsystem(PluginManager& manager) {
 		manager.addPluginInitializer([](auto& config) {
 			config.template InitPluginConfiguration<config::AggregateConfiguration>();
+		});
+
+		manager.transactionFeeCalculator()->addTransactionSizeSupplier(model::Entity_Type_Aggregate_Bonded, [pConfigHolder = manager.configHolder()](const model::Transaction& transaction, const Height& height) {
+			auto size = transaction.Size;
+			if (pConfigHolder->Version(height) >= FeeAggregateBondedFixVersion)
+				size -= reinterpret_cast<const model::AggregateTransaction&>(transaction).CosignaturesCount() * sizeof(model::Cosignature);
+
+			return size;
 		});
 
 		// configure the aggregate to allow all registered transactions that support embedding

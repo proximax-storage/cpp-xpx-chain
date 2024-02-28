@@ -37,7 +37,7 @@ namespace catapult { namespace model {
 
 			// Act:
 			model::TransactionFeeCalculator transactionFeeCalculator;
-			auto fee = transactionFeeCalculator.calculateTransactionFee(multiplier, transaction, 1, 1);
+			auto fee = transactionFeeCalculator.calculateTransactionFee(multiplier, transaction, 1, 1, Height(-1));
 
 			// Assert:
 			EXPECT_EQ(expectedFee, fee) << "size = " << size << ", multiplier = " << multiplier;
