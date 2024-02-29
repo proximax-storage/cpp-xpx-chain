@@ -93,11 +93,7 @@ namespace catapult { namespace cache {
 		uint64_t totalSize = 0;
 		UnknownTransactions transactions;
 		for (const auto& data : m_transactionDataContainer) {
-			if (data.pEntity->MaxFee < m_pTransactionFeeCalculator->calculateTransactionFee(
-											   minFeeMultiplier,
-											   *data.pEntity,
-											   feeInterest,
-											   feeInterestDenominator))
+			if (data.pEntity->MaxFee < m_pTransactionFeeCalculator->calculateTransactionFee( minFeeMultiplier, *data.pEntity, feeInterest, feeInterestDenominator, Height(-1)))
 				continue;
 
 			auto shortHash = utils::ToShortHash(data.EntityHash);
