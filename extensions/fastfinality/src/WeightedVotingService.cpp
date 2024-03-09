@@ -139,15 +139,16 @@ namespace catapult { namespace fastfinality {
 		auto CreateRemoteNodeStateRetriever(
 				const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
 				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-				const model::BlockElementSupplier& lastBlockElementSupplier) {
-			return [pFsmWeak, pConfigHolder, lastBlockElementSupplier]() {
+				const model::BlockElementSupplier& lastBlockElementSupplier,
+				const dbrb::DbrbViewFetcher& dbrbViewFetcher) {
+			return [pFsmWeak, pConfigHolder, lastBlockElementSupplier, &dbrbViewFetcher]() {
 				auto pFsmShared = pFsmWeak.lock();
 				if (!pFsmShared || pFsmShared->stopped() || pFsmShared->dbrbProcess()->currentView().Data.empty())
 					return std::vector<RemoteNodeState>();
 
 				auto pPromise = std::make_shared<thread::promise<std::vector<RemoteNodeState>>>();
 
-				boost::asio::post(pFsmShared->dbrbProcess()->strand(), [pFsmWeak, pConfigHolder, lastBlockElementSupplier, pPromise]() {
+				boost::asio::post(pFsmShared->dbrbProcess()->strand(), [pFsmWeak, pConfigHolder, lastBlockElementSupplier, pPromise, &dbrbViewFetcher]() {
 					auto pFsmShared = pFsmWeak.lock();
 					if (!pFsmShared || pFsmShared->stopped()) {
 						pPromise->set_value(std::vector<RemoteNodeState>());
@@ -162,11 +163,12 @@ namespace catapult { namespace fastfinality {
 					const auto targetHeight = chainHeight + Height(maxBlocksPerSyncAttempt);
 
 					const auto& pDbrbProcess = pFsmShared->dbrbProcess();
-					const auto& view = pDbrbProcess->currentView();
-					auto minOpinionNumber = view.quorumSize() - 1;
+					const auto& view = dbrbViewFetcher.getView(Timestamp(0));
+					auto minOpinionNumber = config.Network.CommitteeSize - 1;
 					auto pMessageSender = pDbrbProcess->messageSender();
 					pMessageSender->clearQueue();
-					for (const auto& identityKey : view.Data) {
+					pMessageSender->requestNodes(view, pConfigHolder);
+					for (const auto& identityKey : view) {
 						if (identityKey == pDbrbProcess->id())
 							continue;
 
@@ -367,7 +369,7 @@ namespace catapult { namespace fastfinality {
 
 				actions.CheckLocalChain = CreateDefaultCheckLocalChainAction(
 					pFsmShared,
-					CreateRemoteNodeStateRetriever(pFsmShared, pConfigHolder, lastBlockElementSupplier),
+					CreateRemoteNodeStateRetriever(pFsmShared, pConfigHolder, lastBlockElementSupplier, pluginManager.dbrbViewFetcher()),
 					pConfigHolder,
 					lastBlockElementSupplier,
 					importanceGetter,
