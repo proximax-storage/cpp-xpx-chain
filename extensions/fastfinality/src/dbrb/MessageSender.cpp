@@ -243,24 +243,25 @@ namespace catapult { namespace dbrb {
 						CATAPULT_LOG(debug) << "[MESSAGE SENDER] Added node " << dbrbNode << " " << dbrbNode.identityKey();
 						pThis->broadcastThisNode();
 					} else {
-						std::lock_guard<std::mutex> guard(pThis->m_removeNodeMutex);
-						auto timestamp = utils::NetworkTime();
-						auto view = View{ pThis->m_dbrbViewFetcher.getView(timestamp) };
-						auto nodeIter = pThis->m_nodesToRemove.find(node.identityKey());
-						if (nodeIter == pThis->m_nodesToRemove.cend() && view.isMember(node.identityKey())) {
-							view.Data.erase(node.identityKey());
-							auto bootstrapView = View{ pConfigHolder->Config().Network.DbrbBootstrapProcesses };
-							view.merge(bootstrapView);
-
-							if (!pThis->m_pTransactionSender->isRemoveDbrbProcessByNetworkTransactionSent(node.identityKey()) && view.isMember(pThis->m_thisNode.identityKey())) {
-								pThis->m_nodesToRemove.emplace(node.identityKey(), NodeRemovalData{ timestamp, view.Data, std::map<ProcessId, Signature>{} });
-								auto pRequest = ionet::CreateSharedPacket<DbrbRemoveNodeRequestPacket>();
-								pRequest->Timestamp = timestamp;
-								pRequest->ProcessId = node.identityKey();
-								view.Data.erase(pThis->m_thisNode.identityKey());
-								pThis->enqueue(pRequest, view.Data);
-							}
-						}
+						// TODO: uncomment and retest
+//						std::lock_guard<std::mutex> guard(pThis->m_removeNodeMutex);
+//						auto timestamp = utils::NetworkTime();
+//						auto view = View{ pThis->m_dbrbViewFetcher.getView(timestamp) };
+//						auto nodeIter = pThis->m_nodesToRemove.find(node.identityKey());
+//						if (nodeIter == pThis->m_nodesToRemove.cend() && view.isMember(node.identityKey())) {
+//							view.Data.erase(node.identityKey());
+//							auto bootstrapView = View{ pConfigHolder->Config().Network.DbrbBootstrapProcesses };
+//							view.merge(bootstrapView);
+//
+//							if (!pThis->m_pTransactionSender->isRemoveDbrbProcessByNetworkTransactionSent(node.identityKey()) && view.isMember(pThis->m_thisNode.identityKey())) {
+//								pThis->m_nodesToRemove.emplace(node.identityKey(), NodeRemovalData{ timestamp, view.Data, std::map<ProcessId, Signature>{} });
+//								auto pRequest = ionet::CreateSharedPacket<DbrbRemoveNodeRequestPacket>();
+//								pRequest->Timestamp = timestamp;
+//								pRequest->ProcessId = node.identityKey();
+//								view.Data.erase(pThis->m_thisNode.identityKey());
+//								pThis->enqueue(pRequest, view.Data);
+//							}
+//						}
 					}
 
 					{
