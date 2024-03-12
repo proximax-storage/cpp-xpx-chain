@@ -17,22 +17,6 @@ namespace catapult { namespace cache {
 			std::strftime(buffer, 40 ,"%F %T", std::localtime(&time));
 			out << std::endl << prefix << process << " expires at: " << buffer;
 		}
-
-		void LogAllProcesses(const std::map<dbrb::ProcessId, Timestamp>& processes) {
-			std::ostringstream out;
-			out << std::endl << "DBRB processes (" << processes.size() << "):";
-			for (const auto& pair : processes)
-				LogProcess("DBRB process: ", pair.first, pair.second, out);
-			CATAPULT_LOG(trace) << out.str();
-		}
-
-		void LogCurrentView(const dbrb::ViewData& view, const std::map<dbrb::ProcessId, Timestamp>& processes) {
-			std::ostringstream out;
-			out << std::endl << "current DBRB view (" << view.size() << "):";
-			for (const auto& processId : view)
-				LogProcess("DBRB view member: ", processId, processes.at(processId), out);
-			CATAPULT_LOG(trace) << out.str();
-		}
 	}
 
 	dbrb::ViewData DbrbViewFetcherImpl::getView(Timestamp timestamp) const {
@@ -43,9 +27,6 @@ namespace catapult { namespace cache {
 
 			view.insert(iter->second.begin(), iter->second.end());
 		}
-
-		LogAllProcesses(m_processes);
-		LogCurrentView(view, m_processes);
 
     	return view;
     }
@@ -66,5 +47,27 @@ namespace catapult { namespace cache {
 	void DbrbViewFetcherImpl::clear() {
 		m_processes.clear();
 		m_expirationTimes.clear();
+    }
+
+	void DbrbViewFetcherImpl::logAllProcesses() const {
+		std::ostringstream out;
+		out << std::endl << "DBRB processes (" << m_processes.size() << "):";
+		for (const auto& pair : m_processes)
+			LogProcess("DBRB process: ", pair.first, pair.second, out);
+		CATAPULT_LOG(trace) << out.str();
+    }
+
+	void DbrbViewFetcherImpl::logView(const dbrb::ViewData& view) const {
+		std::ostringstream out;
+		out << std::endl << "current DBRB view (" << view.size() << "):";
+		for (const auto& processId : view) {
+			auto iter = m_processes.find(processId);
+			if (iter != m_processes.cend()) {
+				LogProcess("DBRB view member: ", processId, iter->second, out);
+			} else {
+				out << std::endl << processId << " is not a member of the view";
+			}
+		}
+		CATAPULT_LOG(trace) << out.str();
     }
 }}

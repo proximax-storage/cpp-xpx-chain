@@ -21,6 +21,8 @@ namespace catapult { namespace cache {
     public:
 		dbrb::ViewData getView(Timestamp timestamp) const override;
 		Timestamp getExpirationTime(const dbrb::ProcessId& processId) const override;
+		void logAllProcesses() const override;
+		void logView(const dbrb::ViewData& view) const override;
 
 	public:
 		void addDbrbProcess(const state::DbrbProcessEntry& entry);

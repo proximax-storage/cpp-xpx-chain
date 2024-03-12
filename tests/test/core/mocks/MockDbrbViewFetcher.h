@@ -19,5 +19,7 @@ namespace catapult { namespace mocks {
 	public:
 		dbrb::ViewData getView(Timestamp timestamp) const override {}
 		Timestamp getExpirationTime(const dbrb::ProcessId& processId) const override {}
+		void logAllProcesses() const override {}
+		void logView(const dbrb::ViewData& view) const override {}
 	};
 }}

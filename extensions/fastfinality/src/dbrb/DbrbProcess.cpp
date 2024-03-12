@@ -389,6 +389,8 @@ namespace catapult { namespace dbrb {
 
 	bool DbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) {
 		auto view = View{ m_dbrbViewFetcher.getView(now) };
+		m_dbrbViewFetcher.logAllProcesses();
+		m_dbrbViewFetcher.logView(view.Data);
 		auto isTemporaryProcess = view.isMember(m_id);
 
 		CATAPULT_LOG(debug) << "[DBRB] getting config at height " << height;

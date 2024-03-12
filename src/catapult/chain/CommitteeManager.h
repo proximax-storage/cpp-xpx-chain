@@ -56,9 +56,7 @@ namespace catapult { namespace chain {
 
 		/// Returns the committee selected by the last call of selectCommittee()
 		/// or empty committee after reset().
-		const Committee& committee() const {
-			return m_committee;
-		}
+		virtual Committee committee() const = 0;
 
 		/// Sets last block element \a supplier.
 		void setLastBlockElementSupplier(const model::BlockElementSupplier& supplier);

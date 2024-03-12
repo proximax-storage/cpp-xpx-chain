@@ -194,7 +194,7 @@ namespace catapult { namespace fastfinality {
 
 	namespace {
 		bool ValidateBlockCosignatures(const std::shared_ptr<model::Block>& pBlock, const chain::CommitteeManager& committeeManager, const model::NetworkConfiguration& config) {
-			const auto& committee = committeeManager.committee();
+			auto committee = committeeManager.committee();
 			if (pBlock->Signer != committee.BlockProposer) {
 				CATAPULT_LOG(warning) << "rejecting block, signer " << pBlock->Signer
 					<< " invalid, expected " << committee.BlockProposer;
@@ -439,16 +439,18 @@ namespace catapult { namespace fastfinality {
 				CATAPULT_THROW_RUNTIME_ERROR("committee start phase is not set")
 
 			auto& committeeManager = state.pluginManager().getCommitteeManager(model::Block::Current_Version);
-			if (committeeManager.committee().Round > round.Round)
-				CATAPULT_THROW_RUNTIME_ERROR_2("invalid committee round", committeeManager.committee().Round, round.Round)
+			auto committee = committeeManager.committee();
+			if (committee.Round > round.Round)
+				CATAPULT_THROW_RUNTIME_ERROR_2("invalid committee round", committee.Round, round.Round)
 
 			const auto& config = pConfigHolder->Config(committeeData.currentBlockHeight()).Network;
 			while (committeeManager.committee().Round < round.Round)
 				committeeManager.selectCommittee(config);
 			CATAPULT_LOG(debug) << "block " << committeeData.currentBlockHeight() << ": selected committee for round " << round.Round;
 			committeeManager.logCommittee();
+			committeeData.setIsBlockBroadcastEnabled(true);
 
-			const auto& committee = committeeManager.committee();
+			committee = committeeManager.committee();
 			committeeData.addCommitteeBootKey(committeeManager.getBootKey(committee.BlockProposer, config));
 			for (const auto& key: committee.Cosigners)
 				committeeData.addCommitteeBootKey(committeeManager.getBootKey(key, config));
@@ -725,7 +727,7 @@ namespace catapult { namespace fastfinality {
 			auto votes = committeeData.precommits();
 			std::vector<model::Cosignature> cosignatures;
 			cosignatures.reserve(votes.size());
-			const auto& blockProposer = state.pluginManager().getCommitteeManager(model::Block::Current_Version).committee().BlockProposer;
+			auto blockProposer = state.pluginManager().getCommitteeManager(model::Block::Current_Version).committee().BlockProposer;
 			for (const auto &pair : votes) {
 				if (pair.first != blockProposer)
 					cosignatures.push_back(pair.second.BlockCosignature);

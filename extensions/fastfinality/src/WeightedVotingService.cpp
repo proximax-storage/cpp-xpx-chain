@@ -163,7 +163,9 @@ namespace catapult { namespace fastfinality {
 					const auto targetHeight = chainHeight + Height(maxBlocksPerSyncAttempt);
 
 					const auto& pDbrbProcess = pFsmShared->dbrbProcess();
-					const auto& view = dbrbViewFetcher.getView(Timestamp(0));
+					auto view = dbrbViewFetcher.getView(Timestamp(0));
+					auto bootstrapView = config.Network.DbrbBootstrapProcesses;
+					view.merge(std::move(bootstrapView));
 					auto minOpinionNumber = config.Network.CommitteeSize - 1;
 					auto pMessageSender = pDbrbProcess->messageSender();
 					pMessageSender->clearQueue();

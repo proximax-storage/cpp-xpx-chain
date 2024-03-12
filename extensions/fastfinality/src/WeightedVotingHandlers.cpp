@@ -122,8 +122,12 @@ namespace catapult { namespace fastfinality {
 			return true;
 		}
 
-		bool ValidateBlockCosignatures(const model::Block& block, const chain::CommitteeManager& committeeManager, const model::NetworkConfiguration& config, chain::HarvesterWeight totalSumOfVotes) {
-			const auto& committee = committeeManager.committee();
+		bool ValidateBlockCosignatures(
+				const model::Block& block,
+				const chain::CommitteeManager& committeeManager,
+				const model::NetworkConfiguration& config,
+				chain::HarvesterWeight totalSumOfVotes,
+				const chain::Committee& committee) {
 			auto numCosignatures = block.CosignaturesCount();
 			if (committee.Cosigners.size() + 1u < numCosignatures) {
 				CATAPULT_LOG(warning) << "rejecting block, number of cosignatures exceeded committee number";
@@ -166,6 +170,11 @@ namespace catapult { namespace fastfinality {
 				const std::shared_ptr<thread::IoThreadPool>& pValidatorPool) {
 			auto name = (isProposedBlock ? "proposed" : "confirmed");
 			auto& committeeData = fsm.committeeData();
+			if (!committeeData.isBlockBroadcastEnabled()) {
+				CATAPULT_LOG(warning) << "rejecting " << name << " block (broadcast is disabled)";
+				return false;
+			}
+
 			auto expectedHeight = committeeData.currentBlockHeight();
 			if (expectedHeight != block.Height) {
 				CATAPULT_LOG(warning) << "rejecting " << name << " block (height " << block.Height << " does not equal to expected height " << expectedHeight << ")";
@@ -178,7 +187,7 @@ namespace catapult { namespace fastfinality {
 			}
 
 			const auto& committeeManager = state.pluginManager().getCommitteeManager(model::Block::Current_Version);
-			const auto& committee = committeeManager.committee();
+			auto committee = committeeManager.committee();
 			if (committee.Round < 0) {
 				CATAPULT_LOG(warning) << "rejecting " << name << " block (committee is not yet selected)";
 				return false;
@@ -199,7 +208,7 @@ namespace catapult { namespace fastfinality {
 				return false;
 			}
 
-			if (!isProposedBlock && !ValidateBlockCosignatures(block, committeeManager, state.pluginManager().config(block.Height), committeeData.totalSumOfVotes()))
+			if (!isProposedBlock && !ValidateBlockCosignatures(block, committeeManager, state.pluginManager().config(block.Height), committeeData.totalSumOfVotes(), committee))
 				return false;
 
 			bool isBlockValid = ValidateBlock(block, isProposedBlock, state, lastBlockElementSupplier, pValidatorPool);
