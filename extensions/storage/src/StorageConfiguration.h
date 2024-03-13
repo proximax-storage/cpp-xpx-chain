@@ -17,7 +17,7 @@ namespace catapult { namespace storage {
 	/// Storage configuration settings.
 	struct StorageConfiguration {
 	public:
-		/// Replicator key.
+        /// Replicator key.
 		std::string Key;
 
 		/// Replicator host.
@@ -32,11 +32,11 @@ namespace catapult { namespace storage {
 		/// Storage directory.
 		std::string StorageDirectory;
 
-		/// Storage sandbox directory.
-		std::string SandboxDirectory;
-
 		/// Use TCP socket.
 		bool UseTcpSocket;
+
+		/// Log options
+		std::string LogOptions;
 
 		// Use RPC to connect to Replicator
 		bool UseRpcReplicator;
