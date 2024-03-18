@@ -113,6 +113,7 @@ namespace catapult { namespace fastfinality {
 			m_committeeData.removeBootKeys();
 			m_committeeData.removeValidatedProposedBlockSignatures();
 			m_committeeData.removeValidatedConfirmedBlockSignatures();
+			m_committeeData.setIsBlockBroadcastEnabled(false);
 		}
 
 		bool stopped() const {

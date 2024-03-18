@@ -24,6 +24,8 @@ namespace catapult { namespace chain {
 
 		void reset() override;
 
+		Committee committee() const override;
+
 		HarvesterWeight weight(const Key& accountKey, const model::NetworkConfiguration& config) const override;
 		HarvesterWeight zeroWeight() const override;
 		void add(HarvesterWeight& weight, const chain::HarvesterWeight& delta) const override;
@@ -34,10 +36,7 @@ namespace catapult { namespace chain {
 
 		void logCommittee() const override;
 
-	public:
-		cache::AccountMap& accounts() {
-			return m_accounts;
-		}
+		cache::AccountMap accounts();
 
 	protected:
 		void decreaseActivities(const config::CommitteeConfiguration& config);
@@ -48,5 +47,6 @@ namespace catapult { namespace chain {
 		cache::AccountMap m_accounts;
 		Timestamp m_timestamp;
 		uint64_t m_phaseTime;
+		mutable std::mutex m_mutex;
 	};
 }}

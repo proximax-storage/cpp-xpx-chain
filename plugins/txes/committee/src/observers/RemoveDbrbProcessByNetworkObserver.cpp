@@ -17,7 +17,8 @@ namespace catapult { namespace observers {
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (RemoveDbrbProcessByNetwork)");
 
 			auto& cache = context.Cache.template sub<cache::CommitteeCache>();
-			for (const auto& [key, accountData] : pAccountCollector->accounts()) {
+			auto accounts = pAccountCollector->accounts();
+			for (const auto& [key, accountData] : accounts) {
 				if (accountData.BootKey == notification.ProcessId) {
 					auto iter = cache.find(key);
 					auto pEntry = iter.tryGet();

@@ -26,7 +26,7 @@ namespace catapult { namespace observers {
 			auto maxRollbackBlocks = networkConfig.MaxRollbackBlocks;
 			if (NotifyMode::Commit == context.Mode && context.Height.unwrap() > maxRollbackBlocks) {
 				auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
-				auto& disabledAccounts = pAccountCollector->disabledAccounts();
+				auto disabledAccounts = pAccountCollector->disabledAccounts();
 				auto disabledAccountsIter = disabledAccounts.find(pruneHeight);
 				if (disabledAccounts.end() != disabledAccountsIter) {
 					for (const auto& key : disabledAccountsIter->second)
@@ -53,7 +53,7 @@ namespace catapult { namespace observers {
 			pCommitteeManager->logCommittee();
 
 			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
-			const auto& committee = pCommitteeManager->committee();
+			auto committee = pCommitteeManager->committee();
 			auto& accounts = pCommitteeManager->accounts();
 			accounts.at(committee.BlockProposer).ActivityObsolete += pluginConfig.ActivityCommitteeCosignedDelta;
 			for (const auto& key : committee.Cosigners)
@@ -91,7 +91,7 @@ namespace catapult { namespace observers {
 			auto maxRollbackBlocks = networkConfig.MaxRollbackBlocks;
 			if (NotifyMode::Commit == context.Mode && context.Height.unwrap() > maxRollbackBlocks) {
 				auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
-				auto& disabledAccounts = pAccountCollector->disabledAccounts();
+				auto disabledAccounts = pAccountCollector->disabledAccounts();
 				auto disabledAccountsIter = disabledAccounts.find(pruneHeight);
 				if (disabledAccounts.end() != disabledAccountsIter) {
 					for (const auto& key : disabledAccountsIter->second)
@@ -108,27 +108,39 @@ namespace catapult { namespace observers {
 			if (Height(1) == context.Height)
 				return;
 
-			auto readOnlyCache = context.Cache.toReadOnly();
-			cache::ImportanceView importanceView(readOnlyCache.sub<cache::AccountStateCache>());
-
-			const auto& committee = pCommitteeManager->committee();
-			if (committee.Round != notification.Round)
-				CATAPULT_THROW_RUNTIME_ERROR_2("invalid committee round", committee.Round, notification.Round)
+			auto committee = pCommitteeManager->committee();
+			if (committee.Round != notification.Round) {
+				CATAPULT_LOG(error) << "invalid committee round " << committee.Round << " (expected " << notification.Round << ")";
+				return;
+			}
 			CATAPULT_LOG(debug) << "block " << context.Height << ": committee round " << notification.Round;
 
 			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
 			auto accounts = pCommitteeManager->accounts();
 
-			accounts.at(committee.BlockProposer).increaseActivity(pluginConfig.ActivityCommitteeCosignedDeltaInt);
-			for (const auto& key : committee.Cosigners)
-				accounts.at(key).increaseActivity(pluginConfig.ActivityCommitteeCosignedDeltaInt);
+			{
+				auto iter = accounts.find(committee.BlockProposer);
+				if (iter == accounts.end())
+					CATAPULT_THROW_RUNTIME_ERROR_1("block proposer not found", committee.BlockProposer)
+				iter->second.increaseActivity(pluginConfig.ActivityCommitteeCosignedDeltaInt);
+				for (const auto& key : committee.Cosigners) {
+					iter = accounts.find(key);
+					if (iter == accounts.end())
+						CATAPULT_THROW_RUNTIME_ERROR_1("committee member not found", key)
+					iter->second.increaseActivity(pluginConfig.ActivityCommitteeCosignedDeltaInt);
+				}
+			}
 
-			auto iter = committeeCache.find(committee.BlockProposer);
-			auto& entry = iter.get();
-			entry.setLastSigningBlockHeight(context.Height);
-			entry.setFeeInterest(notification.FeeInterest);
-			entry.setFeeInterestDenominator(notification.FeeInterestDenominator);
+			{
+				auto iter = committeeCache.find(committee.BlockProposer);
+				auto& entry = iter.get();
+				entry.setLastSigningBlockHeight(context.Height);
+				entry.setFeeInterest(notification.FeeInterest);
+				entry.setFeeInterestDenominator(notification.FeeInterestDenominator);
+			}
 
+			auto readOnlyCache = context.Cache.toReadOnly();
+			cache::ImportanceView importanceView(readOnlyCache.sub<cache::AccountStateCache>());
 			for (auto& pair : accounts) {
 				const auto& key = pair.first;
 				auto& data = pair.second;

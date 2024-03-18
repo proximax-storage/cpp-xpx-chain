@@ -38,6 +38,7 @@ namespace catapult { namespace fastfinality {
 			, m_sumOfPrecommitsSufficient(false)
 			, m_unexpectedProposedBlockHeight(false)
 			, m_unexpectedConfirmedBlockHeight(false)
+			, m_isBlockBroadcastEnabled(false)
 		{}
 
 	public:
@@ -304,6 +305,16 @@ namespace catapult { namespace fastfinality {
 			m_validatedConfirmedBlockSignatures.clear();
 		}
 
+		void setIsBlockBroadcastEnabled(bool value) {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			m_isBlockBroadcastEnabled = value;
+		}
+
+		bool isBlockBroadcastEnabled() const {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			return m_isBlockBroadcastEnabled;
+		}
+
 	private:
 		bool isSumOfVotesSufficient(const VoteMap& votes) {
 			const auto& committeeManager = m_pluginManager.getCommitteeManager(model::Block::Current_Version);
@@ -356,5 +367,7 @@ namespace catapult { namespace fastfinality {
 
 		std::unordered_set<Signature, utils::ArrayHasher<Signature>> m_validatedProposedBlockSignatures;
 		std::unordered_set<Signature, utils::ArrayHasher<Signature>> m_validatedConfirmedBlockSignatures;
+
+		bool m_isBlockBroadcastEnabled;
 	};
 }}

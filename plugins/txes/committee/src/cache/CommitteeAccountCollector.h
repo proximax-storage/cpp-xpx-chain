@@ -38,23 +38,18 @@ namespace catapult { namespace cache {
 		}
 
 		/// Returns collected accounts.
-		AccountMap& accounts() {
-			return m_accounts;
-		}
-
-		/// Returns collected accounts.
-		const AccountMap& accounts() const {
+		AccountMap accounts() {
 			return m_accounts;
 		}
 
 		/// Returns collected disabled accounts.
-		DisabledAccountMap& disabledAccounts() {
+		DisabledAccountMap disabledAccounts() {
 			return m_disabledAccounts;
 		}
 
-		/// Returns collected disabled accounts.
-		const DisabledAccountMap& disabledAccounts() const {
-			return m_disabledAccounts;
+		void clear() {
+			m_accounts.clear();
+			m_disabledAccounts.clear();
 		}
 
 	private:

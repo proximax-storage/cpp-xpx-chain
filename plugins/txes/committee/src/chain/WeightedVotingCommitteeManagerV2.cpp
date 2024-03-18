@@ -96,7 +96,10 @@ namespace catapult { namespace chain {
 		}
 
 		void DecreaseActivity(const Key& key, cache::AccountMap& accounts, const config::CommitteeConfiguration& config) {
-			auto& data = accounts.at(key);
+			auto iter = accounts.find(key);
+			if (iter == accounts.end())
+				CATAPULT_THROW_RUNTIME_ERROR_1("account not found", key)
+			auto& data = iter->second;
 			data.decreaseActivity(config.ActivityCommitteeNotCosignedDeltaInt);
 
 			CATAPULT_LOG(trace) << "committee account " << key << ": activity " << data.Activity << ", weight " << CalculateWeight(data, config);
@@ -121,15 +124,24 @@ namespace catapult { namespace chain {
 		void LogCommittee(const cache::AccountMap& accounts, const Committee& committee) {
 			std::ostringstream out;
 			out << std::endl << "Committee (" << committee.Cosigners.size() + 1u << "):";
-			LogProcess("block proposer ", committee.BlockProposer, accounts.at(committee.BlockProposer).ExpirationTime, out);
-			for (const auto& key : committee.Cosigners)
-				LogProcess("committee member ", key, accounts.at(key).ExpirationTime, out);
+			auto iter = accounts.find(committee.BlockProposer);
+			if (iter == accounts.end())
+				CATAPULT_THROW_RUNTIME_ERROR_1("account not found", committee.BlockProposer)
+			LogProcess("block proposer ", committee.BlockProposer, iter->second.ExpirationTime, out);
+			for (const auto& key : committee.Cosigners) {
+				iter = accounts.find(key);
+				if (iter == accounts.end())
+					CATAPULT_THROW_RUNTIME_ERROR_1("account not found", key)
+				LogProcess("committee member ", key, iter->second.ExpirationTime, out);
+			}
 
 			CATAPULT_LOG(debug) << out.str();
 		}
 	}
 
 	void WeightedVotingCommitteeManagerV2::logCommittee() const {
+		std::lock_guard<std::mutex> guard(m_mutex);
+
 		LogHarvesters(m_accounts);
 		LogCommittee(m_accounts, m_committee);
 	}
@@ -141,12 +153,28 @@ namespace catapult { namespace chain {
 	{}
 
 	void WeightedVotingCommitteeManagerV2::reset() {
+		std::lock_guard<std::mutex> guard(m_mutex);
+
 		m_hashes.clear();
 		m_committee = Committee();
 		m_accounts = m_pAccountCollector->accounts();
 	}
 
+	Committee WeightedVotingCommitteeManagerV2::committee() const {
+		std::lock_guard<std::mutex> guard(m_mutex);
+
+		return m_committee;
+	}
+
+	cache::AccountMap WeightedVotingCommitteeManagerV2::accounts() {
+		std::lock_guard<std::mutex> guard(m_mutex);
+
+		return m_accounts;
+	}
+
 	HarvesterWeight WeightedVotingCommitteeManagerV2::weight(const Key& accountKey, const model::NetworkConfiguration& networkConfig) const {
+		std::lock_guard<std::mutex> guard(m_mutex);
+
 		auto iter = m_accounts.find(accountKey);
 		HarvesterWeight weight{};
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
@@ -209,6 +237,8 @@ namespace catapult { namespace chain {
 	}
 
 	const Committee& WeightedVotingCommitteeManagerV2::selectCommittee(const model::NetworkConfiguration& networkConfig) {
+		std::lock_guard<std::mutex> guard(m_mutex);
+
 		auto previousRound = m_committee.Round;
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
 		LogAccountData(m_accounts, config);
@@ -256,7 +286,7 @@ namespace catapult { namespace chain {
 			auto weight = static_cast<double>(CalculateWeight(accountData, config));
 			const auto& hash = previousRound < 0 ?
 				Hasher::calculateHash(m_hashes[key], pLastBlockElement->GenerationHash, key) :
-				Hasher::calculateHash(m_hashes.at(key));
+				Hasher::calculateHash(m_hashes[key]);
 			auto hit = *reinterpret_cast<const uint64_t*>(hash.data());
 			if (hit == 0u)
 				hit = 1u;
@@ -298,7 +328,7 @@ namespace catapult { namespace chain {
 			auto greed = static_cast<double>(data.FeeInterest) / static_cast<double>(data.FeeInterestDenominator);
 			auto minGreed = static_cast<double>(config.MinGreedFeeInterest) / static_cast<double>(config.MinGreedFeeInterestDenominator);
 			greed = std::max(greed, minGreed);
-			auto hit = *reinterpret_cast<const uint64_t*>(m_hashes.at(key).data());
+			auto hit = *reinterpret_cast<const uint64_t*>(m_hashes[key].data());
 			blockProposerCandidates.emplace(Rate(greed * static_cast<double>(hit), key), key);
 		}
 

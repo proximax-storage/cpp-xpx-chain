@@ -33,6 +33,10 @@ namespace catapult { namespace chain {
 
 		void reset() override;
 
+		chain::Committee committee() const override {
+			return m_committee;
+		}
+
 		HarvesterWeight weight(const Key& accountKey, const model::NetworkConfiguration& config) const override;
 		HarvesterWeight zeroWeight() const override;
 		void add(HarvesterWeight& weight, const chain::HarvesterWeight& delta) const override;
