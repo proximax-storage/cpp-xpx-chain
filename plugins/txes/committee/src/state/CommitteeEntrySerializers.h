@@ -18,4 +18,13 @@ namespace catapult { namespace state {
 		/// Loads a single value from \a input.
 		static CommitteeEntry Load(io::InputStream& input);
 	};
+
+	/// Policy for saving and loading committee entry data for patricia tree.
+	struct CommitteeEntryPatriciaTreeSerializer {
+		/// Saves \a entry to \a output.
+		static void Save(const CommitteeEntry& entry, io::OutputStream& output);
+
+		/// Loads a single value from \a input.
+		static CommitteeEntry Load(io::InputStream& input);
+	};
 }}

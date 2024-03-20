@@ -39,6 +39,7 @@ namespace catapult { namespace observers {
 			auto &entry = cacheIter.get();
 
 			PruneHistory(entry.updateHistory(), pruneHeight);
+			cache.unmarkHistoryForRemove(mosaicId, pruneHeight);
 
 			if (entry.levy() == nullptr && !entry.hasUpdateHistory())
 				cache.remove(mosaicId);

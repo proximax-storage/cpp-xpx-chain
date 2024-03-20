@@ -10,30 +10,28 @@
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/PacketPayload.h"
 #include "catapult/thread/IoThreadPool.h"
+#include "catapult/utils/NetworkTime.h"
 #include <utility>
 
 
 namespace catapult { namespace dbrb {
 
 	DbrbProcess::DbrbProcess(
-		std::weak_ptr<net::PacketWriters> pWriters,
+		const std::weak_ptr<net::PacketWriters>& pWriters,
 		const net::PacketIoPickerContainer& packetIoPickers,
 		const ionet::Node& thisNode,
 		const crypto::KeyPair& keyPair,
-		const std::shared_ptr<thread::IoThreadPool>& pPool,
-		TransactionSender&& transactionSender,
-		const dbrb::DbrbViewFetcher& dbrbViewFetcher,
-		chain::TimeSupplier timeSupplier,
-		const supplier<Height>& chainHeightSupplier)
+		std::shared_ptr<thread::IoThreadPool> pPool,
+		std::shared_ptr<TransactionSender> pTransactionSender,
+		const dbrb::DbrbViewFetcher& dbrbViewFetcher)
 			: m_id(thisNode.identityKey())
 			, m_keyPair(keyPair)
-			, m_nodeRetreiver(packetIoPickers, thisNode.metadata().NetworkIdentifier, pWriters)
+			, m_nodeRetreiver(packetIoPickers, thisNode.metadata().NetworkIdentifier, m_id, pWriters)
 			, m_pMessageSender(std::make_shared<MessageSender>(pWriters, m_nodeRetreiver))
-			, m_strand(pPool->ioContext())
-			, m_transactionSender(std::move(transactionSender))
-			, m_dbrbViewFetcher(dbrbViewFetcher)
-			, m_timeSupplier(std::move(timeSupplier))
-			, m_chainHeightSupplier(chainHeightSupplier) {
+			, m_pPool(std::move(pPool))
+			, m_strand(m_pPool->ioContext())
+			, m_pTransactionSender(std::move(pTransactionSender))
+			, m_dbrbViewFetcher(dbrbViewFetcher) {
 		m_node.Node = thisNode;
 		auto pPackedNode = ionet::PackNode(thisNode);
 		// Skip NetworkNode fields: size, host and friendly name.
@@ -74,12 +72,24 @@ namespace catapult { namespace dbrb {
 		return m_nodeRetreiver;
 	}
 
+	boost::asio::io_context::strand& DbrbProcess::strand() {
+		return m_strand;
+	}
+
+	MessageSender& DbrbProcess::messageSender() {
+		return *m_pMessageSender;
+	}
+
+	const View& DbrbProcess::currentView() {
+		return m_currentView;
+	}
+
 	// Basic operations:
 
 	void DbrbProcess::broadcast(const Payload& payload) {
 		CATAPULT_LOG(debug) << "[DBRB] BROADCAST: payload " << payload->Type;
 		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), payload]() {
-			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: stranded broadcast call for payload " << payload->Type;
+			CATAPULT_LOG(trace) << "[DBRB] BROADCAST: stranded broadcast call for payload " << payload->Type;
 			auto pThis = pThisWeak.lock();
 			if (!pThis)
 				return;
@@ -89,7 +99,7 @@ namespace catapult { namespace dbrb {
 				return;
 			}
 
-			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: sending payload " << payload->Type;
+			CATAPULT_LOG(trace) << "[DBRB] BROADCAST: sending payload " << payload->Type;
 			auto pMessage = std::make_shared<PrepareMessage>(pThis->m_id, payload, pThis->m_currentView);
 			pThis->disseminate(pMessage, pMessage->View.Data);
 		});
@@ -98,22 +108,22 @@ namespace catapult { namespace dbrb {
 	void DbrbProcess::processMessage(const Message& message) {
 		switch (message.Type) {
 			case ionet::PacketType::Dbrb_Prepare_Message: {
-				CATAPULT_LOG(debug) << "[DBRB] Received PREPARE message from " << message.Sender << ".";
+				CATAPULT_LOG(trace) << "[DBRB] Received PREPARE message from " << message.Sender << ".";
 				onPrepareMessageReceived(dynamic_cast<const PrepareMessage&>(message));
 				break;
 			}
 			case ionet::PacketType::Dbrb_Acknowledged_Message: {
-				CATAPULT_LOG(debug) << "[DBRB] Received ACKNOWLEDGED message from " << message.Sender << ".";
+				CATAPULT_LOG(trace) << "[DBRB] Received ACKNOWLEDGED message from " << message.Sender << ".";
 				onAcknowledgedMessageReceived(dynamic_cast<const AcknowledgedMessage&>(message));
 				break;
 			}
 			case ionet::PacketType::Dbrb_Commit_Message: {
-				CATAPULT_LOG(debug) << "[DBRB] Received COMMIT message from " << message.Sender << ".";
+				CATAPULT_LOG(trace) << "[DBRB] Received COMMIT message from " << message.Sender << ".";
 				onCommitMessageReceived(dynamic_cast<const CommitMessage&>(message));
 				break;
 			}
 			case ionet::PacketType::Dbrb_Deliver_Message: {
-				CATAPULT_LOG(debug) << "[DBRB] Received DELIVER message from " << message.Sender << ".";
+				CATAPULT_LOG(trace) << "[DBRB] Received DELIVER message from " << message.Sender << ".";
 				onDeliverMessageReceived(dynamic_cast<const DeliverMessage&>(message));
 				break;
 			}
@@ -178,7 +188,7 @@ namespace catapult { namespace dbrb {
 	// Message callbacks:
 
 	void DbrbProcess::onPrepareMessageReceived(const PrepareMessage& message) {
-		CATAPULT_LOG(debug) << "[DBRB] PREPARE: received payload " << message.Payload->Type << " from " << message.Sender;
+		CATAPULT_LOG(trace) << "[DBRB] PREPARE: received payload " << message.Payload->Type << " from " << message.Sender;
 		if (!m_currentView.isMember(m_id)) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (node is not a participant).";
 			return;
@@ -208,7 +218,7 @@ namespace catapult { namespace dbrb {
 		data.Sender = message.Sender;
 		data.Payload = message.Payload;
 
-		CATAPULT_LOG(debug) << "[DBRB] PREPARE: Sending Acknowledged message to " << message.Sender << ".";
+		CATAPULT_LOG(trace) << "[DBRB] PREPARE: Sending Acknowledged message to " << message.Sender << ".";
 		Signature payloadSignature = sign(message.Payload);
 		auto pMessage = std::make_shared<AcknowledgedMessage>(m_id, payloadHash, m_currentView, payloadSignature);
 		send(pMessage, message.Sender);
@@ -227,7 +237,7 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
-		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: payload " << data.Payload->Type << " from " << data.Sender;
+		CATAPULT_LOG(trace) << "[DBRB] ACKNOWLEDGED: payload " << data.Payload->Type << " from " << data.Sender;
 
 		// Signature must be valid.
 		if (!verify(message.Sender, data.Payload, message.View, message.PayloadSignature)) {
@@ -236,7 +246,7 @@ namespace catapult { namespace dbrb {
 		}
 
 		data.Signatures[std::make_pair(message.View, message.Sender)] = message.PayloadSignature;
-		bool quorumCollected = data.QuorumManager.update(message);
+		bool quorumCollected = data.QuorumManager.update(message, data.Payload->Type);
 		if (quorumCollected && data.Certificate.empty())
 			onAcknowledgedQuorumCollected(message);
 	}
@@ -244,7 +254,7 @@ namespace catapult { namespace dbrb {
 	void DbrbProcess::onAcknowledgedQuorumCollected(const AcknowledgedMessage& message) {
 		// Replacing certificate.
 		auto& data = m_broadcastData[message.PayloadHash];
-		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Quorum collected in view " << message.View << ". Payload " << data.Payload->Type << " from " << data.Sender;
+		CATAPULT_LOG(trace) << "[DBRB] ACKNOWLEDGED: Quorum collected in view " << message.View << ". Payload " << data.Payload->Type << " from " << data.Sender;
 		data.CertificateView = message.View;
 		data.Certificate.clear();
 		const auto& acknowledgedSet = data.QuorumManager.AcknowledgedPayloads[message.View];
@@ -255,7 +265,7 @@ namespace catapult { namespace dbrb {
 		}
 
 		// Disseminating Commit message.
-		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: Disseminating Commit message with payload " << data.Payload->Type << " from " << data.Sender;
+		CATAPULT_LOG(trace) << "[DBRB] ACKNOWLEDGED: Disseminating Commit message with payload " << data.Payload->Type << " from " << data.Sender;
 		auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, data.Certificate, data.CertificateView, m_currentView);
 		disseminate(pMessage, m_currentView.Data);
 	}
@@ -273,7 +283,7 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
-		CATAPULT_LOG(debug) << "[DBRB] COMMIT: payload " << data.Payload->Type << " from " << data.Sender;
+		CATAPULT_LOG(trace) << "[DBRB] COMMIT: payload " << data.Payload->Type << " from " << data.Sender;
 
 		// Message certificate must be valid, i.e. all signatures in it must be valid.
 		for (const auto& [signer, signature] : message.Certificate) {
@@ -288,13 +298,13 @@ namespace catapult { namespace dbrb {
 		if (!data.CommitMessageReceived) {
 			data.CommitMessageReceived = true;
 
-			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Disseminating Commit message with payload " << data.Payload->Type << " from " << data.Sender;
+			CATAPULT_LOG(trace) << "[DBRB] COMMIT: Disseminating Commit message with payload " << data.Payload->Type << " from " << data.Sender;
 			auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, message.Certificate, message.CertificateView, m_currentView);
 			disseminate(pMessage, m_currentView.Data);
 		}
 
 		// Allow delivery for sender process.
-		CATAPULT_LOG(debug) << "[DBRB] COMMIT: Sending Deliver message with payload " << data.Payload->Type << " from " << data.Sender << " to " << message.Sender;
+		CATAPULT_LOG(trace) << "[DBRB] COMMIT: Sending Deliver message with payload " << data.Payload->Type << " from " << data.Sender << " to " << message.Sender;
 		auto pMessage = std::make_shared<DeliverMessage>(m_id, message.PayloadHash, m_currentView);
 		send(pMessage, message.Sender);
 	}
@@ -317,9 +327,9 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
-		CATAPULT_LOG(debug) << "[DBRB] DELIVER: payload " << data.Payload->Type << " from " << data.Sender;
+		CATAPULT_LOG(trace) << "[DBRB] DELIVER: payload " << data.Payload->Type << " from " << data.Sender;
 
-		bool quorumCollected = data.QuorumManager.update(message);
+		bool quorumCollected = data.QuorumManager.update(message, data.Payload->Type);
 		if (quorumCollected) {
 			onDeliverQuorumCollected(data.Payload, data.Sender);
 
@@ -338,63 +348,69 @@ namespace catapult { namespace dbrb {
 
 	// Other callbacks:
 
-	void DbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder]() {
+	namespace {
+		void LogTime(const char* prefix, const Timestamp& timestamp) {
+			auto time = std::chrono::system_clock::to_time_t(utils::ToTimePoint(timestamp));
+			char buffer[40];
+			std::strftime(buffer, 40 ,"%F %T", std::localtime(&time));
+			CATAPULT_LOG(debug) << prefix << buffer;
+		}
+	}
+
+	bool DbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) {
+		auto view = View{ m_dbrbViewFetcher.getView(now) };
+		auto isTemporaryProcess = view.isMember(m_id);
+
+		CATAPULT_LOG(debug) << "[DBRB] getting config at height " << height;
+		const auto& config = pConfigHolder->Config(height).Network;
+		auto bootstrapView = View{ config.DbrbBootstrapProcesses };
+		if (bootstrapView.Data.empty()) {
+			CATAPULT_LOG(debug) << "[DBRB] no bootstrap nodes, getting config at height " << height + Height(1);
+			bootstrapView = View{ pConfigHolder->Config(height + Height(1)).Network.DbrbBootstrapProcesses };
+		}
+		auto isBootstrapProcess = bootstrapView.isMember(m_id);
+
+		view.merge(bootstrapView);
+		if (view.Data.empty())
+			CATAPULT_THROW_RUNTIME_ERROR("no DBRB processes")
+
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, view, isTemporaryProcess, isBootstrapProcess, gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis()), registerSelf]() {
 			auto pThis = pThisWeak.lock();
 			if (!pThis)
 				return;
 
 			pThis->m_broadcastData.clear();
 
-			auto now = pThis->m_timeSupplier();
-			auto view = View{ pThis->m_dbrbViewFetcher.getView(now) };
-			auto isTemporaryProcess = view.isMember(pThis->m_id);
-
-			const auto& config = pConfigHolder->Config().Network;
-			auto bootstrapView = View{ config.DbrbBootstrapProcesses };
-			if (bootstrapView.Data.empty()) {
-				auto chainHeight = pThis->m_chainHeightSupplier();
-				CATAPULT_LOG(debug) << "[DBRB] chain height: " << chainHeight;
-				bootstrapView = View{ pConfigHolder->Config(chainHeight + Height(1)).Network.DbrbBootstrapProcesses };
-			}
-			auto isBootstrapProcess = bootstrapView.isMember(pThis->m_id);
-
-			view.merge(bootstrapView);
-			if (view.Data.empty())
-				CATAPULT_THROW_RUNTIME_ERROR("no DBRB processes")
-
 			pThis->m_nodeRetreiver.requestNodes(view.Data);
 			pThis->m_currentView = view;
 			CATAPULT_LOG(debug) << "[DBRB] Current view is now set to " << pThis->m_currentView;
 
-			bool isRegistrationRequired = false;
-			if (!isTemporaryProcess && !isBootstrapProcess) {
-				CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
-				isRegistrationRequired = true;
-			} else if (isTemporaryProcess) {
-				auto expirationTime = pThis->m_dbrbViewFetcher.getExpirationTime(pThis->m_id);
-				auto gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis());
-				if (expirationTime < gracePeriod)
-					CATAPULT_THROW_RUNTIME_ERROR_1("invalid expiration time", pThis->m_id)
-
-				auto gracePeriodStart = expirationTime - gracePeriod;
-				if (now >= gracePeriodStart) {
-					CATAPULT_LOG(debug) << "[DBRB] node registration in the DBRB system soon expires";
+			if (registerSelf) {
+				bool isRegistrationRequired = false;
+				if (!isTemporaryProcess && !isBootstrapProcess) {
+					CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
 					isRegistrationRequired = true;
-				}
-			}
+				} else if (isTemporaryProcess) {
+					auto expirationTime = pThis->m_dbrbViewFetcher.getExpirationTime(pThis->m_id);
+					LogTime("[DBRB] process expires at ", expirationTime);
+					if (expirationTime < gracePeriod)
+						CATAPULT_THROW_RUNTIME_ERROR_1("invalid expiration time", pThis->m_id)
 
-			if (isRegistrationRequired) {
-				if (now >= pThis->m_lastRegistrationTxTime + pThis->m_transactionSender.transactionTimeout()) {
-					CATAPULT_LOG(debug) << "[DBRB] sending AddDbrbProcessTransaction";
-					pThis->m_lastRegistrationTxTime = now;
-					pThis->m_transactionSender.sendAddDbrbProcessTransaction();
-				} else {
-					CATAPULT_LOG(debug) << "[DBRB] skipping node registration in the DBRB system because of previous transaction";
+					auto gracePeriodStart = expirationTime - gracePeriod;
+					LogTime("[DBRB] process grace period starts at ", gracePeriodStart);
+					if (now >= gracePeriodStart) {
+						CATAPULT_LOG(debug) << "[DBRB] node registration in the DBRB system soon expires";
+						isRegistrationRequired = true;
+					}
 				}
+
+				if (isRegistrationRequired)
+					pThis->m_pTransactionSender->sendAddDbrbProcessTransaction();
 			}
 
 			pThis->m_nodeRetreiver.broadcastNodes();
 		});
+
+		return isTemporaryProcess || isBootstrapProcess;
 	}
 }}

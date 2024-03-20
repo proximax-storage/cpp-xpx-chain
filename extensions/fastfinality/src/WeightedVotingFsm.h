@@ -25,7 +25,7 @@ namespace catapult { namespace fastfinality {
 		std::vector<Key> NodeIdentityKeys;
 	};
 
-	class WeightedVotingFsm {
+	class WeightedVotingFsm : public std::enable_shared_from_this<WeightedVotingFsm> {
 	public:
 		explicit WeightedVotingFsm(
 				std::shared_ptr<thread::IoThreadPool> pPool,
@@ -43,15 +43,20 @@ namespace catapult { namespace fastfinality {
 
 	public:
 		void start() {
-			boost::asio::post(m_strand, [this] {
-				processEvent(StartLocalChainCheck{});
-			});
+			processEvent(StartLocalChainCheck{});
 		}
 
 		template<typename TEvent>
 		void processEvent(const TEvent& event) {
-			CATAPULT_LOG(debug) << __PRETTY_FUNCTION__;
-			m_sm.process_event(event);
+			auto func = __PRETTY_FUNCTION__;
+			boost::asio::post(m_strand, [pThisWeak = weak_from_this(), event, func] {
+				auto pThis = pThisWeak.lock();
+				if (!pThis)
+					return;
+
+				CATAPULT_LOG(debug) << func;
+				pThis->m_sm.process_event(event);
+			});
 		}
 
 		void shutdown() {
@@ -62,10 +67,6 @@ namespace catapult { namespace fastfinality {
 			m_actions = WeightedVotingActions{};
 			m_pPool = nullptr;
 			m_pDbrbProcess = nullptr;
-		}
-
-		auto& ioContext() {
-			return m_pPool->ioContext();
 		}
 
 		auto& timer() {

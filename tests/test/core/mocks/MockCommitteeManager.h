@@ -20,6 +20,7 @@ namespace catapult { namespace mocks {
 		void reset() override;
 		double weight(const Key& accountKey) const override;
 		void setCommittee(const chain::Committee& committee);
+		void logCommittee() const override {}
 
 		double Weight = 0;
 	};

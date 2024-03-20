@@ -261,6 +261,23 @@ namespace catapult { namespace test {
 
 		config.GreedDelta = 0.5;
 		config.GreedExponent = 2.0;
+
+		config.CommitteeSize = 21;
+		config.CommitteeApproval = 0.67;
+		config.CommitteePhaseTime = utils::TimeSpan::FromSeconds(5);
+		config.MinCommitteePhaseTime = utils::TimeSpan::FromSeconds(1);
+		config.MaxCommitteePhaseTime = utils::TimeSpan::FromMinutes(1);
+		config.CommitteeSilenceInterval = utils::TimeSpan::FromMilliseconds(100);
+		config.CommitteeRequestInterval = utils::TimeSpan::FromMilliseconds(500);
+		config.CommitteeChainHeightRequestInterval = utils::TimeSpan::FromSeconds(30);
+		config.CommitteeTimeAdjustment = 1.1;
+		config.CommitteeEndSyncApproval = 0.45;
+		config.CommitteeBaseTotalImportance = 100;
+		config.CommitteeNotRunningContribution = 0.5;
+		config.DbrbRegistrationDuration = utils::TimeSpan::FromHours(24);
+		config.DbrbRegistrationGracePeriod = utils::TimeSpan::FromHours(1);
+		config.EnableHarvesterExpiration = false;
+
 		return config;
 	}
 

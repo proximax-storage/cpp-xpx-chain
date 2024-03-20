@@ -14,24 +14,18 @@ namespace catapult { namespace mocks {
 	MockDbrbProcess::MockDbrbProcess(
 			const dbrb::ProcessId& processId,
 			bool fakeDissemination,
-			const dbrb::DbrbConfiguration& dbrbConfig,
 			std::weak_ptr<net::PacketWriters> pWriters,
 			const net::PacketIoPickerContainer& packetIoPickers,
 			const crypto::KeyPair& keyPair,
-			const config::ImmutableConfiguration& immutableConfig,
 			const std::shared_ptr<thread::IoThreadPool>& pPool,
-			const dbrb::DbrbViewFetcher& dbrbViewFetcher,
-			chain::TimeSupplier timeSupplier,
-			const supplier<Height>& chainHeightSupplier)
+			const dbrb::DbrbViewFetcher& dbrbViewFetcher)
 		: DbrbProcess(std::move(pWriters),
 					  packetIoPickers,
 					  { processId, {}, {} },
 					  keyPair,
 					  pPool,
-					  { keyPair, immutableConfig, dbrbConfig, {}, {} },
-					  dbrbViewFetcher,
-					  std::move(timeSupplier),
-					  chainHeightSupplier) {
+					  nullptr,
+					  dbrbViewFetcher) {
 		m_fakeDissemination = fakeDissemination;
 		setDeliverCallback([this](const dbrb::Payload& payload) {
 			const auto payloadHash = dbrb::CalculatePayloadHash(payload);
@@ -106,7 +100,7 @@ namespace catapult { namespace mocks {
 		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: payload " << data.Payload->Type << " from " << data.Sender;
 
 		data.Signatures[std::make_pair(message.View, message.Sender)] = message.PayloadSignature;
-		bool quorumCollected = data.QuorumManager.update(message);
+		bool quorumCollected = data.QuorumManager.update(message, data.Payload->Type);
 		if (quorumCollected && data.Certificate.empty())
 			onAcknowledgedQuorumCollected(message);
 	}

@@ -6,7 +6,6 @@
 
 #include "Validators.h"
 #include "src/cache/DbrbViewCache.h"
-#include "catapult/crypto/Signer.h"
 
 
 namespace catapult { namespace validators {

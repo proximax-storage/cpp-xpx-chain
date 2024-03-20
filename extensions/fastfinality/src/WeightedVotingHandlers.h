@@ -25,7 +25,7 @@ namespace catapult {
 namespace catapult { namespace fastfinality {
 
 	/// A retriever that returns remote node states from all available peers.
-	using RemoteNodeStateRetriever = std::function<thread::future<std::vector<RemoteNodeState>> ()>;
+	using RemoteNodeStateRetriever = std::function<std::vector<RemoteNodeState> ()>;
 
 	/// Handles a push proposed block message.
 	void PushProposedBlock(
@@ -53,7 +53,7 @@ namespace catapult { namespace fastfinality {
 	void RegisterPullRemoteNodeStateHandler(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+		const Key& bootPublicKey,
 		const std::function<std::shared_ptr<const model::BlockElement> (const Height&)>& blockElementGetter,
 		const model::BlockElementSupplier& lastBlockElementSupplier);
 }}

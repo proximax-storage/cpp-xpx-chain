@@ -6,11 +6,14 @@
 
 #pragma once
 #include "CommitteeCacheTypes.h"
-#include "src/state/CommitteeEntrySerializer.h"
+#include "src/state/CommitteeEntrySerializers.h"
 #include "catapult/cache/CacheSerializerAdapter.h"
 
 namespace catapult { namespace cache {
 
 	/// Primary serializer for committee cache.
 	struct CommitteeEntryPrimarySerializer : public CacheSerializerAdapter<state::CommitteeEntrySerializer, CommitteeCacheDescriptor> {};
+
+	/// Primary serializer for committee cache.
+	struct CommitteeEntryPatriciaTreeSerializer : public CacheSerializerAdapter<state::CommitteeEntryPatriciaTreeSerializer, CommitteeCacheDescriptor> {};
 }}

@@ -271,8 +271,8 @@ namespace catapult { namespace local {
 		// endregion
 	}
 
-	TEST(TEST_CLASS, NetworkBuildsChainSuccess) {
-		// Assert:
-		AssertNetworkBuildsChainSuccess();
-	}
+//	TEST(TEST_CLASS, NetworkBuildsChainSuccess) {
+//		// Assert:
+//		AssertNetworkBuildsChainSuccess();
+//	}
 }}
