@@ -246,6 +246,44 @@ namespace catapult { namespace model {
 		/// Amount to give that has been returned to sender.
 		catapult::Amount AmountGiveReturned;
 	};
+	
+	/// Binary layout for a mosaic debit receipt.
+	struct MosaicDebitReceipt : public Receipt {
+	public:
+		/// Creates a receipt around \a receiptType, \a mosaicDebtor, \a currencyCreditor, \a mosaicId and \a amount.
+		MosaicDebitReceipt(
+				ReceiptType receiptType,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				catapult::MosaicId mosaicId,
+				catapult::Amount mosaicAmount,
+				catapult::MosaicId currencyId)
+				: MosaicDebtor(mosaicDebtor)
+				, CurrencyCreditor(currencyCreditor)
+				, MosaicId(mosaicId)
+				, MosaicAmount(mosaicAmount)
+				, CurrencyId(currencyId) {
+			Size = sizeof(MosaicDebitReceipt);
+			Version = 1;
+			Type = receiptType;
+		}
+
+	public:
+		/// Mosaic debtor public key.
+		Key MosaicDebtor;
+
+		/// Currency creditor public key.
+		Key CurrencyCreditor;
+
+		/// Mosaic id.
+		catapult::MosaicId MosaicId;
+
+		/// Mosaic amount.
+		catapult::Amount MosaicAmount;
+
+		/// Currency id.
+		catapult::MosaicId CurrencyId;
+	};
 
 #pragma pack(pop)
 

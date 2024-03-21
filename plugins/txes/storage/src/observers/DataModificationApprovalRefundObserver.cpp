@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -16,6 +16,10 @@ namespace catapult { namespace observers {
 		auto driveIter = driveCache.find(notification.DriveKey);
 		auto& driveEntry = driveIter.get();
 
+	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		auto& statementBuilder = context.StatementBuilder();
+
 		const auto replicatorDifference = driveEntry.replicatorCount() - driveEntry.replicators().size();
 		const auto usedSizeDifference =
 				driveEntry.activeDataModifications().begin()->ActualUploadSizeMegabytes
@@ -26,12 +30,27 @@ namespace catapult { namespace observers {
 		liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
 									   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 									   transferAmount);
+		// Adding Refund receipt.
+		{
+			const auto receiptType = model::Receipt_Type_Data_Modification_Approval_Refund;
+			const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+													streamingMosaicId, transferAmount, currencyMosaicId);
+			statementBuilder.addTransactionReceipt(receipt);
+		}
 
 		const auto& modification = *driveEntry.activeDataModifications().begin();
 		const auto expectedActualDifference =
 				modification.ExpectedUploadSizeMegabytes - modification.ActualUploadSizeMegabytes;
+	  	const auto streamTransferAmount = Amount(driveEntry.replicatorCount() * expectedActualDifference);
 		liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
 										config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
-										Amount(driveEntry.replicatorCount() * expectedActualDifference));
+										streamTransferAmount);
+	  	// Adding Refund Stream receipt.
+		{
+			const auto receiptType = model::Receipt_Type_Data_Modification_Approval_Refund_Stream;
+			const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+													streamingMosaicId, streamTransferAmount, currencyMosaicId);
+			statementBuilder.addTransactionReceipt(receipt);
+		}
 	});
 }}

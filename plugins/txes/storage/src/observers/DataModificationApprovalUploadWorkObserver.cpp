@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -22,7 +22,9 @@ namespace catapult { namespace observers {
 		auto driveIter = driveCache.find(notification.DriveKey);
 		auto& driveEntry = driveIter.get();
 
+	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+	  	auto& statementBuilder = context.StatementBuilder();
 
 		// Preparing presentOpinions bitset array.
 		const auto presentOpinionByteCount = (totalJudgingKeysCount * totalJudgedKeysCount + 7) / 8;
@@ -69,6 +71,12 @@ namespace catapult { namespace observers {
 							Amount(utils::FileSize::FromBytes(uploadSizesIncrements.at(i)).megabytes());
 					liquidityProvider->debitMosaics(context, driveEntry.key(), judgedKey,
 												   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), mosaicAmount);
+
+					// Adding Upload receipt.
+					const auto receiptType = model::Receipt_Type_Data_Modification_Approval_Upload;
+					const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), judgedKey,
+															streamingMosaicId, mosaicAmount, currencyMosaicId);
+					statementBuilder.addTransactionReceipt(receipt);
 				}
 			}
 		}

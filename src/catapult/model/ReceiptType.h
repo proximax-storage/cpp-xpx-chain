@@ -67,6 +67,9 @@ namespace catapult { namespace model {
 
 		/// Offer removal.
 		OfferRemoval = 0xC,
+
+		/// Storage.
+		Storage = 0xD,
 	};
 
 	/// Enumeration of receipt types.

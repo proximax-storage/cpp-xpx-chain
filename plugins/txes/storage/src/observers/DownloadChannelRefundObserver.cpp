@@ -1,10 +1,11 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
 
 #include "Observers.h"
+#include "src/catapult/model/Address.h"
 #include "src/utils/Queue.h"
 
 namespace catapult { namespace observers {
@@ -32,17 +33,37 @@ namespace catapult { namespace observers {
 
 		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 	  	const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+	  	auto& statementBuilder = context.StatementBuilder();
 
 	  	// Refunding currency mosaics.
 	  	const auto& currencyRefundAmount = senderState.Balances.get(currencyMosaicId);
 		senderState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
 		recipientState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
 
+	  	// Adding balance transfer Refund receipt.
+		{
+			const auto receiptType = model::Receipt_Type_Download_Channel_Refund;
+			const Address consumerAddress = model::PublicKeyToAddress(downloadChannelEntry.consumer(),
+																	  context.Config.Immutable.NetworkIdentifier);
+			const model::BalanceTransferReceipt receipt(receiptType, downloadChannelEntry.id().array(), consumerAddress,
+														currencyMosaicId, currencyRefundAmount);
+			statementBuilder.addTransactionReceipt(receipt);
+		}
+
 		// Refunding streaming mosaics.
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
 		liquidityProvider->debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(),
 									   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 									   streamingRefundAmount);
+
+	  	// Adding mosaic debit Refund receipt.
+		{
+			const auto receiptType = model::Receipt_Type_Download_Channel_Refund;
+			const model::MosaicDebitReceipt receipt(receiptType, downloadChannelEntry.id().array(),
+													downloadChannelEntry.consumer(),
+													streamingMosaicId, streamingRefundAmount, currencyMosaicId);
+			statementBuilder.addTransactionReceipt(receipt);
+		}
 
 	  	// Removing associations with the download channel in respective drive and replicator entries.
 	  	auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
