@@ -111,7 +111,7 @@ namespace catapult { namespace state {
 	public:
 		/// Creates a new root namespace with \a lifetime.
 		/// \note The method shares the children of this root namespace with the new root namespace.
-		RootNamespace renew(const NamespaceLifetime& newLifetime) const;
+		RootNamespace renew(const NamespaceLifetime& newLifetime, bool setAliasOnRenew = true) const;
 
 		/// Creates an ordered set of child namespace paths.
 		/// \note Child paths are ordered lexicographically.

@@ -161,8 +161,14 @@ namespace catapult { namespace model {
 		/// Allows expiration of harvesters.
 		bool EnableHarvesterExpiration;
 
+		/// Allows removing DBRB process on node shutdown.
+		bool EnableRemovingDbrbProcessOnShutdown;
+
 		/// Special group of harvesters that never expire.
 		std::set<Key> EmergencyHarvesters;
+
+		/// Special group of harvesters that never expire mapped to bootstrap keys of the nodes the harvesters are set up on.
+		std::unordered_map<Key, Key, utils::ArrayHasher<Key>> BootstrapHarvesters;
 
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;

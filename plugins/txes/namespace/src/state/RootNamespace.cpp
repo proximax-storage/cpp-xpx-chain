@@ -145,9 +145,10 @@ namespace catapult { namespace state {
 		return !(*this == rhs);
 	}
 
-	RootNamespace RootNamespace::renew(const NamespaceLifetime& newLifetime) const {
+	RootNamespace RootNamespace::renew(const NamespaceLifetime& newLifetime, bool setAliasOnRenew) const {
 		RootNamespace rn(m_id, m_owner, newLifetime, m_pChildren);
-		rn.setAlias(m_id, m_alias);
+		if (setAliasOnRenew)
+			rn.setAlias(m_id, m_alias);
 		return rn;
 	}
 

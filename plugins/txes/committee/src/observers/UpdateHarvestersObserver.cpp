@@ -7,6 +7,7 @@
 #include "Observers.h"
 #include "src/cache/CommitteeCache.h"
 #include "src/chain/WeightedVotingCommitteeManager.h"
+#include "src/chain/WeightedVotingCommitteeManagerV2.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/ImportanceView.h"
@@ -14,11 +15,9 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::BlockCommitteeNotification<1>;
-
 	namespace {
-		void UpdateHarvesters(
-				const Notification& notification,
+		void UpdateHarvestersV1(
+				const model::BlockCommitteeNotification<1>& notification,
 				ObserverContext& context,
 				const std::shared_ptr<chain::WeightedVotingCommitteeManager>& pCommitteeManager,
 				const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
@@ -27,7 +26,7 @@ namespace catapult { namespace observers {
 			auto maxRollbackBlocks = networkConfig.MaxRollbackBlocks;
 			if (NotifyMode::Commit == context.Mode && context.Height.unwrap() > maxRollbackBlocks) {
 				auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
-				auto& disabledAccounts = pAccountCollector->disabledAccounts();
+				auto disabledAccounts = pAccountCollector->disabledAccounts();
 				auto disabledAccountsIter = disabledAccounts.find(pruneHeight);
 				if (disabledAccounts.end() != disabledAccountsIter) {
 					for (const auto& key : disabledAccountsIter->second)
@@ -50,20 +49,20 @@ namespace catapult { namespace observers {
 			pCommitteeManager->reset();
 			while (pCommitteeManager->committee().Round < notification.Round)
 				pCommitteeManager->selectCommittee(networkConfig);
-			CATAPULT_LOG(debug) << "selected committee for round " << notification.Round;
+			CATAPULT_LOG(debug) << "block " << context.Height << ": selected committee for round " << notification.Round;
 			pCommitteeManager->logCommittee();
 
 			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
-			const auto& committee = pCommitteeManager->committee();
+			auto committee = pCommitteeManager->committee();
 			auto& accounts = pCommitteeManager->accounts();
-			accounts.at(committee.BlockProposer).Activity += pluginConfig.ActivityCommitteeCosignedDelta;
+			accounts.at(committee.BlockProposer).ActivityObsolete += pluginConfig.ActivityCommitteeCosignedDelta;
 			for (const auto& key : committee.Cosigners)
-				accounts.at(key).Activity += pluginConfig.ActivityCommitteeCosignedDelta;
+				accounts.at(key).ActivityObsolete += pluginConfig.ActivityCommitteeCosignedDelta;
 
 			auto iter = committeeCache.find(committee.BlockProposer);
 			auto& entry = iter.get();
 			entry.setLastSigningBlockHeight(context.Height);
-			entry.setGreed(static_cast<double>(notification.FeeInterest) / notification.FeeInterestDenominator);
+			entry.setGreedObsolete(static_cast<double>(notification.FeeInterest) / notification.FeeInterestDenominator);
 
 			for (const auto& pair : accounts) {
 				const auto& key = pair.first;
@@ -75,19 +74,115 @@ namespace catapult { namespace observers {
 				entry.setEffectiveBalance(effectiveBalance);
 				entry.setCanHarvest(canHarvest);
 
-				auto sign = boost::math::sign(pair.second.Activity);
+				auto sign = boost::math::sign(pair.second.ActivityObsolete);
 				if (!sign)
 					sign = 1;
-				entry.setActivity(pair.second.Activity - pluginConfig.ActivityDelta * sign);
+				entry.setActivityObsolete(pair.second.ActivityObsolete - pluginConfig.ActivityDelta * sign);
+			}
+		}
+
+		void UpdateHarvestersV2(
+				const model::BlockCommitteeNotification<2>& notification,
+				ObserverContext& context,
+				const std::shared_ptr<chain::WeightedVotingCommitteeManagerV2>& pCommitteeManager,
+				const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
+			auto& committeeCache = context.Cache.sub<cache::CommitteeCache>();
+			const auto& networkConfig = context.Config.Network;
+			auto maxRollbackBlocks = networkConfig.MaxRollbackBlocks;
+			if (NotifyMode::Commit == context.Mode && context.Height.unwrap() > maxRollbackBlocks) {
+				auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
+				auto disabledAccounts = pAccountCollector->disabledAccounts();
+				auto disabledAccountsIter = disabledAccounts.find(pruneHeight);
+				if (disabledAccounts.end() != disabledAccountsIter) {
+					for (const auto& key : disabledAccountsIter->second)
+						committeeCache.remove(key);
+				}
+			}
+
+			if (!networkConfig.EnableWeightedVoting)
+				return;
+
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (UpdateHarvesters)");
+
+			if (Height(1) == context.Height)
+				return;
+
+			auto committee = pCommitteeManager->committee();
+			if (committee.Round != notification.Round) {
+				CATAPULT_LOG(error) << "invalid committee round " << committee.Round << " (expected " << notification.Round << ")";
+				return;
+			}
+			CATAPULT_LOG(debug) << "block " << context.Height << ": committee round " << notification.Round;
+
+			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
+			auto accounts = pCommitteeManager->accounts();
+
+			{
+				auto iter = accounts.find(committee.BlockProposer);
+				if (iter == accounts.end())
+					CATAPULT_THROW_RUNTIME_ERROR_1("block proposer not found", committee.BlockProposer)
+				iter->second.increaseActivity(pluginConfig.ActivityCommitteeCosignedDeltaInt);
+				for (const auto& key : committee.Cosigners) {
+					iter = accounts.find(key);
+					if (iter == accounts.end())
+						CATAPULT_THROW_RUNTIME_ERROR_1("committee member not found", key)
+					iter->second.increaseActivity(pluginConfig.ActivityCommitteeCosignedDeltaInt);
+				}
+			}
+
+			{
+				auto iter = committeeCache.find(committee.BlockProposer);
+				auto& entry = iter.get();
+				entry.setLastSigningBlockHeight(context.Height);
+				entry.setFeeInterest(notification.FeeInterest);
+				entry.setFeeInterestDenominator(notification.FeeInterestDenominator);
+			}
+
+			auto readOnlyCache = context.Cache.toReadOnly();
+			cache::ImportanceView importanceView(readOnlyCache.sub<cache::AccountStateCache>());
+			for (auto& pair : accounts) {
+				const auto& key = pair.first;
+				auto& data = pair.second;
+				auto effectiveBalance = importanceView.getAccountImportanceOrDefault(key, context.Height);
+				bool canHarvest = (effectiveBalance.unwrap() >= networkConfig.MinHarvesterBalance.unwrap());
+
+				auto iter = committeeCache.find(key);
+				auto& entry = iter.get();
+				if (networkConfig.BootstrapHarvesters.empty()) {
+					entry.setVersion(3);
+				} else {
+					entry.setVersion(4);
+				}
+				entry.setEffectiveBalance(effectiveBalance);
+				entry.setCanHarvest(canHarvest);
+				if (!entry.feeInterestDenominator()) {
+					entry.setFeeInterest(pluginConfig.MinGreedFeeInterest);
+					entry.setFeeInterestDenominator(pluginConfig.MinGreedFeeInterestDenominator);
+				}
+
+				auto sign = boost::math::sign(data.Activity);
+				if (!sign)
+					sign = 1;
+				data.decreaseActivity(pluginConfig.ActivityDeltaInt * sign);
+				entry.setActivity(data.Activity);
 			}
 		}
 	}
 
-	DECLARE_OBSERVER(UpdateHarvesters, Notification)(
+	DECLARE_OBSERVER(UpdateHarvestersV1, model::BlockCommitteeNotification<1>)(
 			const std::shared_ptr<chain::WeightedVotingCommitteeManager>& pCommitteeManager,
 			const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
-		return MAKE_OBSERVER(UpdateHarvesters, Notification, ([pCommitteeManager, pAccountCollector](const auto& notification, auto& context) {
-			UpdateHarvesters(notification, context, pCommitteeManager, pAccountCollector);
+		return MAKE_OBSERVER(UpdateHarvestersV1, model::BlockCommitteeNotification<1>, ([pCommitteeManager, pAccountCollector](const auto& notification, auto& context) {
+			UpdateHarvestersV1(notification, context, pCommitteeManager, pAccountCollector);
+		}));
+	}
+
+	DECLARE_OBSERVER(UpdateHarvestersV2, model::BlockCommitteeNotification<2>)(
+			const std::shared_ptr<chain::WeightedVotingCommitteeManagerV2>& pCommitteeManager,
+			const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
+		return MAKE_OBSERVER(UpdateHarvestersV2, model::BlockCommitteeNotification<2>, ([pCommitteeManager, pAccountCollector](const auto& notification, auto& context) {
+			UpdateHarvestersV2(notification, context, pCommitteeManager, pAccountCollector);
 		}));
 	}
 }}

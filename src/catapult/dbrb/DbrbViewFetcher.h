@@ -20,5 +20,11 @@ namespace catapult { namespace dbrb {
 
 		/// Returns the latest registered view.
 		virtual Timestamp getExpirationTime(const ProcessId& processId) const = 0;
+
+		/// Logs all known DBRB processes.
+		virtual void logAllProcesses() const = 0;
+
+		/// Logs \a view.
+		virtual void logView(const dbrb::ViewData& view) const = 0;
 	};
 }}

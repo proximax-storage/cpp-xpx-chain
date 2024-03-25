@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -26,7 +26,9 @@ namespace catapult { namespace observers {
 		auto senderIter = accountStateCache.find(Key(notification.DownloadChannelId.array()));
 	  	const auto& senderState = senderIter.get();
 
+	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		auto& statementBuilder = context.StatementBuilder();
 
 		// Maps each replicator key to a vector of opinions about that replicator.
 		std::map<Key, std::vector<uint64_t>> opinions;
@@ -81,6 +83,13 @@ namespace catapult { namespace observers {
 			auto& recipientState = recipientIter.get();
 			const auto megabytesPayment = utils::FileSize::FromBytes(bytesPayment).megabytes();
 			liquidityProvider->debitMosaics(context, downloadChannelEntry.id().array(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), Amount(megabytesPayment));
+
+			// Adding Download Approval receipt.
+			const auto receiptType = model::Receipt_Type_Download_Approval;
+			const model::MosaicDebitReceipt receipt(receiptType, downloadChannelEntry.id().array(), replicatorKey,
+													streamingMosaicId, Amount(megabytesPayment), currencyMosaicId);
+			statementBuilder.addTransactionReceipt(receipt);
+
 			auto& cumulativePayment = downloadChannelEntry.cumulativePayments().at(replicatorKey);
 			cumulativePayment = cumulativePayment + Amount(bytesPayment);
 		}

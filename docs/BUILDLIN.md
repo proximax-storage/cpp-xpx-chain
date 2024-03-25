@@ -3,6 +3,8 @@
 Use the script below:
 
 ```
+sudo su
+
 set -e
 set -x
 
@@ -46,7 +48,6 @@ apt-get update -y && apt-get upgrade -y && apt-get clean && \
 rm /usr/bin/gcc && ln -s /usr/bin/gcc-12 /usr/bin/gcc
 
 cd /usr/local/src
-
 curl -OL https://github.com/zeromq/cppzmq/archive/v4.9.0.tar.gz && \
   tar xzf v4.9.0.tar.gz && \
   cd cppzmq-4.9.0 && \
@@ -57,6 +58,8 @@ curl -OL https://github.com/zeromq/cppzmq/archive/v4.9.0.tar.gz && \
   make install
 
 # Install mongo-cxx
+
+cd /usr/local/src
 curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.7.0/mongo-cxx-driver-r3.7.0.tar.gz  && \
 tar -xzf mongo-cxx-driver-r3.7.0.tar.gz  && \
 cd mongo-cxx-driver-r3.7.0/build && \
@@ -65,6 +68,7 @@ cd mongo-cxx-driver-r3.7.0/build && \
   make install
 
 # Clean Downloads
+cd /usr/local/src
 rm v4.9.0.tar.gz mongo-cxx-driver-r3.7.0.tar.gz 
 ```
 # Building on Ubuntu 18.04 (LTS)

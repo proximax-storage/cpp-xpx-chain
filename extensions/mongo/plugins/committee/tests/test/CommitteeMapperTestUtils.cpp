@@ -20,7 +20,7 @@ namespace catapult { namespace test {
 		EXPECT_EQ(entry.lastSigningBlockHeight().unwrap(), GetUint64(dbEntry, "lastSigningBlockHeight"));
 		EXPECT_EQ(entry.effectiveBalance().unwrap(), GetUint64(dbEntry, "effectiveBalance"));
 		EXPECT_EQ(entry.canHarvest(), GetBool(dbEntry, "canHarvest"));
-		EXPECT_EQ(entry.activity(), GetDouble(dbEntry, "activity"));
-		EXPECT_EQ(entry.greed(), GetDouble(dbEntry, "greed"));
+		EXPECT_EQ(entry.activityObsolete(), GetDouble(dbEntry, "activity"));
+		EXPECT_EQ(entry.greedObsolete(), GetDouble(dbEntry, "greed"));
 	}
 }}

@@ -3,7 +3,7 @@
 		{
 			"name": "Block",
 			"type": "33091",
-			"supportedVersions": [3, 4]
+			"supportedVersions": [3, 4, 5]
 		},
 		{
 			"name": "Nemesis_Block",
@@ -373,6 +373,16 @@
 		{
 			"name": "addDbrbProcess",
 			"type": "16748",
+			"supportedVersions": [2]
+		},
+		{
+			"name": "removeDbrbProcess",
+			"type": "17004",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "removeDbrbProcessByNetwork",
+			"type": "17260",
 			"supportedVersions": [1]
 		},
 		{

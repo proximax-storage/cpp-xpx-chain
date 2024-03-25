@@ -110,31 +110,31 @@ namespace catapult { namespace storage {
 				gHandleLostConnection = storageConfig.RpcHandleLostConnection;
 				gDbgRpcChildCrash = storageConfig.RpcDbgChildCrash;
 				m_pReplicator = sirius::drive::createRpcReplicator(
-						std::string(storageConfig.RpcHost),
+						storageConfig.RpcHost,
 						std::stoi(storageConfig.RpcPort),
 						reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
-						std::string(storageConfig.Host), // TODO: do not use move semantics.
-						std::string(storageConfig.Port), // TODO: do not use move semantics.
-						std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
-						std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
+						storageConfig.Host,
+						storageConfig.Port,
+						storageConfig.StorageDirectory,
 						resolveBootstrapAddresses(),
 						storageConfig.UseTcpSocket,
 						*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
 						nullptr,
-						Service_Name);
+						Service_Name,
+						storageConfig.LogOptions );
 			}
 			else {
 				m_pReplicator = sirius::drive::createDefaultReplicator(
 						reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
-						std::string(storageConfig.Host), // TODO: do not use move semantics.
-						std::string(storageConfig.Port), // TODO: do not use move semantics.
-						std::string(storageConfig.StorageDirectory), // TODO: do not use move semantics.
-						std::string(storageConfig.SandboxDirectory), // TODO: do not use move semantics.
+						storageConfig.Host,
+						storageConfig.Port,
+						storageConfig.StorageDirectory,
 						resolveBootstrapAddresses(),
 						storageConfig.UseTcpSocket,
 						*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
 						nullptr,
-						Service_Name);
+						Service_Name,
+						storageConfig.LogOptions );
 			}
 
 			m_pReplicatorEventHandler->setReplicator(m_pReplicator);
@@ -327,10 +327,10 @@ namespace catapult { namespace storage {
 				sirius::drive::CompletedModification completedModification;
 				completedModification.m_modificationId = modification.ModificationId.array();
 				if (modification.Status == state::CompletedModification::CompletionStatus::CANCELLED) {
-					completedModification.m_status = sirius::drive::CompletedModification::CompletedModificationStatus::CANCELLED;
+					completedModification.m_completedModificationStatus = sirius::drive::CompletedModification::CompletedModificationStatus::CANCELLED;
 				}
 				else {
-					completedModification.m_status = sirius::drive::CompletedModification::CompletedModificationStatus::APPROVED;
+					completedModification.m_completedModificationStatus = sirius::drive::CompletedModification::CompletedModificationStatus::APPROVED;
 				}
 				storageCompletedModifications.push_back(completedModification);
 			}
@@ -673,7 +673,7 @@ namespace catapult { namespace storage {
         }
 
         void stop() {
-			m_pReplicator->stopReplicator();
+			m_pReplicator->shutdownReplicator();
 			m_pReplicator.reset();
         }
 

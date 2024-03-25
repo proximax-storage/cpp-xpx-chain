@@ -9,8 +9,12 @@
 #include "src/cache/DbrbViewCacheSubCachePlugin.h"
 #include "src/cache/DbrbViewFetcherImpl.h"
 #include "src/model/AddDbrbProcessTransaction.h"
+#include "src/model/RemoveDbrbProcessTransaction.h"
+#include "src/model/RemoveDbrbProcessByNetworkTransaction.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/AddDbrbProcessTransactionPlugin.h"
+#include "src/plugins/RemoveDbrbProcessTransactionPlugin.h"
+#include "src/plugins/RemoveDbrbProcessByNetworkTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/CacheHandlers.h"
 
@@ -21,12 +25,12 @@ namespace catapult { namespace plugins {
 			config.template InitPluginConfiguration<config::DbrbConfiguration>();
 		});
 
-		const auto& pConfigHolder = manager.configHolder();
-		const auto& immutableConfig = manager.immutableConfig();
 		manager.addTransactionSupport(CreateAddDbrbProcessTransactionPlugin());
+		manager.addTransactionSupport(CreateRemoveDbrbProcessTransactionPlugin());
+		manager.addTransactionSupport(CreateRemoveDbrbProcessByNetworkTransactionPlugin());
 
 		auto pDbrbViewFetcher = std::make_shared<cache::DbrbViewFetcherImpl>();
-		manager.addCacheSupport(std::make_unique<cache::DbrbViewCacheSubCachePlugin>(manager.cacheConfig(cache::DbrbViewCache::Name), pConfigHolder, pDbrbViewFetcher));
+		manager.addCacheSupport(std::make_unique<cache::DbrbViewCacheSubCachePlugin>(manager.cacheConfig(cache::DbrbViewCache::Name), manager.configHolder(), pDbrbViewFetcher));
 
 		using DbrbViewCacheHandlersService = CacheHandlers<cache::DbrbViewCacheDescriptor>;
 		DbrbViewCacheHandlersService::Register<model::FacilityCode::DbrbView>(manager);
@@ -40,17 +44,24 @@ namespace catapult { namespace plugins {
 		manager.setDbrbViewFetcher(pDbrbViewFetcher);
 
 		auto pTransactionFeeCalculator = manager.transactionFeeCalculator();
-		pTransactionFeeCalculator->addUnlimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, model::AddDbrbProcessTransaction::Current_Version);
+		for (auto version = 1u; version <= model::AddDbrbProcessTransaction::Current_Version; ++version)
+			pTransactionFeeCalculator->addLimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, version);
+		for (auto version = 1u; version <= model::RemoveDbrbProcessTransaction::Current_Version; ++version)
+			pTransactionFeeCalculator->addLimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, version);
+		for (auto version = 1u; version <= model::RemoveDbrbProcessByNetworkTransaction::Current_Version; ++version)
+			pTransactionFeeCalculator->addLimitedFeeTransaction(model::RemoveDbrbProcessByNetworkTransaction::Entity_Type, version);
 
-		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
+		manager.addStatefulValidatorHook([&dbrbViewFetcher = *pDbrbViewFetcher](auto& builder) {
 		  	builder
-				.add(validators::CreateAddDbrbProcessValidator());
+				.add(validators::CreateAddDbrbProcessValidator())
+				.add(validators::CreateRemoveDbrbProcessByNetworkValidator(dbrbViewFetcher));
 		});
 
 		manager.addObserverHook([](auto& builder) {
 			builder
 				.add(observers::CreateAddDbrbProcessObserver())
-				.add(observers::CreateDbrbProcessPruningObserver());
+				.add(observers::CreateDbrbProcessPruningObserver())
+				.add(observers::CreateRemoveDbrbProcessObserver());
 		});
 	}
 }}

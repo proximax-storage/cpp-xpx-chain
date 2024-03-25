@@ -18,4 +18,7 @@ namespace catapult { namespace fastfinality {
 		const harvesting::HarvestingConfiguration& harvestingConfig,
 		const dbrb::DbrbConfiguration& dbrbConfig,
 		std::shared_ptr<dbrb::TransactionSender> pTransactionSender);
+
+	/// Creates a registrar for a weighted voting shutdown service.
+	DECLARE_SERVICE_REGISTRAR(WeightedVotingShutdown)(std::shared_ptr<dbrb::TransactionSender> pTransactionSender);
 }}

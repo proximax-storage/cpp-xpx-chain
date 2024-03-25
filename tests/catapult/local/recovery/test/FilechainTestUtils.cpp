@@ -24,7 +24,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
-#include "tests/test/nodeps/data/NemesisMemoryBlockStorage_data.h"
+#include "tests/test/nodeps/data/BasicNemesisMemoryBlockStorage_data.h"
 #include "tests/test/nodeps/MijinConstants.h"
 
 namespace catapult { namespace test {
@@ -98,7 +98,7 @@ namespace catapult { namespace test {
 
 		pBlock->Height = Height(height);
 		pBlock->Difficulty = Difficulty(1 << 8);
-		pBlock->Timestamp = test::Nemesis_Timestamp + Timestamp(height * timeSpacing.millis());
+		pBlock->Timestamp = test::Basic_Nemesis_Timestamp + Timestamp(height * timeSpacing.millis());
 		pBlock->FeeInterest = 1;
 		pBlock->FeeInterestDenominator = 1;
 

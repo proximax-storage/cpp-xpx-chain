@@ -78,11 +78,10 @@ namespace catapult { namespace model {
 
 	// region fees
 
-	BlockTransactionsInfo CalculateBlockTransactionsInfo(const Block& block,
-														 const TransactionFeeCalculator& transactionFeeCalculator) {
+	BlockTransactionsInfo CalculateBlockTransactionsInfo(const Block& block, const TransactionFeeCalculator& transactionFeeCalculator) {
 		BlockTransactionsInfo blockTransactionsInfo;
 		for (const auto& transaction : block.Transactions()) {
-			auto transactionFee = transactionFeeCalculator.calculateTransactionFee(block.FeeMultiplier, transaction, block.FeeInterest, block.FeeInterestDenominator);
+			auto transactionFee = transactionFeeCalculator.calculateTransactionFee(block.FeeMultiplier, transaction, block.FeeInterest, block.FeeInterestDenominator, block.Height);
 			blockTransactionsInfo.TotalFee = blockTransactionsInfo.TotalFee + transactionFee;
 			++blockTransactionsInfo.Count;
 		}

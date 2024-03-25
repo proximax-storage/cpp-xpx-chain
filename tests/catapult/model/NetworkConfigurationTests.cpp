@@ -89,6 +89,12 @@ namespace catapult { namespace model {
 						}
 					},
 					{
+						"bootstrap.harvesters",
+						{
+							{ "E8D4B7BEB2A531ECA8CC7FD93F79A4C828C24BE33F99CF7C5609FF5CE14605F4", "E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21, A384FBAAADBFF0405DDA0212D8A6C85F9164A08C24AFD15425927BCB274A45D4" },
+						}
+					},
+					{
 						"plugin:alpha",
 						{
 							{ "foo", "alpha" }

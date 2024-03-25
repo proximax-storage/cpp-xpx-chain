@@ -91,6 +91,11 @@ namespace catapult { namespace deltaset {
 			return m_elements.cend() != iter ? FindConstIterator(std::move(iter)) : FindConstIterator();
 		}
 
+		/// Returns all elements in this set.
+		std::vector<ElementType> getAll() const {
+			return m_elements.getAll();
+		}
+
 		/// Searches for \a key in this set.
 		/// Returns \c true if it is found or \c false if it is not found.
 		bool contains(const KeyType& key) const {

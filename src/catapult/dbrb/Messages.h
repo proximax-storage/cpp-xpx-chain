@@ -42,7 +42,7 @@ namespace catapult { namespace dbrb {
 	struct Message {
 	public:
 		Message() = delete;
-		Message(ProcessId sender, ionet::PacketType type): Sender(std::move(sender)), Type(type) {}
+		Message(const ProcessId& sender, ionet::PacketType type, View view): Sender(sender), Type(type), View(std::move(view)) {}
 		virtual ~Message() = default;
 
 	public:
@@ -63,6 +63,9 @@ namespace catapult { namespace dbrb {
 
 		/// This message signed by sender.
 		catapult::Signature Signature;
+
+		/// Current view of the system from the perspective of Sender.
+		dbrb::View View;
 	};
 
 	class NetworkPacketConverter {
@@ -91,10 +94,9 @@ namespace catapult { namespace dbrb {
 	struct PrepareMessage : Message {
 	public:
 		PrepareMessage() = delete;
-		PrepareMessage(const ProcessId& sender, Payload payload, View view)
-			: Message(sender, ionet::PacketType::Dbrb_Prepare_Message)
+		PrepareMessage(const ProcessId& sender, Payload payload, dbrb::View view)
+			: Message(sender, ionet::PacketType::Dbrb_Prepare_Message, std::move(view))
 			, Payload(std::move(payload))
-			, View(std::move(view))
 		{}
 
 	public:
@@ -103,19 +105,15 @@ namespace catapult { namespace dbrb {
 	public:
 		/// Message to be broadcasted.
 		dbrb::Payload Payload;
-
-		/// Current view of the system from the perspective of Sender.
-		dbrb::View View;
 	};
 
 	struct AcknowledgedMessage : Message {
 	public:
 		AcknowledgedMessage() = delete;
-		explicit AcknowledgedMessage(ProcessId  sender, const Hash256& payloadHash, View view, catapult::Signature payloadSignature)
-			: Message(sender, ionet::PacketType::Dbrb_Acknowledged_Message)
+		explicit AcknowledgedMessage(const ProcessId& sender, const Hash256& payloadHash, dbrb::View view, const catapult::Signature& payloadSignature)
+			: Message(sender, ionet::PacketType::Dbrb_Acknowledged_Message, std::move(view))
 			, PayloadHash(payloadHash)
-			, View(std::move(view))
-			, PayloadSignature(std::move(payloadSignature))
+			, PayloadSignature(payloadSignature)
 		{}
 
 	public:
@@ -125,9 +123,6 @@ namespace catapult { namespace dbrb {
 		/// Hash of the payload.
 		Hash256 PayloadHash;
 
-		/// Current view of the system from the perspective of Sender.
-		dbrb::View View;
-
 		/// Signature formed by Sender.
 		catapult::Signature PayloadSignature;
 	};
@@ -135,12 +130,10 @@ namespace catapult { namespace dbrb {
 	struct CommitMessage : Message {
 	public:
 		CommitMessage() = delete;
-		explicit CommitMessage(const ProcessId& sender, const Hash256& payloadHash, CertificateType certificate, View certificateView, View currentView)
-			: Message(sender, ionet::PacketType::Dbrb_Commit_Message)
+		explicit CommitMessage(const ProcessId& sender, const Hash256& payloadHash, CertificateType certificate, dbrb::View view)
+			: Message(sender, ionet::PacketType::Dbrb_Commit_Message, std::move(view))
 			, PayloadHash(payloadHash)
 			, Certificate(std::move(certificate))
-			, CertificateView(std::move(certificateView))
-			, CurrentView(std::move(currentView))
 		{}
 
 	public:
@@ -152,21 +145,14 @@ namespace catapult { namespace dbrb {
 
 		/// Message certificate for supplied payload.
 		CertificateType Certificate;
-
-		/// View associated with supplied certificate.
-		View CertificateView;
-
-		/// Current view of the system from the perspective of Sender.
-		View CurrentView;
 	};
 
 	struct DeliverMessage : Message {
 	public:
 		DeliverMessage() = delete;
-		explicit DeliverMessage(const ProcessId& sender, const Hash256& payloadHash, View view)
-			: Message(sender, ionet::PacketType::Dbrb_Deliver_Message)
+		explicit DeliverMessage(const ProcessId& sender, const Hash256& payloadHash, dbrb::View view)
+			: Message(sender, ionet::PacketType::Dbrb_Deliver_Message, std::move(view))
 			, PayloadHash(payloadHash)
-			, View(std::move(view))
 		{}
 
 	public:
@@ -175,8 +161,5 @@ namespace catapult { namespace dbrb {
 	public:
 		/// Hash of the payload.
 		Hash256 PayloadHash;
-
-		/// Current view of the system from the perspective of Sender.
-		dbrb::View View;
 	};
 }}

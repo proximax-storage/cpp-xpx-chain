@@ -52,6 +52,9 @@ namespace catapult { namespace extensions {
 		Post_Packet_Handlers,
 
 		/// Requires all tasks to be registered.
-		Post_Tasks
+		Post_Tasks,
+
+		/// Last phase, requires all other services to be registered.
+		Shutdown_Handlers
 	};
 }}

@@ -567,7 +567,7 @@ namespace catapult { namespace chain {
 		model::TransactionFeeCalculator transactionFeeCalculator;
 		for (auto& utInfo : transactionData.UtInfos) {
 			auto multiplier = BlockFeeMultiplier(feeMultiples[i++]);
-			const_cast<Amount&>(utInfo.pEntity->MaxFee) = transactionFeeCalculator.calculateTransactionFee(multiplier, *utInfo.pEntity, 1, 1);
+			const_cast<Amount&>(utInfo.pEntity->MaxFee) = transactionFeeCalculator.calculateTransactionFee(multiplier, *utInfo.pEntity, 1, 1, Height(-1));
 		}
 
 		// Sanity:

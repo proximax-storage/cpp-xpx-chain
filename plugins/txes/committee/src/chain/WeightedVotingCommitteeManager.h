@@ -29,10 +29,21 @@ namespace catapult { namespace chain {
 
 	public:
 		const Committee& selectCommittee(const model::NetworkConfiguration& config) override;
+		Key getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const override;
 
 		void reset() override;
 
-		double weight(const Key& accountKey) const override;
+		chain::Committee committee() const override {
+			return m_committee;
+		}
+
+		HarvesterWeight weight(const Key& accountKey, const model::NetworkConfiguration& config) const override;
+		HarvesterWeight zeroWeight() const override;
+		void add(HarvesterWeight& weight, const chain::HarvesterWeight& delta) const override;
+		void mul(HarvesterWeight& weight, double multiplier) const override;
+		bool ge(const HarvesterWeight& weight1, const chain::HarvesterWeight& weight2) const override;
+		bool eq(const HarvesterWeight& weight1, const chain::HarvesterWeight& weight2) const override;
+		std::string str(const HarvesterWeight& weight) const override;
 
 		void logCommittee() const override;
 

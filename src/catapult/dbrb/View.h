@@ -35,9 +35,6 @@ namespace catapult { namespace dbrb {
 		bool operator<=(const View& other) const;
 		bool operator>=(const View& other) const;
 
-		/// Check if two views are comparable.
-		static bool areComparable(const View& a, const View& b);
-
 		/// Insertion operator for outputting \a view to \a out.
 		friend std::ostream& operator<<(std::ostream& out, const View& view) {
 			bool leadingSpace = false;

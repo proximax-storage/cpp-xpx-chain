@@ -11,12 +11,20 @@ namespace catapult { namespace cache {
 
 #define TEST_CLASS CommitteeCacheStorageTests
 
+	namespace {
+		auto CreateConfigurationHolder() {
+			auto pConfigHolder = config::CreateMockConfigurationHolder(test::MutableBlockchainConfiguration().ToConst());
+			const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).SetPluginConfiguration(config::CommitteeConfiguration::Uninitialized());
+			return pConfigHolder;
+		}
+	}
+
 	TEST(TEST_CLASS, CanLoadValueIntoCache) {
 		// Arrange: create a random value to insert
 		auto originalEntry = test::CreateCommitteeEntry();
 
 		// Act:
-		CommitteeCache cache(CacheConfiguration{}, std::make_shared<cache::CommitteeAccountCollector>(), config::CreateMockConfigurationHolder());
+		CommitteeCache cache(CacheConfiguration{}, std::make_shared<cache::CommitteeAccountCollector>(), CreateConfigurationHolder());
 		auto delta = cache.createDelta(Height{1});
 		CommitteeCacheStorage::LoadInto(originalEntry, *delta);
 		cache.commit();

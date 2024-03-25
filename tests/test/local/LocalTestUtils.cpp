@@ -350,6 +350,8 @@ namespace catapult { namespace test {
 			for (const auto& pair : config.Network.Plugins)
 				LoadPluginByName(*pPluginManager, modules, "", pair.first);
 
+			pConfigHolder->SetPluginInitializer(pPluginManager->createPluginInitializer());
+
 			return std::shared_ptr<plugins::PluginManager>(
 				pPluginManager.get(),
 				[pPluginManager, modules = std::move(modules)](const auto*) mutable {

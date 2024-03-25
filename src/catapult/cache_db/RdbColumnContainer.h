@@ -81,6 +81,9 @@ namespace catapult { namespace cache {
 		/// Finds first element with <= \a key, storing result in \a iterator.
 		void findLowerOrEqual(const RawBuffer& key, RdbDataIterator& iterator) const;
 
+		/// Gets all elements, storing result in \a result.
+		void getAll(std::vector<std::string>& result) const;
+
 		/// Inserts element with \a key and \a value.
 		void insert(const RawBuffer& key, const std::string& value);
 

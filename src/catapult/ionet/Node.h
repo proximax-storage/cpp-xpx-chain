@@ -38,6 +38,9 @@ namespace catapult { namespace ionet {
 
 		/// Port.
 		unsigned short Port;
+
+		/// DBRB Port.
+		unsigned short DbrbPort;
 	};
 
 	/// Additional node information.
