@@ -193,6 +193,8 @@ namespace catapult { namespace validators {
 	// Modification upload size is invalid
 	DEFINE_STORAGE_RESULT(Modification_Invalid_Upload_Size, 59);
 
+	// Validation failed because there are modifications in progress
+	DEFINE_STORAGE_RESULT(Modification_In_Progress, 60);
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -166,7 +166,7 @@ namespace catapult { namespace utils {
 			return out;
 		}
 
-	private:
+	protected:
 		std::array<uint8_t, N> m_array;
 	};
 

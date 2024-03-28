@@ -33,7 +33,7 @@ namespace catapult { namespace model {
 	struct AggregateTransactionHeader : public Transaction {
 	public:
 		static constexpr VersionType Min_Version = 2;
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Aggregate_Complete, 3)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Aggregate_Complete, 4)
 
 	public:
 		/// Transaction payload size in bytes.

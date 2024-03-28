@@ -45,4 +45,14 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to aggregate transaction entity types notifications and validates that:
 	/// - aggregate bonded transaction is enabled
 	DECLARE_STATEFUL_VALIDATOR(AggregateTransactionType, model::AggregateTransactionTypeNotification<1>)();
+
+	/// A validator implementation that applies to aggregate transaction entity types notifications and validates that:
+	/// - the transaction is not bonded
+	DECLARE_STATEFUL_VALIDATOR(StrictAggregateTransactionType, model::AggregateTransactionTypeNotification<2>)();
+
+
+	/// A validator implementation that applies to aggregate transaction entity types notifications and validates that:
+	/// - transactions list is not empty
+	/// - there is enough mosaics for fee compensation
+	DECLARE_STATEFUL_VALIDATOR(TransactionFeeCompensation, model::TransactionFeeNotification<1>)();
 }}

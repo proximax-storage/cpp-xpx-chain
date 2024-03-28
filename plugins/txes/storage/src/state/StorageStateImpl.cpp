@@ -195,6 +195,10 @@ namespace catapult { namespace state {
         auto driveIter = pDriveCacheView->find(driveKey);
 		const auto& driveEntry = driveIter.get();
 
+		if (driveEntry.ownerManagement() == OwnerManagement::PERMANENTLY_FORBIDDEN) {
+			return {};
+		}
+
         auto completedModificationsIter = driveEntry.completedDataModifications().rbegin();
         while (completedModificationsIter != driveEntry.completedDataModifications().rend()) {
             if (completedModificationsIter->ApprovalState == state::DataModificationApprovalState::Approved)

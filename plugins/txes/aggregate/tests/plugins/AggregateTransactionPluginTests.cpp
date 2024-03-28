@@ -150,7 +150,7 @@ namespace catapult { namespace plugins {
 
 		// Assert:
 		EXPECT_EQ(2u, attributes.MinVersion);
-		EXPECT_EQ(3u, attributes.MaxVersion);
+		EXPECT_EQ(4u, attributes.MaxVersion);
 
 		// - zero denotes default lifetime should be used
 		EXPECT_EQ(utils::TimeSpan(), attributes.MaxLifetime);
@@ -166,7 +166,7 @@ namespace catapult { namespace plugins {
 
 		// Assert:
 		EXPECT_EQ(2u, attributes.MinVersion);
-		EXPECT_EQ(3u, attributes.MaxVersion);
+		EXPECT_EQ(4u, attributes.MaxVersion);
 
 		EXPECT_EQ(utils::TimeSpan::FromMinutes(1234), attributes.MaxLifetime);
 	}

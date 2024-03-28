@@ -27,7 +27,7 @@ namespace catapult { namespace utils {
 	class DiagnosticCounterId {
 	public:
 		/// Maximum counter name size.
-		static constexpr auto Max_Counter_Name_Size = 13u;
+		static constexpr auto Max_Counter_Name_Size = 20u;
 
 	public:
 		/// Creates an empty id.

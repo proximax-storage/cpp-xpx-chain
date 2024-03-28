@@ -43,7 +43,7 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, TransactionHasExpectedProperties) {
 		// Assert:
 		EXPECT_EQ(Entity_Type_Aggregate_Complete, AggregateTransaction::Entity_Type);
-		EXPECT_EQ(3u, AggregateTransaction::Current_Version);
+		EXPECT_EQ(4u, AggregateTransaction::Current_Version);
 	}
 
 	// endregion

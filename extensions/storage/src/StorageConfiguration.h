@@ -53,6 +53,12 @@ namespace catapult { namespace storage {
 		// Whether the replicator can be crashed by the outside command
 		bool RpcDbgChildCrash;
 
+		// Host for rpc messenger, storage
+		std::string RpcServicesServerHost;
+
+		// Port for rpc messenger, storage
+		std::string RpcServicesServerPort;
+
 	private:
 		StorageConfiguration() = default;
 

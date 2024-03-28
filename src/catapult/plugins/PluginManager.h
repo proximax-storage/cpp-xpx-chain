@@ -36,6 +36,9 @@
 #include "catapult/observers/DemuxObserverBuilder.h"
 #include "catapult/observers/ObserverTypes.h"
 #include "catapult/state/StorageState.h"
+#include "catapult/state/ContractState.h"
+#include "catapult/observers/StorageExternalManagementObserver.h"
+#include "catapult/state/DriveStateBrowser.h"
 #include "catapult/utils/DiagnosticCounter.h"
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/validators/ValidatorTypes.h"
@@ -288,7 +291,20 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
-		// region storage
+		// region contract
+
+		/// Sets a contract state.
+		void setContractState(const std::shared_ptr<state::ContractState>& pState);
+
+		/// Returns whether the contract state set or not.
+		bool isContractStateSet();
+
+		/// Gets contract state.
+		state::ContractState& contractState() const;
+
+		// endregion
+
+		// region liquidityProvider
 
 		void setLiquidityProviderExchangeValidator(std::unique_ptr<validators::LiquidityProviderExchangeValidator>&&);
 		const std::unique_ptr<validators::LiquidityProviderExchangeValidator>& liquidityProviderExchangeValidator() const;
@@ -298,10 +314,25 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
+		// region storage browser
+
+		void setDriveStateBrowser(std::unique_ptr<state::DriveStateBrowser>&& browser);
+		const std::unique_ptr<state::DriveStateBrowser>& driveStateBrowser() const;
+
+		// endregion
+
 		// region storage updates listeners
 
 		const std::vector<std::unique_ptr<observers::StorageUpdatesListener>>& storageUpdatesListeners() const;
 		void addStorageUpdateListener(std::unique_ptr<observers::StorageUpdatesListener>&& storageUpdatesListener);
+
+		// endregion
+
+		// region storage external management observer
+
+		const std::unique_ptr<observers::StorageExternalManagementObserver>& storageExternalManagement() const;
+		void setStorageExternalManagement(
+				std::unique_ptr<observers::StorageExternalManagementObserver>&& storageExternalManagement);
 
 		// endregion
 
@@ -344,11 +375,16 @@ namespace catapult { namespace plugins {
 		std::map<VersionType, std::shared_ptr<chain::CommitteeManager>> m_committeeManagers;
 		std::shared_ptr<dbrb::DbrbViewFetcher> m_pDbrbViewFetcher;
 		std::shared_ptr<state::StorageState> m_pStorageState;
+		std::shared_ptr<state::ContractState> m_pContractState;
 
 		std::unique_ptr<validators::LiquidityProviderExchangeValidator> m_pLiquidityProviderExchangeValidator;
 		std::unique_ptr<observers::LiquidityProviderExchangeObserver> m_pLiquidityProviderExchangeObserver;
 
+		std::unique_ptr<state::DriveStateBrowser> m_pStorageStateBrowser;
+
 		std::vector<std::unique_ptr<observers::StorageUpdatesListener>> m_storageUpdatesListeners;
+
+		std::unique_ptr<observers::StorageExternalManagementObserver> m_storageExternalManagement;
 
 		std::shared_ptr<model::TransactionFeeCalculator> m_pTransactionFeeCalculator;
 	};

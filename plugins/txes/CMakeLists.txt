@@ -27,7 +27,7 @@ function(catapult_tx_plugin_src PLUGIN_BASE_NAME)
 endfunction()
 
 function(catapult_tx_plugin_tests TARGET_NAME)
-	string(REGEX MATCH "\.[a-z_]+$" PLUGIN_NAME ${TARGET_NAME})
+	string(REGEX MATCH "\.[a-z_0-9]+$" PLUGIN_NAME ${TARGET_NAME})
 	string(SUBSTRING ${PLUGIN_NAME} 1 -1 PLUGIN_NAME)
 
 	if (NOT TARGET "tests.catapult.test.plugins.${PLUGIN_NAME}")
@@ -68,3 +68,4 @@ add_subdirectory(supercontract)
 add_subdirectory(streaming)
 add_subdirectory(liquidityprovider)
 add_subdirectory(dbrb)
+add_subdirectory(supercontract_v2)

@@ -161,7 +161,7 @@ namespace catapult { namespace model {
 					: transaction.MaxFee;
 				sub.notify(TransactionNotification<1>(transaction.Signer, hash, transaction.Type, transaction.Deadline));
 				sub.notify(TransactionDeadlineNotification<1>(transaction.Deadline, attributes.MaxLifetime));
-				sub.notify(TransactionFeeNotification<1>(transaction.Size, fee, transaction.MaxFee));
+				sub.notify(TransactionFeeNotification<1>(transaction, m_feeMosaicId, fee, transaction.MaxFee));
 				sub.notify(BalanceDebitNotification<1>(transaction.Signer, m_feeMosaicId, fee));
 
 				// raise a signature notification

@@ -28,7 +28,7 @@ namespace catapult { namespace storage {
 				, m_transactionStatusHandler(transactionStatusHandler)
 				, m_keyPair(keyPair) {}
 
-        public:
+		public:
             void modifyApprovalTransactionIsReady(
                     sirius::drive::Replicator&,
                     const sirius::drive::ApprovalTransactionInfo& transactionInfo) override {

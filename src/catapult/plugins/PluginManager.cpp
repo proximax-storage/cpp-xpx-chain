@@ -363,6 +363,28 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
+	// region contract
+
+	/// Sets a contract state.
+	void PluginManager::setContractState(const std::shared_ptr<state::ContractState>& pState) {
+		if (!!m_pContractState)
+			CATAPULT_THROW_RUNTIME_ERROR("contract state already set");
+
+		m_pContractState = pState;
+	}
+
+	/// Returns whether the contract state set or not.
+	bool PluginManager::isContractStateSet() {
+		return !!m_pContractState;
+	}
+
+	/// Gets contract state.
+	state::ContractState& PluginManager::contractState() const {
+		return *m_pContractState;
+	}
+
+	// endregion
+
 	// region liquidity provider
 	void PluginManager::setLiquidityProviderExchangeValidator(
 			std::unique_ptr<validators::LiquidityProviderExchangeValidator>&& validator) {
@@ -383,6 +405,18 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
+	// region drive state
+
+	void PluginManager::setDriveStateBrowser(std::unique_ptr<state::DriveStateBrowser>&& browser) {
+		m_pStorageStateBrowser = std::move(browser);
+	}
+
+	const std::unique_ptr<state::DriveStateBrowser>& PluginManager::driveStateBrowser() const {
+		return m_pStorageStateBrowser;
+	}
+
+	// endregion
+
 	// region storage updates listeners
 
 	const std::vector<std::unique_ptr<observers::StorageUpdatesListener>>&
@@ -391,6 +425,19 @@ namespace catapult { namespace plugins {
 	}
 	void PluginManager::addStorageUpdateListener(std::unique_ptr<observers::StorageUpdatesListener>&& storageUpdatesListener) {
 		m_storageUpdatesListeners.emplace_back(std::move(storageUpdatesListener));
+	}
+
+	// endregion
+
+	// region storage external management observer
+
+	const std::unique_ptr<observers::StorageExternalManagementObserver>&
+	PluginManager::storageExternalManagement() const {
+		return m_storageExternalManagement;
+	}
+	void PluginManager::setStorageExternalManagement(
+			std::unique_ptr<observers::StorageExternalManagementObserver>&& storageExternalManagement) {
+		m_storageExternalManagement = std::move(storageExternalManagement);
 	}
 
 	// endregion

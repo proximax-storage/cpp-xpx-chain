@@ -374,6 +374,41 @@
 			"name": "removeDbrbProcessByNetwork",
 			"type": "17260",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "deployContract",
+			"type": "16750",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "manualCall",
+			"type": "17006",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "automaticExecutionsPayment",
+			"type": "17262",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "successfulEndBatchExecution",
+			"type": "17518",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "unsuccessfulEndBatchExecution",
+			"type": "17774",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "endBatchExecutionSingle",
+			"type": "18030",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "synchronizationSingle",
+			"type": "18286",
+			"supportedVersions": [1]
 		}
 	]
 }

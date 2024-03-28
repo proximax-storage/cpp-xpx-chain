@@ -35,8 +35,9 @@ namespace catapult { namespace config {
 		liquidityproviderConfigId,
 		exchangesdaConfigId,
 		dbrbConfigId,
-        First = static_cast<uint32_t>(aggregateConfigId),
-        Latest = static_cast<uint32_t>(dbrbConfigId),
+		supercontract_v2ConfigId,
+		First = static_cast<uint32_t>(aggregateConfigId),
+        Latest = static_cast<uint32_t>(supercontract_v2ConfigId),
 	};
 
 /// Defines config constants for a config with \a NAME.

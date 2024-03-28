@@ -102,7 +102,7 @@ maxSupportedEntityVersionsSize = 1MB
 enabled = true
 
 maxOfferDuration = 57600
-longOfferKey = CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE
+longOfferKey = 10AB82ACE20F2DC3EDC5E4C77B09420D60FB707B8D4AA86A768B05CF943A93EB
 
 [plugin:catapult.plugins.lockhash]
 
@@ -238,3 +238,12 @@ offerSortPolicy = 1
 [plugin:catapult.plugins.dbrb]
 
 enabled = true
+
+[plugin:catapult.plugins.supercontract_v2]
+
+enabled = true
+maxRowSize = 100
+maxExecutionPayment = 10'000'000'000
+maxServicePaymentsSize = 512
+maxAutoExecutions = 10000
+automaticExecutionsDeadline = 5760

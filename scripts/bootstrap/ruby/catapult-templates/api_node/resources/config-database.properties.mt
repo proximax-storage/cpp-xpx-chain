@@ -30,3 +30,4 @@ catapult.mongo.plugins.operation = true
 catapult.mongo.plugins.supercontract = true
 catapult.mongo.plugins.streaming = true
 catapult.mongo.plugins.dbrb = true
+catapult.mongo.plugins.supercontract_v2 = true

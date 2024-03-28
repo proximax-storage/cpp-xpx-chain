@@ -238,3 +238,12 @@ offerSortPolicy = 1
 [plugin:catapult.plugins.dbrb]
 
 enabled = true
+
+[plugin:catapult.plugins.supercontract_v2]
+
+enabled = true
+maxRowSize = 100
+maxExecutionPayment = 10'000'000'000
+maxServicePaymentsSize = 512
+maxAutoExecutions = 10000
+automaticExecutionsDeadline = 5760

@@ -97,5 +97,9 @@ namespace catapult { namespace model {
 		Dbrb = 0x6C,
 		/// View sequence facility code.
 		DbrbView = 0x6D,
+		/// SuperContract V2 facility code.
+		SuperContract_v2 = 0x6E,
+		/// DriveContractCache facility code.
+		DriveContract = 0x6F,
 	};
 }}
