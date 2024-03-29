@@ -7,7 +7,7 @@
 #include "MongoReplicatorCacheStorage.h"
 #include "src/mappers/ReplicatorEntryMapper.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
-#include "plugins/txes/storage//src/cache/ReplicatorCache.h"
+#include "plugins/txes/storage/src/cache/ReplicatorCache.h"
 #include "catapult/model/Address.h"
 
 using namespace bsoncxx::builder::stream;
