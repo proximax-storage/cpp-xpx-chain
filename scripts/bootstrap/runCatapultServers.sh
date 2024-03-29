@@ -60,7 +60,7 @@ generate_nem() {
       rm -R $WORK_DIR/data/$1/settings
       cd -
     else
-      cp $WORK_DIR/nemesis/data -r $WORK_DIR/data/$1/
+      cp -r $WORK_DIR/nemesis/data $WORK_DIR/data/$1/
       cp -R $WORK_DIR/config-build/$1/userconfig/resources $WORK_DIR/data/$1/
     fi
 
