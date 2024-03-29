@@ -47,11 +47,13 @@ namespace catapult { namespace state {
 		// The caller must be sure that the contract exists
 		const auto& contractEntry = contractIt.get();
 
-		return m_pDriveStateBrowser->getDriveState(m_pCache->createView().toReadOnly(), contractEntry.driveKey());
+		auto view = m_pCache->createView();
+		return m_pDriveStateBrowser->getDriveState(view.toReadOnly(), contractEntry.driveKey());
 	}
 
 	std::set<Key> ContractStateImpl::getContracts(const Key& executorKey) const {
-		auto readOnlyCache = m_pCache->createView().toReadOnly();
+		auto view = m_pCache->createView();
+		auto readOnlyCache = view.toReadOnly();
 		auto drives = m_pDriveStateBrowser->getDrives(readOnlyCache, executorKey);
 		auto pDriveContractCacheView = getCacheView<cache::DriveContractCache>();
 		std::set<Key> contracts;
@@ -72,8 +74,8 @@ namespace catapult { namespace state {
 		// The caller must be sure that the contract exists
 		const auto& contractEntry = contractIt.get();
 
-		auto executorKeys =
-				m_pDriveStateBrowser->getReplicators(m_pCache->createView().toReadOnly(), contractEntry.driveKey());
+		auto view = m_pCache->createView();
+		auto executorKeys = m_pDriveStateBrowser->getReplicators(view.toReadOnly(), contractEntry.driveKey());
 
 		std::map<Key, ExecutorStateInfo> executors;
 
