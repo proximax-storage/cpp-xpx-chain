@@ -84,8 +84,8 @@ namespace catapult { namespace observers {
 
 					// Adding Replicator Participation receipt.
 					const auto receiptType = model::Receipt_Type_Periodic_Payment_Replicator_Participation;
-					const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
-															storageMosaicId, payment, currencyMosaicId);
+					const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
+														{ storageMosaicId, currencyMosaicId }, payment);
 					statementBuilder.addTransactionReceipt(receipt);
 
 					info.TimeInConfirmedStorage = Timestamp(0);
@@ -143,8 +143,8 @@ namespace catapult { namespace observers {
 
 							// Adding Replicator Modification receipt.
 							const auto receiptType = model::Receipt_Type_Periodic_Payment_Replicator_Modification;
-							const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
-																	streamingMosaicId, totalReplicatorAmount, currencyMosaicId);
+							const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
+																{ streamingMosaicId, currencyMosaicId }, totalReplicatorAmount);
 							statementBuilder.addTransactionReceipt(receipt);
 						}
 					}
@@ -155,11 +155,11 @@ namespace catapult { namespace observers {
 													config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 													refundStreamingAmount);
 
-					// Adding Owner Refund receipt (for streaming mosaic).
+					// Adding Owner Refund receipt for streaming mosaic.
 					{
 						const auto receiptType = model::Receipt_Type_Periodic_Payment_Owner_Refund;
-						const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
-																streamingMosaicId, refundStreamingAmount, currencyMosaicId);
+						const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+															{ streamingMosaicId, currencyMosaicId }, refundStreamingAmount);
 						statementBuilder.addTransactionReceipt(receipt);
 					}
 
@@ -168,11 +168,11 @@ namespace catapult { namespace observers {
 													config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
 													refundStorageAmount);
 
-					// Adding Owner Refund receipt (for storage mosaic).
+					// Adding Owner Refund receipt for storage mosaic.
 					{
 						const auto receiptType = model::Receipt_Type_Periodic_Payment_Owner_Refund;
-						const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
-																storageMosaicId, refundStorageAmount, currencyMosaicId);
+						const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+															{ storageMosaicId, currencyMosaicId }, refundStorageAmount);
 						statementBuilder.addTransactionReceipt(receipt);
 					}
 

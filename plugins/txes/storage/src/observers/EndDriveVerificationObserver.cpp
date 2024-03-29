@@ -100,8 +100,8 @@ namespace catapult { namespace observers {
 
 				// Adding End Drive Verification receipt.
 				const auto receiptType = model::Receipt_Type_End_Drive_Verification;
-				const model::MosaicDebitReceipt receipt(receiptType, Key(), replicatorKey,
-														storageMosaicId, storageDepositSlashingShare, currencyMosaicId);
+				const model::StorageReceipt receipt(receiptType, Key(), replicatorKey,
+													{ storageMosaicId, currencyMosaicId }, storageDepositSlashingShare);
 				statementBuilder.addTransactionReceipt(receipt);
 			}
 

@@ -74,8 +74,8 @@ namespace catapult { namespace observers {
 
 					// Adding Upload receipt.
 					const auto receiptType = model::Receipt_Type_Data_Modification_Approval_Upload;
-					const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), judgedKey,
-															streamingMosaicId, mosaicAmount, currencyMosaicId);
+					const model::StorageReceipt receipt(receiptType, driveEntry.key(), judgedKey,
+														{ streamingMosaicId, currencyMosaicId }, mosaicAmount);
 					statementBuilder.addTransactionReceipt(receipt);
 				}
 			}
