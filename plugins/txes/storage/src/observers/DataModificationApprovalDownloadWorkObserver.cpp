@@ -54,8 +54,8 @@ namespace catapult { namespace observers {
 
 			// Adding Download receipt.
 			const auto receiptType = model::Receipt_Type_Data_Modification_Approval_Download;
-			const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), replicatorEntry.key(),
-													streamingMosaicId, mosaicAmount, currencyMosaicId);
+			const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorEntry.key(),
+												{ streamingMosaicId, currencyMosaicId }, mosaicAmount);
 			statementBuilder.addTransactionReceipt(receipt);
 
 			// Updating current replicator's drive info.

@@ -33,8 +33,8 @@ namespace catapult { namespace observers {
 		// Adding Refund receipt.
 		{
 			const auto receiptType = model::Receipt_Type_Data_Modification_Approval_Refund;
-			const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
-													streamingMosaicId, transferAmount, currencyMosaicId);
+			const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+												{ streamingMosaicId, currencyMosaicId }, transferAmount);
 			statementBuilder.addTransactionReceipt(receipt);
 		}
 
@@ -48,8 +48,8 @@ namespace catapult { namespace observers {
 	  	// Adding Refund Stream receipt.
 		{
 			const auto receiptType = model::Receipt_Type_Data_Modification_Approval_Refund_Stream;
-			const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
-													streamingMosaicId, streamTransferAmount, currencyMosaicId);
+			const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+												{ streamingMosaicId, currencyMosaicId }, streamTransferAmount);
 			statementBuilder.addTransactionReceipt(receipt);
 		}
 	});

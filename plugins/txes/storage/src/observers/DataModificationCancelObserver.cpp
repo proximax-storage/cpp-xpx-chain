@@ -50,8 +50,8 @@ namespace catapult { namespace observers {
 
 					// Adding Pending Replicator receipt.
 					const auto receiptType = model::Receipt_Type_Data_Modification_Cancel_Pending_Replicator;
-					const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
-															streamingMosaicId, totalReplicatorAmount, currencyMosaicId);
+					const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
+														{ streamingMosaicId, currencyMosaicId }, totalReplicatorAmount);
 					statementBuilder.addTransactionReceipt(receipt);
 				}
 			}
@@ -66,8 +66,8 @@ namespace catapult { namespace observers {
 
 			// Adding Pending Owner receipt.
 			const auto receiptType = model::Receipt_Type_Data_Modification_Cancel_Pending_Owner;
-			const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
-													streamingMosaicId, totalDriveOwnerAmount, currencyMosaicId);
+			const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+												{ streamingMosaicId, currencyMosaicId }, totalDriveOwnerAmount);
 			statementBuilder.addTransactionReceipt(receipt);
 		} else {
 			// Performing refund for the drive owner
@@ -76,8 +76,8 @@ namespace catapult { namespace observers {
 
 			// Adding Queued receipt.
 			const auto receiptType = model::Receipt_Type_Data_Modification_Cancel_Queued;
-			const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
-													streamingMosaicId, refundAmount, currencyMosaicId);
+			const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+												{ streamingMosaicId, currencyMosaicId }, refundAmount);
 			statementBuilder.addTransactionReceipt(receipt);
 		}
 

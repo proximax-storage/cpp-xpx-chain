@@ -5,7 +5,6 @@
 **/
 
 #include "Observers.h"
-#include "src/catapult/model/Address.h"
 #include "src/utils/Queue.h"
 #include "src/utils/AVLTree.h"
 #include "src/utils/StorageUtils.h"
@@ -79,8 +78,8 @@ namespace catapult { namespace observers {
 
 					// Adding Replicator Modification receipt.
 					const auto receiptType = model::Receipt_Type_Drive_Closure_Replicator_Modification;
-					const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
-															streamingMosaicId, totalReplicatorAmount, currencyMosaicId);
+					const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
+														{ streamingMosaicId, currencyMosaicId }, totalReplicatorAmount);
 					statementBuilder.addTransactionReceipt(receipt);
 				}
 			}
@@ -116,8 +115,8 @@ namespace catapult { namespace observers {
 
 				// Adding Replicator Participation receipt.
 				const auto receiptType = model::Receipt_Type_Drive_Closure_Replicator_Participation;
-				const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
-														storageMosaicId, payment, currencyMosaicId);
+				const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
+														{ storageMosaicId, currencyMosaicId }, payment);
 				statementBuilder.addTransactionReceipt(receipt);
 			}
 
@@ -147,13 +146,11 @@ namespace catapult { namespace observers {
 			driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
 		  	driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
 
-		  	// Adding balance transfer Owner Refund receipt.
+		  	// Adding Owner Refund receipt for currency.
 		  	{
 			  	const auto receiptType = model::Receipt_Type_Drive_Closure_Owner_Refund;
-			  	const Address ownerAddress = model::PublicKeyToAddress(driveEntry.owner(),
-																	   context.Config.Immutable.NetworkIdentifier);
-			  	const model::BalanceTransferReceipt receipt(receiptType, driveEntry.key(), ownerAddress,
-															currencyMosaicId, currencyRefundAmount);
+			  	const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+													{ currencyMosaicId, currencyMosaicId }, currencyRefundAmount);
 			  	statementBuilder.addTransactionReceipt(receipt);
 		  	}
 
@@ -161,11 +158,11 @@ namespace catapult { namespace observers {
 										   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
 										   storageRefundAmount);
 
-			// Adding mosaic debit Owner Refund receipt (for storage mosaic).
+			// Adding Owner Refund receipt for storage mosaic.
 		  	{
 			  	const auto receiptType = model::Receipt_Type_Drive_Closure_Owner_Refund;
-			  	const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
-														storageMosaicId, storageRefundAmount, currencyMosaicId);
+			  	const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+													{ storageMosaicId, currencyMosaicId }, storageRefundAmount);
 			  	statementBuilder.addTransactionReceipt(receipt);
 		  	}
 
@@ -173,11 +170,11 @@ namespace catapult { namespace observers {
 										   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 										   streamingRefundAmount);
 
-			// Adding mosaic debit Owner Refund receipt (for streaming mosaic).
+		  // Adding Owner Refund receipt for streaming mosaic.
 			{
 				const auto receiptType = model::Receipt_Type_Drive_Closure_Owner_Refund;
-				const model::MosaicDebitReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
-														streamingMosaicId, streamingRefundAmount, currencyMosaicId);
+				const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+													{ streamingMosaicId, currencyMosaicId }, streamingRefundAmount);
 				statementBuilder.addTransactionReceipt(receipt);
 			}
 

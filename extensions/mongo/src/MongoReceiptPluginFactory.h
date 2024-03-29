@@ -91,6 +91,6 @@ namespace catapult { namespace mongo {
 	/// Creates a mongo offer removal receipt plugin around \a type.
 	std::unique_ptr<MongoReceiptPlugin> CreateOfferRemovalReceiptMongoPlugin(model::ReceiptType type);
 
-	/// Creates a mongo mosaic debit receipt plugin around \a type.
-	std::unique_ptr<MongoReceiptPlugin> CreateMosaicDebitReceiptMongoPlugin(model::ReceiptType type);
+	/// Creates a mongo storage receipt plugin around \a type.
+	std::unique_ptr<MongoReceiptPlugin> CreateStorageReceiptMongoPlugin(model::ReceiptType type);
 }}

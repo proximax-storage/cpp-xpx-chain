@@ -246,43 +246,38 @@ namespace catapult { namespace model {
 		/// Amount to give that has been returned to sender.
 		catapult::Amount AmountGiveReturned;
 	};
-	
-	/// Binary layout for a mosaic debit receipt.
-	struct MosaicDebitReceipt : public Receipt {
+
+	/// Binary layout for a storage receipt.
+	struct StorageReceipt : public Receipt {
 	public:
-		/// Creates a receipt around \a receiptType, \a mosaicDebtor, \a currencyCreditor, \a mosaicId and \a amount.
-		MosaicDebitReceipt(
+		/// Creates a receipt around \a receiptType, \a sender, \a recipient, \a mosaicsPair and \a sentAmount.
+		StorageReceipt(
 				ReceiptType receiptType,
-				const Key& mosaicDebtor,
-				const Key& currencyCreditor,
-				catapult::MosaicId mosaicId,
-				catapult::Amount mosaicAmount,
-				catapult::MosaicId currencyId)
-				: MosaicDebtor(mosaicDebtor)
-				, CurrencyCreditor(currencyCreditor)
-				, MosaicId(mosaicId)
-				, MosaicAmount(mosaicAmount)
-				, CurrencyId(currencyId) {
-			Size = sizeof(MosaicDebitReceipt);
+				const Key& sender,
+				const Key& recipient,
+				std::pair<MosaicId, MosaicId> mosaicsPair,
+				catapult::Amount sentAmount)
+				: Sender(sender)
+				, Recipient(recipient)
+				, MosaicsPair(mosaicsPair)
+				, SentAmount(sentAmount) {
+			Size = sizeof(StorageReceipt);
 			Version = 1;
 			Type = receiptType;
 		}
 
 	public:
-		/// Mosaic debtor public key.
-		Key MosaicDebtor;
+		/// Sender public key.
+		Key Sender;
 
-		/// Currency creditor public key.
-		Key CurrencyCreditor;
+		/// Recipient public key.
+		Key Recipient;
 
-		/// Mosaic id.
-		catapult::MosaicId MosaicId;
+		/// Mosaic IDs which are being sent by Sender and received by Recipient respectively.
+		std::pair<MosaicId, MosaicId> MosaicsPair;
 
-		/// Mosaic amount.
-		catapult::Amount MosaicAmount;
-
-		/// Currency id.
-		catapult::MosaicId CurrencyId;
+		/// Amount of the mosaic that is being sent.
+		catapult::Amount SentAmount;
 	};
 
 #pragma pack(pop)

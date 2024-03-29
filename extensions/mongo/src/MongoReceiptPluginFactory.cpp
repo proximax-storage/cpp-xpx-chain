@@ -88,13 +88,13 @@ namespace catapult { namespace mongo {
 					<< "mosaicAmountGiveReturned" << mappers::ToInt64(receipt.AmountGiveReturned);
 		}
 
-		void StreamMosaicDebitReceipt(bsoncxx::builder::stream::document& builder, const model::MosaicDebitReceipt& receipt) {
+		void StreamStorageReceipt(bsoncxx::builder::stream::document& builder, const model::StorageReceipt& receipt) {
 			builder
-					<< "mosaicDebtor" << mappers::ToBinary(receipt.MosaicDebtor)
-					<< "currencyCreditor" << mappers::ToBinary(receipt.CurrencyCreditor)
-					<< "mosaicId" << mappers::ToInt64(receipt.MosaicId)
-					<< "mosaicAmount" << mappers::ToInt64(receipt.MosaicAmount)
-					<< "currencyId" << mappers::ToInt64(receipt.CurrencyId);
+					<< "sender" << mappers::ToBinary(receipt.Sender)
+					<< "recipient" << mappers::ToBinary(receipt.Recipient)
+					<< "mosaicIdSent" << mappers::ToInt64(receipt.MosaicsPair.first)
+					<< "mosaicIdReceived" << mappers::ToInt64(receipt.MosaicsPair.second)
+					<< "sentAmount" << mappers::ToInt64(receipt.SentAmount);
 		}
 	}
 
@@ -105,5 +105,5 @@ namespace catapult { namespace mongo {
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferCreation, StreamOfferCreationReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferExchange, StreamOfferExchangeReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferRemoval, StreamOfferRemovalReceipt)
-	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(MosaicDebit, StreamMosaicDebitReceipt)
+	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(Storage, StreamStorageReceipt)
 }}

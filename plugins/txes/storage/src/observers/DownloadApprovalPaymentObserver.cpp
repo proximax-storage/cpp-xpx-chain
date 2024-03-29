@@ -86,8 +86,8 @@ namespace catapult { namespace observers {
 
 			// Adding Download Approval receipt.
 			const auto receiptType = model::Receipt_Type_Download_Approval;
-			const model::MosaicDebitReceipt receipt(receiptType, downloadChannelEntry.id().array(), replicatorKey,
-													streamingMosaicId, Amount(megabytesPayment), currencyMosaicId);
+			const model::StorageReceipt receipt(receiptType, downloadChannelEntry.id().array(), replicatorKey,
+												{ streamingMosaicId, currencyMosaicId }, Amount(megabytesPayment));
 			statementBuilder.addTransactionReceipt(receipt);
 
 			auto& cumulativePayment = downloadChannelEntry.cumulativePayments().at(replicatorKey);

@@ -50,18 +50,27 @@ namespace catapult { namespace observers {
 			statementBuilder.addTransactionReceipt(receipt);
 		}
 
+	  	// Adding Refund receipt for currency.
+		{
+			const auto receiptType = model::Receipt_Type_Download_Channel_Refund;
+			const model::StorageReceipt receipt(receiptType, downloadChannelEntry.id().array(),
+												downloadChannelEntry.consumer(),
+												{ currencyMosaicId, currencyMosaicId }, currencyRefundAmount);
+			statementBuilder.addTransactionReceipt(receipt);
+		}
+
 		// Refunding streaming mosaics.
 		const auto& streamingRefundAmount = senderState.Balances.get(streamingMosaicId);
 		liquidityProvider->debitMosaics(context, downloadChannelEntry.id().array(), downloadChannelEntry.consumer(),
 									   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 									   streamingRefundAmount);
 
-	  	// Adding mosaic debit Refund receipt.
+	  	// Adding Refund receipt for streaming mosaic.
 		{
 			const auto receiptType = model::Receipt_Type_Download_Channel_Refund;
-			const model::MosaicDebitReceipt receipt(receiptType, downloadChannelEntry.id().array(),
-													downloadChannelEntry.consumer(),
-													streamingMosaicId, streamingRefundAmount, currencyMosaicId);
+			const model::StorageReceipt receipt(receiptType, downloadChannelEntry.id().array(),
+												downloadChannelEntry.consumer(),
+												{ streamingMosaicId, currencyMosaicId }, streamingRefundAmount);
 			statementBuilder.addTransactionReceipt(receipt);
 		}
 
