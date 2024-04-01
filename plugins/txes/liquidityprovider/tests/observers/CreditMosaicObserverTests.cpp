@@ -135,7 +135,7 @@ namespace catapult { namespace observers {
 			CacheValues values(CreateInitialLInfo());
 
 			Amount toTransfer =
-					Amount { test::RandomInRange(0UL, values.InitialEntry.entry.additionallyMinted().unwrap()) };
+					Amount { test::RandomInRange(Amount(0).unwrap(), values.InitialEntry.entry.additionallyMinted().unwrap()) };
 
 			RunTest(NotifyMode::Commit,
 					values,
