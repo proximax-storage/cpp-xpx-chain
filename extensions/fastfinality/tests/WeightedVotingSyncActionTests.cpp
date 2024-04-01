@@ -76,7 +76,7 @@ namespace catapult { namespace fastfinality {
 					std::shared_ptr<model::BlockElement> pLastBlockElement,
 					std::map<Key, uint64_t> importances,
 					uint8_t expectedAction)
-				: m_pPool(test::CreateStartedIoThreadPool())
+				: m_pPool(std::move(test::CreateStartedIoThreadPool()))
 				, m_pluginManager(test::CreatePluginManager())
 				, m_pFsm(std::make_shared<fastfinality::WeightedVotingFsm>(m_pPool, pConfigHolder->Config(), std::make_shared<MockDbrbProcess>(), m_pluginManager))
 				, m_states(std::move(states))
@@ -89,12 +89,20 @@ namespace catapult { namespace fastfinality {
 			{};
 
 			void start() {
-				m_pFsm->start();
+				auto pFsm = m_pFsm.lock();
+				if (!pFsm || pFsm->stopped())
+					return;
+
+				pFsm->start();
 				m_pPool->join();
 			}
 
 			void assignActions() {
-				auto& actions = m_pFsm->actions();
+				auto pFsm = m_pFsm.lock();
+				if (!pFsm || pFsm->stopped())
+					return;
+
+				auto& actions = pFsm->actions();
 				actions.CheckLocalChain = [pThis = shared_from_this()] {
 					if (pThis->m_counter == 0) {
 						pThis->m_counter++;
@@ -130,7 +138,7 @@ namespace catapult { namespace fastfinality {
 		private:
 			std::shared_ptr<thread::IoThreadPool> m_pPool;
 			plugins::PluginManager m_pluginManager;
-			std::shared_ptr<WeightedVotingFsm> m_pFsm;
+			std::weak_ptr<WeightedVotingFsm> m_pFsm;
 			std::vector<fastfinality::RemoteNodeState> m_states;
 			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 			std::shared_ptr<const model::BlockElement> m_pLastBlockElement;

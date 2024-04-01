@@ -83,10 +83,12 @@ namespace catapult { namespace observers {
 						0,
 						0);
 				mocks::MockStorageState storageState;
-				storageState.setLastBlockElementSupplier([lastBlockTime] {
-					model::Block block;
-					block.Timestamp = lastBlockTime;
-					return std::make_shared<model::BlockElement>(block);
+
+				model::Block block;
+				block.Timestamp = lastBlockTime;
+				auto pBlockElement = std::make_shared<model::BlockElement>(block);
+				storageState.setLastBlockElementSupplier([pBlockElement] {
+					return pBlockElement;
 				});
 				auto pObserver = CreateStartDriveVerificationObserver(storageState);
 				test::ObserveNotification(*pObserver, notification, context);

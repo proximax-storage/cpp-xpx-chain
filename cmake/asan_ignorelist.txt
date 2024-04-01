@@ -1,0 +1,2 @@
+src:plugins/txes/service/src/StartDriveVerificationTransactionPlugin.cpp
+src:plugins/txes/service/tests/plugins/StartDriveVerificationTransactionPluginTests.cpp

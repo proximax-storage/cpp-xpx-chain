@@ -18,9 +18,11 @@ namespace catapult { namespace storage {
 #define TEST_CLASS ReplicatorEventHandlerTests
 
 	namespace {
+        const auto Key_Pair = crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
+
 		auto CreateTransactionSender(state::StorageState& storageState, handlers::TransactionRangeHandler transactionRangeHandler) {
 			return TransactionSender(
-				crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"),
+				Key_Pair,
 				config::ImmutableConfiguration::Uninitialized(),
 				StorageConfiguration::Uninitialized(),
 				transactionRangeHandler,
@@ -106,10 +108,10 @@ namespace catapult { namespace storage {
 
 	namespace {
 		auto CreateDataModificationSingleApprovalTransactionInfo() {
-			sirius::drive::ApprovalTransactionInfo transactionInfo;
+			auto pTransactionInfo = std::make_unique<sirius::drive::ApprovalTransactionInfo>();
 
 			const Key clientKey({ 11 });
-			auto& opinions = transactionInfo.m_opinions;
+			auto& opinions = pTransactionInfo->m_opinions;
 			opinions.emplace_back(Key({ 1 }).array());
 			opinions[opinions.size() - 1].m_uploadLayout = {
 				sirius::drive::KeyAndBytes{ Key({ 2 }).array(), 100u },
@@ -118,7 +120,7 @@ namespace catapult { namespace storage {
 			};
 			opinions[opinions.size() - 1].m_signature = sirius::Signature({ 1 });
 
-			return transactionInfo;
+			return *pTransactionInfo;
 		}
 	}
 

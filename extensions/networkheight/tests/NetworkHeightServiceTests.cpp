@@ -108,10 +108,10 @@ namespace catapult { namespace networkheight {
 			auto modifier = storage.modifier();
 
 			for (auto i = 2u; i <= numBlocks; ++i) {
-				model::Block block;
-				block.Size = sizeof(model::BlockHeader);
-				block.Height = Height(i);
-				modifier.saveBlock(test::BlockToBlockElement(block));
+				model::UniqueEntityPtr<model::Block> pBlockHeader = utils::MakeUniqueWithSize<model::Block>(sizeof(model::BlockHeaderV4));
+				pBlockHeader->Size = sizeof(model::BlockHeaderV4);
+				pBlockHeader->Height = Height(i);
+				modifier.saveBlock(test::BlockToBlockElement(*pBlockHeader));
 			}
 
 			modifier.commit();

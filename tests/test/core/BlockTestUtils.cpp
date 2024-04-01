@@ -175,12 +175,13 @@ namespace catapult { namespace test {
 	// endregion
 
 	std::vector<uint8_t> CreateRandomBlockBuffer(size_t numBlocks) {
-		constexpr auto Entity_Size = sizeof(model::BlockHeader);
-		auto buffer = GenerateRandomVector(numBlocks * Entity_Size);
+		constexpr auto Entity_Size = sizeof(model::BlockHeaderV4);
+        auto buffer = GenerateRandomVector(numBlocks * Entity_Size);
 		for (auto i = 0u; i < numBlocks; ++i) {
-			auto& block = reinterpret_cast<model::Block&>(buffer[i * Entity_Size]);
-			block.Size = Entity_Size;
-			block.Type = model::Entity_Type_Block;
+			auto& block = reinterpret_cast<model::BlockHeaderV4&>(buffer[i * Entity_Size]);
+            block.Size = Entity_Size;
+            block.Type = model::Entity_Type_Block;
+            block.TransactionPayloadSize = 0;
 		}
 
 		return buffer;
@@ -192,7 +193,13 @@ namespace catapult { namespace test {
 
 	model::BlockRange CreateBlockEntityRange(size_t numBlocks) {
 		auto buffer = CreateRandomBlockBuffer(numBlocks);
-		return model::BlockRange::CopyFixed(buffer.data(), numBlocks);
+        auto range = model::EntityRange<model::BlockHeaderV4>::CopyFixed(buffer.data(), numBlocks);
+
+		std::vector<size_t> offsets;
+		for (int i = 0; i < buffer.size(); i += sizeof(model::BlockHeaderV4))
+			offsets.push_back(i);
+
+		return model::BlockRange::CopyVariable(buffer.data(), buffer.size(), offsets);
 	}
 
 	std::vector<model::BlockRange> PrepareRanges(size_t count) {

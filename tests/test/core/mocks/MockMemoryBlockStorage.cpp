@@ -44,12 +44,13 @@ namespace catapult { namespace mocks {
 
 		// storage already contains nemesis block (height 1)
 		for (auto i = 2u; i <= numBlocks; ++i) {
-			model::Block block;
-			block.Size = sizeof(model::BlockHeader);
-			block.Height = Height(i);
-			block.FeeInterest = 1;
-			block.FeeInterestDenominator = 1;
-			pStorage->saveBlock(test::BlockToBlockElement(block));
+			model::UniqueEntityPtr<model::Block> pBlockHeader = utils::MakeUniqueWithSize<model::Block>(sizeof(model::BlockHeaderV4));
+			pBlockHeader->Size = sizeof(model::BlockHeaderV4);
+			pBlockHeader->Height = Height(i);
+			pBlockHeader->FeeInterest = 1;
+			pBlockHeader->FeeInterestDenominator = 1;
+
+			pStorage->saveBlock(test::BlockToBlockElement(*pBlockHeader));
 		}
 
 		return std::move(pStorage);

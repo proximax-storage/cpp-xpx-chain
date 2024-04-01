@@ -92,7 +92,7 @@ namespace catapult { namespace model {
 
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
-		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
+		DownloadPayment(const Hash256& downloadChannelId, const uint64_t downloadSize)
 			: DownloadChannelId(downloadChannelId)
 			, DownloadSize(downloadSize)
 		{}
@@ -104,7 +104,7 @@ namespace catapult { namespace model {
 
 	struct StreamingWork : public UnresolvedAmountData {
 	public:
-		StreamingWork(const Key& driveKey, const uint64_t& uploadSize)
+		StreamingWork(const Key& driveKey, const uint64_t uploadSize)
 			: DriveKey(driveKey)
 			, UploadSize(uploadSize)
 		{}
@@ -130,7 +130,7 @@ namespace catapult { namespace model {
 				const Key& drive,
 				const Key& owner,
 				const Hash256& cdi,
-				const uint64_t& uploadSize)
+				const uint64_t uploadSize)
 			: Notification(Notification_Type, sizeof(DataModificationNotification<1>))
 			, DataModificationId(dataModificationId)
 			, DriveKey(drive)
@@ -171,13 +171,13 @@ namespace catapult { namespace model {
 				const Hash256& streamId,
 				const Key& drive,
 				const Key& owner,
-				const uint64_t& expecteedUploadSize,
-				const std::string& folderName)
+				const uint64_t expectedUploadSize,
+				const std::string folderName)
 			: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
 			, StreamId(streamId)
 			, DriveKey(drive)
 			, Owner(owner)
-			, ExpectedUploadSize(expecteedUploadSize)
+			, ExpectedUploadSize(expectedUploadSize)
 			, FolderName(folderName)
 		{}
 
@@ -213,7 +213,7 @@ namespace catapult { namespace model {
 				const Key& drive,
 				const Hash256& streamId,
 				const Key& owner,
-				const uint64_t& actualUploadSize,
+				const uint64_t actualUploadSize,
 				const Hash256& streamStructureCdi)
 				: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
 				, StreamId(streamId)
@@ -253,7 +253,7 @@ namespace catapult { namespace model {
 		explicit StreamPaymentNotification(
 				const Key& drive,
 				const Hash256& streamId,
-				const uint64_t& additionalUploadSize)
+				const uint64_t additionalUploadSize)
 				: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
 				, StreamId(streamId)
 				, DriveKey(drive)
@@ -333,7 +333,7 @@ namespace catapult { namespace model {
 		explicit PrepareDriveNotification(
 				const Key& owner,
 				const Key& driveKey,
-				const uint64_t& driveSize,
+				const uint64_t driveSize,
 				const uint16_t& replicatorCount)
 			: Notification(Notification_Type, sizeof(PrepareDriveNotification<1>))
 			, Owner(owner)

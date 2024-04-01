@@ -1,0 +1,4 @@
+# Ignore uninitialized value errors
+uninitialized:*
+warning:*use-of-uninitialized-value*
+fun:testing::internal::UnitTestImpl::GetTestCase

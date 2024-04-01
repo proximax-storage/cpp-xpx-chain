@@ -92,7 +92,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Public key.
-		const Key& PublicKey;
+		const Key PublicKey;
 	};
 
 	// endregion
@@ -118,7 +118,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Sender.
-		const Key& Sender;
+		const Key Sender;
 
 		/// Mosaic id.
 		UnresolvedMosaicId MosaicId;

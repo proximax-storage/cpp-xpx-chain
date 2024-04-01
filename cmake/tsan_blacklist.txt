@@ -1,3 +1,10 @@
+# Ignore external libraries
+src:*/external/*
+
+# Ignore system libraries
+src:*/usr/*
+src:*/include/*
+
 # ignore this file
 src:Waits.h
 src:BlockchainConfigurationHolder.cpp

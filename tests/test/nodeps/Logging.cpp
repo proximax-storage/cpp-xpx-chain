@@ -20,7 +20,7 @@
 
 #include "Logging.h"
 #include <boost/log/sinks.hpp>
-#include <boost/phoenix.hpp>
+#include <boost/phoenix/bind.hpp>
 
 namespace catapult { namespace test {
 

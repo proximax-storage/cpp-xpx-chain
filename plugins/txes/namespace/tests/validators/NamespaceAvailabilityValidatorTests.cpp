@@ -123,7 +123,8 @@ namespace catapult { namespace validators {
 
 	TEST(ROOT_TEST_CLASS, CanAddRootNamespaceWithEternalDurationInNemesis) {
 		// Act: try to create a root with an eternal duration by signer different from nemesis signer
-		auto notification = model::RootNamespaceNotification<1>(test::GenerateRandomByteArray<Key>(), NamespaceId(26), Eternal_Artifact_Duration);
+		auto signer = test::GenerateRandomByteArray<Key>();
+		auto notification = model::RootNamespaceNotification<1>(signer, NamespaceId(26), Eternal_Artifact_Duration);
 		RunRootTest(ValidationResult::Success, notification, Height(1), SeedCacheWithRoot25);
 	}
 
@@ -135,7 +136,8 @@ namespace catapult { namespace validators {
 
 	TEST(ROOT_TEST_CLASS, CannotAddRootNamespaceWithEternalDurationAfterNemesis) {
 		// Act: try to create a root with an eternal duration by signer different from nemesis signer
-		auto notification = model::RootNamespaceNotification<1>(test::GenerateRandomByteArray<Key>(), NamespaceId(26), Eternal_Artifact_Duration);
+		auto signer = test::GenerateRandomByteArray<Key>();
+		auto notification = model::RootNamespaceNotification<1>(signer, NamespaceId(26), Eternal_Artifact_Duration);
 		RunRootTest(Failure_Namespace_Eternal_After_Nemesis_Block, notification, Height(15), SeedCacheWithRoot25);
 	}
 
@@ -154,7 +156,8 @@ namespace catapult { namespace validators {
 		// Arrange:
 		for (auto height : { Height(1), Height(15) }) {
 			// Act: try to create a root with a non-eternal duration
-			auto notification = model::RootNamespaceNotification<1>(Key(), NamespaceId(26), Default_Duration);
+			auto signer = Key();
+			auto notification = model::RootNamespaceNotification<1>(signer, NamespaceId(26), Default_Duration);
 			RunRootTest(ValidationResult::Success, notification, height, SeedCacheWithRoot25);
 		}
 	}
@@ -201,7 +204,8 @@ namespace catapult { namespace validators {
 		// Arrange: namespace is deactivated at height 20 and grace period is 25, so it is available starting at 45
 		for (auto height : { Height(45), Height(100) }) {
 			// Act: try to change the owner of a root that has expired and exceeded its grace period
-			auto notification = model::RootNamespaceNotification<1>(Key(), NamespaceId(25), Default_Duration);
+			auto signer = Key();
+			auto notification = model::RootNamespaceNotification<1>(signer, NamespaceId(25), Default_Duration);
 			RunRootTest(ValidationResult::Success, notification, height, SeedCacheWithRoot25);
 		}
 	}
@@ -249,13 +253,16 @@ namespace catapult { namespace validators {
 
 	TEST(ROOT_TEST_CLASS, CannotRenewNonEternalRootNamespaceWithEternalDurationInNemesis) {
 		// Assert: extend a non-eternal namespace as eternal
-		AssertCannotChangeDuration(test::GenerateRandomByteArray<Key>(), Height(1), test::CreateLifetime(10, 20), Eternal_Artifact_Duration);
+		auto signer = test::GenerateRandomByteArray<Key>();
+		AssertCannotChangeDuration(signer, Height(1), test::CreateLifetime(10, 20), Eternal_Artifact_Duration);
 	}
 
 	TEST(ROOT_TEST_CLASS, CannotRenewRootNamespaceWithEternalDuration) {
 		// Assert: "extend" an external namespace
-		AssertCannotChangeDuration(test::GenerateRandomByteArray<Key>(), Height(1), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), Eternal_Artifact_Duration);
-		AssertCannotChangeDuration(test::GenerateRandomByteArray<Key>(), Height(100), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), BlockDuration(2));
+		auto signerOne = test::GenerateRandomByteArray<Key>();
+		auto signerTwo = test::GenerateRandomByteArray<Key>();
+		AssertCannotChangeDuration(signerOne, Height(1), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), Eternal_Artifact_Duration);
+		AssertCannotChangeDuration(signerTwo, Height(100), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), BlockDuration(2));
 		AssertCannotChangeDuration(Nemesis_Signer, Height(1), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), Eternal_Artifact_Duration);
 		AssertCannotChangeDuration(Nemesis_Signer, Height(100), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), BlockDuration(2));
 	}

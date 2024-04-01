@@ -31,10 +31,10 @@ namespace catapult { namespace local {
 			auto pStorage = mocks::CreateMemoryBlockStorage(0);
 			pStorage->dropBlocksAfter(startHeight - Height(1));
 			for (auto i = 0u; i < numBlocks; ++i) {
-				model::Block block;
-				block.Size = sizeof(model::BlockHeader);
-				block.Height = startHeight + Height(i);
-				pStorage->saveBlock(test::BlockToBlockElement(block));
+				model::UniqueEntityPtr<model::Block> pBlockHeader = utils::MakeUniqueWithSize<model::Block>(sizeof(model::BlockHeaderV4));
+				pBlockHeader->Size = sizeof(model::BlockHeaderV4);
+				pBlockHeader->Height = startHeight + Height(i);
+				pStorage->saveBlock(test::BlockToBlockElement(*pBlockHeader));
 			}
 
 			return pStorage;

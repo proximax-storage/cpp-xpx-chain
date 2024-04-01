@@ -1,0 +1,16 @@
+# Ignore sml.
+src:*sml.hpp
+
+src:*WeightedVotingChainPackets.h
+src:*WeightedVotingTransitionTable.h
+src:*DbrbUtils.cpp
+
+# Ignore external libraries.
+src:*/external/*
+
+# Ignore XCode libraries.
+src:*/Applications/Xcode.app/*
+
+# Ignore system libraries.
+src:*/usr/*
+src:*/homebrew/*
