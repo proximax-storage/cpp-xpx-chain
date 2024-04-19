@@ -164,4 +164,13 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(ServiceUnitTransfer, model::BalanceTransferNotification<1>)();
 
 	DECLARE_STATEFUL_VALIDATOR(OwnerManagementProhibition, model::OwnerManagementProhibitionNotification<1>)();
+
+	/// A validator implementation that applies to replicator / node boot key notifications and validates that:
+	/// - no other replicator is registered with given boot key
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorNodeBootKey, model::ReplicatorNodeBootKeyNotification<1>)();
+
+	/// A validator implementation that applies to replicators cleanup notifications and validates that:
+	/// - replicators are registered
+	/// - replicators are not bound with boot keys
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorsCleanup, model::ReplicatorsCleanupNotification<1>)();
 }}

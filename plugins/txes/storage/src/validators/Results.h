@@ -193,6 +193,18 @@ namespace catapult { namespace validators {
 	// Modification upload size is invalid
 	DEFINE_STORAGE_RESULT(Modification_Invalid_Upload_Size, 59);
 
+	// Boot key is already registered with other replicator
+	DEFINE_STORAGE_RESULT(Boot_Key_Is_Registered_With_Other_Replicator, 60);
+
+	// Replicator cannot be removed
+	DEFINE_STORAGE_RESULT(Replicator_Cannot_Be_Removed, 61);
+
+	// Replicator cannot be removed
+	DEFINE_STORAGE_RESULT(Replicator_Cleanup_Is_Unallowed_In_Public_Network, 62);
+
+	// Replicator cannot be removed
+	DEFINE_STORAGE_RESULT(Replicator_Is_Bound_With_Boot_Key, 63);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

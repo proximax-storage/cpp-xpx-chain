@@ -323,7 +323,7 @@
 		{
 			"name": "replicatorOnboarding",
 			"type": "18018",
-			"supportedVersions": [1]
+			"supportedVersions": [2]
 		},
 		{
 			"name": "storagePayment",
@@ -373,6 +373,11 @@
 		{
 			"name": "removeDbrbProcessByNetwork",
 			"type": "17260",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "replicatorsCleanup",
+			"type": "16482",
 			"supportedVersions": [1]
 		}
 	]

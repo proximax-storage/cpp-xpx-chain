@@ -17,6 +17,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamReplicatorOnboardingTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "publicKey" << ToBinary(transaction.Signer);
 		builder << "capacity" << ToInt64(transaction.Capacity);
+		builder << "nodeBootKey" << ToBinary(transaction.NodeBootKey);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(ReplicatorOnboarding, StreamReplicatorOnboardingTransaction)

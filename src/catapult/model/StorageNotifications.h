@@ -90,6 +90,10 @@ namespace catapult { namespace model {
 
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Owner_Management_Prohibition_v1, 0x001B);
 
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Node_Boot_Key_v1, 0x001C);
+
+	DEFINE_NOTIFICATION_TYPE(All, Storage, ReplicatorsCleanup_v1, 0x001D);
+
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
 		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
@@ -651,6 +655,31 @@ namespace catapult { namespace model {
 		Hash256 Seed;
 	};
 
+	/// Notification of the node boot key where the replicator is running on.
+	template<VersionType version>
+	struct ReplicatorNodeBootKeyNotification;
+
+	template<>
+	struct ReplicatorNodeBootKeyNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Replicator_Node_Boot_Key_v1_Notification;
+
+	public:
+		explicit ReplicatorNodeBootKeyNotification(const Key& replicatorKey, const Key& nodeBootKey)
+			: Notification(Notification_Type, sizeof(ReplicatorNodeBootKeyNotification<1>))
+			, ReplicatorKey(replicatorKey)
+			, NodeBootKey(nodeBootKey)
+		{}
+
+	public:
+		/// Key of the replicator.
+		Key ReplicatorKey;
+
+		/// Key of the replicator.
+		Key NodeBootKey;
+	};
+
 	/// Notification of a drive closure.
 	template<VersionType version>
 	struct DriveClosureNotification;
@@ -1153,5 +1182,29 @@ namespace catapult { namespace model {
 
 		/// Key of the drive.
 		Key DriveKey;
+	};
+
+	template<VersionType version>
+	struct ReplicatorsCleanupNotification;
+
+	template<>
+	struct ReplicatorsCleanupNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_ReplicatorsCleanup_v1_Notification;
+
+	public:
+		explicit ReplicatorsCleanupNotification(uint16_t replicatorCount, const Key* pReplicatorKeys)
+			: Notification(Notification_Type, sizeof(ReplicatorsCleanupNotification<1>))
+			, ReplicatorCount(replicatorCount)
+			, ReplicatorKeysPtr(pReplicatorKeys)
+		{}
+
+	public:
+		/// The number of replicators.
+		uint16_t ReplicatorCount;
+
+		/// Replicator keys.
+		const Key* ReplicatorKeysPtr;
 	};
 }}

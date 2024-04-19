@@ -190,11 +190,9 @@ private:
 
 		if (index < leftSize) {
 			return orderStatistics(node.Left, index);
-		}
-		if (index == leftSize) {
+		} else if (index == leftSize) {
 			return nodePointer;
-		}
-		else {
+		} else {
 			return orderStatistics(node.Right, index - leftSize - 1);
 		}
 	}

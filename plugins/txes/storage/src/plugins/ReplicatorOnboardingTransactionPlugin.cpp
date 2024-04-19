@@ -22,6 +22,12 @@ namespace catapult { namespace plugins {
 		auto CreatePublisher(const config::ImmutableConfiguration& config) {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
+				case 2: {
+					sub.notify(SignatureNotification<1>(transaction.NodeBootKey, transaction.MessageSignature, transaction.Message));
+					sub.notify(ReplicatorNodeBootKeyNotification<1>(transaction.Signer, transaction.NodeBootKey));
+
+					[[fallthrough]];
+				}
 				case 1: {
 					auto hashSeed = CalculateHash(transaction, config.GenerationHash);
 

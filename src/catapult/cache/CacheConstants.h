@@ -56,6 +56,7 @@ namespace catapult { namespace cache {
 		ExchangeSda,
 		SdaOfferGroup,
 		DbrbView,
+		BootKeyReplicator,
 	};
 
 /// Defines cache constants for a cache with \a NAME.
