@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -17,6 +17,10 @@ namespace catapult { namespace observers {
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		auto driveIt = driveCache.find(notification.DriveKey);
 		auto& driveEntry = driveIt.get();
+
+	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		auto& statementBuilder = context.StatementBuilder();
 
 		auto& activeDataModifications = driveEntry.activeDataModifications();
 		auto cancelingDataModificationIter = std::find_if(
@@ -43,6 +47,12 @@ namespace catapult { namespace observers {
 							replicatorKey,
 							config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 							totalReplicatorAmount);
+
+					// Adding Pending Replicator receipt.
+					const auto receiptType = model::Receipt_Type_Data_Modification_Cancel_Pending_Replicator;
+					const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
+														{ streamingMosaicId, currencyMosaicId }, totalReplicatorAmount);
+					statementBuilder.addTransactionReceipt(receipt);
 				}
 			}
 
@@ -53,10 +63,22 @@ namespace catapult { namespace observers {
 							(driveEntry.replicatorCount() - replicators.size()));    // Stream refund
 
 			liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalDriveOwnerAmount);
+
+			// Adding Pending Owner receipt.
+			const auto receiptType = model::Receipt_Type_Data_Modification_Cancel_Pending_Owner;
+			const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+												{ streamingMosaicId, currencyMosaicId }, totalDriveOwnerAmount);
+			statementBuilder.addTransactionReceipt(receipt);
 		} else {
 			// Performing refund for the drive owner
 			const auto refundAmount = Amount(2 * modificationSize * driveEntry.replicatorCount());
 			liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), refundAmount);
+
+			// Adding Queued receipt.
+			const auto receiptType = model::Receipt_Type_Data_Modification_Cancel_Queued;
+			const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+												{ streamingMosaicId, currencyMosaicId }, refundAmount);
+			statementBuilder.addTransactionReceipt(receipt);
 		}
 
 		// Updating data modification lists in the drive entry:

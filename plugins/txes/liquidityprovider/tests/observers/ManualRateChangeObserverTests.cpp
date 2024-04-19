@@ -170,9 +170,9 @@ namespace catapult { namespace observers {
 			RunTest(NotifyMode::Commit,
 					values,
 					test::RandomByte() % 2,
-					Amount{test::RandomInRange(0UL, values.CurrencyBalance.unwrap())},
+					Amount{test::RandomInRange(Amount(0).unwrap(), values.CurrencyBalance.unwrap())},
 					test::RandomByte() % 2,
-					Amount{test::RandomInRange(0UL, values.MosaicBalance.unwrap())});
+					Amount{test::RandomInRange(Amount(0).unwrap(), values.MosaicBalance.unwrap())});
 		}
 	}
 

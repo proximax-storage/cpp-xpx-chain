@@ -87,6 +87,15 @@ namespace catapult { namespace mongo {
 					<< "mosaicIdGet" << mappers::ToInt64(receipt.MosaicsPair.second)
 					<< "mosaicAmountGiveReturned" << mappers::ToInt64(receipt.AmountGiveReturned);
 		}
+
+		void StreamStorageReceipt(bsoncxx::builder::stream::document& builder, const model::StorageReceipt& receipt) {
+			builder
+					<< "sender" << mappers::ToBinary(receipt.Sender)
+					<< "recipient" << mappers::ToBinary(receipt.Recipient)
+					<< "mosaicIdSent" << mappers::ToInt64(receipt.MosaicsPair.first)
+					<< "mosaicIdReceived" << mappers::ToInt64(receipt.MosaicsPair.second)
+					<< "sentAmount" << mappers::ToInt64(receipt.SentAmount);
+		}
 	}
 
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(BalanceTransfer, StreamBalanceTransferReceipt)
@@ -96,4 +105,5 @@ namespace catapult { namespace mongo {
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferCreation, StreamOfferCreationReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferExchange, StreamOfferExchangeReceipt)
 	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(OfferRemoval, StreamOfferRemovalReceipt)
+	DEFINE_MONGO_RECEIPT_PLUGIN_FACTORY(Storage, StreamStorageReceipt)
 }}

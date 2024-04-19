@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -30,6 +30,8 @@ namespace catapult { namespace observers {
 			const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 			const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 			const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
+			auto& statementBuilder = context.StatementBuilder();
+
 			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto driveStateIter = accountStateCache.find(notification.DriveKey);
 			auto& driveState = driveStateIter.get();
@@ -70,7 +72,15 @@ namespace catapult { namespace observers {
 						modificationSize + // Download work
 						modificationSize * (replicators.size() - 1) / replicators.size()); // Upload work
 				for (const auto& replicatorKey : replicators) {
-					liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
+					liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey,
+													config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+													totalReplicatorAmount);
+
+					// Adding Replicator Modification receipt.
+					const auto receiptType = model::Receipt_Type_Drive_Closure_Replicator_Modification;
+					const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
+														{ streamingMosaicId, currencyMosaicId }, totalReplicatorAmount);
+					statementBuilder.addTransactionReceipt(receipt);
 				}
 			}
 
@@ -99,7 +109,15 @@ namespace catapult { namespace observers {
 
 				auto payment = Amount(((driveSize * timeInConfirmedStorageSeconds) / paymentIntervalSeconds)
 											  .template convert_to<uint64_t>());
-				liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
+				liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey,
+												config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
+												payment);
+
+				// Adding Replicator Participation receipt.
+				const auto receiptType = model::Receipt_Type_Drive_Closure_Replicator_Participation;
+				const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
+														{ storageMosaicId, currencyMosaicId }, payment);
+				statementBuilder.addTransactionReceipt(receipt);
 			}
 
 			// The Drive is Removed, so we should make removal from payment queue
@@ -128,13 +146,37 @@ namespace catapult { namespace observers {
 			driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
 		  	driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
 
+		  	// Adding Owner Refund receipt for currency.
+		  	{
+			  	const auto receiptType = model::Receipt_Type_Drive_Closure_Owner_Refund;
+			  	const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+													{ currencyMosaicId, currencyMosaicId }, currencyRefundAmount);
+			  	statementBuilder.addTransactionReceipt(receipt);
+		  	}
+
 		  	liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
 										   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
 										   storageRefundAmount);
 
+			// Adding Owner Refund receipt for storage mosaic.
+		  	{
+			  	const auto receiptType = model::Receipt_Type_Drive_Closure_Owner_Refund;
+			  	const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+													{ storageMosaicId, currencyMosaicId }, storageRefundAmount);
+			  	statementBuilder.addTransactionReceipt(receipt);
+		  	}
+
 		  	liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
 										   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 										   streamingRefundAmount);
+
+		  // Adding Owner Refund receipt for streaming mosaic.
+			{
+				const auto receiptType = model::Receipt_Type_Drive_Closure_Owner_Refund;
+				const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+													{ streamingMosaicId, currencyMosaicId }, streamingRefundAmount);
+				statementBuilder.addTransactionReceipt(receipt);
+			}
 
 			// Removing the drive from queue, if present
 			if (replicators.size() < driveEntry.replicatorCount()) {

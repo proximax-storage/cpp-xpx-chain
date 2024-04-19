@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -22,6 +22,10 @@ namespace catapult { namespace observers {
 			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
+
+		  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+			const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
+		  	auto& statementBuilder = context.StatementBuilder();
 
 		  	auto& shards = driveEntry.verification()->Shards;
 			auto& shardSet = shards[notification.ShardId];
@@ -93,6 +97,12 @@ namespace catapult { namespace observers {
 				liquidityProvider->debitMosaics(context, Key(), replicatorKey,
 											   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
 											   storageDepositSlashingShare);
+
+				// Adding End Drive Verification receipt.
+				const auto receiptType = model::Receipt_Type_End_Drive_Verification;
+				const model::StorageReceipt receipt(receiptType, Key(), replicatorKey,
+													{ storageMosaicId, currencyMosaicId }, storageDepositSlashingShare);
+				statementBuilder.addTransactionReceipt(receipt);
 			}
 
 			// Streaming deposits of failed provers remain on drive's account
