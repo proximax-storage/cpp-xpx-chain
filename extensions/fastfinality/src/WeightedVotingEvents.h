@@ -24,9 +24,8 @@ namespace catapult { namespace fastfinality {
 	struct StageDetectionSucceeded{};
 
 	struct CommitteeSelectionResult{
-		bool IsBlockProposer;
-		bool IsCosigner;
-		CommitteePhase Phase;
+		bool ProposeBlock;
+		bool WaitForProposal;
 	};
 
 	struct NotEnoughBootKeys{};

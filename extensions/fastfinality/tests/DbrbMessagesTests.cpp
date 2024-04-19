@@ -11,20 +11,6 @@
 namespace catapult { namespace fastfinality {
 
 	namespace {
-		dbrb::CommitMessage CreateCommitMessage(const std::vector<dbrb::ProcessId>& nodes) {
-			dbrb::View view;
-			view.Data = dbrb::ViewData{ nodes[0], nodes[2], nodes[4] };
-			auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
-			auto payloadHash = dbrb::CalculatePayloadHash(payload);
-			std::map<dbrb::ProcessId, catapult::Signature> certificate{
-				{ nodes[0], test::GenerateRandomArray<Signature_Size>() },
-				{ nodes[1], test::GenerateRandomArray<Signature_Size>() },
-				{ nodes[2], test::GenerateRandomArray<Signature_Size>() },
-				{ nodes[3], test::GenerateRandomArray<Signature_Size>() },
-			};
-			return dbrb::CommitMessage(nodes[0], payloadHash, certificate, view);
-		}
-
 		template<typename TMessage>
 		void RunMessageSerializationTest(std::function<TMessage (const std::vector<dbrb::ProcessId>& nodes)> createMessage, consumer<const TMessage&, const TMessage&> callback) {
 			std::vector<dbrb::ProcessId> nodes = {
@@ -71,7 +57,7 @@ namespace catapult { namespace fastfinality {
 					view.Data.emplace(node);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 				auto payloadHash = dbrb::CalculatePayloadHash(payload);
-				return dbrb::AcknowledgedMessage(nodes[0], payloadHash, view, test::GenerateRandomArray<Signature_Size>());
+				return dbrb::AcknowledgedMessage(nodes[0], payloadHash, view, test::GenerateRandomByteArray<Signature>());
 			},
 			[](const dbrb::AcknowledgedMessage& originalMessage, const dbrb::AcknowledgedMessage& unpackedMessage) {
 				EXPECT_EQ(originalMessage.View, unpackedMessage.View);
@@ -81,7 +67,17 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, ValidateCommitMessageSerialization) {
 		RunMessageSerializationTest<dbrb::CommitMessage>([](const auto& nodes) {
-				return CreateCommitMessage(nodes);
+				dbrb::View view;
+				view.Data = dbrb::ViewData{ nodes[0], nodes[2], nodes[4] };
+				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
+				auto payloadHash = dbrb::CalculatePayloadHash(payload);
+				std::map<dbrb::ProcessId, catapult::Signature> certificate{
+					{ nodes[0], test::GenerateRandomByteArray<Signature>() },
+					{ nodes[1], test::GenerateRandomByteArray<Signature>() },
+					{ nodes[2], test::GenerateRandomByteArray<Signature>() },
+					{ nodes[3], test::GenerateRandomByteArray<Signature>() },
+				};
+				return dbrb::CommitMessage(nodes[0], payloadHash, certificate, view);
 			},
 			[](const dbrb::CommitMessage& originalMessage, const dbrb::CommitMessage& unpackedMessage) {
 			 	EXPECT_EQ(originalMessage.PayloadHash, unpackedMessage.PayloadHash);
@@ -102,5 +98,56 @@ namespace catapult { namespace fastfinality {
 				EXPECT_EQ(originalMessage.View, unpackedMessage.View);
 				EXPECT_EQ(originalMessage.PayloadHash, unpackedMessage.PayloadHash);
 			});
+	}
+
+	TEST(TEST_CLASS, ValidateShardPrepareMessageSerialization) {
+		RunMessageSerializationTest<dbrb::ShardPrepareMessage>([](const auto& nodes) {
+				dbrb::DbrbTreeView view;
+				for (const auto& node : nodes)
+					view.emplace_back(node);
+				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
+				return dbrb::ShardPrepareMessage(nodes[0], payload, view, test::GenerateRandomByteArray<Signature>());
+			},
+			[](const dbrb::ShardPrepareMessage& originalMessage, const dbrb::ShardPrepareMessage& unpackedMessage) {
+				EXPECT_EQ(originalMessage.Payload->Size, unpackedMessage.Payload->Size);
+				EXPECT_EQ_MEMORY(originalMessage.Payload.get(), unpackedMessage.Payload.get(), originalMessage.Payload->Size);
+				EXPECT_EQ(originalMessage.View, unpackedMessage.View);
+				EXPECT_EQ(originalMessage.BroadcasterSignature, unpackedMessage.BroadcasterSignature);
+			});
+	}
+
+	namespace {
+		template<typename TMessage>
+		void RunShardMessageSerializationTest() {
+			RunMessageSerializationTest<TMessage>([](const auto& nodes) {
+					auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
+					auto payloadHash = dbrb::CalculatePayloadHash(payload);
+					std::map<dbrb::ProcessId, catapult::Signature> certificate{
+						{ nodes[0], test::GenerateRandomByteArray<Signature>() },
+						{ nodes[1], test::GenerateRandomByteArray<Signature>() },
+						{ nodes[2], test::GenerateRandomByteArray<Signature>() },
+						{ nodes[3], test::GenerateRandomByteArray<Signature>() },
+						{ nodes[4], test::GenerateRandomByteArray<Signature>() },
+						{ nodes[5], test::GenerateRandomByteArray<Signature>() },
+					};
+					return TMessage(nodes[0], payloadHash, certificate);
+				},
+				[](const TMessage& originalMessage, const TMessage& unpackedMessage) {
+					EXPECT_EQ(originalMessage.PayloadHash, unpackedMessage.PayloadHash);
+					EXPECT_EQ(originalMessage.Certificate, unpackedMessage.Certificate);
+				});
+		}
+	}
+
+	TEST(TEST_CLASS, ValidateShardAcknowledgedMessage) {
+		RunShardMessageSerializationTest<dbrb::ShardAcknowledgedMessage>();
+	}
+
+	TEST(TEST_CLASS, ValidateShardCommitMessage) {
+		RunShardMessageSerializationTest<dbrb::ShardCommitMessage>();
+	}
+
+	TEST(TEST_CLASS, ValidateShardDeliverMessage) {
+		RunShardMessageSerializationTest<dbrb::ShardDeliverMessage>();
 	}
 }}

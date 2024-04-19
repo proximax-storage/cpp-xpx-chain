@@ -17,16 +17,16 @@ namespace catapult { namespace fastfinality {
 
 	struct WeightedVotingTransitionTable {
 		auto operator()() const {
-			auto isPhaseProposeAndIsBlockProposer = [](const auto& event) {
-				return event.IsBlockProposer && (event.Phase == CommitteePhase::Propose);
+			auto proposeBlock = [](const auto& event) {
+				return event.ProposeBlock;
 			};
 
-			auto isPhaseProposeAndIsCosigner = [](const auto& event) {
-				return event.IsCosigner && (event.Phase == CommitteePhase::Propose);
+			auto waitForProposal = [](const auto& event) {
+				return event.WaitForProposal;
 			};
 
-			auto isNotPhaseProposeOrNotInCommittee = [](const auto& event) {
-				return (event.Phase != CommitteePhase::Propose) || !(event.IsBlockProposer || event.IsCosigner);
+			auto waitForConfirmedBlock = [](const auto& event) {
+				return !event.ProposeBlock && !event.WaitForProposal;
 			};
 
 #define ACTION(NAME) [] (WeightedVotingActions& actions) { actions.NAME(); }
@@ -54,9 +54,9 @@ namespace catapult { namespace fastfinality {
 				sml::state<StageDetection> + sml::event<StageDetectionSucceeded> = sml::state<CommitteeSelection>,
 
 				sml::state<CommitteeSelection> + sml::on_entry<sml::_> / ACTION(SelectCommittee),
-				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isPhaseProposeAndIsBlockProposer ] = sml::state<BlockGeneration>,
-				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isPhaseProposeAndIsCosigner ] = sml::state<ProposalWaiting>,
-				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ isNotPhaseProposeOrNotInCommittee ] = sml::state<ConfirmedBlockWaiting>,
+				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ proposeBlock ] = sml::state<BlockGeneration>,
+				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ waitForProposal ] = sml::state<ProposalWaiting>,
+				sml::state<CommitteeSelection> + sml::event<CommitteeSelectionResult> [ waitForConfirmedBlock ] = sml::state<ConfirmedBlockWaiting>,
 				sml::state<CommitteeSelection> + sml::event<NotEnoughBootKeys> = sml::state<ConfirmedBlockWaiting>,
 				sml::state<CommitteeSelection> + sml::event<NotRegisteredInDbrbSystem> = sml::state<LocalChainCheck>,
 

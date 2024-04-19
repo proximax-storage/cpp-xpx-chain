@@ -8,7 +8,6 @@
 
 #include <utility>
 #include "WeightedVotingFsm.h"
-#include "dbrb/DbrbPacketHandlers.h"
 #include "catapult/api/ApiTypes.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/crypto/KeyUtils.h"
@@ -143,12 +142,12 @@ namespace catapult { namespace fastfinality {
 				const dbrb::DbrbViewFetcher& dbrbViewFetcher) {
 			return [pFsmWeak, pConfigHolder, lastBlockElementSupplier, &dbrbViewFetcher]() {
 				auto pFsmShared = pFsmWeak.lock();
-				if (!pFsmShared || pFsmShared->stopped() || pFsmShared->dbrbProcess()->currentView().Data.empty())
+				if (!pFsmShared || pFsmShared->stopped() || pFsmShared->dbrbProcess().currentView().Data.empty())
 					return std::vector<RemoteNodeState>();
 
 				auto pPromise = std::make_shared<thread::promise<std::vector<RemoteNodeState>>>();
 
-				boost::asio::post(pFsmShared->dbrbProcess()->strand(), [pFsmWeak, pConfigHolder, lastBlockElementSupplier, pPromise, &dbrbViewFetcher]() {
+				boost::asio::post(pFsmShared->dbrbProcess().strand(), [pFsmWeak, pConfigHolder, lastBlockElementSupplier, pPromise, &dbrbViewFetcher]() {
 					auto pFsmShared = pFsmWeak.lock();
 					if (!pFsmShared || pFsmShared->stopped()) {
 						pPromise->set_value(std::vector<RemoteNodeState>());
@@ -162,16 +161,16 @@ namespace catapult { namespace fastfinality {
 					const auto maxBlocksPerSyncAttempt = config.Node.MaxBlocksPerSyncAttempt;
 					const auto targetHeight = chainHeight + Height(maxBlocksPerSyncAttempt);
 
-					const auto& pDbrbProcess = pFsmShared->dbrbProcess();
+					const auto& dbrbProcess = pFsmShared->dbrbProcess();
 					auto view = dbrbViewFetcher.getView(Timestamp(0));
 					auto bootstrapView = config.Network.DbrbBootstrapProcesses;
 					view.merge(std::move(bootstrapView));
 					auto minOpinionNumber = config.Network.CommitteeSize - 1;
-					auto pMessageSender = pDbrbProcess->messageSender();
+					auto pMessageSender = dbrbProcess.messageSender();
 					pMessageSender->clearQueue();
 					pMessageSender->requestNodes(view, pConfigHolder);
 					for (const auto& identityKey : view) {
-						if (identityKey == pDbrbProcess->id())
+						if (identityKey == dbrbProcess.id())
 							continue;
 
 						auto nodePacketIoPair = pMessageSender->getNodePacketIoPair(identityKey);
@@ -266,6 +265,8 @@ namespace catapult { namespace fastfinality {
 				locator.registerService(Writers_Service_Name, pWriters);
 
 				auto pUnlockedAccounts = CreateUnlockedAccounts(m_harvestingConfig);
+				auto dbrbShardingEnabled = config.Network.EnableDbrbSharding || nextConfig.Network.EnableDbrbSharding;
+				auto dbrbShardSize = config.Network.DbrbShardSize;
 				auto pFsmShared = pServiceGroup->pushService([
 						pWritersWeak = std::weak_ptr<net::PacketWriters>(pWriters),
 						&config,
@@ -275,16 +276,24 @@ namespace catapult { namespace fastfinality {
 						pUnlockedAccounts,
 						pTransactionSender = m_pTransactionSender,
 						pDbrbPool,
-						pWeightedVotingFsmPool](const std::shared_ptr<thread::IoThreadPool>&) {
+						pWeightedVotingFsmPool,
+						dbrbShardingEnabled,
+						dbrbShardSize](const std::shared_ptr<thread::IoThreadPool>&) {
 					pTransactionSender->init(&keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local), pUnlockedAccounts);
-					auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(config::ToLocalNode(config), keyPair, state.nodes(), pWritersWeak, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher(), dbrbConfig);
-					return std::make_shared<WeightedVotingFsm>(pWeightedVotingFsmPool, config, pDbrbProcess, state.pluginManager());
+					auto pMessageSender = dbrb::CreateMessageSender(config::ToLocalNode(config), pWritersWeak, state.nodes(), dbrbConfig.IsDbrbProcess, pTransactionSender, state.pluginManager().dbrbViewFetcher());
+					if (dbrbShardingEnabled) {
+						auto pDbrbProcess = std::make_shared<dbrb::ShardedDbrbProcess>(keyPair, pMessageSender, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher(), dbrbShardSize);
+						return std::make_shared<WeightedVotingFsm>(pWeightedVotingFsmPool, config, pDbrbProcess, state.pluginManager());
+					} else {
+						auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(keyPair, pMessageSender, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher());
+						return std::make_shared<WeightedVotingFsm>(pWeightedVotingFsmPool, config, pDbrbProcess, state.pluginManager());
+					}
 				});
 
 				const auto& pluginManager = state.pluginManager();
-				pFsmShared->dbrbProcess()->registerPacketHandlers(pFsmShared->packetHandlers());
+				pFsmShared->dbrbProcess().registerPacketHandlers(pFsmShared->packetHandlers());
 				std::weak_ptr<WeightedVotingFsm> pFsmWeak = pFsmShared;
-				pFsmShared->dbrbProcess()->setDeliverCallback([pFsmWeak, &pluginManager](const std::shared_ptr<ionet::Packet>& pPacket) {
+				pFsmShared->dbrbProcess().setDeliverCallback([pFsmWeak, &pluginManager](const std::shared_ptr<ionet::Packet>& pPacket) {
 					TRY_GET_FSM()
 
 					switch (pPacket->Type) {
@@ -312,7 +321,7 @@ namespace catapult { namespace fastfinality {
 					auto storageView = storage.view();
 					return storageView.loadBlockElement(storageView.chainHeight());
 				};
-				pFsmShared->dbrbProcess()->setValidationCallback([pFsmWeak, &pluginManager, &state, lastBlockElementSupplier, pValidatorPool](const std::shared_ptr<ionet::Packet>& pPacket) {
+				pFsmShared->dbrbProcess().setValidationCallback([pFsmWeak, &pluginManager, &state, lastBlockElementSupplier, pValidatorPool](const std::shared_ptr<ionet::Packet>& pPacket) {
 					auto pFsmShared = pFsmWeak.lock();
 					if (!pFsmShared || pFsmShared->stopped())
 						return false;
@@ -352,9 +361,9 @@ namespace catapult { namespace fastfinality {
 
 				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
 				handlers::RegisterPullBlocksHandler(pFsmShared->packetHandlers(), state.storage(), CreatePullBlocksHandlerConfiguration(config.Node));
-				dbrb::RegisterPushNodesHandler(pFsmShared->dbrbProcess(), config.Immutable.NetworkIdentifier, pConfigHolder, pFsmShared->packetHandlers());
-				dbrb::RegisterRemoveNodeRequestHandler(pFsmShared->dbrbProcess(), locator.keyPair(), pFsmShared->packetHandlers());
-				dbrb::RegisterRemoveNodeResponseHandler(pFsmShared->dbrbProcess(), pFsmShared->packetHandlers());
+				pFsmShared->dbrbProcess().registerDbrbPushNodesHandler(config.Immutable.NetworkIdentifier, pConfigHolder, pFsmShared->packetHandlers());
+				pFsmShared->dbrbProcess().registerDbrbRemoveNodeRequestHandler(locator.keyPair(), pFsmShared->packetHandlers());
+				pFsmShared->dbrbProcess().registerDbrbRemoveNodeResponseHandler(pFsmShared->packetHandlers());
 
 				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, 2u);
 				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, [&acceptor = *pReaders](

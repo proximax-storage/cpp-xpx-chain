@@ -144,7 +144,7 @@ namespace catapult { namespace model {
 		double CommitteeEndSyncApproval;
 
 		/// Amount of importance added to the node's importance during the approval stage of node synchronization.
-		uint64_t CommitteeBaseTotalImportance = 100;
+		uint64_t CommitteeBaseTotalImportance;
 
 		/// Weight of the node in synchronization state during the approval stage of node synchronization.
 		double CommitteeNotRunningContribution;
@@ -172,6 +172,12 @@ namespace catapult { namespace model {
 
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
+
+		/// Enables DBRB sharding.
+		bool EnableDbrbSharding;
+
+		/// DBRB shard size.
+		uint32_t DbrbShardSize;
 
 	private:
 		/// Map of plugin configurations.

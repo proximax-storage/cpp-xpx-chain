@@ -7,7 +7,7 @@
 #pragma once
 #include "CommitteeData.h"
 #include "WeightedVotingTransitionTable.h"
-#include "dbrb/DbrbProcess.h"
+#include "dbrb/DbrbProcessContainer.h"
 #include "catapult/thread/IoThreadPool.h"
 
 namespace catapult { namespace ionet { class NodePacketIoPair; } }
@@ -27,7 +27,7 @@ namespace catapult { namespace fastfinality {
 
 	class WeightedVotingFsm : public std::enable_shared_from_this<WeightedVotingFsm> {
 	public:
-		explicit WeightedVotingFsm(
+		WeightedVotingFsm(
 				std::shared_ptr<thread::IoThreadPool> pPool,
 				const config::BlockchainConfiguration& config,
 				std::shared_ptr<dbrb::DbrbProcess> pDbrbProcess,
@@ -39,7 +39,23 @@ namespace catapult { namespace fastfinality {
 			, m_strand(m_pPool->ioContext())
 			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
-			, m_pDbrbProcess(std::move(pDbrbProcess))
+			, m_dbrbProcess(std::move(pDbrbProcess))
+			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32())
+		{}
+
+		WeightedVotingFsm(
+				std::shared_ptr<thread::IoThreadPool> pPool,
+				const config::BlockchainConfiguration& config,
+				std::shared_ptr<dbrb::ShardedDbrbProcess> pDbrbProcess,
+				const plugins::PluginManager& pluginManager)
+			: m_pPool(std::move(pPool))
+			, m_timer(m_pPool->ioContext())
+			, m_sm(boost::sml::sm<WeightedVotingTransitionTable>(m_actions))
+			, m_committeeData(pluginManager)
+			, m_strand(m_pPool->ioContext())
+			, m_nodeWorkState(NodeWorkState::None)
+			, m_stopped(false)
+			, m_dbrbProcess(std::move(pDbrbProcess))
 			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32())
 		{}
 
@@ -67,8 +83,8 @@ namespace catapult { namespace fastfinality {
 			m_timer.cancel();
 			processEvent(Stop{});
 			m_actions = WeightedVotingActions{};
-			m_pPool = nullptr;
-			m_pDbrbProcess = nullptr;
+			m_pPool.reset();
+			m_dbrbProcess.shutdown();
 		}
 
 		auto& timer() {
@@ -132,8 +148,8 @@ namespace catapult { namespace fastfinality {
 			return m_mutex;
 		}
 
-		const auto& dbrbProcess() {
-			return m_pDbrbProcess;
+		auto& dbrbProcess() {
+			return m_dbrbProcess;
 		}
 
 		auto& packetHandlers() {
@@ -151,7 +167,7 @@ namespace catapult { namespace fastfinality {
 		NodeWorkState m_nodeWorkState;
 		bool m_stopped;
 		mutable std::mutex m_mutex;
-		std::shared_ptr<dbrb::DbrbProcess> m_pDbrbProcess;
+		dbrb::DbrbProcessContainer m_dbrbProcess;
 		ionet::ServerPacketHandlers m_packetHandlers;
 	};
 }}

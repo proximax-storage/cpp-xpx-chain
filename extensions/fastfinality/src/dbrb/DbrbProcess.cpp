@@ -17,17 +17,14 @@
 namespace catapult { namespace dbrb {
 
 	DbrbProcess::DbrbProcess(
-		const ionet::Node& thisNode,
 		const crypto::KeyPair& keyPair,
-		const ionet::NodeContainer& nodeContainer,
-		const std::weak_ptr<net::PacketWriters>& pWriters,
+		std::shared_ptr<MessageSender> pMessageSender,
 		std::shared_ptr<thread::IoThreadPool> pPool,
 		std::shared_ptr<TransactionSender> pTransactionSender,
-		const dbrb::DbrbViewFetcher& dbrbViewFetcher,
-		const dbrb::DbrbConfiguration& dbrbConfig)
-			: m_id(thisNode.identityKey())
-			, m_keyPair(keyPair)
-			, m_pMessageSender(std::make_shared<MessageSender>(thisNode, pWriters, nodeContainer, dbrbConfig.IsDbrbProcess, pTransactionSender, dbrbViewFetcher))
+		const dbrb::DbrbViewFetcher& dbrbViewFetcher)
+			: m_keyPair(keyPair)
+			, m_id(keyPair.publicKey())
+			, m_pMessageSender(std::move(pMessageSender))
 			, m_pPool(std::move(pPool))
 			, m_strand(m_pPool->ioContext())
 			, m_pTransactionSender(std::move(pTransactionSender))

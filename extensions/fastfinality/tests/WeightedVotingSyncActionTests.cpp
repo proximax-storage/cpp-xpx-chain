@@ -45,14 +45,11 @@ namespace catapult { namespace fastfinality {
 		public:
 			explicit MockDbrbProcess()
 				: DbrbProcess(
-					{},
 					crypto::KeyPair::FromPrivate({}),
-					{},
-					std::make_shared<mocks::MockPacketWriters>(),
+					dbrb::CreateMessageSender({}, std::make_shared<mocks::MockPacketWriters>(), {}, false, nullptr, mocks::MockDbrbViewFetcher()),
 					test::CreateStartedIoThreadPool(1),
 					nullptr,
-					mocks::MockDbrbViewFetcher(),
-					dbrb::DbrbConfiguration::Uninitialized())
+					mocks::MockDbrbViewFetcher())
 			{}
 
 			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) override { return true; }
