@@ -135,7 +135,7 @@ namespace catapult { namespace plugins {
 							utils::SwapOperation::Buy);
 
 					const auto pInitializerDownloadWork =
-							sub.mempool().malloc(model::ExecutorWork(contractKey, transaction.ExecutionCallPayment));
+							sub.mempool().malloc(model::ExecutorWork(contractKey, transaction.DownloadCallPayment));
 					utils::SwapMosaics(
 							transaction.Signer,
 							contractExecutionPaymentKey,
