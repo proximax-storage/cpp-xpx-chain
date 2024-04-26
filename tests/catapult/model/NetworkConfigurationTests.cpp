@@ -90,10 +90,10 @@ namespace catapult { namespace model {
 							{ "dbrbRegistrationDuration", "24h" },
 							{ "dbrbRegistrationGracePeriod", "1h" },
 
-							{ "enableHarvesterExpiration", "true" },
-							{ "enableRemovingDbrbProcessOnShutdown", "true" },
+							{ "enableHarvesterExpiration", "false" },
+							{ "enableRemovingDbrbProcessOnShutdown", "false" },
 
-							{ "enableDbrbSharding", "true" },
+							{ "enableDbrbSharding", "false" },
 							{ "dbrbShardSize", "6" },
 						}
 					},

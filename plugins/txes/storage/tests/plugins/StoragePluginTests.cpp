@@ -89,7 +89,7 @@ namespace catapult { namespace plugins {
 					"PrepareDriveValidator",
 					"DataModificationApprovalValidator",
 					"DataModificationCancelValidator",
-					"ReplicatorOnboardingValidator",
+					"ReplicatorOnboardingV1Validator",
 					"ReplicatorOffboardingValidator",
 					"FinishDownloadValidator",
 					"DownloadPaymentValidator",
@@ -110,6 +110,7 @@ namespace catapult { namespace plugins {
 					"OwnerManagementProhibitionValidator",
 					"ReplicatorNodeBootKeyValidator",
 					"ReplicatorsCleanupValidator",
+					"ReplicatorOnboardingV2Validator",
 				};
 			}
 
@@ -123,7 +124,7 @@ namespace catapult { namespace plugins {
 					"PrepareDriveObserver",
 					"DataModificationApprovalObserver",
 					"DataModificationCancelObserver",
-					"ReplicatorOnboardingObserver",
+					"ReplicatorOnboardingV1Observer",
 					"ReplicatorOffboardingObserver",
 					"FinishDownloadObserver",
 					"DownloadPaymentObserver",
@@ -142,6 +143,7 @@ namespace catapult { namespace plugins {
 					"OwnerManagementProhibitionObserver",
 					"ReplicatorNodeBootKeyObserver",
 					"ReplicatorsCleanupObserver",
+					"ReplicatorOnboardingV2Observer",
 				};
 			}
 

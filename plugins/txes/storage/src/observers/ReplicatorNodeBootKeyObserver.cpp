@@ -14,7 +14,12 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorNodeBootKey)");
 
-		auto& cache = context.Cache.template sub<cache::BootKeyReplicatorCache>();
-		cache.insert(state::BootKeyReplicatorEntry(notification.NodeBootKey, notification.ReplicatorKey));
+		auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
+		auto replicatorIter = replicatorCache.find(notification.ReplicatorKey);
+		auto& replicatorEntry = replicatorIter.get();
+		replicatorEntry.setNodeBootKey(notification.NodeBootKey);
+
+		auto& bootKeyReplicatorCache = context.Cache.template sub<cache::BootKeyReplicatorCache>();
+		bootKeyReplicatorCache.insert(state::BootKeyReplicatorEntry(notification.NodeBootKey, notification.ReplicatorKey));
 	});
 }}

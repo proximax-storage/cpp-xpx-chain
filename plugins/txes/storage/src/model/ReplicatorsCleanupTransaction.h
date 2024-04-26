@@ -38,7 +38,7 @@ namespace catapult { namespace model {
 	public:
 		// Calculates the real size of a replicators cleanup \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + transaction.ReplicatorCount * sizeof(Key);
+			return sizeof(TransactionType) + transaction.ReplicatorCount * Key_Size;
 		}
 	};
 

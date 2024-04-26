@@ -583,20 +583,16 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak]() {
 			TRY_GET_FSM()
 
-			CATAPULT_LOG(warning) << "=========================> START WAIT FOR PROPOSAL";
 			auto phaseEndTimeMillis = GetPhaseEndTimeMillis(CommitteePhase::Propose, pFsmShared->committeeData().committeeRound().PhaseTimeMillis);
 			DelayAction(pFsmWeak, pFsmShared->timer(), phaseEndTimeMillis, [pFsmWeak] {
 				TRY_GET_FSM()
 
 				auto& committeeData = pFsmShared->committeeData();
 				if (committeeData.unexpectedProposedBlockHeight()) {
-					CATAPULT_LOG(warning) << "=========================> UNEXPECTED BLOCK HEIGHT";
 					pFsmShared->processEvent(UnexpectedBlockHeight{});
 				} else if (committeeData.proposedBlock()) {
-					CATAPULT_LOG(warning) << "=========================> PROPOSAL RECEIVED";
 					pFsmShared->processEvent(ProposalReceived{});
 				} else {
-					CATAPULT_LOG(warning) << "=========================> PROPOSAL NOT RECEIVED";
 					pFsmShared->processEvent(ProposalNotReceived{});
 				}
 			});

@@ -100,12 +100,12 @@ namespace catapult { namespace plugins {
 		// Assert:
         ASSERT_EQ(6u, sub.numNotifications());
         auto i = 0u;
-		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Storage_Replicator_Node_Boot_Key_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(LiquidityProvider_Credit_Mosaic_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(LiquidityProvider_Credit_Mosaic_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Storage_Replicator_Onboarding_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Storage_Replicator_Onboarding_v2_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Storage_Replicator_Node_Boot_Key_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	// endregion
@@ -148,7 +148,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishReplicatorOnboardingNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ReplicatorOnboardingNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<ReplicatorOnboardingNotification<2>> sub;
 		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
 

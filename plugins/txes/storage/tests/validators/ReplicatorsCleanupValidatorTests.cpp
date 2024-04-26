@@ -19,13 +19,7 @@ namespace catapult { namespace validators {
     namespace {
         using Notification = model::ReplicatorsCleanupNotification<1>;
 
-		auto CreateConfig(model::NetworkIdentifier networkIdentifier) {
-			test::MutableBlockchainConfiguration config;
-			config.Immutable.NetworkIdentifier = networkIdentifier;
-			return config.ToConst();
-		}
-
-        void AssertValidationResult(ValidationResult expectedResult, model::NetworkIdentifier networkIdentifier, const std::vector<std::pair<Key, Key>>& keysToInsert, const std::vector<Key>& keysToRemove) {
+        void AssertValidationResult(ValidationResult expectedResult, const std::vector<std::pair<Key, Key>>& keysToInsert, const std::vector<Key>& keysToRemove) {
             // Arrange:
             auto cache = test::StorageCacheFactory::Create();
             {
@@ -42,14 +36,14 @@ namespace catapult { namespace validators {
             auto pValidator = CreateReplicatorsCleanupValidator();
 
             // Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, CreateConfig(networkIdentifier));
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
         }
     }
 
-    TEST(TEST_CLASS, FailureWhenNetworkIsPublic) {
+    TEST(TEST_CLASS, FailureWhenNoReplicatorsToRemove) {
         // Arrange:
 		std::vector<std::pair<Key, Key>> keysToInsert{
 			{ Key({ 1 }), Key({ 5 }) },
@@ -57,17 +51,11 @@ namespace catapult { namespace validators {
 			{ Key({ 3 }), Key() },
 			{ Key({ 4 }), Key() },
 		};
-		std::vector<Key> keysToRemove{
-			Key({ 1 }),
-			Key({ 2 }),
-			Key({ 3 }),
-			Key({ 4 }),
-		};
+		std::vector<Key> keysToRemove{};
 
         // Assert:
         AssertValidationResult(
-			Failure_Storage_Replicator_Cleanup_Is_Unallowed_In_Public_Network,
-			model::NetworkIdentifier::Public,
+			Failure_Storage_No_Replicators_To_Remove,
 			keysToInsert,
 			keysToRemove);
     }
@@ -91,7 +79,6 @@ namespace catapult { namespace validators {
         // Assert:
         AssertValidationResult(
 			Failure_Storage_Replicator_Not_Found,
-			model::NetworkIdentifier::Mijin_Test,
 			keysToInsert,
 			keysToRemove);
     }
@@ -113,7 +100,6 @@ namespace catapult { namespace validators {
         // Assert:
         AssertValidationResult(
 			Failure_Storage_Replicator_Is_Bound_With_Boot_Key,
-			model::NetworkIdentifier::Mijin_Test,
 			keysToInsert,
 			keysToRemove);
     }
@@ -135,7 +121,6 @@ namespace catapult { namespace validators {
         // Assert:
         AssertValidationResult(
 			ValidationResult::Success,
-			model::NetworkIdentifier::Mijin_Test,
 			keysToInsert,
 			keysToRemove);
 	}

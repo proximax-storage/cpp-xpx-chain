@@ -94,6 +94,9 @@ namespace catapult { namespace model {
 
 	DEFINE_NOTIFICATION_TYPE(All, Storage, ReplicatorsCleanup_v1, 0x001D);
 
+	/// Defines a replicator onboarding notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x001E);
+
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
 		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
@@ -623,22 +626,13 @@ namespace catapult { namespace model {
 		Hash256 DataModificationId;
 	};
 
-	/// Notification of a replicator onboarding.
-	template<VersionType version>
-	struct ReplicatorOnboardingNotification;
-
-	template<>
-	struct ReplicatorOnboardingNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Storage_Replicator_Onboarding_v1_Notification;
+	/// Base replicator onboarding notification.
+	template<typename TDerivedNotification>
+	struct BaseReplicatorOnboardingNotification : public Notification {
 
 	public:
-		explicit ReplicatorOnboardingNotification(
-				const Key& publicKey,
-				const Amount& capacity,
-				const Hash256& seed)
-			: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
+		explicit BaseReplicatorOnboardingNotification(const Key& publicKey, const Amount& capacity, const Hash256& seed)
+			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 			, PublicKey(publicKey)
 			, Capacity(capacity)
 			, Seed(seed)
@@ -653,6 +647,34 @@ namespace catapult { namespace model {
 
 		/// Seed that is used for random number generator.
 		Hash256 Seed;
+	};
+
+	/// Notification of a replicator onboarding.
+	template<VersionType version>
+	struct ReplicatorOnboardingNotification;
+
+	template<>
+	struct ReplicatorOnboardingNotification<1> : public BaseReplicatorOnboardingNotification<ReplicatorOnboardingNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Replicator_Onboarding_v1_Notification;
+
+	public:
+		explicit ReplicatorOnboardingNotification(const Key& publicKey, const Amount& capacity, const Hash256& seed)
+			: BaseReplicatorOnboardingNotification(publicKey, capacity, seed)
+		{}
+	};
+
+	template<>
+	struct ReplicatorOnboardingNotification<2> : public BaseReplicatorOnboardingNotification<ReplicatorOnboardingNotification<2>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Replicator_Onboarding_v2_Notification;
+
+	public:
+		explicit ReplicatorOnboardingNotification(const Key& publicKey, const Amount& capacity, const Hash256& seed)
+			: BaseReplicatorOnboardingNotification(publicKey, capacity, seed)
+		{}
 	};
 
 	/// Notification of the node boot key where the replicator is running on.

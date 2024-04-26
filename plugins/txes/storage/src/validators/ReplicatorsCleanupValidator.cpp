@@ -12,8 +12,8 @@ namespace catapult { namespace validators {
 	using Notification = model::ReplicatorsCleanupNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(ReplicatorsCleanup, ([](const Notification& notification, const ValidatorContext& context) {
-		if (context.NetworkIdentifier == model::NetworkIdentifier::Public)
-			return Failure_Storage_Replicator_Cleanup_Is_Unallowed_In_Public_Network;
+		if (!notification.ReplicatorCount)
+			return Failure_Storage_No_Replicators_To_Remove;
 
 		const auto& cache = context.Cache.sub<cache::ReplicatorCache>();
 		auto pReplicatorKey = notification.ReplicatorKeysPtr;

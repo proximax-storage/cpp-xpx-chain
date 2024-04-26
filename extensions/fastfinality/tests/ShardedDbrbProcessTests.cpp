@@ -168,71 +168,36 @@ namespace catapult { namespace fastfinality {
 			pPacket->Type = ionet::PacketType::Push_Precommit_Messages;
 			return pPacket;
 		}
+
+		void RunTest(size_t viewSize, size_t unreachableNodeCount, size_t shardSize) {
+			// Arrange:
+			std::atomic<size_t> deliverCounter = 0;
+			auto keyPairs = CreateKeyPairs(viewSize);
+			dbrb::ViewData view;
+			for (const auto& keyPair : keyPairs)
+				view.emplace(keyPair.publicKey());
+			MockDbrbViewFetcher dbrbViewFetcher(view);
+			MockDeliverCallback deliverCallback(deliverCounter);
+			auto pPool = std::shared_ptr<thread::IoThreadPool>(test::CreateStartedIoThreadPool(1));
+			auto processes = CreateDbrbProcesses(keyPairs, pPool, shardSize, unreachableNodeCount, dbrbViewFetcher, deliverCallback);
+
+			// Act:
+			processes.at(keyPairs[unreachableNodeCount].publicKey())->broadcast(CreatePayload(), view);
+
+			// Assert:
+			WAIT_FOR_VALUE_SECONDS(viewSize - unreachableNodeCount, deliverCounter, 30);
+		}
 	}
 
 	TEST(TEST_CLASS, PayloadDeliverySuccess1) {
-		// Arrange:
-		size_t viewSize = 50;
-		size_t unreachableNodeCount = 16;
-		size_t shardSize = 4;
-		std::atomic<size_t> deliverCounter = 0;
-		auto keyPairs = CreateKeyPairs(viewSize);
-		dbrb::ViewData view;
-		for (const auto& keyPair : keyPairs)
-			view.emplace(keyPair.publicKey());
-		MockDbrbViewFetcher dbrbViewFetcher(view);
-		MockDeliverCallback deliverCallback(deliverCounter);
-		auto pPool = std::shared_ptr<thread::IoThreadPool>(test::CreateStartedIoThreadPool(1));
-		auto processes = CreateDbrbProcesses(keyPairs, pPool, shardSize, unreachableNodeCount, dbrbViewFetcher, deliverCallback);
-
-		// Act:
-		processes.at(keyPairs[unreachableNodeCount].publicKey())->broadcast(CreatePayload(), view);
-
-		// Assert:
-		WAIT_FOR_VALUE(viewSize - unreachableNodeCount, deliverCounter);
+		RunTest(50, 16, 4);
 	}
 
 	TEST(TEST_CLASS, PayloadDeliverySuccess2) {
-		// Arrange:
-		size_t viewSize = 50;
-		size_t unreachableNodeCount = 16;
-		size_t shardSize = 5;
-		std::atomic<size_t> deliverCounter = 0;
-		auto keyPairs = CreateKeyPairs(viewSize);
-		dbrb::ViewData view;
-		for (const auto& keyPair : keyPairs)
-			view.emplace(keyPair.publicKey());
-		MockDbrbViewFetcher dbrbViewFetcher(view);
-		MockDeliverCallback deliverCallback(deliverCounter);
-		auto pPool = std::shared_ptr<thread::IoThreadPool>(test::CreateStartedIoThreadPool(1));
-		auto processes = CreateDbrbProcesses(keyPairs, pPool, shardSize, unreachableNodeCount, dbrbViewFetcher, deliverCallback);
-
-		// Act:
-		processes.at(keyPairs[unreachableNodeCount].publicKey())->broadcast(CreatePayload(), view);
-
-		// Assert:
-		WAIT_FOR_VALUE(viewSize - unreachableNodeCount, deliverCounter);
+		RunTest(50, 16, 5);
 	}
 
 	TEST(TEST_CLASS, PayloadDeliverySuccess3) {
-		// Arrange:
-		size_t viewSize = 50;
-		size_t unreachableNodeCount = 16;
-		size_t shardSize = 6;
-		std::atomic<size_t> deliverCounter = 0;
-		auto keyPairs = CreateKeyPairs(viewSize);
-		dbrb::ViewData view;
-		for (const auto& keyPair : keyPairs)
-			view.emplace(keyPair.publicKey());
-		MockDbrbViewFetcher dbrbViewFetcher(view);
-		MockDeliverCallback deliverCallback(deliverCounter);
-		auto pPool = std::shared_ptr<thread::IoThreadPool>(test::CreateStartedIoThreadPool(1));
-		auto processes = CreateDbrbProcesses(keyPairs, pPool, shardSize, unreachableNodeCount, dbrbViewFetcher, deliverCallback);
-
-		// Act:
-		processes.at(keyPairs[unreachableNodeCount].publicKey())->broadcast(CreatePayload(), view);
-
-		// Assert:
-		WAIT_FOR_VALUE(viewSize - unreachableNodeCount, deliverCounter);
+		RunTest(50, 16, 6);
 	}
 }}

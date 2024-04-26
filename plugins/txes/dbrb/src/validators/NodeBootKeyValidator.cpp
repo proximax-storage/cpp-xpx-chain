@@ -14,7 +14,8 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(NodeBootKey, ([](const Notification& notification, const ValidatorContext& context) {
 		const auto& cache = context.Cache.sub<cache::DbrbViewCache>();
-		if (!cache.contains(notification.NodeBootKey))
+		const auto& bootstrapProcesses = context.Config.Network.DbrbBootstrapProcesses;
+		if (!cache.contains(notification.NodeBootKey) && (bootstrapProcesses.find(notification.NodeBootKey) == bootstrapProcesses.cend()))
 			return Failure_Dbrb_Process_Is_Not_Registered;
 
 		return ValidationResult::Success;

@@ -12,7 +12,6 @@
 namespace catapult { namespace mocks {
 
 	MockDbrbProcess::MockDbrbProcess(
-		const dbrb::ProcessId& processId,
 		bool fakeDissemination,
 		std::weak_ptr<net::PacketWriters> pWriters,
 		const ionet::NodeContainer& nodeContainer,
@@ -22,7 +21,7 @@ namespace catapult { namespace mocks {
 		const dbrb::DbrbConfiguration& dbrbConfig)
 			: DbrbProcess(
 				keyPair,
-				dbrb::CreateMessageSender(ionet::Node{ processId, ionet::NodeEndpoint(), ionet::NodeMetadata() }, std::move(pWriters), nodeContainer, dbrbConfig.IsDbrbProcess, nullptr, dbrbViewFetcher),
+				dbrb::CreateMessageSender(ionet::Node{ keyPair.publicKey(), ionet::NodeEndpoint(), ionet::NodeMetadata() }, std::move(pWriters), nodeContainer, dbrbConfig.IsDbrbProcess, nullptr, dbrbViewFetcher),
 				pPool,
 				nullptr,
 				dbrbViewFetcher) {

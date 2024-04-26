@@ -25,20 +25,29 @@ namespace catapult { namespace observers {
 			Key replicatorKey = test::GenerateRandomByteArray<Key>();
 			Key nodeBootKey = test::GenerateRandomByteArray<Key>();
             Notification notification(replicatorKey, nodeBootKey);
-			auto& cache = context.cache().sub<cache::BootKeyReplicatorCache>();
+			auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
+			state::ReplicatorEntry replicatorEntry(replicatorKey);
+			replicatorEntry.setVersion(2);
+			replicatorCache.insert(replicatorEntry);
+			auto& bootKeyReplicatorCache = context.cache().sub<cache::BootKeyReplicatorCache>();
 			auto pObserver = CreateReplicatorNodeBootKeyObserver();
 
 			// Sanity:
-			ASSERT_FALSE(cache.contains(nodeBootKey));
+			ASSERT_FALSE(bootKeyReplicatorCache.contains(nodeBootKey));
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
 
             // Assert: check the cache
-     		auto iter = cache.find(nodeBootKey);
-			const auto& actualEntry = iter.get();
-			auto expectedEntry = test::CreateBootKeyReplicatorEntry(nodeBootKey, replicatorKey);
-			test::AssertEqualBootKeyReplicatorData(expectedEntry, actualEntry);
+			replicatorEntry.setNodeBootKey(nodeBootKey);
+			auto replicatorIter = replicatorCache.find(replicatorKey);
+			const auto& actualReplicatorEntry = replicatorIter.get();
+			test::AssertEqualReplicatorData(replicatorEntry, actualReplicatorEntry);
+
+     		auto bootKeyIter = bootKeyReplicatorCache.find(nodeBootKey);
+			const auto& actualBootKeyReplicatorEntry = bootKeyIter.get();
+			auto expectedBootKeyReplicatorEntry = test::CreateBootKeyReplicatorEntry(nodeBootKey, replicatorKey);
+			test::AssertEqualBootKeyReplicatorData(expectedBootKeyReplicatorEntry, actualBootKeyReplicatorEntry);
         }
     }
 

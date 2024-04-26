@@ -325,7 +325,7 @@ namespace catapult { namespace fastfinality {
 					CATAPULT_LOG(debug) << "collected " << committeeData.votes(pMessage->Type).size() << " " << name << "(s)";
 				} else if (addVotesToBroadcast) {
 					committeeData.addVoteToBroadcast(*pMessage);
-					CATAPULT_LOG(debug) << "received " << name << " message to broadcast from " << pMessage->BlockCosignature.Signer;
+					CATAPULT_LOG(debug) << "received " << name << " to broadcast from " << pMessage->BlockCosignature.Signer;
 				}
 			}
 

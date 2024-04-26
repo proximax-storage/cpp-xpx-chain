@@ -64,10 +64,15 @@ namespace catapult { namespace validators {
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(DataModificationCancel, model::DataModificationCancelNotification<1>)();
 
-	/// A validator implementation that applies to drive replicator onboarding notifications and validates that:
+	/// A validator implementation that applies to drive replicator onboarding notifications V1 and validates that:
 	/// - the replicator does not exist
 	/// - replicator capacity >= minCapacity
-	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboardingV1, model::ReplicatorOnboardingNotification<1>)();
+
+	/// A validator implementation that applies to drive replicator onboarding notifications V2 and validates that:
+	/// - the replicator does not exist
+	/// - replicator capacity >= minCapacity
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboardingV2, model::ReplicatorOnboardingNotification<2>)();
 
 	/// A validator implementation that applies to drive replicator offboarding notifications and validates that:
 	/// - signer is registered as replicator

@@ -26,7 +26,9 @@ namespace catapult { namespace observers {
 
 			auto& cache = context.Cache.sub<cache::DbrbViewCache>();
 			auto processIds = cache.processIds();
-			auto pruningBoundary = context.Timestamp - maxTransactionLifeTime;
+			const auto& config = context.Config.Network.GetPluginConfiguration<config::DbrbConfiguration>();
+			auto lifetime = config.DbrbProcessLifetimeAfterExpiration.millis();
+			auto pruningBoundary = (lifetime > 0 ? context.Timestamp - Timestamp(lifetime) : context.Timestamp - maxTransactionLifeTime);
 			for (const auto& processId : processIds) {
 				auto iter = cache.find(processId);
 				const auto& entry = iter.get();

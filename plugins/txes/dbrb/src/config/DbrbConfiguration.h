@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/model/PluginConfiguration.h"
+#include "catapult/utils/TimeSpan.h"
 #include "catapult/types.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
@@ -19,6 +20,9 @@ namespace catapult { namespace config {
 
 		/// Whether the plugin is enabled.
 		bool Enabled;
+
+		/// The period before pruning DBRB processes after expiration.
+		utils::TimeSpan DbrbProcessLifetimeAfterExpiration;
 
 	private:
 		DbrbConfiguration() = default;

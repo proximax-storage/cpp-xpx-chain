@@ -123,7 +123,7 @@ namespace catapult { namespace dbrb {
 			data.AcknowledgeCertificate.emplace(pThis->m_id, signature);
 			data.Shard = CreateDbrbShard(data.Tree, pThis->m_id, pThis->m_shardSize);
 			if (!data.Shard.Initialized) {
-				CATAPULT_LOG(error) << "[DBRB] BROADCAST: failed to create tree, aborting broadcast";
+				CATAPULT_LOG(error) << "[DBRB] BROADCAST: failed to create shard, aborting broadcast";
 				return;
 			}
 
@@ -248,7 +248,7 @@ namespace catapult { namespace dbrb {
 		data.Shard = CreateDbrbShard(message.View, m_id, m_shardSize);
 		if (!data.Shard.Initialized) {
 			m_broadcastData.erase(payloadHash);
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (not a part of tree)";
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (failed to create shard)";
 			return;
 		}
 

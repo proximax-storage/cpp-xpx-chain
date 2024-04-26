@@ -11,7 +11,7 @@
 namespace catapult { namespace dbrb {
 
 	struct DbrbDoubleShard {
-		static constexpr size_t MinShardSize = 4;
+		static constexpr size_t MinShardSize = 3;
 
 		bool Initialized = false;
 

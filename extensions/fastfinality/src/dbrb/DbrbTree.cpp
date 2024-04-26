@@ -201,8 +201,10 @@ namespace catapult { namespace dbrb {
 		if (shardSize < DbrbDoubleShard::MinShardSize)
 			CATAPULT_THROW_INVALID_ARGUMENT_2("shard size invalid", shardSize, DbrbDoubleShard::MinShardSize)
 
-		if (view.empty())
-			CATAPULT_THROW_INVALID_ARGUMENT("view is empty")
+		if (view.empty()) {
+			CATAPULT_LOG(error) << "failed to create DBRB shard, view is empty";
+			return {};
+		}
 
 		DbrbDoubleShard shard;
 

@@ -75,8 +75,11 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DataModificationCancel, model::DataModificationCancelNotification<1>)
 	(const std::unique_ptr<LiquidityProviderExchangeObserver>&);
 
-	/// Observes changes triggered by replicator onboarding notifications.
-	DECLARE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
+	/// Observes changes triggered by replicator onboarding notifications V1.
+	DECLARE_OBSERVER(ReplicatorOnboardingV1, model::ReplicatorOnboardingNotification<1>)();
+
+	/// Observes changes triggered by replicator onboarding notifications V2.
+	DECLARE_OBSERVER(ReplicatorOnboardingV2, model::ReplicatorOnboardingNotification<2>)();
 
 	/// Observes changes triggered by drive closure notifications.
 	DECLARE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>)
