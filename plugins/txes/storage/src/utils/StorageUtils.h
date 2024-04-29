@@ -12,6 +12,7 @@
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/observers/ObserverContext.h"
 #include "src/cache/PriorityQueueCache.h"
+#include "src/model/StorageReceiptType.h"
 #include "src/state/BcDriveEntry.h"
 #include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
 #include <queue>
@@ -67,7 +68,7 @@ namespace catapult { namespace utils {
 	void RefundDepositsOnDriveClosure(
 			const Key&,
 			const std::set<Key>&,
-			const observers::ObserverContext&);
+			observers::ObserverContext&);
 
 	/// Calculates amounts of deposit refunds of \a replicators in case of replicator offboarding
 	/// with respect to the drive with \a driveKey, and transfers them to replicators' accounts.
@@ -96,12 +97,12 @@ namespace catapult { namespace utils {
 	/// Assigns acceptable replicators from \a pKeyCollector to the drive with \a driveKey.
 	void PopulateDriveWithReplicators(
 			const Key&,
-			const observers::ObserverContext&,
+			observers::ObserverContext&,
 			std::mt19937&);
 
 	/// Assigns each replicator from \a replicatorKeys to drives according to the drive priority queue.
 	void AssignReplicatorsToQueuedDrives(
 			const std::set<Key>&,
-			const observers::ObserverContext&,
+			observers::ObserverContext&,
 			std::mt19937&);
 }}

@@ -12,7 +12,7 @@ namespace catapult { namespace observers {
 	using Notification = model::ReplicatorOnboardingNotification<1>;
 
 	DECLARE_OBSERVER(ReplicatorOnboarding, Notification)() {
-		return MAKE_OBSERVER(ReplicatorOnboarding, Notification, ([](const Notification& notification, const ObserverContext& context) {
+		return MAKE_OBSERVER(ReplicatorOnboarding, Notification, ([](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorOnboarding)");
 
