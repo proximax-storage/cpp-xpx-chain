@@ -143,35 +143,35 @@ namespace catapult { namespace observers {
 		  	const auto storageRefundAmount = driveState.Balances.get(storageMosaicId);
 		  	const auto streamingRefundAmount = driveState.Balances.get(streamingMosaicId);
 
-			driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
-		  	driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
+		  	if (currencyRefundAmount.unwrap() > 0) {
+				driveState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
+				driveOwnerState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
 
-		  	// Adding Owner Refund receipt for currency.
-		  	{
-			  	const auto receiptType = model::Receipt_Type_Drive_Closure_Owner_Refund;
+				// Adding Owner Refund receipt for currency.
+				const auto receiptType = model::Receipt_Type_Drive_Closure_Owner_Refund;
 			  	const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
 													{ currencyMosaicId, currencyMosaicId }, currencyRefundAmount);
 			  	statementBuilder.addTransactionReceipt(receipt);
 		  	}
 
-		  	liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
-										   config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
-										   storageRefundAmount);
+			if (storageRefundAmount.unwrap() > 0) {
+				liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+												config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
+												storageRefundAmount);
 
-			// Adding Owner Refund receipt for storage mosaic.
-		  	{
+				// Adding Owner Refund receipt for storage mosaic.
 			  	const auto receiptType = model::Receipt_Type_Drive_Closure_Owner_Refund;
 			  	const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
 													{ storageMosaicId, currencyMosaicId }, storageRefundAmount);
 			  	statementBuilder.addTransactionReceipt(receipt);
 		  	}
 
-		  	liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
-										   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
-										   streamingRefundAmount);
+			if (streamingRefundAmount.unwrap() > 0) {
+				liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+												config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+												streamingRefundAmount);
 
-		  // Adding Owner Refund receipt for streaming mosaic.
-			{
+		  		// Adding Owner Refund receipt for streaming mosaic.
 				const auto receiptType = model::Receipt_Type_Drive_Closure_Owner_Refund;
 				const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
 													{ streamingMosaicId, currencyMosaicId }, streamingRefundAmount);
