@@ -45,53 +45,56 @@ namespace catapult { namespace observers {
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				const auto& replicatorKey = notification.PublicKeysPtr[notification.JudgingKeysCount + j];
 				auto& opinionVector = opinions[replicatorKey];
+				const auto& cumulativePaymentMegabytes = downloadChannelEntry.cumulativePayments().at(replicatorKey).unwrap();
 				opinionVector.emplace_back(presentOpinions[i*totalJudgedKeysCount + j] ?
 			 			*pOpinionElement++ :
-					   	downloadChannelEntry.cumulativePayments().at(replicatorKey).unwrap());
+					   	utils::FileSize::FromMegabytes(cumulativePaymentMegabytes).bytes());
 			}
 
 		// Calculating full payments to the replicators based on median opinions about them.
 		std::map<Key, uint64_t> payments;
-		uint64_t totalPayment = 0;
-		for (auto& pair: opinions) {
-			auto& opinionVector = pair.second;
+		uint64_t totalFullPayment = 0;
+		for (auto& [replicatorKey, opinionVector]: opinions) {
 			std::sort(opinionVector.begin(), opinionVector.end());
 			const auto medianIndex = opinionVector.size() / 2;	// Corresponds to upper median index when the size is even
-			const auto medianOpinion = opinionVector.size() % 2 ?
-									   opinionVector.at(medianIndex) :
-									   (opinionVector.at(medianIndex-1) + opinionVector.at(medianIndex)) / 2;
-			uint64_t fullPayment = 0;
-			if (medianOpinion > downloadChannelEntry.cumulativePayments().at(pair.first).unwrap()) {
-				fullPayment = medianOpinion - downloadChannelEntry.cumulativePayments().at(pair.first).unwrap();
-			}
-			payments[pair.first] = fullPayment;
-			totalPayment += fullPayment;
+			const auto medianOpinionBytes = opinionVector.size() % 2 ?
+									   		opinionVector.at(medianIndex) :
+									   		(opinionVector.at(medianIndex-1) + opinionVector.at(medianIndex)) / 2;
+			const auto medianOpinionMegabytes = utils::FileSize::FromBytes(medianOpinionBytes).megabytes();
+			const auto& cumulativePaymentMegabytes = downloadChannelEntry.cumulativePayments().at(replicatorKey).unwrap();
+			const uint64_t fullPayment = medianOpinionMegabytes > cumulativePaymentMegabytes ?
+									     medianOpinionMegabytes - cumulativePaymentMegabytes :
+			                             0;
+			payments[replicatorKey] = fullPayment;
+			totalFullPayment += fullPayment;
 		}
 
 		// Scaling down payments if there's not enough mosaics on the download channel for full payments to all of the replicators.
 		const auto& downloadChannelBalance = senderState.Balances.get(streamingMosaicId).unwrap();
-		if (downloadChannelBalance < totalPayment) {
+		if (downloadChannelBalance < totalFullPayment) {
+			uint64_t totalDownscaledPayment = 0;
+
 			for (auto& [_, payment]: payments) {
 				auto paymentLong = BigUint(payment);
-				payment = ((paymentLong * downloadChannelBalance) / totalPayment).convert_to<uint64_t>();
+				payment = ((paymentLong * downloadChannelBalance) / totalFullPayment).convert_to<uint64_t>();
+				totalDownscaledPayment += payment;
 			}
 		}
 
 		// Making mosaic transfers and updating cumulative payments.
-		for (const auto& [replicatorKey, bytesPayment]: payments) {
-			auto recipientIter = accountStateCache.find(replicatorKey);
-			auto& recipientState = recipientIter.get();
-			const auto megabytesPayment = utils::FileSize::FromBytes(bytesPayment).megabytes();
-			liquidityProvider->debitMosaics(context, downloadChannelEntry.id().array(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), Amount(megabytesPayment));
+		for (const auto& [replicatorKey, payment]: payments) {
+			liquidityProvider->debitMosaics(context, downloadChannelEntry.id().array(), replicatorKey,
+											config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+											Amount(payment));
 
 			// Adding Download Approval receipt.
 			const auto receiptType = model::Receipt_Type_Download_Approval;
 			const model::StorageReceipt receipt(receiptType, downloadChannelEntry.id().array(), replicatorKey,
-												{ streamingMosaicId, currencyMosaicId }, Amount(megabytesPayment));
+												{ streamingMosaicId, currencyMosaicId }, Amount(payment));
 			statementBuilder.addTransactionReceipt(receipt);
 
 			auto& cumulativePayment = downloadChannelEntry.cumulativePayments().at(replicatorKey);
-			cumulativePayment = cumulativePayment + Amount(bytesPayment);
+			cumulativePayment = cumulativePayment + Amount(payment);
 		}
 	}))
 }}
