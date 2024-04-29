@@ -8,6 +8,7 @@
 #include "Results.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
+#include "catapult/model/StorageNotifications.h"
 #include "src/model/DbrbNotifications.h"
 
 namespace catapult { namespace validators {
@@ -22,4 +23,8 @@ namespace catapult { namespace validators {
 		/// - votes are valid
 		/// - number of votes sufficient
 		DECLARE_STATEFUL_VALIDATOR(RemoveDbrbProcessByNetwork, model::RemoveDbrbProcessByNetworkNotification<1>)(const dbrb::DbrbViewFetcher& dbrbViewFetcher);
+
+		/// A validator implementation that applies to replicator node boot key notification and validates that:
+		/// - boot key is registered
+		DECLARE_STATEFUL_VALIDATOR(NodeBootKey, model::ReplicatorNodeBootKeyNotification<1>)();
 }}

@@ -12,6 +12,12 @@ namespace catapult { namespace dbrb {
 
 	/// View of the system.
 	struct View {
+		/// Calculates the maximum number of invalid processes that is allowed in a view of \a viewSize.
+		static size_t maxInvalidProcesses(size_t viewSize);
+
+		/// Calculates quorum size in a view of \a viewSize.
+		static size_t quorumSize(size_t viewSize);
+
 		/// Set of IDs of current members of the view.
 		ViewData Data;
 

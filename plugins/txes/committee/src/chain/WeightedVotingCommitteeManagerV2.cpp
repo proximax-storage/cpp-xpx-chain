@@ -78,6 +78,9 @@ namespace catapult { namespace chain {
 		};
 
 		int64_t CalculateWeight(const state::AccountData& accountData, const config::CommitteeConfiguration& config) {
+			if (config.EnableEqualWeights)
+				return static_cast<int64_t>(config.WeightScaleFactor);
+
 			auto weight = static_cast<int64_t>(config.WeightScaleFactor / (1.0 + std::exp(static_cast<double>(-accountData.Activity) / config.ActivityScaleFactor)));
 			if (weight == 0)
 				weight = 1;
@@ -173,11 +176,14 @@ namespace catapult { namespace chain {
 	}
 
 	HarvesterWeight WeightedVotingCommitteeManagerV2::weight(const Key& accountKey, const model::NetworkConfiguration& networkConfig) const {
+		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
+		if (config.EnableEqualWeights)
+			return HarvesterWeight{ .n = static_cast<int64_t>(config.WeightScaleFactor) };
+
 		std::lock_guard<std::mutex> guard(m_mutex);
 
 		auto iter = m_accounts.find(accountKey);
 		HarvesterWeight weight{};
-		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
 		weight.n = (m_accounts.end() != iter) ? CalculateWeight(iter->second, config) : 0;
 
 		return weight;
@@ -290,6 +296,8 @@ namespace catapult { namespace chain {
 			auto hit = *reinterpret_cast<const uint64_t*>(hash.data());
 			if (hit == 0u)
 				hit = 1u;
+			if (config.EnableEqualWeights)
+				weight *= utils::checked_cast<uint64_t, double>((pLastBlockElement->Block.Height + Height(1) - accountData.LastSigningBlockHeight).unwrap());
 			auto stake = static_cast<double>(accountData.EffectiveBalance.unwrap()) / static_cast<double>(hit);
 			auto fRate = stake * weight;
 			auto nRate = std::numeric_limits<int64_t>::max();

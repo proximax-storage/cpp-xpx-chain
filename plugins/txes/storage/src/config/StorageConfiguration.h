@@ -64,6 +64,9 @@ namespace catapult { namespace config {
 		/// The verification expiration constant.
 		double VerificationExpirationConstant;
 
+		/// Whether binding replicators to boot keys enabled.
+		bool EnableReplicatorBootKeyBinding;
+
 	private:
 		StorageConfiguration() = default;
 

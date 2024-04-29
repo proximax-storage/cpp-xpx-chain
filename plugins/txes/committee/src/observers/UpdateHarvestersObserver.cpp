@@ -122,12 +122,14 @@ namespace catapult { namespace observers {
 				auto iter = accounts.find(committee.BlockProposer);
 				if (iter == accounts.end())
 					CATAPULT_THROW_RUNTIME_ERROR_1("block proposer not found", committee.BlockProposer)
-				iter->second.increaseActivity(pluginConfig.ActivityCommitteeCosignedDeltaInt);
-				for (const auto& key : committee.Cosigners) {
-					iter = accounts.find(key);
-					if (iter == accounts.end())
-						CATAPULT_THROW_RUNTIME_ERROR_1("committee member not found", key)
+				if (!pluginConfig.EnableEqualWeights) {
 					iter->second.increaseActivity(pluginConfig.ActivityCommitteeCosignedDeltaInt);
+					for (const auto& key : committee.Cosigners) {
+						iter = accounts.find(key);
+						if (iter == accounts.end())
+							CATAPULT_THROW_RUNTIME_ERROR_1("committee member not found", key)
+						iter->second.increaseActivity(pluginConfig.ActivityCommitteeCosignedDeltaInt);
+					}
 				}
 			}
 
@@ -161,11 +163,13 @@ namespace catapult { namespace observers {
 					entry.setFeeInterestDenominator(pluginConfig.MinGreedFeeInterestDenominator);
 				}
 
-				auto sign = boost::math::sign(data.Activity);
-				if (!sign)
-					sign = 1;
-				data.decreaseActivity(pluginConfig.ActivityDeltaInt * sign);
-				entry.setActivity(data.Activity);
+				if (!pluginConfig.EnableEqualWeights) {
+					auto sign = boost::math::sign(data.Activity);
+					if (!sign)
+						sign = 1;
+					data.decreaseActivity(pluginConfig.ActivityDeltaInt * sign);
+					entry.setActivity(data.Activity);
+				}
 			}
 		}
 	}

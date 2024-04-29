@@ -53,4 +53,19 @@ namespace catapult { namespace state {
 		EXPECT_EQ(downloadChannels, entry.downloadChannels());
 	}
 
+	TEST(TEST_CLASS, CanAccessNodeBootKey) {
+		// Arrange:
+		auto entry = ReplicatorEntry(Key());
+		auto nodeBootKey = test::GenerateRandomByteArray<Key>();
+
+		// Sanity:
+		ASSERT_EQ(Key(), entry.nodeBootKey());
+
+		// Act:
+		entry.setNodeBootKey(nodeBootKey);
+
+		// Assert:
+		EXPECT_EQ(nodeBootKey, entry.nodeBootKey());
+	}
+
 }}

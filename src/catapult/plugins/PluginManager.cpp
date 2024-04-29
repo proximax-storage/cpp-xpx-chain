@@ -385,10 +385,10 @@ namespace catapult { namespace plugins {
 
 	// region storage updates listeners
 
-	const std::vector<std::unique_ptr<observers::StorageUpdatesListener>>&
-	PluginManager::storageUpdatesListeners() const {
+	const std::vector<std::unique_ptr<observers::StorageUpdatesListener>>& PluginManager::storageUpdatesListeners() const {
 		return m_storageUpdatesListeners;
 	}
+
 	void PluginManager::addStorageUpdateListener(std::unique_ptr<observers::StorageUpdatesListener>&& storageUpdatesListener) {
 		m_storageUpdatesListeners.emplace_back(std::move(storageUpdatesListener));
 	}
@@ -402,6 +402,16 @@ namespace catapult { namespace plugins {
 	}
 
 	// endregion
+
+	// region DBRB process update listeners
+
+	const std::vector<std::unique_ptr<observers::DbrbProcessUpdateListener>>& PluginManager::dbrbProcessUpdateListeners() const {
+		return m_dbrbProcessUpdateListeners;
+	}
+
+	void PluginManager::addDbrbProcessUpdateListener(std::unique_ptr<observers::DbrbProcessUpdateListener>&& listener) {
+		m_dbrbProcessUpdateListeners.emplace_back(std::move(listener));
+	}
 
 	// region configure plugin manager
 

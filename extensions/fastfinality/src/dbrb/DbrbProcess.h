@@ -22,19 +22,12 @@ namespace catapult { namespace dbrb {
 	/// Class representing DBRB process.
 	class DbrbProcess : public std::enable_shared_from_this<DbrbProcess>, public utils::NonCopyable {
 	public:
-		using ValidationCallback = predicate<const Payload&>;
-		using DeliverCallback = consumer<const Payload&>;
-
-	public:
-		explicit DbrbProcess(
-			const ionet::Node& thisNode,
+		DbrbProcess(
 			const crypto::KeyPair& keyPair,
-			const ionet::NodeContainer& nodeContainer,
-			const std::weak_ptr<net::PacketWriters>& pWriters,
+			std::shared_ptr<MessageSender> pMessageSender,
 			std::shared_ptr<thread::IoThreadPool> pPool,
 			std::shared_ptr<TransactionSender> pTransactionSender,
-			const dbrb::DbrbViewFetcher& dbrbViewFetcher,
-			const dbrb::DbrbConfiguration& dbrbConfig);
+			const dbrb::DbrbViewFetcher& dbrbViewFetcher);
 
 	public:
 		/// Broadcast arbitrary \c payload into the system.
@@ -69,13 +62,13 @@ namespace catapult { namespace dbrb {
 		void onDeliverQuorumCollected(const Payload&);
 
 	protected:
+		const crypto::KeyPair& m_keyPair;
 		ProcessId m_id;
 		View m_currentView;
 		std::map<Hash256, BroadcastData> m_broadcastData;
 		NetworkPacketConverter m_converter;
 		ValidationCallback m_validationCallback;
 		DeliverCallback m_deliverCallback;
-		const crypto::KeyPair& m_keyPair;
 		std::shared_ptr<MessageSender> m_pMessageSender;
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 		boost::asio::io_context::strand m_strand;

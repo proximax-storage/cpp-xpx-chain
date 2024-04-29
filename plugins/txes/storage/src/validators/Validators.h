@@ -64,10 +64,15 @@ namespace catapult { namespace validators {
 	/// -
 	DECLARE_STATEFUL_VALIDATOR(DataModificationCancel, model::DataModificationCancelNotification<1>)();
 
-	/// A validator implementation that applies to drive replicator onboarding notifications and validates that:
+	/// A validator implementation that applies to drive replicator onboarding notifications V1 and validates that:
 	/// - the replicator does not exist
 	/// - replicator capacity >= minCapacity
-	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboardingV1, model::ReplicatorOnboardingNotification<1>)();
+
+	/// A validator implementation that applies to drive replicator onboarding notifications V2 and validates that:
+	/// - the replicator does not exist
+	/// - replicator capacity >= minCapacity
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorOnboardingV2, model::ReplicatorOnboardingNotification<2>)();
 
 	/// A validator implementation that applies to drive replicator offboarding notifications and validates that:
 	/// - signer is registered as replicator
@@ -164,4 +169,13 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(ServiceUnitTransfer, model::BalanceTransferNotification<1>)();
 
 	DECLARE_STATEFUL_VALIDATOR(OwnerManagementProhibition, model::OwnerManagementProhibitionNotification<1>)();
+
+	/// A validator implementation that applies to replicator / node boot key notifications and validates that:
+	/// - no other replicator is registered with given boot key
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorNodeBootKey, model::ReplicatorNodeBootKeyNotification<1>)();
+
+	/// A validator implementation that applies to replicators cleanup notifications and validates that:
+	/// - replicators are registered
+	/// - replicators are not bound with boot keys
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorsCleanup, model::ReplicatorsCleanupNotification<1>)();
 }}

@@ -80,11 +80,11 @@ namespace catapult { namespace fastfinality {
 			pFsmShared->resetCommitteeData();
 
 			auto localHeight = lastBlockElementSupplier()->Block.Height;
-			bool isInDbrbSystem = pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::NetworkTime(), localHeight, false);
+			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::NetworkTime(), localHeight, false);
 
 			std::vector<RemoteNodeState> remoteNodeStates = retriever();
 
-			pFsmShared->dbrbProcess()->messageSender()->broadcastThisNode();
+			pFsmShared->dbrbProcess().messageSender()->broadcastThisNode();
 
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
@@ -166,7 +166,7 @@ namespace catapult { namespace fastfinality {
 					if (isInDbrbSystem) {
 						pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 					} else {
-						pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::NetworkTime(), localHeight, true);
+						pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::NetworkTime(), localHeight, true);
 						DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 							TRY_GET_FSM()
 
@@ -261,8 +261,7 @@ namespace catapult { namespace fastfinality {
 				nodeConfig.MaxChainBytesPerSyncAttempt.bytes32()
 			};
 
-			const auto& pDbrbProcess = pFsmShared->dbrbProcess();
-			auto pMessageSender = pDbrbProcess->messageSender();
+			auto pMessageSender = pFsmShared->dbrbProcess().messageSender();
 			pMessageSender->clearQueue();
 			for (const auto& identityKey : chainSyncData.NodeIdentityKeys) {
 				std::vector<std::shared_ptr<model::Block>> blocks;
@@ -429,7 +428,7 @@ namespace catapult { namespace fastfinality {
 			committeeData.setUnexpectedConfirmedBlockHeight(false);
 			auto round = committeeData.committeeRound();
 			auto pConfigHolder = state.pluginManager().configHolder();
-			bool isInDbrbSystem = pFsmShared->dbrbProcess()->updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight(), true);
+			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight(), true);
 			if (!isInDbrbSystem) {
 				pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
 				return;
@@ -488,7 +487,9 @@ namespace catapult { namespace fastfinality {
 				pFsmShared->processEvent(NotEnoughBootKeys{});
 			} else {
 				CATAPULT_LOG(debug) << "committee selection result: is block proposer = " << isBlockProposer << ", is cosigner = " << isCosigner << ", start phase = " << round.StartPhase << ", phase time = " << round.PhaseTimeMillis << "ms";
-				pFsmShared->processEvent(CommitteeSelectionResult{ isBlockProposer, isCosigner, round.StartPhase });
+				bool proposeBlock = (round.StartPhase == CommitteePhase::Propose) && isBlockProposer;
+				bool waitForProposal = (round.StartPhase == CommitteePhase::Propose) && (isCosigner || (!isBlockProposer && !isCosigner && pFsmShared->dbrbProcess().shardingEnabled()));
+				pFsmShared->processEvent(CommitteeSelectionResult{ proposeBlock, waitForProposal });
 			}
 		};
 	}
@@ -569,7 +570,8 @@ namespace catapult { namespace fastfinality {
 				auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);
 				pPacket->Type = ionet::PacketType::Push_Proposed_Block;
 				std::memcpy(static_cast<void*>(pPacket->Data()), pBlock.get(), pBlock->Size);
-				pFsmShared->dbrbProcess()->broadcast(pPacket, committeeData.committeeBootKeys());
+				const auto& recipients = (pFsmShared->dbrbProcess().shardingEnabled() ? pFsmShared->dbrbProcess().currentView().Data : committeeData.committeeBootKeys());
+				pFsmShared->dbrbProcess().broadcast(pPacket, recipients);
 				pFsmShared->processEvent(BlockGenerationSucceeded{});
 			} else {
 				pFsmShared->processEvent(BlockGenerationFailed{});
@@ -699,7 +701,8 @@ namespace catapult { namespace fastfinality {
 				for (const auto& pair : votes)
 					pMessage[index++] = pair.second;
 
-				pFsmShared->dbrbProcess()->broadcast(pPacket, committeeData.committeeBootKeys());
+				const auto& recipients = (pFsmShared->dbrbProcess().shardingEnabled() ? pFsmShared->dbrbProcess().currentView().Data : committeeData.committeeBootKeys());
+				pFsmShared->dbrbProcess().broadcast(pPacket, recipients);
 			};
 		}
 	}
@@ -736,13 +739,18 @@ namespace catapult { namespace fastfinality {
 			// Broadcast the confirmed block.
 			auto cosignaturesSize = cosignatures.size() * sizeof(model::Cosignature);
 			auto blockSize = pProposedBlock->Size + cosignaturesSize;
-			auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(blockSize);
-			pPacket->Type = ionet::PacketType::Push_Confirmed_Block;
-			std::memcpy(static_cast<void*>(pPacket->Data()), pProposedBlock.get(), pProposedBlock->Size);
-			std::memcpy(static_cast<void*>(pPacket->Data() + pProposedBlock->Size), cosignatures.data(), cosignaturesSize);
-			reinterpret_cast<model::Block*>(pPacket->Data())->Size = blockSize;
-			const auto& pDbrbProcess = pFsmShared->dbrbProcess();
-			pDbrbProcess->broadcast(pPacket, pDbrbProcess->currentView().Data);
+			auto pBlock = utils::MakeSharedWithSize<model::Block>(blockSize);
+			std::memcpy(static_cast<void *>(pBlock.get()), pProposedBlock.get(), pProposedBlock->Size);
+			pBlock->Size = blockSize;
+			std::memcpy(static_cast<void *>(pBlock->CosignaturesPtr()), cosignatures.data(), cosignaturesSize);
+			if (pFsmShared->dbrbProcess().shardingEnabled()) {
+				committeeData.setConfirmedBlock(pBlock);
+			} else {
+				auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(blockSize);
+				pPacket->Type = ionet::PacketType::Push_Confirmed_Block;
+				std::memcpy(static_cast<void*>(pPacket->Data()), pBlock.get(), blockSize);
+				pFsmShared->dbrbProcess().broadcast(pPacket, pFsmShared->dbrbProcess().currentView().Data);
+			}
 		};
 	}
 

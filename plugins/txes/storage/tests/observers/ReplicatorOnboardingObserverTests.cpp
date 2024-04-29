@@ -13,11 +13,11 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS ReplicatorOnboardingObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboarding,)
+	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboardingV1,)
+	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboardingV2,)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::StorageCacheFactory>;
-        using Notification = model::ReplicatorOnboardingNotification<1>;
 
         const Key Replicator_Key = test::GenerateRandomByteArray<Key>();
         constexpr auto Capacity = Amount(50);
@@ -55,13 +55,14 @@ namespace catapult { namespace observers {
 
 		struct TestValues {
 		public:
-			explicit TestValues()
+			explicit TestValues(VersionType version)
 					: InitialDriveEntries()
 					, ExpectedDriveEntries()
 					, InitialDriveQueueEntry(state::DrivePriorityQueueKey)
 					, ExpectedDriveQueueEntry(state::DrivePriorityQueueKey)
-					, ExpectedReplicatorEntry(Replicator_Key)
-			{}
+					, ExpectedReplicatorEntry(Replicator_Key) {
+				ExpectedReplicatorEntry.setVersion(version);
+			}
 
 		public:
 			std::vector<state::BcDriveEntry> InitialDriveEntries;
@@ -97,10 +98,11 @@ namespace catapult { namespace observers {
 			values.ExpectedReplicatorEntry.drives().emplace(Drive1_Key, state::DriveInfo{ Hash256(), false, 0 });
 		}
 
-        void RunTest(NotifyMode mode, TestValues& values, const Height& currentHeight) {
+		template<VersionType version>
+        void RunTest(observers::NotificationObserverPointerT<model::ReplicatorOnboardingNotification<version>> pObserver, NotifyMode mode, TestValues& values, const Height& currentHeight) {
             // Arrange:
             ObserverTestContext context(mode, currentHeight, CreateConfig());
-            Notification notification(Replicator_Key, Capacity, Hash_Seed);
+			model::ReplicatorOnboardingNotification<version> notification(Replicator_Key, Capacity, Hash_Seed);
 			auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountCache = context.cache().sub<cache::AccountStateCache>();
 			auto& driveCache = context.cache().sub<cache::BcDriveCache>();
@@ -114,8 +116,6 @@ namespace catapult { namespace observers {
 				test::AddAccountState(accountCache, driveEntry.key(), Current_Height);
 			}
 			priorityQueueCache.insert(values.InitialDriveQueueEntry);
-
-			auto pObserver = CreateReplicatorOnboardingObserver();
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);
@@ -143,20 +143,37 @@ namespace catapult { namespace observers {
         }
     }
 
-    TEST(TEST_CLASS, ReplicatorOnboarding_Commit) {
+    TEST(TEST_CLASS, ReplicatorOnboarding_CommitV1) {
         // Arrange:
-        TestValues values;
+        TestValues values(1);
 		PrepareTestValues(values);
 
         // Assert:
-        RunTest(NotifyMode::Commit, values, Current_Height);
+        RunTest(CreateReplicatorOnboardingV1Observer(), NotifyMode::Commit, values, Current_Height);
     }
 
-    TEST(TEST_CLASS, ReplicatorOnboarding_Rollback) {
+    TEST(TEST_CLASS, ReplicatorOnboarding_CommitV2) {
         // Arrange:
-		TestValues values;
+        TestValues values(2);
+		PrepareTestValues(values);
+
+        // Assert:
+        RunTest(CreateReplicatorOnboardingV2Observer(), NotifyMode::Commit, values, Current_Height);
+    }
+
+    TEST(TEST_CLASS, ReplicatorOnboarding_RollbackV1) {
+        // Arrange:
+		TestValues values(1);
 
         // Assert
-		EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
+		EXPECT_THROW(RunTest(CreateReplicatorOnboardingV1Observer(), NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
+    }
+
+    TEST(TEST_CLASS, ReplicatorOnboarding_RollbackV2) {
+        // Arrange:
+		TestValues values(2);
+
+        // Assert
+		EXPECT_THROW(RunTest(CreateReplicatorOnboardingV2Observer(), NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
     }
 }}

@@ -67,10 +67,20 @@ namespace catapult { namespace state {
 			return m_replicatorsSetNode;
 		}
 
+		// Gets the public boot key of the node the replicator is running on.
+		const Key& nodeBootKey() const {
+			return m_nodeBootKey;
+		}
+
+		void setNodeBootKey(const Key& nodeBootKey) {
+			m_nodeBootKey = nodeBootKey;
+		}
+
 	private:
 		DrivesMap m_drives;
 		std::set<Hash256> m_downloadChannels;
 		state::AVLTreeNode m_replicatorsSetNode;
+		Key m_nodeBootKey;
 	};
 
 	// Replicator entry.

@@ -41,7 +41,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		bson_stream::document builder;
 		auto doc = builder << "replicator" << bson_stream::open_document
 				<< "key" << ToBinary(entry.key())
-				<< "version" << static_cast<int32_t>(entry.version());
+				<< "version" << static_cast<int32_t>(entry.version())
+				<< "nodeBootKey" << ToBinary(entry.nodeBootKey());
 
 		StreamDrives(builder, entry.drives());
 		StreamDownloadChannels(builder, entry.downloadChannels());
@@ -88,6 +89,10 @@ namespace catapult { namespace mongo { namespace plugins {
 		Key key;
 		DbBinaryToModelArray(key, dbReplicatorEntry["key"].get_binary());
 		state::ReplicatorEntry entry(key);
+
+		Key nodeBootKey;
+		DbBinaryToModelArray(nodeBootKey, dbReplicatorEntry["nodeBootKey"].get_binary());
+		entry.setNodeBootKey(nodeBootKey);
 
 		entry.setVersion(static_cast<VersionType>(dbReplicatorEntry["version"].get_int32()));
 

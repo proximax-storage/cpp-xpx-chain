@@ -16,7 +16,16 @@ namespace catapult { namespace observers {
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (RemoveDbrbProcess)");
 
 		auto& cache = context.Cache.sub<cache::DbrbViewCache>();
-		if (cache.contains(notification.ProcessId))
-			cache.remove(notification.ProcessId);
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::DbrbConfiguration>();
+		if (pluginConfig.DbrbProcessLifetimeAfterExpiration.millis() > 0) {
+			auto iter = cache.find(notification.ProcessId);
+			auto pEntry = iter.tryGet();
+			if (pEntry) {
+				pEntry->setExpirationTime(context.Timestamp);
+			}
+		} else {
+			if (cache.contains(notification.ProcessId))
+				cache.remove(notification.ProcessId);
+		}
 	}))
 }}

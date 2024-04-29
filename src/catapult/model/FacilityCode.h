@@ -97,5 +97,7 @@ namespace catapult { namespace model {
 		Dbrb = 0x6C,
 		/// View sequence facility code.
 		DbrbView = 0x6D,
+		/// Boot key / replicator facility code.
+		BootKeyReplicator = 0x6E,
 	};
 }}

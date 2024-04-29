@@ -61,6 +61,9 @@ namespace catapult { namespace config {
 		/// Activity value subtracted from activity of committee members that didn't cosign the block (integer value).
 		int64_t ActivityCommitteeNotCosignedDeltaInt;
 
+		/// Enables equal harvester weights.
+		bool EnableEqualWeights;
+
 	private:
 		CommitteeConfiguration() = default;
 

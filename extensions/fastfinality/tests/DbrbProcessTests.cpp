@@ -20,11 +20,10 @@ namespace catapult { namespace fastfinality {
 		void CreateMockDbrbProcesses(uint8_t count = 1, bool fakeDissemination = false) {
 			dbrb::ViewData viewData;
 			for (uint8_t i = 0u; i < count; ++i) {
-				const auto processId = Key{ {i} };
-				auto pProcess = std::make_shared<MockDbrbProcess>(processId, fakeDissemination);
+				auto pProcess = std::make_shared<MockDbrbProcess>(fakeDissemination);
 				pProcess->setValidationCallback([](const auto&){ return true; });
+				viewData.insert(pProcess->id());
 				MockDbrbProcess::DbrbProcessPool.emplace_back(std::move(pProcess));
-				viewData.insert(processId);
 			}
 
 			const dbrb::View currentView{ viewData };

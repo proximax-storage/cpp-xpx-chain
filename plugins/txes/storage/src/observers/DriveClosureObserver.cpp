@@ -42,7 +42,7 @@ namespace catapult { namespace observers {
 			const auto replicators = driveEntry.replicators();
 
 			// Removing replicators from tree before must be performed before refunding
-			auto replicatorKeyExtractor = [=, &accountStateCache](const Key& key) {
+			auto replicatorKeyExtractor = [&storageMosaicId, &accountStateCache](const Key& key) {
 				return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
 			};
 
