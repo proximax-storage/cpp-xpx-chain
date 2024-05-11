@@ -9,7 +9,7 @@ option(SIRIUS_DRIVE_MULTI "changes for sirius drive-multi" ON)
 option(XPX_STORAGE_SDK_NOT_BUILD_EXAMPLES "Not Build XPX-STORAGE SDK examples." ON)
 
 set(CPP_XPX_CHAIN ON)
-#set(SKIP_SUPERCONTRACT ON)
+set(SKIP_SUPERCONTRACT ON)
 
 if (SIRIUS_DRIVE_MULTI)
 	add_definitions(-DSIRIUS_DRIVE_MULTI)
