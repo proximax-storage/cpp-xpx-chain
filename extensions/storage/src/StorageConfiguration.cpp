@@ -22,6 +22,7 @@ namespace catapult { namespace storage {
 		LOAD_DB_PROPERTY(Key);
 		LOAD_DB_PROPERTY(Host);
 		LOAD_DB_PROPERTY(Port);
+		LOAD_DB_PROPERTY(WsPort);
 		LOAD_DB_PROPERTY(TransactionTimeout);
 		LOAD_DB_PROPERTY(StorageDirectory);
 		LOAD_DB_PROPERTY(UseTcpSocket);

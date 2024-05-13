@@ -115,6 +115,7 @@ namespace catapult { namespace storage {
 						reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
 						storageConfig.Host,
 						storageConfig.Port,
+						storageConfig.WsPort,
 						storageConfig.StorageDirectory,
 						resolveBootstrapAddresses(),
 						storageConfig.UseTcpSocket,
@@ -128,6 +129,7 @@ namespace catapult { namespace storage {
 						reinterpret_cast<const sirius::crypto::KeyPair&>(m_keyPair), // TODO: pass private key string.
 						storageConfig.Host,
 						storageConfig.Port,
+						storageConfig.WsPort,
 						storageConfig.StorageDirectory,
 						resolveBootstrapAddresses(),
 						storageConfig.UseTcpSocket,

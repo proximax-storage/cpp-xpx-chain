@@ -26,6 +26,9 @@ namespace catapult { namespace storage {
 		/// Replicator port.
 		std::string Port;
 
+		/// Replicator websocket port.
+		std::string WsPort;
+
 		/// Timeout for the transactions sent by the replicator.
 		utils::TimeSpan TransactionTimeout;
 
