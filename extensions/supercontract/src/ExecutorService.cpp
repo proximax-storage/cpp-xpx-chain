@@ -256,9 +256,10 @@ namespace catapult::contract {
 				// lazy start of the executor
 				start();
 			}
-			for (const auto& [contractKey, _] : m_alreadyAddedContracts) {
-				if (actualContracts.find(contractKey) == actualContracts.end()) {
-					removeContract(contractKey);
+
+			for (const auto& pair : m_alreadyAddedContracts) {
+				if (actualContracts.find(pair.first) == actualContracts.end()) {
+					removeContract(pair.first);
 				}
 			}
 			for (const auto& contractKey : actualContracts) {
@@ -278,7 +279,7 @@ namespace catapult::contract {
 
 	private:
 		void addContract(const Key& contractKey, const Height& height) {
-			m_alreadyAddedContracts[contractKey] = height;
+			m_alreadyAddedContracts.insert({contractKey, height});
 			auto contractInfo = m_contractState.getContractInfo(contractKey, height, m_serviceState.config());
 			sirius::contract::AddContractRequest addRequest;
 			addRequest.m_driveKey = contractInfo.DriveKey.array();
