@@ -462,9 +462,17 @@ namespace catapult::contract {
 			Amount executionPayment,
 			Amount downloadPayment,
 			const Key& caller,
+			std::vector<model::UnresolvedMosaic> payments,
 			Height height) {
 		if (!m_pImpl) {
 			return;
+		}
+		std::vector<state::Payment> servicePayments;
+		for (const auto& unresolvedMosaic : payments) {
+			// state::Payment payment;
+			// payment.PaymentUnresolvedMosaicId = unresolvedMosaic.MosaicId;
+			// payment.PaymentAmount = unresolvedMosaic.Amount;
+			servicePayments.push_back({unresolvedMosaic.MosaicId, unresolvedMosaic.Amount});
 		}
 		m_pImpl->addManualCall(
 				contractKey,
@@ -475,7 +483,8 @@ namespace catapult::contract {
 										executionPayment,
 										downloadPayment,
 										caller,
-										height });
+										height,
+										servicePayments});
 	}
 
 	void ExecutorService::successfulBatchExecutionPublished(

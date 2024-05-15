@@ -12,6 +12,7 @@
 #include "catapult/extensions/ServiceRegistrar.h"
 #include "catapult/ionet/Node.h"
 #include <catapult/crypto/CurvePoint.h>
+#include <catapult/model/Mosaic.h>
 #include <set>
 #include <optional>
 
@@ -54,6 +55,7 @@ namespace catapult { namespace contract {
 				Amount executionPayment,
 				Amount downloadPayment,
 				const Key& caller,
+				std::vector<catapult::model::UnresolvedMosaic> payments,
 				Height height);
 
 		void successfulBatchExecutionPublished(
