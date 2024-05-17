@@ -22,14 +22,14 @@ namespace catapult { namespace validators {
 		}
 
 		// Check of the signer is the owner
-        const auto& owner = pDriveEntry->owner();
-        if (owner != notification.DriveOwner) {
-        	return Failure_Storage_Is_Not_Owner;
-        }
-
-        if (pDriveEntry->ownerManagement() != state::OwnerManagement::ALLOWED) {
-        	return Failure_Storage_Owner_Management_Is_Forbidden;
-        }
+//        const auto& owner = pDriveEntry->owner();
+//        if (owner != notification.DriveOwner) {
+//        	return Failure_Storage_Is_Not_Owner;
+//        }
+//
+//        if (pDriveEntry->ownerManagement() != state::OwnerManagement::ALLOWED) {
+//        	return Failure_Storage_Owner_Management_Is_Forbidden;
+//        }
 
         return ValidationResult::Success;
 		
