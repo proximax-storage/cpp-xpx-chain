@@ -36,7 +36,7 @@ namespace catapult { namespace deltaset {
 			if (backup.empty()) {
 				elements.clear();
 			} else {
-				elements = backup.back();
+				elements = std::move(backup.back());
 				backup.pop_back();
 			}
 		}
