@@ -21,6 +21,8 @@ namespace catapult { namespace observers {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
 
+			CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Entered DriveClosure observer.";
+
 			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
@@ -40,12 +42,16 @@ namespace catapult { namespace observers {
 
 			// The value will be used after removing drive entry. That's why the copy is needed
 			const auto replicators = driveEntry.replicators();
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Replicator keys stored in driveEntry.replicators():";
+			for (const auto& key : replicators)
+				CATAPULT_LOG(debug) << "[DRIVE CLOSURE] - " << key;
 
 			// Removing replicators from tree before must be performed before refunding
 			auto replicatorKeyExtractor = [&storageMosaicId, &accountStateCache](const Key& key) {
 				return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
 			};
 
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Creating replicatorTreeAdapter...";
 			utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
 					context.Cache.template sub<cache::QueueCache>(),
 							state::ReplicatorsSetTree,
@@ -56,16 +62,28 @@ namespace catapult { namespace observers {
 						[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
 						replicatorCache.find(key).get().replicatorsSetNode() = node;
 					});
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Created replicatorTreeAdapter.";
 
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Removing replicators from the tree using replicatorTreeAdapter:";
 			for (const auto& replicatorKey : replicators) {
+				CATAPULT_LOG(debug) << "[DRIVE CLOSURE] - removing " << replicatorKey << "...";
 				replicatorTreeAdapter.remove(replicatorKeyExtractor(replicatorKey));
 			}
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Successfully removed replicators from the tree.";
 
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Refunding deposits to replicators...";
+			// ...
+			// for (const auto& replicatorKey : replicators) {
+			//		auto replicatorIter = replicatorCache.find(replicatorKey);
+			//		auto& replicatorEntry = replicatorIter.get();	// TODO: Possible place of an exception.
+			//		...
 			RefundDepositsOnDriveClosure(driveEntry.key(), replicators, context);
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Successfully refunded deposits to replicators.";
 
 			// Making payments to replicators, if there is a pending data modification
 			auto& activeDataModifications = driveEntry.activeDataModifications();
 
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Making payments to replicators, if there is a pending data modification.";
 			if (!activeDataModifications.empty() && !replicators.empty()) {
 				const auto& modificationSize = activeDataModifications.front().ExpectedUploadSizeMegabytes;
 				const auto totalReplicatorAmount = Amount(
@@ -88,6 +106,7 @@ namespace catapult { namespace observers {
 					context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto paymentIntervalSeconds = pluginConfig.StorageBillingPeriod.seconds();
 
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Making payments to replicators for their participation time.";
 			auto timeSinceLastPayment = (context.Timestamp - driveEntry.getLastPayment()).unwrap() / 1000;
 			for (auto& [replicatorKey, info] : driveEntry.confirmedStorageInfos()) {
 				auto replicatorIter = accountStateCache.find(replicatorKey);
@@ -136,7 +155,9 @@ namespace catapult { namespace observers {
 					[&driveCache](const Key& key, const state::AVLTreeNode& node) {
 						driveCache.find(key).get().verificationNode() = node;
 					});
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Removing drive from the tree using driveTreeAdapter...";
 		  	driveTreeAdapter.remove(notification.DriveKey);
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Successfully removed drive from the tree.";
 
 			// Returning the rest to the drive owner
 			const auto currencyRefundAmount = driveState.Balances.get(currencyMosaicId);
@@ -184,10 +205,13 @@ namespace catapult { namespace observers {
 				auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
 				auto& driveQueueEntry = driveQueueIter.get();
 
+				CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Removing drive from priority queue...";
 				driveQueueEntry.remove(notification.DriveKey);
+				CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Successfully removed drive from priority queue.";
 			}
 
 			// Simulate publishing of finish download for all download channels
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Simulating publishing of finish download for all download channels.";
 			auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 			utils::QueueAdapter<cache::DownloadChannelCache> downloadQueueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
 			for (const auto& key: driveEntry.downloadShards()) {
@@ -200,23 +224,37 @@ namespace catapult { namespace observers {
 				}
 			}
 
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Updating listeners.";
 			for (const auto& updateListener: updatesListeners) {
 				updateListener->onDriveClosed(context, notification.DriveKey);
 			}
 
 			// Removing the drive from caches
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Removing the drive from replicator entries:";
 			for (const auto& replicatorKey : replicators) {
+				CATAPULT_LOG(debug) << "[DRIVE CLOSURE] - removing from " << replicatorKey << "...";
 				auto replicatorIter = replicatorCache.find(replicatorKey);
-				auto& replicatorEntry = replicatorIter.get();
+				auto& replicatorEntry = replicatorIter.get();	// TODO: Possible place of an exception.
 				replicatorEntry.drives().erase(notification.DriveKey);
 			}
 
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Removing drive from the drive cache.";
 			driveCache.remove(notification.DriveKey);
 
 			// Assigning drive's former replicators to queued drives
 			std::seed_seq seed(notification.TransactionHash.begin(), notification.TransactionHash.end());
 			std::mt19937 rng(seed);
+
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Assigning drive's former replicators to queued drives...";
+			// ...
+			// for (const auto& replicatorKey : replicatorKeys) {
+			//		auto replicatorIter = replicatorCache.find(replicatorKey);
+			//		auto& replicatorEntry = replicatorIter.get();	// TODO: Possible place of an exception.
+			//		...
 			utils::AssignReplicatorsToQueuedDrives(replicators, context, rng);
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Successfully assigned all drive's former replicators to queued drives.";
+
+		  	CATAPULT_LOG(debug) << "[DRIVE CLOSURE] Reached end of the observer.";
 		}))
 	}
 }}
