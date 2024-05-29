@@ -45,13 +45,13 @@ namespace catapult { namespace observers {
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				const auto& replicatorKey = notification.PublicKeysPtr[notification.JudgingKeysCount + j];
 				auto& opinionVector = opinions[replicatorKey];
-				const auto& cumulativePaymentMegabytes = downloadChannelEntry.cumulativePayments().at(replicatorKey).unwrap();
+				const auto& cumulativePaidWorkBytes = downloadChannelEntry.cumulativePayments().at(replicatorKey).unwrap();
 				opinionVector.emplace_back(presentOpinions[i*totalJudgedKeysCount + j] ?
-			 			*pOpinionElement++ :
-					   	utils::FileSize::FromMegabytes(cumulativePaymentMegabytes).bytes());
+				                           *pOpinionElement++ :
+										   cumulativePaidWorkBytes);
 			}
 
-		// Calculating full payments to the replicators based on median opinions about them.
+		// Calculating full payments (in bytes equivalent) to the replicators based on median opinions about them.
 		std::map<Key, uint64_t> payments;
 		uint64_t totalFullPayment = 0;
 		for (auto& [replicatorKey, opinionVector]: opinions) {
@@ -60,10 +60,9 @@ namespace catapult { namespace observers {
 			const auto medianOpinionBytes = opinionVector.size() % 2 ?
 									   		opinionVector.at(medianIndex) :
 									   		(opinionVector.at(medianIndex-1) + opinionVector.at(medianIndex)) / 2;
-			const auto medianOpinionMegabytes = utils::FileSize::FromBytes(medianOpinionBytes).megabytes();
-			const auto& cumulativePaymentMegabytes = downloadChannelEntry.cumulativePayments().at(replicatorKey).unwrap();
-			const uint64_t fullPayment = medianOpinionMegabytes > cumulativePaymentMegabytes ?
-									     medianOpinionMegabytes - cumulativePaymentMegabytes :
+			const auto& cumulativePaidWorkBytes = downloadChannelEntry.cumulativePayments().at(replicatorKey).unwrap();
+			const uint64_t fullPayment = medianOpinionBytes > cumulativePaidWorkBytes ?
+									     medianOpinionBytes - cumulativePaidWorkBytes :
 			                             0;
 			payments[replicatorKey] = fullPayment;
 			totalFullPayment += fullPayment;
@@ -71,30 +70,29 @@ namespace catapult { namespace observers {
 
 		// Scaling down payments if there's not enough mosaics on the download channel for full payments to all of the replicators.
 		const auto& downloadChannelBalance = senderState.Balances.get(streamingMosaicId).unwrap();
-		if (downloadChannelBalance < totalFullPayment) {
-			uint64_t totalDownscaledPayment = 0;
-
+	  	const auto& downloadChannelBalanceBytes = utils::FileSize::FromMegabytes(downloadChannelBalance).bytes();	// 1 Streaming mosaic = 1 MB of work
+		if (downloadChannelBalanceBytes < totalFullPayment) {
 			for (auto& [_, payment]: payments) {
 				auto paymentLong = BigUint(payment);
-				payment = ((paymentLong * downloadChannelBalance) / totalFullPayment).convert_to<uint64_t>();
-				totalDownscaledPayment += payment;
+				payment = ((paymentLong * downloadChannelBalanceBytes) / totalFullPayment).convert_to<uint64_t>();
 			}
 		}
 
 		// Making mosaic transfers and updating cumulative payments.
 		for (const auto& [replicatorKey, payment]: payments) {
+			const auto paymentMegabytes = utils::FileSize::FromBytes(payment).megabytes();
 			liquidityProvider->debitMosaics(context, downloadChannelEntry.id().array(), replicatorKey,
 											config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
-											Amount(payment));
+											Amount(paymentMegabytes));
 
 			// Adding Download Approval receipt.
 			const auto receiptType = model::Receipt_Type_Download_Approval;
 			const model::StorageReceipt receipt(receiptType, downloadChannelEntry.id().array(), replicatorKey,
-												{ streamingMosaicId, currencyMosaicId }, Amount(payment));
+												{ streamingMosaicId, currencyMosaicId }, Amount(paymentMegabytes));
 			statementBuilder.addTransactionReceipt(receipt);
 
-			auto& cumulativePayment = downloadChannelEntry.cumulativePayments().at(replicatorKey);
-			cumulativePayment = cumulativePayment + Amount(payment);
+			auto& cumulativePaidWorkBytes = downloadChannelEntry.cumulativePayments().at(replicatorKey);
+			cumulativePaidWorkBytes = cumulativePaidWorkBytes + Amount(payment);
 		}
 	}))
 }}
