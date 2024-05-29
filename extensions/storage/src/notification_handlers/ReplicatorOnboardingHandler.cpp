@@ -8,10 +8,9 @@
 
 namespace catapult { namespace notification_handlers {
 
-	using Notification = model::ReplicatorOnboardingNotification<1>;
-
-	DECLARE_HANDLER(ReplicatorOnboarding, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(ReplicatorOnboarding, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+	namespace {
+		template<typename TNotification>
+		void HandleReplicatorOnboarding(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak, const TNotification& notification) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
@@ -25,6 +24,18 @@ namespace catapult { namespace notification_handlers {
 				pReplicatorService->anotherReplicatorOnboarded(notification.PublicKey);
 				pReplicatorService->maybeRestart();
 			}
+		}
+	}
+
+	DECLARE_HANDLER(ReplicatorOnboardingV1, model::ReplicatorOnboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
+		return MAKE_HANDLER_WITH_TYPE(ReplicatorOnboardingV1, model::ReplicatorOnboardingNotification<1>, [pReplicatorServiceWeak](const model::ReplicatorOnboardingNotification<1>& notification, const HandlerContext&) {
+			HandleReplicatorOnboarding(pReplicatorServiceWeak, notification);
+		});
+	}
+
+	DECLARE_HANDLER(ReplicatorOnboardingV2, model::ReplicatorOnboardingNotification<2>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
+		return MAKE_HANDLER_WITH_TYPE(ReplicatorOnboardingV2, model::ReplicatorOnboardingNotification<2>, [pReplicatorServiceWeak](const model::ReplicatorOnboardingNotification<2>& notification, const HandlerContext&) {
+			HandleReplicatorOnboarding(pReplicatorServiceWeak, notification);
 		});
 	}
 }}
