@@ -8,6 +8,7 @@
 #include "src/cache/CommitteeCache.h"
 #include "src/chain/WeightedVotingCommitteeManager.h"
 #include "src/chain/WeightedVotingCommitteeManagerV2.h"
+#include "src/chain/WeightedVotingCommitteeManagerV3.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/ImportanceView.h"
@@ -34,7 +35,7 @@ namespace catapult { namespace observers {
 				}
 			}
 
-			if (!networkConfig.EnableWeightedVoting)
+			if (!networkConfig.EnableWeightedVoting && !networkConfig.EnableDbrbFastFinality)
 				return;
 
 			if (NotifyMode::Rollback == context.Mode)
@@ -81,10 +82,11 @@ namespace catapult { namespace observers {
 			}
 		}
 
+		template<typename TNotification, typename TWeightedVotingCommitteeManager>
 		void UpdateHarvestersV2(
-				const model::BlockCommitteeNotification<2>& notification,
+				const TNotification& notification,
 				ObserverContext& context,
-				const std::shared_ptr<chain::WeightedVotingCommitteeManagerV2>& pCommitteeManager,
+				const std::shared_ptr<TWeightedVotingCommitteeManager>& pCommitteeManager,
 				const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
 			auto& committeeCache = context.Cache.sub<cache::CommitteeCache>();
 			const auto& networkConfig = context.Config.Network;
@@ -99,7 +101,7 @@ namespace catapult { namespace observers {
 				}
 			}
 
-			if (!networkConfig.EnableWeightedVoting)
+			if (!networkConfig.EnableWeightedVoting && !networkConfig.EnableDbrbFastFinality)
 				return;
 
 			if (NotifyMode::Rollback == context.Mode)
@@ -186,6 +188,14 @@ namespace catapult { namespace observers {
 			const std::shared_ptr<chain::WeightedVotingCommitteeManagerV2>& pCommitteeManager,
 			const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
 		return MAKE_OBSERVER(UpdateHarvestersV2, model::BlockCommitteeNotification<2>, ([pCommitteeManager, pAccountCollector](const auto& notification, auto& context) {
+			UpdateHarvestersV2(notification, context, pCommitteeManager, pAccountCollector);
+		}));
+	}
+
+	DECLARE_OBSERVER(UpdateHarvestersV3, model::BlockCommitteeNotification<3>)(
+			const std::shared_ptr<chain::WeightedVotingCommitteeManagerV3>& pCommitteeManager,
+			const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
+		return MAKE_OBSERVER(UpdateHarvestersV3, model::BlockCommitteeNotification<3>, ([pCommitteeManager, pAccountCollector](const auto& notification, auto& context) {
 			UpdateHarvestersV2(notification, context, pCommitteeManager, pAccountCollector);
 		}));
 	}

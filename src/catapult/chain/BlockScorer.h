@@ -43,8 +43,8 @@ namespace catapult { namespace chain {
 	/// of \a signerImportance for the block chain described by \a config.
 	BlockTarget CalculateTarget(
 			const utils::TimeSpan& timeSpan,
-			Difficulty difficulty,
-			Importance signerImportance,
+			const Difficulty& difficulty,
+			const Importance& signerImportance,
 			const model::NetworkConfiguration& config,
 			uint32_t feeInterest,
 			uint32_t feeInterestDenominator);
@@ -54,7 +54,7 @@ namespace catapult { namespace chain {
 	BlockTarget CalculateTarget(
 			const model::Block& parentBlock,
 			const model::Block& currentBlock,
-			Importance signerImportance,
+			const Importance& signerImportance,
 			const model::NetworkConfiguration& config);
 
 	/// Contextual information for calculating a block hit.
@@ -97,7 +97,7 @@ namespace catapult { namespace chain {
 	public:
 		/// Creates a predicate around a block chain configuration (\a config) and an importance lookup function
 		/// (\a importanceLookup).
-		BlockHitPredicate(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const ImportanceLookupFunc& importanceLookup);
+		BlockHitPredicate(std::shared_ptr<config::BlockchainConfigurationHolder>  pConfigHolder, ImportanceLookupFunc  importanceLookup);
 
 	public:
 		/// Determines if the \a block is a hit given its parent (\a parentBlock) and generation hash (\a generationHash).

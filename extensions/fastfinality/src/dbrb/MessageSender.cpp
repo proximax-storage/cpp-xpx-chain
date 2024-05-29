@@ -58,7 +58,8 @@ namespace catapult { namespace dbrb {
 			void clearBroadcastData() override;
 			bool isNodeAdded(const ProcessId& id) override;
 			void addRemoveNodeResponse(const ProcessId& idToRemove, const ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature) override;
-			ViewData getUnreachableNodes(ViewData& view) override;
+			ViewData getUnreachableNodes(ViewData& view) const override;
+			size_t getUnreachableNodeCount(const dbrb::ViewData& view) const override;
 
 		private:
 			void broadcastNodes(const std::vector<ionet::Node>& nodes);
@@ -448,7 +449,7 @@ namespace catapult { namespace dbrb {
 		m_pTransactionSender->sendRemoveDbrbProcessByNetworkTransaction(idToRemove, timestamp, votes);
 	}
 
-	ViewData DefaultMessageSender::getUnreachableNodes(ViewData& view) {
+	ViewData DefaultMessageSender::getUnreachableNodes(ViewData& view) const {
 		std::lock_guard<std::mutex> guard(m_nodeMutex);
 		ViewData unreachableNodes;
 		for (auto iter = view.cbegin(); iter != view.cend();) {
@@ -461,5 +462,16 @@ namespace catapult { namespace dbrb {
 		}
 
 		return unreachableNodes;
+	}
+
+	size_t DefaultMessageSender::getUnreachableNodeCount(const dbrb::ViewData& view) const {
+		std::lock_guard<std::mutex> guard(m_nodeMutex);
+		size_t count = 0;
+		for (auto iter = view.cbegin(); iter != view.cend(); ++iter) {
+			if (m_nodes.find(*iter) == m_nodes.cend())
+				count++;
+		}
+
+		return count;
 	}
 }}

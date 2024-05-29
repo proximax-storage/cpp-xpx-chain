@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "fastfinality/src/WeightedVotingFsm.h"
+#include "fastfinality/src/weighted_voting/WeightedVotingFsm.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockCommitteeManager.h"
@@ -97,7 +97,7 @@ namespace catapult { namespace fastfinality {
 						pThis->m_counter++;
 						auto dbrbConfig = dbrb::DbrbConfiguration::Uninitialized();
 						const_cast<dbrb::DbrbConfiguration&>(dbrbConfig).IsDbrbProcess = true;
-						auto defaultCheckLocalChainAction = fastfinality::CreateDefaultCheckLocalChainAction(
+						auto defaultCheckLocalChainAction = fastfinality::CreateWeightedVotingCheckLocalChainAction(
 							pThis->m_pFsm,
 							[pThis]() -> std::vector<RemoteNodeState> {
 								auto states = pThis->m_states;

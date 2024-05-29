@@ -31,7 +31,7 @@ enableUnconfirmedTransactionMinFeeValidation = true
 enableUndoBlock = false
 enableBlockSync = false
 
-enableWeightedVoting = true
+enableWeightedVoting = false
 committeeSize = 3
 committeeApproval = 1
 committeePhaseTime = 5s
@@ -51,8 +51,10 @@ dbrbRegistrationGracePeriod = 1h
 enableHarvesterExpiration = true
 enableRemovingDbrbProcessOnShutdown = true
 
-enableDbrbSharding = true
+enableDbrbSharding = false
 dbrbShardSize = 6
+
+enableDbrbFastFinality = true
 
 [bootstrap.harvesters]
 

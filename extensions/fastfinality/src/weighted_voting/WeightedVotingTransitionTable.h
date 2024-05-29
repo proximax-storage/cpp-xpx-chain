@@ -8,7 +8,7 @@
 #include "WeightedVotingActions.h"
 #include "WeightedVotingEvents.h"
 #include "WeightedVotingStates.h"
-#include "sml.hpp"
+#include "fastfinality/src/sml.hpp"
 #include <memory>
 
 namespace sml = boost::sml;

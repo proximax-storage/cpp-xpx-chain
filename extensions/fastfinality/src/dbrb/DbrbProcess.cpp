@@ -358,18 +358,10 @@ namespace catapult { namespace dbrb {
 
 		bool quorumCollected = data.QuorumManager.update(message, data.Payload->Type);
 		if (quorumCollected) {
-			onDeliverQuorumCollected(data.Payload);
+			CATAPULT_LOG(debug) << "[DBRB] DELIVER: delivering payload " << data.Payload->Type;
+			m_deliverCallback(data.Payload);
 
 			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: operation took " << (utils::NetworkTime().unwrap() - data.Begin.unwrap()) << " ms to deliver " << data.Payload->Type;
-		}
-	}
-
-	void DbrbProcess::onDeliverQuorumCollected(const Payload& payload) {
-		if (payload) { // Should always be set.
-			CATAPULT_LOG(debug) << "[DBRB] DELIVER: delivering payload " << payload->Type;
-			m_deliverCallback(payload);
-		} else {
-			CATAPULT_LOG(error) << "[DBRB] DELIVER: NO PAYLOAD!!!";
 		}
 	}
 

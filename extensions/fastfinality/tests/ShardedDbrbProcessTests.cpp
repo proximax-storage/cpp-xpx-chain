@@ -68,11 +68,15 @@ namespace catapult { namespace fastfinality {
 			void addRemoveNodeResponse(const dbrb::ProcessId& idToRemove, const dbrb::ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature) override {}
 			void clearNodeRemovalData() override {}
 
-			dbrb::ViewData getUnreachableNodes(dbrb::ViewData& view) override {
+			dbrb::ViewData getUnreachableNodes(dbrb::ViewData& view) const override {
 				for (const auto& id : m_unreachableNodes)
 					view.erase(id);
 
 				return m_unreachableNodes;
+			}
+
+			size_t getUnreachableNodeCount(const dbrb::ViewData& view) const override {
+				return m_unreachableNodes.size();
 			}
 
 			void addProcess(const std::shared_ptr<dbrb::ShardedDbrbProcess>& pProcess) {

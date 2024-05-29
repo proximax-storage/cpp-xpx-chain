@@ -12,6 +12,7 @@ namespace catapult {
 	namespace chain {
 		class WeightedVotingCommitteeManager;
 		class WeightedVotingCommitteeManagerV2;
+		class WeightedVotingCommitteeManagerV3;
 	}
 	namespace cache { class CommitteeAccountCollector; }
 }
@@ -32,6 +33,11 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by block cosignatures notifications V2
 	DECLARE_OBSERVER(UpdateHarvestersV2, model::BlockCommitteeNotification<2>)(
 		const std::shared_ptr<chain::WeightedVotingCommitteeManagerV2>& pCommitteeManager,
+		const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector);
+
+	/// Observes changes triggered by block cosignatures notifications V2
+	DECLARE_OBSERVER(UpdateHarvestersV3, model::BlockCommitteeNotification<3>)(
+		const std::shared_ptr<chain::WeightedVotingCommitteeManagerV3>& pCommitteeManager,
 		const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector);
 
 	/// Observes changes triggered by active harvesters notifications V1

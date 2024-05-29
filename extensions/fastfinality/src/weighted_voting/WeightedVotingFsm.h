@@ -7,7 +7,7 @@
 #pragma once
 #include "CommitteeData.h"
 #include "WeightedVotingTransitionTable.h"
-#include "dbrb/DbrbProcessContainer.h"
+#include "fastfinality/src/dbrb/DbrbProcessContainer.h"
 #include "catapult/thread/IoThreadPool.h"
 
 namespace catapult { namespace ionet { class NodePacketIoPair; } }

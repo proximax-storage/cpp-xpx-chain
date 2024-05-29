@@ -179,6 +179,9 @@ namespace catapult { namespace model {
 		/// DBRB shard size.
 		uint32_t DbrbShardSize;
 
+		/// Allows block confirmation using DBRB protocol without Weighted Voting.
+		bool EnableDbrbFastFinality;
+
 	private:
 		/// Map of plugin configurations.
 		mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> m_pluginConfigs;

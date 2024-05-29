@@ -102,7 +102,7 @@ namespace catapult { namespace dbrb {
 			if (m_shardingEnabled) {
 				m_pShardedDbrbProcess->broadcast(payload, std::move(recipients));
 			} else {
-				m_pDbrbProcess->broadcast(payload, recipients);
+				m_pDbrbProcess->broadcast(payload, std::move(recipients));
 			}
 		}
 

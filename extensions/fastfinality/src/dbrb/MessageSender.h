@@ -50,7 +50,8 @@ namespace catapult { namespace dbrb {
 		virtual bool isNodeAdded(const ProcessId& id) = 0;
 		virtual void addRemoveNodeResponse(const ProcessId& idToRemove, const ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature) = 0;
 		virtual void clearNodeRemovalData() = 0;
-		virtual ViewData getUnreachableNodes(ViewData& view) = 0;
+		virtual ViewData getUnreachableNodes(ViewData& view) const = 0;
+		virtual size_t getUnreachableNodeCount(const dbrb::ViewData& view) const = 0;
 	};
 
 	std::shared_ptr<MessageSender> CreateMessageSender(

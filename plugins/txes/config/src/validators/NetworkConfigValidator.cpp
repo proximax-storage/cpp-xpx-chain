@@ -53,6 +53,9 @@ namespace catapult { namespace validators {
 				auto totalCurrency = context.Config.Immutable.InitialCurrencyAtomicUnits + totalInflation.first;
 				if (totalCurrency > networkConfig.MaxMosaicAtomicUnits)
 					return Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid;
+
+				if (networkConfig.EnableWeightedVoting && networkConfig.EnableDbrbFastFinality)
+					return Failure_NetworkConfig_Weighted_Voting_And_Dbrb_Fast_Finality_Both_Enabled;
 			} catch (...) {
 				return Failure_NetworkConfig_BlockChain_Config_Malformed;
 			}

@@ -32,7 +32,7 @@ namespace catapult { namespace model {
 	struct BlockHeader : public VerifiableEntity {
 	public:
 		/// Block format version.
-		static constexpr VersionType Current_Version = 5;
+		static constexpr VersionType Current_Version = 6;
 
 	public:
 		/// Height of a block.

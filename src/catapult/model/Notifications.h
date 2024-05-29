@@ -339,6 +339,18 @@ namespace catapult { namespace model {
 		{}
 	};
 
+	template<>
+	struct BlockCommitteeNotification<3> : public BasicBlockCommitteeNotification<BlockCommitteeNotification<3>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Committee_v3_Notification;
+
+	public:
+		 BlockCommitteeNotification(int64_t round, uint32_t feeInterest, uint32_t feeInterestDenominator)
+			: BasicBlockCommitteeNotification(round, feeInterest, feeInterestDenominator)
+		{}
+	};
+
 	// endregion
 
 	// region transaction
