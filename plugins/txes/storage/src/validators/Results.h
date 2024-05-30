@@ -202,6 +202,9 @@ namespace catapult { namespace validators {
 	/// Replicator is bound with a boot key
 	DEFINE_STORAGE_RESULT(Replicator_Is_Bound_With_Boot_Key, 62);
 
+	/// List of replicator keys supplied in the notification is empty
+	DEFINE_STORAGE_RESULT(Empty_Replicator_List, 63);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -11,6 +11,7 @@
 #include "DataModificationCancelMapper.h"
 #include "ReplicatorOnboardingMapper.h"
 #include "ReplicatorsCleanupMapper.h"
+#include "ReplicatorTreeRebuildMapper.h"
 #include "DriveClosureMapper.h"
 #include "ReplicatorOffboardingMapper.h"
 #include "FinishDownloadMapper.h"
@@ -48,6 +49,7 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDownloadApprovalTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateEndDriveVerificationTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateReplicatorsCleanupTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateReplicatorTreeRebuildTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoBcDriveCacheStorage(

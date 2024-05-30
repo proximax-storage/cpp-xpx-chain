@@ -94,8 +94,10 @@ namespace catapult { namespace model {
 
 	DEFINE_NOTIFICATION_TYPE(All, Storage, ReplicatorsCleanup_v1, 0x001D);
 
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Tree_Rebuild_v1, 0x001E);
+
 	/// Defines a replicator onboarding notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x001E);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x001F);
 
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
@@ -1220,6 +1222,34 @@ namespace catapult { namespace model {
 			: Notification(Notification_Type, sizeof(ReplicatorsCleanupNotification<1>))
 			, ReplicatorCount(replicatorCount)
 			, ReplicatorKeysPtr(pReplicatorKeys)
+		{}
+
+	public:
+		/// The number of replicators.
+		uint16_t ReplicatorCount;
+
+		/// Replicator keys.
+		const Key* ReplicatorKeysPtr;
+	};
+
+
+	/// Notification of replicator tree rebuild.
+	template<VersionType version>
+	struct ReplicatorTreeRebuildNotification;
+
+	template<>
+	struct ReplicatorTreeRebuildNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Replicator_Tree_Rebuild_v1_Notification;
+
+	public:
+		explicit ReplicatorTreeRebuildNotification(
+				const uint16_t replicatorCount,
+				const Key* pReplicatorKeys)
+				: Notification(Notification_Type, sizeof(ReplicatorTreeRebuildNotification<1>))
+				, ReplicatorCount(replicatorCount)
+				, ReplicatorKeysPtr(pReplicatorKeys)
 		{}
 
 	public:
