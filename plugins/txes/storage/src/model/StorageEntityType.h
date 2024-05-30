@@ -60,6 +60,9 @@ namespace catapult { namespace model {
 	/// ReplicatorsCleanup transaction.
 	DEFINE_TRANSACTION_TYPE(Storage, ReplicatorsCleanup, 0x10);
 
+	/// ReplicatorTreeRebuild transaction.
+	DEFINE_TRANSACTION_TYPE(Queue, ReplicatorTreeRebuild, 0x1);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

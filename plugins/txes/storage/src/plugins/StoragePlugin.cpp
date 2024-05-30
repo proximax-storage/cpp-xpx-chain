@@ -29,6 +29,7 @@
 #include "src/plugins/DownloadApprovalTransactionPlugin.h"
 #include "src/plugins/EndDriveVerificationTransactionPlugin.h"
 #include "src/plugins/ReplicatorsCleanupTransactionPlugin.h"
+#include "src/plugins/ReplicatorTreeRebuildTransactionPlugin.h"
 #include "src/state/StorageStateImpl.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
@@ -84,6 +85,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDownloadApprovalTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateReplicatorsCleanupTransactionPlugin());
+		manager.addTransactionSupport(CreateReplicatorTreeRebuildTransactionPlugin());
 
 		auto transactionFeeCalculator = manager.transactionFeeCalculator();
 		setUnlimitedTransactionFee<model::DataModificationApprovalTransaction>(*transactionFeeCalculator);
@@ -227,7 +229,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateServiceUnitTransferValidator())
 				.add(validators::CreateOwnerManagementProhibitionValidator())
 				.add(validators::CreateReplicatorNodeBootKeyValidator())
-				.add(validators::CreateReplicatorsCleanupValidator());
+				.add(validators::CreateReplicatorsCleanupValidator())
+		  		.add(validators::CreateReplicatorTreeRebuildValidator());
 		});
 
 		const auto& storageUpdatesListeners = manager.storageUpdatesListeners();
@@ -261,7 +264,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreatePeriodicDownloadChannelPaymentObserver())
 				.add(observers::CreateOwnerManagementProhibitionObserver())
 				.add(observers::CreateReplicatorNodeBootKeyObserver())
-				.add(observers::CreateReplicatorsCleanupObserver(liquidityProviderObserver));
+				.add(observers::CreateReplicatorsCleanupObserver(liquidityProviderObserver))
+				.add(observers::CreateReplicatorTreeRebuildObserver());
 		});
 	}
 }}

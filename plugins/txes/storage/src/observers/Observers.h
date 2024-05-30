@@ -142,4 +142,7 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by replicators cleanup notifications
 	DECLARE_OBSERVER(ReplicatorsCleanup, model::ReplicatorsCleanupNotification<1>)(const std::unique_ptr<LiquidityProviderExchangeObserver>& pLiquidityProvider);
 
+	/// Observes changes triggered by replicator tree rebuild notifications
+	DECLARE_OBSERVER(ReplicatorTreeRebuild, model::ReplicatorTreeRebuildNotification<1>)();
+
 }}
