@@ -389,6 +389,11 @@
 			"name": "replicatorsCleanup",
 			"type": "16482",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "replicatorTreeRebuild",
+			"type": "16743",
+			"supportedVersions": [1]
 		}
 	]
 }
