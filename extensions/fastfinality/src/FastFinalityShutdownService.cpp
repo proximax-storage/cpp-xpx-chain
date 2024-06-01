@@ -23,17 +23,17 @@ namespace catapult { namespace fastfinality {
 
 			class DbrbNodeRemover {
 			public:
-				explicit DbrbNodeRemover(std::shared_ptr<dbrb::TransactionSender> pTransactionSender, const plugins::PluginManager& pluginManager, const dbrb::ProcessId& id)
+				explicit DbrbNodeRemover(std::shared_ptr<dbrb::TransactionSender> pTransactionSender, const extensions::ServiceState& state, const dbrb::ProcessId& id)
 					: m_pTransactionSender(std::move(pTransactionSender))
-					, m_pluginManager(pluginManager)
+					, m_state(state)
 					, m_id(id)
 				{}
 
 			public:
 				void shutdown() {
-					if (m_pluginManager.config().EnableRemovingDbrbProcessOnShutdown) {
+					if (m_state.config().Network.EnableRemovingDbrbProcessOnShutdown && m_state.maxChainHeight() == Height(0)) {
 						m_pTransactionSender->disableAddDbrbProcessTransaction();
-						auto view = m_pluginManager.dbrbViewFetcher().getView(utils::NetworkTime());
+						auto view = m_state.pluginManager().dbrbViewFetcher().getView(utils::NetworkTime());
 						if (m_pTransactionSender->isAddDbrbProcessTransactionSent() || view.find(m_id) != view.cend()) {
 							auto future = m_pTransactionSender->sendRemoveDbrbProcessTransaction();
 							future.wait_for(std::chrono::minutes(1));
@@ -43,7 +43,7 @@ namespace catapult { namespace fastfinality {
 
 			private:
 				std::shared_ptr<dbrb::TransactionSender> m_pTransactionSender;
-				const plugins::PluginManager& m_pluginManager;
+				const extensions::ServiceState& m_state;
 				dbrb::ProcessId m_id;
 			};
 
@@ -56,7 +56,7 @@ namespace catapult { namespace fastfinality {
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
 				auto pServiceGroup = state.pool().pushServiceGroup("DBRB node remover");
-				pServiceGroup->registerService(std::make_shared<DbrbNodeRemover>(m_pTransactionSender, state.pluginManager(), locator.keyPair().publicKey()));
+				pServiceGroup->registerService(std::make_shared<DbrbNodeRemover>(m_pTransactionSender, state, locator.keyPair().publicKey()));
 			}
 
 		private:

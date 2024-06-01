@@ -163,14 +163,14 @@ namespace catapult { namespace fastfinality {
 				auto& actions = pFsmShared->actions();
 				auto remoteNodeStateRetriever = CreateRemoteNodeStateRetriever<FastFinalityFsm>(pFsmShared, pConfigHolder, lastBlockElementSupplier);
 
-				actions.CheckLocalChain = CreateFastFinalityCheckLocalChainAction(pFsmShared, remoteNodeStateRetriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, m_dbrbConfig);
+				actions.CheckLocalChain = CreateFastFinalityCheckLocalChainAction(pFsmShared, state, remoteNodeStateRetriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, m_dbrbConfig);
 				actions.ResetLocalChain = CreateFastFinalityResetLocalChainAction();
 				actions.DownloadBlocks = CreateFastFinalityDownloadBlocksAction(pFsmShared, state, blockRangeConsumer);
 				actions.DetectRound = CreateFastFinalityDetectRoundAction(pFsmShared, lastBlockElementSupplier, state);
 				actions.CheckConnections = CreateFastFinalityCheckConnectionsAction(pFsmShared, state);
 				actions.SelectBlockProducer = CreateFastFinalitySelectBlockProducerAction(pFsmShared, state);
 				actions.GenerateBlock = CreateFastFinalityGenerateBlockAction(pFsmShared, state.cache(), pConfigHolder, CreateHarvesterBlockGenerator(state), lastBlockElementSupplier);
-				actions.WaitForBlock = CreateFastFinalityWaitForBlockAction(pFsmShared, state);
+				actions.WaitForBlock = CreateFastFinalityWaitForBlockAction(pFsmShared, pConfigHolder);
 				actions.CommitBlock = CreateFastFinalityCommitBlockAction(pFsmShared, blockRangeConsumer, state);
 				actions.IncrementRound = CreateFastFinalityIncrementRoundAction(pFsmShared, pConfigHolder);
 				actions.ResetRound = CreateFastFinalityResetRoundAction(pFsmShared, state);

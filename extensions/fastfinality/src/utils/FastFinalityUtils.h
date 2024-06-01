@@ -149,6 +149,7 @@ namespace catapult { namespace fastfinality {
 
 				const auto& dbrbProcess = pFsmShared->dbrbProcess();
 				auto view = dbrbProcess.currentView();
+				auto maxUnreachableNodeCount = dbrb::View::maxInvalidProcesses(view.Data.size());
 				view.Data.erase(dbrbProcess.id());
 
 				auto pMessageSender = dbrbProcess.messageSender();
@@ -156,9 +157,8 @@ namespace catapult { namespace fastfinality {
 				pMessageSender->requestNodes(view.Data, pConfigHolder);
 
 				auto unreachableNodeCount = pMessageSender->getUnreachableNodeCount(view.Data);
-				auto maxUnreachableNodeCount = dbrb::View::maxInvalidProcesses(view.Data.size());
 				if (unreachableNodeCount > maxUnreachableNodeCount) {
-					CATAPULT_LOG(debug) << "unreachable node count " << unreachableNodeCount << " exceeds the limit " << maxUnreachableNodeCount;
+					CATAPULT_LOG(warning) << "unreachable node count " << unreachableNodeCount << " exceeds the limit " << maxUnreachableNodeCount;
 					pPromise->set_value({});
 					return;
 				}

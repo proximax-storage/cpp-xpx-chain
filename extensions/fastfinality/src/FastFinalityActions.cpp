@@ -69,19 +69,26 @@ namespace catapult { namespace fastfinality {
 
 	action CreateFastFinalityCheckLocalChainAction(
 			const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
+			const extensions::ServiceState& state,
 			const RemoteNodeStateRetriever& retriever,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
 			const std::function<uint64_t (const Key&)>& importanceGetter,
 			const dbrb::DbrbConfiguration& dbrbConfig) {
-		return [pFsmWeak, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, dbrbConfig]() {
+		return [pFsmWeak, &state, retriever, pConfigHolder, lastBlockElementSupplier, importanceGetter, dbrbConfig]() {
 			TRY_GET_FSM()
+
+			const auto& maxChainHeight = state.maxChainHeight();
+			auto localHeight = lastBlockElementSupplier()->Block.Height;
+			if (maxChainHeight > Height(0) && localHeight >= maxChainHeight) {
+				pFsmShared->processEvent(Hold{});
+				return;
+			}
 
 			pFsmShared->setNodeWorkState(NodeWorkState::Synchronizing);
 			pFsmShared->resetChainSyncData();
 			pFsmShared->resetFastFinalityData();
 
-			auto localHeight = lastBlockElementSupplier()->Block.Height;
 			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::NetworkTime(), localHeight, false);
 
 			std::vector<RemoteNodeState> remoteNodeStates = retriever();
@@ -251,6 +258,7 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, &state, rangeConsumer]() {
 			TRY_GET_FSM()
 
+			const auto& maxChainHeight = state.maxChainHeight();
 			const auto& nodeConfig = state.config().Node;
 			auto maxBlocksPerSyncAttempt = nodeConfig.MaxBlocksPerSyncAttempt;
 			const auto& chainSyncData = pFsmShared->chainSyncData();
@@ -328,6 +336,11 @@ namespace catapult { namespace fastfinality {
 						startHeight = pBlock->Height;
 						blocksFromOptions.NumBlocks = utils::checked_cast<uint64_t, uint32_t>(targetHeight.unwrap() - startHeight.unwrap()) + 1u;
 						break;
+					}
+
+					if (maxChainHeight > Height(0) && pBlock->Height >= maxChainHeight) {
+						pFsmShared->processEvent(Hold{});
+						return;
 					}
 				}
 
@@ -415,12 +428,14 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, &state]() {
 			TRY_GET_FSM()
 
-			auto& dbrbViewFetcher = state.pluginManager().dbrbViewFetcher();
-			auto now = state.timeSupplier()();
-			auto currentView = dbrbViewFetcher.getView(now);
-			auto pMessageSender = pFsmShared->dbrbProcess().messageSender();
-			auto unreachableNodeCount = pMessageSender->getUnreachableNodeCount(currentView);
-			if (unreachableNodeCount > dbrb::View::maxInvalidProcesses(currentView.size())) {
+			const auto& dbrbProcess = pFsmShared->dbrbProcess();
+			auto view = dbrbProcess.currentView();
+			auto maxUnreachableNodeCount = dbrb::View::maxInvalidProcesses(view.Data.size());
+			view.Data.erase(dbrbProcess.id());
+			auto pMessageSender = dbrbProcess.messageSender();
+			auto unreachableNodeCount = pMessageSender->getUnreachableNodeCount(view.Data);
+			if (unreachableNodeCount > maxUnreachableNodeCount) {
+				CATAPULT_LOG(warning) << "unreachable node count " << unreachableNodeCount << " exceeds the limit " << maxUnreachableNodeCount;
 				pFsmShared->processEvent(ConnectionNumberInsufficient{});
 			} else {
 				pFsmShared->processEvent(ConnectionNumberSufficient{});
@@ -544,8 +559,10 @@ namespace catapult { namespace fastfinality {
 		};
 	}
 
-	action CreateFastFinalityWaitForBlockAction(const std::weak_ptr<FastFinalityFsm>& pFsmWeak, extensions::ServiceState& state) {
-		return [pFsmWeak, &state]() {
+	action CreateFastFinalityWaitForBlockAction(
+			const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+		return [pFsmWeak, pConfigHolder]() {
 			TRY_GET_FSM()
 
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
@@ -569,7 +586,8 @@ namespace catapult { namespace fastfinality {
 				if (fastFinalityData.unexpectedBlockHeight()) {
 					pFsmShared->processEvent(UnexpectedBlockHeight{});
 				} else {
-					pFsmShared->processEvent(BlockNotReceived{ !!fastFinalityData.proposedBlock() });
+					const auto& config = pConfigHolder->Config(fastFinalityData.currentBlockHeight());
+					pFsmShared->processEvent(BlockNotReceived{ !!fastFinalityData.proposedBlock() || (fastFinalityData.round().Round % config.Network.CheckNetworkHeightInterval == 0) });
 				}
 			}
 		};

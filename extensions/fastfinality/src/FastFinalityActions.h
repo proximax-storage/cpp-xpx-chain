@@ -32,6 +32,7 @@ namespace catapult { namespace fastfinality {
 
 	action CreateFastFinalityCheckLocalChainAction(
 		const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
+		const extensions::ServiceState& state,
 		const RemoteNodeStateRetriever& retriever,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const model::BlockElementSupplier& lastBlockElementSupplier,
@@ -67,7 +68,7 @@ namespace catapult { namespace fastfinality {
 
 	action CreateFastFinalityWaitForBlockAction(
 		const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
-		extensions::ServiceState& state);
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	action CreateFastFinalityCommitBlockAction(
 		const std::weak_ptr<FastFinalityFsm>& pFsmWeak,

@@ -55,6 +55,7 @@ enableDbrbSharding = false
 dbrbShardSize = 6
 
 enableDbrbFastFinality = true
+checkNetworkHeightInterval = 10
 
 [bootstrap.harvesters]
 

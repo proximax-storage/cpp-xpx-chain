@@ -182,6 +182,9 @@ namespace catapult { namespace model {
 		/// Allows block confirmation using DBRB protocol without Weighted Voting.
 		bool EnableDbrbFastFinality;
 
+		/// Number of failed rounds of block generation before checking the network height and synchronizing if necessary.
+		uint32_t CheckNetworkHeightInterval;
+
 	private:
 		/// Map of plugin configurations.
 		mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> m_pluginConfigs;

@@ -39,12 +39,14 @@ namespace catapult { namespace fastfinality {
 				sml::state<LocalChainCheck> + sml::event<NetworkHeightEqualToLocal> = sml::state<RoundDetection>,
 				sml::state<LocalChainCheck> + sml::event<NotRegisteredInDbrbSystem> = sml::state<LocalChainCheck>,
 				sml::state<LocalChainCheck> + sml::event<StartLocalChainCheck> = sml::state<LocalChainCheck>,
+				sml::state<LocalChainCheck> + sml::event<Hold> = sml::state<OnHold>,
 
 				sml::state<InvalidLocalChain> / ACTION(ResetLocalChain) = sml::X,
 
 				sml::state<BlocksDownloading> + sml::on_entry<sml::_> / ACTION(DownloadBlocks),
 				sml::state<BlocksDownloading> + sml::event<DownloadBlocksFailed> = sml::state<LocalChainCheck>,
 				sml::state<BlocksDownloading> + sml::event<DownloadBlocksSucceeded> = sml::state<LocalChainCheck>,
+				sml::state<BlocksDownloading> + sml::event<Hold> = sml::state<OnHold>,
 
 				sml::state<RoundDetection> + sml::on_entry<sml::_> / ACTION(DetectRound),
 				sml::state<RoundDetection> + sml::event<RoundDetectionSucceeded> = sml::state<ConnectionChecking>,

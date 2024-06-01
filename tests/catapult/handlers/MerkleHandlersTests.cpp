@@ -40,7 +40,7 @@ namespace catapult { namespace handlers {
 		}
 
 		void EnableVerifiableState(test::ServiceTestState& serviceState) {
-			auto state = serviceState.state();
+			auto& state = serviceState.state();
 			const_cast<bool&>(state.pluginManager().immutableConfig().ShouldEnableVerifiableState) = true;
 		}
 	}
