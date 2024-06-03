@@ -77,6 +77,7 @@ namespace catapult { namespace plugins {
 					"ActiveHarvestersV2Observer",
 					"InactiveHarvestersObserver",
 					"RemoveDbrbProcessByNetworkObserver",
+					"UpdateHarvestersV3Observer",
 					"AddHarvesterObserver",
 					"RemoveHarvesterObserver",
 				};

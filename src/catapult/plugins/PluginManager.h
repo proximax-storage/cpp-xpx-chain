@@ -19,9 +19,10 @@
 **/
 
 #pragma once
-#include <catapult/validators/LiquidityProviderExchangeValidator.h>
-#include <catapult/observers/LiquidityProviderExchangeObserver.h>
-#include <catapult/observers/StorageUpdatesListener.h>
+#include "catapult/validators/LiquidityProviderExchangeValidator.h"
+#include "catapult/observers/LiquidityProviderExchangeObserver.h"
+#include "catapult/observers/StorageUpdatesListener.h"
+#include "catapult/observers/DbrbProcessUpdateListener.h"
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
@@ -348,6 +349,13 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
+		// region DBRB process update listeners
+
+		const std::vector<std::unique_ptr<observers::DbrbProcessUpdateListener>>& dbrbProcessUpdateListeners() const;
+		void addDbrbProcessUpdateListener(std::unique_ptr<observers::DbrbProcessUpdateListener>&& listener);
+
+		// endregion
+
 	private:
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;
@@ -387,6 +395,8 @@ namespace catapult { namespace plugins {
 		std::unique_ptr<observers::StorageExternalManagementObserver> m_storageExternalManagement;
 
 		std::shared_ptr<model::TransactionFeeCalculator> m_pTransactionFeeCalculator;
+
+		std::vector<std::unique_ptr<observers::DbrbProcessUpdateListener>> m_dbrbProcessUpdateListeners;
 	};
 }}
 

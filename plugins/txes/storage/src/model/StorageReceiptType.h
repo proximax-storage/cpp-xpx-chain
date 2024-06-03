@@ -12,37 +12,41 @@ namespace catapult { namespace model {
 
 #endif
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Data_Modification_Approval_Download, 1);
+	DEFINE_RECEIPT_TYPE(Data_Modification_Approval, Storage, Data_Modification_Approval_Download, 1);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Data_Modification_Approval_Refund, 2);
+	DEFINE_RECEIPT_TYPE(Data_Modification_Approval, Storage, Data_Modification_Approval_Refund, 2);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Data_Modification_Approval_Refund_Stream, 3);
+	DEFINE_RECEIPT_TYPE(Data_Modification_Approval, Storage, Data_Modification_Approval_Refund_Stream, 3);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Data_Modification_Approval_Upload, 4);
+	DEFINE_RECEIPT_TYPE(Data_Modification_Approval, Storage, Data_Modification_Approval_Upload, 4);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Data_Modification_Cancel_Pending_Owner, 5);
+	DEFINE_RECEIPT_TYPE(Data_Modification_Cancel, Storage, Data_Modification_Cancel_Pending_Owner, 1);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Data_Modification_Cancel_Pending_Replicator, 6);
+	DEFINE_RECEIPT_TYPE(Data_Modification_Cancel, Storage, Data_Modification_Cancel_Pending_Replicator, 2);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Data_Modification_Cancel_Queued, 7);
+	DEFINE_RECEIPT_TYPE(Data_Modification_Cancel, Storage, Data_Modification_Cancel_Queued, 3);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Download_Approval, 8);
+	DEFINE_RECEIPT_TYPE(Download_Approval, Storage, Download_Approval, 1);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Download_Channel_Refund, 9);
+	DEFINE_RECEIPT_TYPE(Download_Channel_Refund, Storage, Download_Channel_Refund, 1);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Drive_Closure_Owner_Refund, 10);
+	DEFINE_RECEIPT_TYPE(Drive_Closure, Storage, Drive_Closure_Owner_Refund, 1);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Drive_Closure_Replicator_Modification, 11);
+	DEFINE_RECEIPT_TYPE(Drive_Closure, Storage, Drive_Closure_Replicator_Modification, 2);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Drive_Closure_Replicator_Participation, 12);
+	DEFINE_RECEIPT_TYPE(Drive_Closure, Storage, Drive_Closure_Replicator_Participation, 3);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, End_Drive_Verification, 13);
+	DEFINE_RECEIPT_TYPE(End_Drive_Verification, Storage, End_Drive_Verification, 1);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Periodic_Payment_Owner_Refund, 14);
+	DEFINE_RECEIPT_TYPE(Periodic_Payment, Storage, Periodic_Payment_Owner_Refund, 1);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Periodic_Payment_Replicator_Modification, 15);
+	DEFINE_RECEIPT_TYPE(Periodic_Payment, Storage, Periodic_Payment_Replicator_Modification, 2);
 
-	DEFINE_RECEIPT_TYPE(Storage, Storage, Periodic_Payment_Replicator_Participation, 16);
+	DEFINE_RECEIPT_TYPE(Periodic_Payment, Storage, Periodic_Payment_Replicator_Participation, 3);
+
+	DEFINE_RECEIPT_TYPE(Replicator_Deposit, Storage, Replicator_Deposit, 1);
+
+	DEFINE_RECEIPT_TYPE(Replicator_Deposit, Storage, Replicator_Deposit_Refund, 2);
 
 #ifndef CUSTOM_RECEIPT_TYPE_DEFINITION
 }}

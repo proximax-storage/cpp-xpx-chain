@@ -34,6 +34,8 @@ namespace catapult { namespace config {
 		TRY_LOAD_CHAIN_PROPERTY(ActivityScaleFactor);
 		config.WeightScaleFactor = 1'000'000'000'000'000'000.0;
 		TRY_LOAD_CHAIN_PROPERTY(WeightScaleFactor);
+		config.EnableEqualWeights = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableEqualWeights);
 #undef TRY_LOAD_CHAIN_PROPERTY
 
 		config.InitialActivityInt = static_cast<int64_t>(config.InitialActivity * config.ActivityScaleFactor);

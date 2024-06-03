@@ -51,8 +51,8 @@ namespace catapult { namespace chain {
 
 	BlockTarget CalculateTarget(
 			const utils::TimeSpan& timeSpan,
-			Difficulty difficulty,
-			Importance signerImportance,
+			const Difficulty& difficulty,
+			const Importance& signerImportance,
 			const model::NetworkConfiguration& config,
 			uint32_t feeInterest,
 			uint32_t feeInterestDenominator) {
@@ -72,7 +72,7 @@ namespace catapult { namespace chain {
 	BlockTarget CalculateTarget(
 			const model::Block& parentBlock,
 			const model::Block& currentBlock,
-			Importance signerImportance,
+			const Importance& signerImportance,
 			const model::NetworkConfiguration& config) {
 		if (currentBlock.Timestamp <= parentBlock.Timestamp)
 			return BlockTarget(0);
@@ -81,13 +81,14 @@ namespace catapult { namespace chain {
 		return CalculateTarget(timeDiff, currentBlock.Difficulty, signerImportance, config, currentBlock.FeeInterest, currentBlock.FeeInterestDenominator);
 	}
 
-	BlockHitPredicate::BlockHitPredicate(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const ImportanceLookupFunc& importanceLookup)
-			: m_pConfigHolder(pConfigHolder)
-			, m_importanceLookup(importanceLookup)
+	BlockHitPredicate::BlockHitPredicate(std::shared_ptr<config::BlockchainConfigurationHolder>  pConfigHolder, ImportanceLookupFunc importanceLookup)
+			: m_pConfigHolder(std::move(pConfigHolder))
+			, m_importanceLookup(std::move(importanceLookup))
 	{}
 
 	bool BlockHitPredicate::operator()(const model::Block& parentBlock, const model::Block& block, const GenerationHash& generationHash) const {
-		if (m_pConfigHolder->Config(block.Height).Network.EnableWeightedVoting)
+		const auto& config = m_pConfigHolder->Config(block.Height).Network;
+		if (config.EnableWeightedVoting || config.EnableDbrbFastFinality)
 			return true;
 
 		auto importance = m_importanceLookup(block.Signer, block.Height);
@@ -97,7 +98,8 @@ namespace catapult { namespace chain {
 	}
 
 	bool BlockHitPredicate::operator()(const BlockHitContext& context) const {
-		if (m_pConfigHolder->Config(context.Height).Network.EnableWeightedVoting)
+		const auto& config = m_pConfigHolder->Config(context.Height).Network;
+		if (config.EnableWeightedVoting || config.EnableDbrbFastFinality)
 			return true;
 
 		auto importance = m_importanceLookup(context.Signer, context.Height);

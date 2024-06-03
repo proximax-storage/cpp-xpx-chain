@@ -6,6 +6,7 @@
 
 #pragma once
 #include "View.h"
+#include <utility>
 
 namespace catapult { namespace crypto { class KeyPair; }}
 
@@ -38,35 +39,7 @@ namespace catapult { namespace dbrb {
 
 #pragma pack(pop)
 
-	/// Base class for all messages sent via DBRB protocol.
-	struct Message {
-	public:
-		Message() = delete;
-		Message(const ProcessId& sender, ionet::PacketType type, View view): Sender(sender), Type(type), View(std::move(view)) {}
-		virtual ~Message() = default;
-
-	public:
-		/// Creates a network packet representing this message.
-		virtual std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) = 0;
-
-		/// Compares this message with \a rhs.
-		bool operator<(const Message& rhs) const {
-			return Sender < rhs.Sender;
-		}
-
-	public:
-		/// Sender of the message.
-		ProcessId Sender;
-
-		/// Type of the packet.
-		ionet::PacketType Type;
-
-		/// This message signed by sender.
-		catapult::Signature Signature;
-
-		/// Current view of the system from the perspective of Sender.
-		dbrb::View View;
-	};
+	struct Message;
 
 	class NetworkPacketConverter {
 	public:
@@ -89,13 +62,53 @@ namespace catapult { namespace dbrb {
 		std::vector<PacketConverter> m_converters;
 	};
 
-	// Messages related to BROADCAST operation
+	/// Base class for all messages sent via DBRB protocol.
+	struct Message {
+	public:
+		Message() = delete;
+		Message(const ProcessId& sender, ionet::PacketType type): Sender(sender), Type(type) {}
+		virtual ~Message() = default;
 
-	struct PrepareMessage : Message {
+	public:
+		/// Creates a network packet representing this message.
+		virtual std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) = 0;
+
+		/// Compares this message with \a rhs.
+		bool operator<(const Message& rhs) const {
+			return Sender < rhs.Sender;
+		}
+
+	public:
+		/// Sender of the message.
+		ProcessId Sender;
+
+		/// Type of the packet.
+		ionet::PacketType Type;
+
+		/// This message signed by sender.
+		catapult::Signature Signature;
+	};
+
+	/// Base class for all messages sent via DBRB protocol.
+	struct BaseMessage : Message {
+	public:
+		BaseMessage() = delete;
+		BaseMessage(const ProcessId& sender, ionet::PacketType type, View view): Message(sender, type), View(std::move(view)) {}
+
+	public:
+		/// Creates a network packet representing this message.
+		virtual std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) = 0;
+
+	public:
+		/// Current view of the system from the perspective of Sender.
+		dbrb::View View;
+	};
+
+	struct PrepareMessage : BaseMessage {
 	public:
 		PrepareMessage() = delete;
 		PrepareMessage(const ProcessId& sender, Payload payload, dbrb::View view)
-			: Message(sender, ionet::PacketType::Dbrb_Prepare_Message, std::move(view))
+			: BaseMessage(sender, ionet::PacketType::Dbrb_Prepare_Message, std::move(view))
 			, Payload(std::move(payload))
 		{}
 
@@ -103,15 +116,15 @@ namespace catapult { namespace dbrb {
 		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 
 	public:
-		/// Message to be broadcasted.
+		/// Message to be broadcast.
 		dbrb::Payload Payload;
 	};
 
-	struct AcknowledgedMessage : Message {
+	struct AcknowledgedMessage : BaseMessage {
 	public:
 		AcknowledgedMessage() = delete;
 		explicit AcknowledgedMessage(const ProcessId& sender, const Hash256& payloadHash, dbrb::View view, const catapult::Signature& payloadSignature)
-			: Message(sender, ionet::PacketType::Dbrb_Acknowledged_Message, std::move(view))
+			: BaseMessage(sender, ionet::PacketType::Dbrb_Acknowledged_Message, std::move(view))
 			, PayloadHash(payloadHash)
 			, PayloadSignature(payloadSignature)
 		{}
@@ -127,11 +140,11 @@ namespace catapult { namespace dbrb {
 		catapult::Signature PayloadSignature;
 	};
 
-	struct CommitMessage : Message {
+	struct CommitMessage : BaseMessage {
 	public:
 		CommitMessage() = delete;
 		explicit CommitMessage(const ProcessId& sender, const Hash256& payloadHash, CertificateType certificate, dbrb::View view)
-			: Message(sender, ionet::PacketType::Dbrb_Commit_Message, std::move(view))
+			: BaseMessage(sender, ionet::PacketType::Dbrb_Commit_Message, std::move(view))
 			, PayloadHash(payloadHash)
 			, Certificate(std::move(certificate))
 		{}
@@ -147,11 +160,11 @@ namespace catapult { namespace dbrb {
 		CertificateType Certificate;
 	};
 
-	struct DeliverMessage : Message {
+	struct DeliverMessage : BaseMessage {
 	public:
 		DeliverMessage() = delete;
 		explicit DeliverMessage(const ProcessId& sender, const Hash256& payloadHash, dbrb::View view)
-			: Message(sender, ionet::PacketType::Dbrb_Deliver_Message, std::move(view))
+			: BaseMessage(sender, ionet::PacketType::Dbrb_Deliver_Message, std::move(view))
 			, PayloadHash(payloadHash)
 		{}
 
@@ -161,5 +174,81 @@ namespace catapult { namespace dbrb {
 	public:
 		/// Hash of the payload.
 		Hash256 PayloadHash;
+	};
+
+	// Messages for sharded DBRB
+
+	struct ShardPrepareMessage : Message {
+	public:
+		ShardPrepareMessage() = delete;
+		ShardPrepareMessage(const ProcessId& sender, Payload payload, DbrbTreeView view, const catapult::Signature& broadcasterSignature)
+			: Message(sender, ionet::PacketType::Dbrb_Shard_Prepare_Message)
+			, Payload(std::move(payload))
+			, View(std::move(view))
+			, BroadcasterSignature(broadcasterSignature)
+		{}
+
+	public:
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
+
+	public:
+		/// Message to be broadcasted.
+		dbrb::Payload Payload;
+
+		/// Current view of the system from the perspective of broadcaster.
+		DbrbTreeView View;
+
+		/// Payload and view signed by broadcaster.
+		catapult::Signature BroadcasterSignature;
+	};
+
+	struct ShardBaseMessage : Message {
+	public:
+		ShardBaseMessage() = delete;
+		explicit ShardBaseMessage(const ProcessId& sender, ionet::PacketType type, const Hash256& payloadHash, CertificateType certificate)
+			: Message(sender, type)
+			, PayloadHash(payloadHash)
+			, Certificate(std::move(certificate))
+		{}
+
+	public:
+		/// Hash of the payload.
+		Hash256 PayloadHash;
+
+		/// Message certificate for supplied payload.
+		CertificateType Certificate;
+	};
+
+	struct ShardAcknowledgedMessage : ShardBaseMessage {
+	public:
+		ShardAcknowledgedMessage() = delete;
+		explicit ShardAcknowledgedMessage(const ProcessId& sender, const Hash256& payloadHash, CertificateType certificate)
+			: ShardBaseMessage(sender, ionet::PacketType::Dbrb_Shard_Acknowledged_Message, payloadHash, std::move(certificate))
+		{}
+
+	public:
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
+	};
+
+	struct ShardCommitMessage : ShardBaseMessage {
+	public:
+		ShardCommitMessage() = delete;
+		explicit ShardCommitMessage(const ProcessId& sender, const Hash256& payloadHash, CertificateType certificate)
+			: ShardBaseMessage(sender, ionet::PacketType::Dbrb_Shard_Commit_Message, payloadHash, std::move(certificate))
+		{}
+
+	public:
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
+	};
+
+	struct ShardDeliverMessage : ShardBaseMessage {
+	public:
+		ShardDeliverMessage() = delete;
+		explicit ShardDeliverMessage(const ProcessId& sender, const Hash256& payloadHash, CertificateType certificate)
+			: ShardBaseMessage(sender, ionet::PacketType::Dbrb_Shard_Deliver_Message, payloadHash, std::move(certificate))
+		{}
+
+	public:
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
 	};
 }}

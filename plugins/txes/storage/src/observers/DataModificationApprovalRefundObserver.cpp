@@ -27,14 +27,22 @@ namespace catapult { namespace observers {
 				- utils::FileSize::FromBytes(notification.UsedDriveSize - notification.MetaFilesSizeBytes).megabytes();
 		const auto transferAmount = Amount(replicatorDifference * usedSizeDifference);
 
-		liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
-									   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
-									   transferAmount);
-		// Adding Refund receipt.
-		{
+		if (transferAmount.unwrap() > 0) {
+			liquidityProvider->debitMosaics(
+					context,
+					driveEntry.key(),
+					driveEntry.owner(),
+					config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+					transferAmount);
+
+			// Adding Refund receipt.
 			const auto receiptType = model::Receipt_Type_Data_Modification_Approval_Refund;
-			const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
-												{ streamingMosaicId, currencyMosaicId }, transferAmount);
+			const model::StorageReceipt receipt(
+					receiptType,
+					driveEntry.key(),
+					driveEntry.owner(),
+					{ streamingMosaicId, currencyMosaicId },
+					transferAmount);
 			statementBuilder.addTransactionReceipt(receipt);
 		}
 
@@ -42,14 +50,23 @@ namespace catapult { namespace observers {
 		const auto expectedActualDifference =
 				modification.ExpectedUploadSizeMegabytes - modification.ActualUploadSizeMegabytes;
 	  	const auto streamTransferAmount = Amount(driveEntry.replicatorCount() * expectedActualDifference);
-		liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
-										config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
-										streamTransferAmount);
-	  	// Adding Refund Stream receipt.
-		{
+
+		if (streamTransferAmount.unwrap() > 0) {
+			liquidityProvider->debitMosaics(
+					context,
+					driveEntry.key(),
+					driveEntry.owner(),
+					config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+					streamTransferAmount);
+
+			// Adding Refund Stream receipt.
 			const auto receiptType = model::Receipt_Type_Data_Modification_Approval_Refund_Stream;
-			const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
-												{ streamingMosaicId, currencyMosaicId }, streamTransferAmount);
+			const model::StorageReceipt receipt(
+					receiptType,
+					driveEntry.key(),
+					driveEntry.owner(),
+					{ streamingMosaicId, currencyMosaicId },
+					streamTransferAmount);
 			statementBuilder.addTransactionReceipt(receipt);
 		}
 	});

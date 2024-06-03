@@ -82,7 +82,18 @@ namespace catapult { namespace ionet {
     ENUM_VALUE(Pull_Remote_Node_State, 17) \
 	\
 	/* A block confirmed by committee has been pushed by a peer. */ \
-	ENUM_VALUE(Push_Confirmed_Block, 18) \
+		ENUM_VALUE(Push_Confirmed_Block, 18) \
+	\
+	/* api only packets have types [500, 550) */ \
+	\
+	/* Partial aggregate transactions have been pushed by an api-node. */ \
+	ENUM_VALUE(Push_Partial_Transactions, 500) \
+	\
+	/* Detached cosignatures have been pushed by an api-node. */ \
+	ENUM_VALUE(Push_Detached_Cosignatures, 501) \
+	\
+	/* Partial transaction infos have been requested by an api-node. */ \
+	ENUM_VALUE(Pull_Partial_Transaction_Infos, 502) \
 	\
 	/* DBRB only packets have types [550, 600) */ \
 	\
@@ -114,16 +125,13 @@ namespace catapult { namespace ionet {
 	\
 	ENUM_VALUE(Dbrb_Remove_Node_Response, 563) \
 	\
-	/* api only packets have types [500, 600) */ \
+	ENUM_VALUE(Dbrb_Shard_Prepare_Message, 564) \
 	\
-	/* Partial aggregate transactions have been pushed by an api-node. */ \
-	ENUM_VALUE(Push_Partial_Transactions, 500) \
+	ENUM_VALUE(Dbrb_Shard_Acknowledged_Message, 565) \
 	\
-	/* Detached cosignatures have been pushed by an api-node. */ \
-	ENUM_VALUE(Push_Detached_Cosignatures, 501) \
+	ENUM_VALUE(Dbrb_Shard_Commit_Message, 566) \
 	\
-	/* Partial transaction infos have been requested by an api-node. */ \
-	ENUM_VALUE(Pull_Partial_Transaction_Infos, 502) \
+	ENUM_VALUE(Dbrb_Shard_Deliver_Message, 567) \
 	\
 	/* node discovery packets have types [600, 700) */ \
 	\
@@ -227,6 +235,9 @@ namespace catapult { namespace ionet {
     /* SDA-SDA Offer Group state path has been requested by a client. */ \
     ENUM_VALUE(SdaOfferGroup_State_Path, FACILITY_BASED_CODE(800, SdaOfferGroup)) \
 	\
+    /* Boot key / replicator state path has been requested by a client. */ \
+    ENUM_VALUE(BootKeyReplicator_State_Path, FACILITY_BASED_CODE(800, BootKeyReplicator)) \
+	\
 	/* SuperContract_v2 state path has been requested by a client. */ \
 	ENUM_VALUE(SuperContract_v2_State_Path, FACILITY_BASED_CODE(800, SuperContract_v2)) \
 	\
@@ -324,6 +335,8 @@ namespace catapult { namespace ionet {
 	\
 	/* SDA-SDA Offer Group infos have been requested by a client. */ \
 	ENUM_VALUE(SdaOfferGroup_Infos, FACILITY_BASED_CODE(1200, SdaOfferGroup))  \
+    /* Boot key / replicator infos have been requested by a client. */ \
+	ENUM_VALUE(BootKeyReplicator_Infos, FACILITY_BASED_CODE(1200, BootKeyReplicator))  \
 	/* SuperContract_v2 infos have been requested by a client. */ \
 	ENUM_VALUE(SuperContract_v2_Infos, FACILITY_BASED_CODE(1200, SuperContract_v2)) \
 	\

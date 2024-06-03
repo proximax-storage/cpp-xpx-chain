@@ -19,15 +19,23 @@ namespace catapult { namespace model {
 		using TransactionType = ReplicatorOnboardingTransactionBody<THeader>;
 
 	public:
-		explicit ReplicatorOnboardingTransactionBody<THeader>()
-		{}
+		explicit ReplicatorOnboardingTransactionBody<THeader>() = default;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_ReplicatorOnboarding, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_ReplicatorOnboarding, 2)
 
 	public:
 		/// The storage size that the replicator provides to the system.
 		Amount Capacity;
+
+		/// The boot public key of the node where this replicator will be running on.
+		Key NodeBootKey;
+
+		/// The message signed by the boot private key of the node.
+		Hash256 Message;
+
+		/// The signature of the message.
+		Signature MessageSignature;
 
 	public:
 		// Calculates the real size of a storage \a transaction.

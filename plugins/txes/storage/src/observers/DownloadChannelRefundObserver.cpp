@@ -40,16 +40,6 @@ namespace catapult { namespace observers {
 		senderState.Balances.debit(currencyMosaicId, currencyRefundAmount, context.Height);
 		recipientState.Balances.credit(currencyMosaicId, currencyRefundAmount, context.Height);
 
-	  	// Adding balance transfer Refund receipt.
-		{
-			const auto receiptType = model::Receipt_Type_Download_Channel_Refund;
-			const Address consumerAddress = model::PublicKeyToAddress(downloadChannelEntry.consumer(),
-																	  context.Config.Immutable.NetworkIdentifier);
-			const model::BalanceTransferReceipt receipt(receiptType, downloadChannelEntry.id().array(), consumerAddress,
-														currencyMosaicId, currencyRefundAmount);
-			statementBuilder.addTransactionReceipt(receipt);
-		}
-
 	  	// Adding Refund receipt for currency.
 		{
 			const auto receiptType = model::Receipt_Type_Download_Channel_Refund;

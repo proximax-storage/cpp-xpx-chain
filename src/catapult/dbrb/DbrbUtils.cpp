@@ -17,8 +17,13 @@ namespace catapult { namespace dbrb {
 	}
 
 	void Write(uint8_t*& pBuffer, uint8_t byte) {
-		memcpy(pBuffer, &byte, 1u);
+		*pBuffer = byte;
 		pBuffer++;
+	}
+
+	void Write(uint8_t*& pBuffer, uint32_t value) {
+		*reinterpret_cast<uint32_t*>(pBuffer) = value;
+		pBuffer += sizeof(uint32_t);
 	}
 
 	void Write(uint8_t*& pBuffer, const View& view) {
@@ -41,6 +46,14 @@ namespace catapult { namespace dbrb {
 			Write(pBuffer, id);
 			Write(pBuffer, signature);
 		}
+	}
+
+	void Write(uint8_t*& pBuffer, const DbrbTreeView& view) {
+		auto size = utils::checked_cast<size_t, uint32_t>(view.size());
+		*reinterpret_cast<uint32_t*>(pBuffer) = size;
+		pBuffer += sizeof(uint32_t);
+		for (const auto& id : view)
+			Write(pBuffer, id);
 	}
 
 	template<>
@@ -105,6 +118,20 @@ namespace catapult { namespace dbrb {
 		}
 
 		return certificate;
+	}
+
+	template<>
+	DbrbTreeView Read(const uint8_t*& pBuffer) {
+		DbrbTreeView view;
+		auto count = *reinterpret_cast<const uint32_t*>(pBuffer);
+		pBuffer += sizeof(uint32_t);
+		view.reserve(count);
+		for (auto i = 0u; i < count; ++i) {
+			auto id = Read<ProcessId>(pBuffer);
+			view.emplace_back(id);
+		}
+
+		return view;
 	}
 
 	Hash256 CalculateHash(const std::vector<RawBuffer>& buffers) {

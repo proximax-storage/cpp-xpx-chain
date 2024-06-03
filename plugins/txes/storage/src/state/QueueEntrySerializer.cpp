@@ -23,7 +23,7 @@ namespace catapult { namespace state {
 		// read version
 		VersionType version = io::Read32(input);
 		if (version > 1)
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of DriveEntry", version);
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of QueueEntry", version);
 
 		Key key;
 		input.read(key);

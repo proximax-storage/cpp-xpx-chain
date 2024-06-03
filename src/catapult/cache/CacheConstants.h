@@ -57,7 +57,8 @@ namespace catapult { namespace cache {
 		SdaOfferGroup,
 		DbrbView,
 		SuperContract_v2,
-		DriveContract
+		DriveContract,
+		BootKeyReplicator,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

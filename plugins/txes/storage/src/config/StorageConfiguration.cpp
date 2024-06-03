@@ -50,6 +50,8 @@ namespace catapult { namespace config {
 		TRY_LOAD_CHAIN_PROPERTY(VerificationExpirationCoefficient);
 		config.VerificationExpirationConstant = 10;
 		TRY_LOAD_CHAIN_PROPERTY(VerificationExpirationConstant);
+		config.EnableReplicatorBootKeyBinding = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableReplicatorBootKeyBinding);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

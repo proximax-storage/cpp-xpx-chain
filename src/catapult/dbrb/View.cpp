@@ -13,9 +13,16 @@ namespace catapult { namespace dbrb {
 		return Data.find(processId) != Data.end();
 	}
 
+	size_t View::maxInvalidProcesses(size_t viewSize) {
+		return (viewSize - 1) / 3;
+	}
+
+	size_t View::quorumSize(size_t viewSize) {
+		return viewSize - (viewSize - 1) / 3;
+	}
+
 	size_t View::quorumSize() const {
-		const size_t size = Data.size();
-		return size - (size - 1) / 3;
+		return quorumSize(Data.size());
 	}
 
 	size_t View::packedSize() const {

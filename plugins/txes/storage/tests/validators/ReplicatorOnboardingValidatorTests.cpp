@@ -14,11 +14,10 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ReplicatorOnboardingValidatorTests
 
-    DEFINE_COMMON_VALIDATOR_TESTS(ReplicatorOnboarding, )
+    DEFINE_COMMON_VALIDATOR_TESTS(ReplicatorOnboardingV1, )
+    DEFINE_COMMON_VALIDATOR_TESTS(ReplicatorOnboardingV2, )
 
     namespace {
-        using Notification = model::ReplicatorOnboardingNotification<1>;
-
         constexpr auto Current_Height = Height(10);
 		const Hash256 Hash_Seed = test::GenerateRandomByteArray<Hash256>();
 
@@ -30,7 +29,9 @@ namespace catapult { namespace validators {
 			return (config.ToConst());
 		}
 
+		template<VersionType version>
         void AssertValidationResult(
+				stateful::NotificationValidatorPointerT<model::ReplicatorOnboardingNotification<version>> pValidator,
                 ValidationResult expectedResult,
 				const state::ReplicatorEntry& replicatorEntry,
                 const Key& publicKey,
@@ -43,8 +44,7 @@ namespace catapult { namespace validators {
                 replicatorCacheDelta.insert(replicatorEntry);
                 cache.commit(Current_Height);
             }
-            Notification notification(publicKey, capacity, Hash_Seed);
-            auto pValidator = CreateReplicatorOnboardingValidator();
+			model::ReplicatorOnboardingNotification<version> notification(publicKey, capacity, Hash_Seed);
             
             // Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, CreateConfig(), Current_Height);
@@ -54,39 +54,84 @@ namespace catapult { namespace validators {
         }
     }
 
-    TEST(TEST_CLASS, FailureWhenReplicatorAlreadyRegistered) {
+    TEST(TEST_CLASS, FailureWhenReplicatorAlreadyRegisteredV1) {
         // Arrange:
         Key publicKey = test::GenerateRandomByteArray<Key>();
         state::ReplicatorEntry replicatorEntry(publicKey);
 
         // Assert:
         AssertValidationResult(
+			CreateReplicatorOnboardingV1Validator(),
             Failure_Storage_Replicator_Already_Registered,
             replicatorEntry,
             publicKey,
 			test::GenerateRandomValue<Amount>());
     }
 
-	TEST(TEST_CLASS, FailureWhenReplicatorCapacityInsufficient) {
+    TEST(TEST_CLASS, FailureWhenReplicatorAlreadyRegisteredV2) {
+        // Arrange:
+        Key publicKey = test::GenerateRandomByteArray<Key>();
+        state::ReplicatorEntry replicatorEntry(publicKey);
+
+        // Assert:
+        AssertValidationResult(
+			CreateReplicatorOnboardingV2Validator(),
+            Failure_Storage_Replicator_Already_Registered,
+            replicatorEntry,
+            publicKey,
+			test::GenerateRandomValue<Amount>());
+    }
+
+	TEST(TEST_CLASS, FailureWhenReplicatorCapacityInsufficientV1) {
 		// Arrange:
 		Key publicKey = test::GenerateRandomByteArray<Key>();
 		state::ReplicatorEntry replicatorEntry(publicKey);
 
 		// Assert:
 		AssertValidationResult(
-				Failure_Storage_Replicator_Capacity_Insufficient,
-				replicatorEntry,
-				test::GenerateRandomByteArray<Key>(),
-				Amount(0u));
+			CreateReplicatorOnboardingV1Validator(),
+			Failure_Storage_Replicator_Capacity_Insufficient,
+			replicatorEntry,
+			test::GenerateRandomByteArray<Key>(),
+			Amount(0u));
 	}
 
-    TEST(TEST_CLASS, Success) {
+	TEST(TEST_CLASS, FailureWhenReplicatorCapacityInsufficientV2) {
+		// Arrange:
+		Key publicKey = test::GenerateRandomByteArray<Key>();
+		state::ReplicatorEntry replicatorEntry(publicKey);
+
+		// Assert:
+		AssertValidationResult(
+			CreateReplicatorOnboardingV2Validator(),
+			Failure_Storage_Replicator_Capacity_Insufficient,
+			replicatorEntry,
+			test::GenerateRandomByteArray<Key>(),
+			Amount(0u));
+	}
+
+    TEST(TEST_CLASS, SuccessV1) {
 		// Arrange:
         Key publicKey = test::GenerateRandomByteArray<Key>();
         state::ReplicatorEntry replicatorEntry(publicKey);
 
         // Assert:
 		AssertValidationResult(
+			CreateReplicatorOnboardingV1Validator(),
+			ValidationResult::Success,
+            replicatorEntry,
+            test::GenerateRandomByteArray<Key>(),
+			test::GenerateRandomValue<Amount>());
+	}
+
+    TEST(TEST_CLASS, SuccessV2) {
+		// Arrange:
+        Key publicKey = test::GenerateRandomByteArray<Key>();
+        state::ReplicatorEntry replicatorEntry(publicKey);
+
+        // Assert:
+		AssertValidationResult(
+			CreateReplicatorOnboardingV2Validator(),
 			ValidationResult::Success,
             replicatorEntry,
             test::GenerateRandomByteArray<Key>(),

@@ -10,140 +10,83 @@
 
 namespace catapult { namespace chain {
 
-	namespace {
-		constexpr auto UNITS_IN_THE_LAST_PLACE = 2;
-
-		class Hasher {
-		public:
-			static Hash256& calculateHash(Hash256& hash, const GenerationHash& generationHash, const Key& key) {
-				crypto::Sha3_256_Builder sha3;
-				sha3.update({ generationHash, key });
-				sha3.final(hash);
-				return hash;
-			}
-
-			static Hash256& calculateHash(Hash256& hash) {
-				crypto::Sha3_256_Builder sha3;
-				sha3.update(hash);
-				sha3.final(hash);
-				return hash;
-			}
-
-			 static Hash256 calculateHash(int64_t rate, const Key& key) {
-				Hash256 hash;
-				crypto::Sha3_256_Builder sha3;
-				sha3.update({ RawBuffer{reinterpret_cast<const uint8_t*>(&rate), sizeof(rate)}, key });
-				sha3.final(hash);
-				return hash;
-			}
-		};
-
-		class Rate {
-		public:
-			explicit Rate(int64_t value, const Key& key)
-				: m_value(value)
-				, m_key(key)
-			{}
-
-		public:
-			int64_t value() const {
-				return m_value;
-			}
-
-			Hash256 hash() const {
-				return Hasher::calculateHash(m_value, m_key);
-			}
-
-		private:
-			int64_t m_value;
-			const Key& m_key;
-		};
-
-		struct RateLess {
-			bool operator()(const Rate& x, const Rate& y) const {
-				if (x.value() == y.value())
-					return (x.hash() < y.hash());
-
-				return (x.value() < y.value());
-			}
-		};
-
-		struct RateGreater {
-			bool operator()(const Rate& x, const Rate& y) const {
-				if (x.value() == y.value())
-					return (x.hash() > y.hash());
-
-				return (x.value() > y.value());
-			}
-		};
-
-		int64_t CalculateWeight(const state::AccountData& accountData, const config::CommitteeConfiguration& config) {
-			auto weight = static_cast<int64_t>(config.WeightScaleFactor / (1.0 + std::exp(static_cast<double>(-accountData.Activity) / config.ActivityScaleFactor)));
-			if (weight == 0)
-				weight = 1;
-
-			return weight;
+	void WeightedVotingCommitteeManagerV2::logAccountData(const cache::AccountMap& accounts, const config::CommitteeConfiguration& config) {
+		CATAPULT_LOG(trace) << "Harvester account data:";
+		for (const auto& pair : accounts) {
+			const auto& data = pair.second;
+			CATAPULT_LOG(trace) << "committee account " << pair.first << " data: "
+				<< calculateWeight(data, config) << "|" << data.Activity << "|" << data.FeeInterest << "|" << data.FeeInterestDenominator << "|" << data.LastSigningBlockHeight << "|"
+				<< data.CanHarvest << "|" << data.EffectiveBalance;
 		}
+	}
 
-		void LogAccountData(const cache::AccountMap& accounts, const config::CommitteeConfiguration& config) {
-			CATAPULT_LOG(trace) << "Harvester account data:";
-			for (const auto& pair : accounts) {
-				const auto& data = pair.second;
-				CATAPULT_LOG(trace) << "committee account " << pair.first << " data: "
-					<< CalculateWeight(data, config) << "|" << data.Activity << "|" << data.FeeInterest << "|" << data.FeeInterestDenominator << "|" << data.LastSigningBlockHeight << "|"
-					<< data.CanHarvest << "|" << data.EffectiveBalance;
-			}
-		}
+	void WeightedVotingCommitteeManagerV2::decreaseActivity(const Key& key, cache::AccountMap& accounts, const config::CommitteeConfiguration& config) {
+		auto iter = accounts.find(key);
+		if (iter == accounts.end())
+			CATAPULT_THROW_RUNTIME_ERROR_1("account not found", key)
+		auto& data = iter->second;
+		data.decreaseActivity(config.ActivityCommitteeNotCosignedDeltaInt);
 
-		void DecreaseActivity(const Key& key, cache::AccountMap& accounts, const config::CommitteeConfiguration& config) {
-			auto iter = accounts.find(key);
-			if (iter == accounts.end())
-				CATAPULT_THROW_RUNTIME_ERROR_1("account not found", key)
-			auto& data = iter->second;
-			data.decreaseActivity(config.ActivityCommitteeNotCosignedDeltaInt);
+		CATAPULT_LOG(trace) << "committee account " << key << ": activity " << data.Activity << ", weight " << calculateWeight(data, config);
+	}
 
-			CATAPULT_LOG(trace) << "committee account " << key << ": activity " << data.Activity << ", weight " << CalculateWeight(data, config);
-		}
+	Hash256& WeightedVotingCommitteeManagerV2::Hasher::calculateHash(Hash256& hash, const GenerationHash& generationHash, const Key& key) {
+		crypto::Sha3_256_Builder sha3;
+		sha3.update({ generationHash, key });
+		sha3.final(hash);
+		return hash;
+	}
 
-		void LogProcess(const char* prefix, const Key& process, const Timestamp& timestamp, std::ostringstream& out) {
-			auto time = std::chrono::system_clock::to_time_t(utils::ToTimePoint(timestamp));
-			char buffer[40];
-			std::strftime(buffer, 40 ,"%F %T", std::localtime(&time));
-			out << std::endl << prefix << process << " expires at: " << buffer;
-		}
+	Hash256& WeightedVotingCommitteeManagerV2::Hasher::calculateHash(Hash256& hash) {
+		crypto::Sha3_256_Builder sha3;
+		sha3.update(hash);
+		sha3.final(hash);
+		return hash;
+	}
 
-		void LogHarvesters(const cache::AccountMap& accounts) {
-			std::ostringstream out;
-			out << std::endl << "Harvesters (" << accounts.size() << "):";
-			for (const auto& [ key, data ] : accounts)
-				LogProcess("harvester ", key, data.ExpirationTime, out);
+	Hash256 WeightedVotingCommitteeManagerV2::Hasher::calculateHash(int64_t rate, const Key& key) {
+		Hash256 hash;
+		crypto::Sha3_256_Builder sha3;
+		sha3.update({ RawBuffer{reinterpret_cast<const uint8_t*>(&rate), sizeof(rate)}, key });
+		sha3.final(hash);
+		return hash;
+	}
 
-			CATAPULT_LOG(trace) << out.str();
-		}
+	void WeightedVotingCommitteeManagerV2::logProcess(const char* prefix, const Key& process, const Timestamp& timestamp, std::ostringstream& out) {
+		auto time = std::chrono::system_clock::to_time_t(utils::ToTimePoint(timestamp));
+		char buffer[40];
+		std::strftime(buffer, 40 ,"%F %T", std::localtime(&time));
+		out << std::endl << prefix << process << " expires at: " << buffer;
+	}
 
-		void LogCommittee(const cache::AccountMap& accounts, const Committee& committee) {
-			std::ostringstream out;
-			out << std::endl << "Committee (" << committee.Cosigners.size() + 1u << "):";
-			auto iter = accounts.find(committee.BlockProposer);
-			if (iter == accounts.end())
-				CATAPULT_THROW_RUNTIME_ERROR_1("account not found", committee.BlockProposer)
-			LogProcess("block proposer ", committee.BlockProposer, iter->second.ExpirationTime, out);
-			for (const auto& key : committee.Cosigners) {
-				iter = accounts.find(key);
-				if (iter == accounts.end())
-					CATAPULT_THROW_RUNTIME_ERROR_1("account not found", key)
-				LogProcess("committee member ", key, iter->second.ExpirationTime, out);
-			}
+	void WeightedVotingCommitteeManagerV2::logHarvesters() const {
+		std::ostringstream out;
+		out << std::endl << "Harvesters (" << m_accounts.size() << "):";
+		for (const auto& [ key, data ] : m_accounts)
+			logProcess("harvester ", key, data.ExpirationTime, out);
 
-			CATAPULT_LOG(debug) << out.str();
-		}
+		CATAPULT_LOG(trace) << out.str();
 	}
 
 	void WeightedVotingCommitteeManagerV2::logCommittee() const {
 		std::lock_guard<std::mutex> guard(m_mutex);
 
-		LogHarvesters(m_accounts);
-		LogCommittee(m_accounts, m_committee);
+		logHarvesters();
+
+		std::ostringstream out;
+		out << std::endl << "Committee (" << m_committee.Cosigners.size() + 1u << "):";
+		auto iter = m_accounts.find(m_committee.BlockProposer);
+		if (iter == m_accounts.end())
+			CATAPULT_THROW_RUNTIME_ERROR_1("account not found", m_committee.BlockProposer)
+		logProcess("block proposer ", m_committee.BlockProposer, iter->second.ExpirationTime, out);
+		for (const auto& key : m_committee.Cosigners) {
+			iter = m_accounts.find(key);
+			if (iter == m_accounts.end())
+				CATAPULT_THROW_RUNTIME_ERROR_1("account not found", key)
+			logProcess("committee member ", key, iter->second.ExpirationTime, out);
+		}
+
+		CATAPULT_LOG(debug) << out.str();
 	}
 
 	WeightedVotingCommitteeManagerV2::WeightedVotingCommitteeManagerV2(std::shared_ptr<cache::CommitteeAccountCollector> pAccountCollector)
@@ -172,13 +115,27 @@ namespace catapult { namespace chain {
 		return m_accounts;
 	}
 
+	int64_t WeightedVotingCommitteeManagerV2::calculateWeight(const state::AccountData& accountData, const config::CommitteeConfiguration& config) {
+		if (config.EnableEqualWeights)
+			return static_cast<int64_t>(config.WeightScaleFactor);
+
+		auto weight = static_cast<int64_t>(config.WeightScaleFactor / (1.0 + std::exp(static_cast<double>(-accountData.Activity) / config.ActivityScaleFactor)));
+		if (weight == 0)
+			weight = 1;
+
+		return weight;
+	}
+
 	HarvesterWeight WeightedVotingCommitteeManagerV2::weight(const Key& accountKey, const model::NetworkConfiguration& networkConfig) const {
+		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
+		if (config.EnableEqualWeights)
+			return HarvesterWeight{ .n = static_cast<int64_t>(config.WeightScaleFactor) };
+
 		std::lock_guard<std::mutex> guard(m_mutex);
 
 		auto iter = m_accounts.find(accountKey);
 		HarvesterWeight weight{};
-		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
-		weight.n = (m_accounts.end() != iter) ? CalculateWeight(iter->second, config) : 0;
+		weight.n = (m_accounts.end() != iter) ? calculateWeight(iter->second, config) : 0;
 
 		return weight;
 	}
@@ -213,9 +170,9 @@ namespace catapult { namespace chain {
 
 	void WeightedVotingCommitteeManagerV2::decreaseActivities(const config::CommitteeConfiguration& config) {
 		CATAPULT_LOG(trace) << "decreasing activities of previous committee accounts";
-		DecreaseActivity(m_committee.BlockProposer, m_accounts, config);
+		decreaseActivity(m_committee.BlockProposer, m_accounts, config);
 		for (const auto& cosigner : m_committee.Cosigners) {
-			DecreaseActivity(cosigner, m_accounts, config);
+			decreaseActivity(cosigner, m_accounts, config);
 		}
 	}
 
@@ -236,12 +193,9 @@ namespace catapult { namespace chain {
 		return {};
 	}
 
-	const Committee& WeightedVotingCommitteeManagerV2::selectCommittee(const model::NetworkConfiguration& networkConfig) {
-		std::lock_guard<std::mutex> guard(m_mutex);
-
+	std::multimap<int64_t, Key, std::greater<>> WeightedVotingCommitteeManagerV2::getCandidates(const model::NetworkConfiguration& networkConfig, const config::CommitteeConfiguration& config) {
 		auto previousRound = m_committee.Round;
-		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
-		LogAccountData(m_accounts, config);
+		logAccountData(m_accounts, config);
 		auto pLastBlockElement = lastBlockElementSupplier()();
 		if (previousRound < 0) {
 			m_phaseTime = pLastBlockElement->Block.committeePhaseTime();
@@ -283,13 +237,15 @@ namespace catapult { namespace chain {
 				}
 			}
 
-			auto weight = static_cast<double>(CalculateWeight(accountData, config));
+			auto weight = static_cast<double>(calculateWeight(accountData, config));
 			const auto& hash = previousRound < 0 ?
 				Hasher::calculateHash(m_hashes[key], pLastBlockElement->GenerationHash, key) :
 				Hasher::calculateHash(m_hashes[key]);
 			auto hit = *reinterpret_cast<const uint64_t*>(hash.data());
 			if (hit == 0u)
 				hit = 1u;
+			if (config.EnableEqualWeights)
+				weight *= utils::checked_cast<uint64_t, double>((pLastBlockElement->Block.Height + Height(1) - accountData.LastSigningBlockHeight).unwrap());
 			auto stake = static_cast<double>(accountData.EffectiveBalance.unwrap()) / static_cast<double>(hit);
 			auto fRate = stake * weight;
 			auto nRate = std::numeric_limits<int64_t>::max();
@@ -303,6 +259,15 @@ namespace catapult { namespace chain {
 
 			rates.emplace(nRate, key);
 		}
+
+		return rates;
+	}
+
+	const Committee& WeightedVotingCommitteeManagerV2::selectCommittee(const model::NetworkConfiguration& networkConfig) {
+		std::lock_guard<std::mutex> guard(m_mutex);
+
+		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
+		auto rates = getCandidates(networkConfig, config);
 
 		// The 21st account may be followed by the accounts with the same rate, select them all as candidates for
 		// the committee.
@@ -329,7 +294,7 @@ namespace catapult { namespace chain {
 			auto minGreed = static_cast<double>(config.MinGreedFeeInterest) / static_cast<double>(config.MinGreedFeeInterestDenominator);
 			greed = std::max(greed, minGreed);
 			auto hit = *reinterpret_cast<const uint64_t*>(m_hashes[key].data());
-			blockProposerCandidates.emplace(Rate(greed * static_cast<double>(hit), key), key);
+			blockProposerCandidates.emplace(Rate(static_cast<int64_t>(greed * static_cast<double>(hit)), key), key);
 		}
 
 		if (m_committee.Cosigners.size() < networkConfig.CommitteeSize)

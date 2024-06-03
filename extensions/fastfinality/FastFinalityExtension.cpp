@@ -4,7 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/WeightedVotingService.h"
+#include "src/weighted_voting/WeightedVotingService.h"
+#include "src/FastFinalityService.h"
+#include "src/FastFinalityShutdownService.h"
 #include "src/dbrb/TransactionSender.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "catapult/harvesting_core/ValidateHarvestingConfiguration.h"
@@ -20,7 +22,8 @@ namespace catapult { namespace fastfinality {
 			auto pTransactionSender = std::make_shared<dbrb::TransactionSender>();
 			bootstrapper.subscriptionManager().addPostBlockCommitSubscriber(std::make_unique<dbrb::BlockSubscriber>(pTransactionSender));
 			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingServiceRegistrar(harvestingConfig, dbrbConfig, pTransactionSender));
-			bootstrapper.extensionManager().addServiceRegistrar(CreateWeightedVotingShutdownServiceRegistrar(pTransactionSender));
+			bootstrapper.extensionManager().addServiceRegistrar(CreateFastFinalityServiceRegistrar(harvestingConfig, dbrbConfig, pTransactionSender));
+			bootstrapper.extensionManager().addServiceRegistrar(CreateFastFinalityShutdownServiceRegistrar(pTransactionSender));
 		}
 	}
 }}

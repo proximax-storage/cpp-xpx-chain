@@ -101,5 +101,7 @@ namespace catapult { namespace model {
 		SuperContract_v2 = 0x6E,
 		/// DriveContractCache facility code.
 		DriveContract = 0x6F,
+		/// Boot key / replicator facility code.
+		BootKeyReplicator = 0x70,
 	};
 }}

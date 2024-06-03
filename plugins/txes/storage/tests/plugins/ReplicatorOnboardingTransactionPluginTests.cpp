@@ -22,7 +22,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS ReplicatorOnboardingTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(ReplicatorOnboarding, config::ImmutableConfiguration, 1, 1,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(ReplicatorOnboarding, config::ImmutableConfiguration, 2, 2,)
 
 		const auto Generation_Hash = utils::ParseByteArray<GenerationHash>("CE076EF4ABFBC65B046987429E274EC31506D173E91BF102F16BEB7FB8176230");
 		constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
@@ -98,21 +98,57 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-        ASSERT_EQ(4u, sub.numNotifications());
+        ASSERT_EQ(6u, sub.numNotifications());
         auto i = 0u;
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(LiquidityProvider_Credit_Mosaic_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(LiquidityProvider_Credit_Mosaic_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Storage_Replicator_Onboarding_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Storage_Replicator_Onboarding_v2_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Storage_Replicator_Node_Boot_Key_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	// endregion
 
 	// region publish - replicator onboarding notification
 
+	PLUGIN_TEST(CanPublishMessageSignatureNotification) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<SignatureNotification<1>> sub;
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		auto pTransaction = CreateTransaction<TTraits>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+		// Assert:
+		ASSERT_EQ(1u, sub.numMatchingNotifications());
+		const auto& notification = sub.matchingNotifications()[0];
+		EXPECT_EQ(pTransaction->NodeBootKey, notification.Signer);
+		EXPECT_EQ(pTransaction->MessageSignature, notification.Signature);
+		EXPECT_EQ_MEMORY(pTransaction->Message.data(), notification.Data.pData, notification.Data.Size);
+		EXPECT_EQ(model::SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
+	}
+
+	PLUGIN_TEST(CanPublishReplicatorNodeBootKeyNotification) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<ReplicatorNodeBootKeyNotification<1>> sub;
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		auto pTransaction = CreateTransaction<TTraits>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+		// Assert:
+		ASSERT_EQ(1u, sub.numMatchingNotifications());
+		const auto& notification = sub.matchingNotifications()[0];
+        EXPECT_EQ(pTransaction->NodeBootKey, notification.NodeBootKey);
+        EXPECT_EQ(pTransaction->Signer, notification.ReplicatorKey);
+	}
+
 	PLUGIN_TEST(CanPublishReplicatorOnboardingNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ReplicatorOnboardingNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<ReplicatorOnboardingNotification<2>> sub;
 		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
 

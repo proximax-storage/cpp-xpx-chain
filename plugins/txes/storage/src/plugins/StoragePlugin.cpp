@@ -11,6 +11,8 @@
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCacheStorage.h"
+#include "src/cache/BootKeyReplicatorCache.h"
+#include "src/cache/BootKeyReplicatorCacheStorage.h"
 #include "src/plugins/PrepareBcDriveTransactionPlugin.h"
 #include "src/plugins/DataModificationTransactionPlugin.h"
 #include "src/plugins/DownloadTransactionPlugin.h"
@@ -26,6 +28,7 @@
 #include "src/plugins/VerificationPaymentTransactionPlugin.h"
 #include "src/plugins/DownloadApprovalTransactionPlugin.h"
 #include "src/plugins/EndDriveVerificationTransactionPlugin.h"
+#include "src/plugins/ReplicatorsCleanupTransactionPlugin.h"
 #include "src/state/StorageStateImpl.h"
 #include "src/state/DriveStateBrowserImpl.h"
 #include "src/validators/Validators.h"
@@ -82,6 +85,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateVerificationPaymentTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDownloadApprovalTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateReplicatorsCleanupTransactionPlugin());
 
 		auto transactionFeeCalculator = manager.transactionFeeCalculator();
 		setUnlimitedTransactionFee<model::DataModificationApprovalTransaction>(*transactionFeeCalculator);
@@ -120,6 +124,18 @@ namespace catapult { namespace plugins {
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("BC DRIVE C"), [&cache]() {
 				return cache.sub<cache::BcDriveCache>().createView(cache.height())->size();
+			});
+		});
+
+		manager.addCacheSupport<cache::BootKeyReplicatorCacheStorage>(
+			std::make_unique<cache::BootKeyReplicatorCache>(manager.cacheConfig(cache::BootKeyReplicatorCache::Name), pConfigHolder));
+
+		using BootKeyReplicatorCacheHandlersService = CacheHandlers<cache::BootKeyReplicatorCacheDescriptor>;
+		BootKeyReplicatorCacheHandlersService::Register<model::FacilityCode::BootKeyReplicator>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("BOOTKEYREP C"), [&cache]() {
+				return cache.sub<cache::BootKeyReplicatorCache>().createView(cache.height())->size();
 			});
 		});
 
@@ -183,6 +199,8 @@ namespace catapult { namespace plugins {
 		const auto& liquidityProviderValidator = manager.liquidityProviderExchangeValidator();
 		const auto& liquidityProviderObserver = manager.liquidityProviderExchangeObserver();
 
+		manager.addDbrbProcessUpdateListener(std::make_unique<observers::StorageDbrbProcessUpdateListener>(liquidityProviderObserver));
+
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateStoragePluginConfigValidator());
@@ -198,7 +216,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDataModificationApprovalRefundValidator())
 				.add(validators::CreateDataModificationCancelValidator())
 				.add(validators::CreateDriveClosureValidator())
-				.add(validators::CreateReplicatorOnboardingValidator())
+				.add(validators::CreateReplicatorOnboardingV1Validator())
+				.add(validators::CreateReplicatorOnboardingV2Validator())
 				.add(validators::CreateReplicatorOffboardingValidator())
 				.add(validators::CreateFinishDownloadValidator())
 				.add(validators::CreateDownloadPaymentValidator())
@@ -214,7 +233,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateStreamPaymentValidator())
 				.add(validators::CreateEndDriveVerificationValidator())
 				.add(validators::CreateServiceUnitTransferValidator())
-				.add(validators::CreateOwnerManagementProhibitionValidator());
+				.add(validators::CreateOwnerManagementProhibitionValidator())
+				.add(validators::CreateReplicatorNodeBootKeyValidator())
+				.add(validators::CreateReplicatorsCleanupValidator());
 		});
 
 		const auto& storageUpdatesListeners = manager.storageUpdatesListeners();
@@ -230,7 +251,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateDataModificationApprovalRefundObserver(liquidityProviderObserver))
 				.add(observers::CreateDataModificationCancelObserver(liquidityProviderObserver))
 				.add(observers::CreateDriveClosureObserver(liquidityProviderObserver, storageUpdatesListeners))
-				.add(observers::CreateReplicatorOnboardingObserver())
+				.add(observers::CreateReplicatorOnboardingV1Observer())
+				.add(observers::CreateReplicatorOnboardingV2Observer())
 				.add(observers::CreateReplicatorOffboardingObserver())
 				.add(observers::CreateDownloadPaymentObserver())
 				.add(observers::CreateDataModificationSingleApprovalObserver())
@@ -245,7 +267,9 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateEndDriveVerificationObserver(liquidityProviderObserver))
 				.add(observers::CreatePeriodicStoragePaymentObserver(liquidityProviderObserver, storageUpdatesListeners))
 				.add(observers::CreatePeriodicDownloadChannelPaymentObserver())
-				.add(observers::CreateOwnerManagementProhibitionObserver());
+				.add(observers::CreateOwnerManagementProhibitionObserver())
+				.add(observers::CreateReplicatorNodeBootKeyObserver())
+				.add(observers::CreateReplicatorsCleanupObserver(liquidityProviderObserver));
 		});
 	}
 }}

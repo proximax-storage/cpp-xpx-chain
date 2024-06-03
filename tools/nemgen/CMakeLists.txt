@@ -7,18 +7,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 catapult_executable(${TARGET_NAME})
 target_link_libraries(${TARGET_NAME}
 	${TARGET_NAME}.blockhashes
-	catapult.tools
 	catapult.plugins.config
-	catapult.plugins.mosaic
-	catapult.plugins.namespace
-	catapult.plugins.transfer
-	catapult.tools
-	catapult.sdk
 	catapult.plugins.mosaic
 	catapult.plugins.namespace
 	catapult.plugins.transfer
 	catapult.plugins.upgrade
 	catapult.plugins.committee
+	catapult.tools
+	catapult.sdk
 	catapult.crypto
 	catapult.config
 	catapult.config_holder)

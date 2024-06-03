@@ -6,31 +6,38 @@
 
 #include "Observers.h"
 #include "src/cache/DbrbViewCache.h"
-#include "src/cache/DbrbViewFetcherImpl.h"
 #include "catapult/chain/CommitteeManager.h"
+#include "catapult/observers/DbrbProcessUpdateListener.h"
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(DbrbProcessPruning, model::BlockNotification<1>, [](const auto& notification, const ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			return;
+	using Notification = model::BlockNotification<1>;
 
-		auto maxTransactionLifeTime = Timestamp(context.Config.Network.MaxTransactionLifetime.millis());
-		auto blockTargetTime = chain::CommitteePhaseCount * context.Config.Network.MinCommitteePhaseTime.millis();
-		uint64_t blockInterval = maxTransactionLifeTime.unwrap() / blockTargetTime;
-		if (context.Height.unwrap() % blockInterval != 0 || blockInterval < context.Height.unwrap() || context.Timestamp < maxTransactionLifeTime)
-			return;
+	DECLARE_OBSERVER(DbrbProcessPruning, Notification)(const std::vector<std::unique_ptr<DbrbProcessUpdateListener>>& updateListeners) {
+		return MAKE_OBSERVER(DbrbProcessPruning, Notification, ([&updateListeners](const Notification& notification, ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				return;
 
-		auto& cache = context.Cache.sub<cache::DbrbViewCache>();
-		auto processIds = cache.processIds();
-		auto pruningBoundary = context.Timestamp - maxTransactionLifeTime;
-		for (const auto& processId : processIds) {
-			auto iter = cache.find(processId);
-			const auto& entry = iter.get();
-			if (entry.expirationTime() < pruningBoundary) {
-				CATAPULT_LOG(debug) << "removing DBRB process " << processId;
-				cache.remove(processId);
+			auto maxTransactionLifeTime = Timestamp(context.Config.Network.MaxTransactionLifetime.millis());
+			auto blockTargetTime = chain::CommitteePhaseCount * context.Config.Network.MinCommitteePhaseTime.millis();
+			uint64_t blockInterval = maxTransactionLifeTime.unwrap() / blockTargetTime;
+			if (context.Height.unwrap() % blockInterval != 0 || blockInterval < context.Height.unwrap() || context.Timestamp < maxTransactionLifeTime)
+				return;
+
+			auto& cache = context.Cache.sub<cache::DbrbViewCache>();
+			auto processIds = cache.processIds();
+			const auto& config = context.Config.Network.GetPluginConfiguration<config::DbrbConfiguration>();
+			auto lifetime = config.DbrbProcessLifetimeAfterExpiration.millis();
+			auto pruningBoundary = (lifetime > 0 ? context.Timestamp - Timestamp(lifetime) : context.Timestamp - maxTransactionLifeTime);
+			for (const auto& processId : processIds) {
+				auto iter = cache.find(processId);
+				const auto& entry = iter.get();
+				if (entry.expirationTime() < pruningBoundary) {
+					cache.remove(processId);
+					for (const auto& pListener : updateListeners)
+						pListener->OnDbrbProcessRemoved(context, processId);
+				}
 			}
-		}
-	});
+        }))
+	};
 }}

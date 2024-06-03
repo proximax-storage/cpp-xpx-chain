@@ -108,7 +108,7 @@ namespace catapult { namespace utils {
 	void RefundDepositsOnDriveClosure(
 			const Key& driveKey,
 			const std::set<Key>& replicators,
-			const observers::ObserverContext& context) {
+			observers::ObserverContext& context) {
 		auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
 		auto& accountCache = context.Cache.template sub<cache::AccountStateCache>();
 		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
@@ -123,6 +123,7 @@ namespace catapult { namespace utils {
 
 		const auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		auto& statementBuilder = context.StatementBuilder();
 
 		// Storage deposit equals to the drive size.
 		const auto storageDepositRefundAmount = Amount(driveEntry.size());
@@ -142,6 +143,20 @@ namespace catapult { namespace utils {
 
 			driveState.Balances.debit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
 			replicatorState.Balances.credit(streamingMosaicId, streamingDepositRefundAmount, context.Height);
+
+			// Adding Replicator Deposit Refund receipts.
+			{
+				const auto receiptType = model::Receipt_Type_Replicator_Deposit_Refund;
+				const model::StorageReceipt receipt(receiptType, Key(), replicatorKey,
+													{ storageMosaicId, storageMosaicId }, storageDepositRefundAmount);
+				statementBuilder.addTransactionReceipt(receipt);
+			}
+			{
+				const auto receiptType = model::Receipt_Type_Replicator_Deposit_Refund;
+				const model::StorageReceipt receipt(receiptType, driveKey, replicatorKey,
+													{ streamingMosaicId, streamingMosaicId }, streamingDepositRefundAmount);
+				statementBuilder.addTransactionReceipt(receipt);
+			}
 		}
 	}
 
@@ -164,6 +179,11 @@ namespace catapult { namespace utils {
 
 		auto voidStateIter = getVoidState(context);
 		auto& voidState = voidStateIter.get();
+
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
+		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		auto& statementBuilder = context.StatementBuilder();
 
 		// Storage deposit equals to the drive size.
 		const auto storageDepositRefundAmount = Amount(driveEntry.size());
@@ -204,6 +224,20 @@ namespace catapult { namespace utils {
 			liquidityProvider->debitMosaics(context, driveKey, replicatorKey,
 										   config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 										   streamingDepositRefundAmount);
+
+			// Adding Replicator Deposit Refund receipts.
+			{
+				const auto receiptType = model::Receipt_Type_Replicator_Deposit_Refund;
+				const model::StorageReceipt receipt(receiptType, Key(), replicatorKey,
+													{ storageMosaicId, currencyMosaicId }, storageDepositRefundAmount);
+				statementBuilder.addTransactionReceipt(receipt);
+			}
+			{
+				const auto receiptType = model::Receipt_Type_Replicator_Deposit_Refund;
+				const model::StorageReceipt receipt(receiptType, driveKey, replicatorKey,
+													{ streamingMosaicId, currencyMosaicId }, streamingDepositRefundAmount);
+				statementBuilder.addTransactionReceipt(receipt);
+			}
 		}
 	}
 
@@ -481,15 +515,17 @@ namespace catapult { namespace utils {
 
 	void PopulateDriveWithReplicators(
 			const Key& driveKey,
-			const observers::ObserverContext& context,
+			observers::ObserverContext& context,
 			std::mt19937& rng) {
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
 		auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+
 		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		auto& statementBuilder = context.StatementBuilder();
 
 		auto driveIt = driveCache.find(driveKey);
 		auto& driveEntry = driveIt.get();
@@ -586,10 +622,25 @@ namespace catapult { namespace utils {
 			auto& replicatorState = replicatorStateIter.get();
 			const auto storageDepositAmount = Amount(driveSize);
 			const auto streamingDepositAmount = Amount(2 * driveSize);
+
 			replicatorState.Balances.debit(storageMosaicId, storageDepositAmount);
 			replicatorState.Balances.debit(streamingMosaicId, streamingDepositAmount);
 			voidState.Balances.credit(storageMosaicId, storageDepositAmount);
 			driveState.Balances.credit(streamingMosaicId, streamingDepositAmount);
+
+			// Adding Replicator Deposit receipts.
+			{
+				const auto receiptType = model::Receipt_Type_Replicator_Deposit;
+				const model::StorageReceipt receipt(receiptType, replicatorKey, Key(),
+													{ storageMosaicId, storageMosaicId }, storageDepositAmount);
+				statementBuilder.addTransactionReceipt(receipt);
+			}
+			{
+				const auto receiptType = model::Receipt_Type_Replicator_Deposit;
+				const model::StorageReceipt receipt(receiptType, replicatorKey, driveKey,
+													{ streamingMosaicId, streamingMosaicId }, streamingDepositAmount);
+				statementBuilder.addTransactionReceipt(receipt);
+			}
 		}
 
 		for (const auto& replicatorKey: driveEntry.replicators()) {
@@ -619,7 +670,7 @@ namespace catapult { namespace utils {
 
 	void AssignReplicatorsToQueuedDrives(
 			const std::set<Key>& replicatorKeys,
-			const observers::ObserverContext& context,
+			observers::ObserverContext& context,
 			std::mt19937& rng) {
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
@@ -632,6 +683,8 @@ namespace catapult { namespace utils {
 
 		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		auto& statementBuilder = context.StatementBuilder();
+
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
 		auto keyExtractor = [=, &accountStateCache](const Key& key) {
@@ -711,10 +764,25 @@ namespace catapult { namespace utils {
 					auto& driveState = driveStateIter.get();
 					const auto storageDepositAmount = Amount(driveSize);
 					const auto streamingDepositAmount = Amount(2 * driveSize);
+
 					replicatorState.Balances.debit(storageMosaicId, storageDepositAmount);
 					replicatorState.Balances.debit(streamingMosaicId, streamingDepositAmount);
 					voidState.Balances.credit(storageMosaicId, storageDepositAmount);
 					driveState.Balances.credit(streamingMosaicId, streamingDepositAmount);
+
+					// Adding Replicator Deposit receipts.
+					{
+						const auto receiptType = model::Receipt_Type_Replicator_Deposit;
+						const model::StorageReceipt receipt(receiptType, replicatorKey, Key(),
+															{ storageMosaicId, storageMosaicId }, storageDepositAmount);
+						statementBuilder.addTransactionReceipt(receipt);
+					}
+					{
+						const auto receiptType = model::Receipt_Type_Replicator_Deposit;
+						const model::StorageReceipt receipt(receiptType, replicatorKey, driveKey,
+															{ streamingMosaicId, streamingMosaicId }, streamingDepositAmount);
+						statementBuilder.addTransactionReceipt(receipt);
+					}
 
 					// Keeping updated DrivePriority in newQueue if the drive still requires any replicators
 					if (driveEntry.replicators().size() < driveEntry.replicatorCount()) {
