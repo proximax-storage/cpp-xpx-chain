@@ -11,7 +11,7 @@ namespace catapult { namespace observers {
 
 	using Notification = model::ReplicatorTreeRebuildNotification<1>;
 
-	DECLARE_OBSERVER(ReplicatorTreeReset, Notification)() {
+	DECLARE_OBSERVER(ReplicatorTreeRebuild, Notification)() {
 		return MAKE_OBSERVER(ReplicatorTreeRebuild, Notification, ([](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorTreeRebuild)");

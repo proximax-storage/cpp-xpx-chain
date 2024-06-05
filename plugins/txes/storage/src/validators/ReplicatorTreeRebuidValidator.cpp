@@ -11,7 +11,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::ReplicatorTreeRebuildNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(ReplicatorTreeReset, ([](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(ReplicatorTreeRebuild, ([](const Notification& notification, const ValidatorContext& context) {
 		if (!notification.ReplicatorCount)
 			return Failure_Storage_Empty_Replicator_List;
 
