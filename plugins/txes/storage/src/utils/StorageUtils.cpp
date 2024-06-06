@@ -798,8 +798,8 @@ namespace catapult { namespace utils {
 			}
 			originalQueue = std::move(newQueue);
 		}
-		for (const auto& replicatorKey: replicatorKeys) {
-			treeAdapter.insert(replicatorKey);
-		}
+//		for (const auto& replicatorKey: replicatorKeys) {
+//			treeAdapter.insert(replicatorKey);
+//		}
 	}
 }}
