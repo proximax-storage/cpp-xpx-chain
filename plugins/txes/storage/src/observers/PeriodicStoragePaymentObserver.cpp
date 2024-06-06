@@ -29,6 +29,8 @@ namespace catapult { namespace observers {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
+		  	CATAPULT_LOG(debug) << "Entered PeriodicStoragePayment observer.";
+
 			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
 			auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
 			auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
