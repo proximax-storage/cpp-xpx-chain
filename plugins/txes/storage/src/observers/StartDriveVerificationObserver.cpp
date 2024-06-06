@@ -20,6 +20,8 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StartDriveVerification)");
 
+		CATAPULT_LOG(debug) << "Entered StartDriveVerification observer.";
+
 		uint64_t verificationInterval = pluginConfig.VerificationInterval.seconds();
 
 		auto pLastBlockElement = state.lastBlockElementSupplier()();
