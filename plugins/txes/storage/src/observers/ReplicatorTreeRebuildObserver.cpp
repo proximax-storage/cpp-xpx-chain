@@ -33,6 +33,11 @@ namespace catapult { namespace observers {
 				queueCache.insert(entry);
 			}
 
+		  	// Quick workaround to allow issuing this transaction when there are no replicators in the Replicator cache.
+			// If the first key in ReplicatorKeysPtr is a zero key, the list of keys is considered empty.
+			if (*notification.ReplicatorKeysPtr == Key())
+				return;
+
 			// Resetting nodes stored in the replicator entries.
 			auto pReplicatorKey = notification.ReplicatorKeysPtr;
 			for (auto i = 0u; i < notification.ReplicatorCount; ++i, ++pReplicatorKey) {
