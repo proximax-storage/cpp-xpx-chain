@@ -203,7 +203,7 @@ namespace catapult { namespace validators {
 	DEFINE_STORAGE_RESULT(Replicator_Is_Bound_With_Boot_Key, 62);
 
 	// Validation failed because there are modifications in progress
-	DEFINE_STORAGE_RESULT(Modification_In_Progress, 60);
+	DEFINE_STORAGE_RESULT(Modification_In_Progress, 63);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

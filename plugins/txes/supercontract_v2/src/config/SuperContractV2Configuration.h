@@ -27,7 +27,7 @@ namespace catapult { namespace config {
 		uint64_t MaxExecutionPayment;
 
 		/// Maximum transaction mosaics size.
-		uint16_t MaxServicePaymentsSize;
+		uint8_t MaxServicePaymentsSize;
 
 		/// Maximum auto executions to be prepaid
 		uint64_t MaxAutoExecutions;

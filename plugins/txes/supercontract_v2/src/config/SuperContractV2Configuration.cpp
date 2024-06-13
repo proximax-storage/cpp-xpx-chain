@@ -28,7 +28,7 @@ namespace catapult { namespace config {
 		config.MaxExecutionPayment = 1000000U;
 		TRY_LOAD_CHAIN_PROPERTY(MaxRowSize);
 
-		config.MaxServicePaymentsSize = 512U;
+		config.MaxServicePaymentsSize = 128U;
 		TRY_LOAD_CHAIN_PROPERTY(MaxServicePaymentsSize);
 
 		config.MaxAutoExecutions = 100000U;

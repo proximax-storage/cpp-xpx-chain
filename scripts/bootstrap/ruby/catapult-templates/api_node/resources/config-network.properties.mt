@@ -257,6 +257,6 @@ dbrbProcessLifetimeAfterExpiration = 168h
 enabled = true
 maxRowSize = 100
 maxExecutionPayment = 10'000'000'000
-maxServicePaymentsSize = 512
+maxServicePaymentsSize = 128
 maxAutoExecutions = 10000
 automaticExecutionsDeadline = 5760

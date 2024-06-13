@@ -19,7 +19,7 @@ namespace catapult { namespace config {
 						"",
 						{
 							{ "enabled", "true" },
-							{ "maxServicePaymentsSize", "512" },
+							{ "maxServicePaymentsSize", "128" },
 							{ "maxRowSize", "4096" },
 							{ "maxExecutionPayment", "1000000" },
 							{ "maxAutoExecutions", "100000" },
@@ -59,7 +59,7 @@ namespace catapult { namespace config {
 			static void AssertCustom(const SuperContractV2Configuration& config) {
 				// Assert:
 				EXPECT_TRUE(config.Enabled);
-				EXPECT_EQ(512, config.MaxServicePaymentsSize);
+				EXPECT_EQ(128, config.MaxServicePaymentsSize);
 				EXPECT_EQ(4096, config.MaxRowSize);
 				EXPECT_EQ(1000000, config.MaxExecutionPayment);
 				EXPECT_EQ(100000, config.MaxAutoExecutions);
