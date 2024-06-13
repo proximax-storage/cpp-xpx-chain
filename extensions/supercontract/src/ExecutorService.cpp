@@ -257,11 +257,17 @@ namespace catapult::contract {
 				start();
 			}
 
-			for (const auto& pair : m_alreadyAddedContracts) {
-				if (actualContracts.find(pair.first) == actualContracts.end()) {
-					removeContract(pair.first);
+			for (auto it = m_alreadyAddedContracts.begin(); it != m_alreadyAddedContracts.end();) {
+				if (actualContracts.find(it->first) == actualContracts.end()) {
+					it = m_alreadyAddedContracts.erase(it);
+					m_pExecutor->removeContract(it->first.array(), sirius::contract::RemoveRequest {});
+
+					continue;
 				}
+
+				++it;
 			}
+
 			for (const auto& contractKey : actualContracts) {
 				if (m_alreadyAddedContracts.find(contractKey) == m_alreadyAddedContracts.end()) {
 					addContract(contractKey, height);
@@ -345,6 +351,7 @@ namespace catapult::contract {
 			}
 		}
 
+		// TODO maybe delete
 		void removeContract(const Key& contractKey) {
 			m_alreadyAddedContracts.erase(contractKey);
 			m_pExecutor->removeContract(contractKey.array(), sirius::contract::RemoveRequest {});
