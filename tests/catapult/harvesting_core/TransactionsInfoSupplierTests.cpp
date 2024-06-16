@@ -65,7 +65,7 @@ namespace catapult { namespace harvesting {
 					, m_executionConfig(m_pConfigHolder->Config())
 					, m_utFacadeFactory(m_catapultCache, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(utCacheSize))
-					, m_supplier(CreateTransactionsInfoSupplier(strategy, *m_pUtCache))
+					, m_supplier(CreateTransactionsInfoSupplier(strategy, *m_pUtCache, [](){ return false; }))
 			{}
 
 		public:

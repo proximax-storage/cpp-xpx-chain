@@ -44,4 +44,23 @@ namespace catapult { namespace handlers {
 			rangeHandler({ std::move(range), context.key() });
 		};
 	}
+
+	/// Creates a push handler that forwards a received entity range to \a rangeHandler in batches
+	/// of size \a batchSize, given a \a registry composed of supported transaction types.
+	template<typename TEntity>
+	auto CreateBatchedPushEntityHandler(const model::TransactionRegistry& registry, size_t batchSize, const RangeHandler<TEntity>& rangeHandler) {
+		return [rangeHandler, &registry, batchSize](const ionet::Packet& packet, const auto& context) {
+			auto ranges = ionet::ExtractEntityBatchesFromPacket<TEntity>(packet, batchSize, [&registry](const auto& entity) {
+				return IsSizeValid(entity, registry);
+			});
+			if (ranges.empty()) {
+				CATAPULT_LOG(warning) << "rejecting empty range: " << packet;
+				return;
+			}
+
+			CATAPULT_LOG(trace) << "received valid " << packet;
+			for (auto i = 0u; i < ranges.size(); ++i)
+				rangeHandler({ std::move(ranges[i]), context.key() });
+		};
+	}
 }}

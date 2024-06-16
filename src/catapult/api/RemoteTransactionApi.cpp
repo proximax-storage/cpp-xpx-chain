@@ -31,9 +31,14 @@ namespace catapult { namespace api {
 
 		struct UtTraits : public RegistryDependentTraits<model::Transaction> {
 		public:
-			using ResultType = model::TransactionRange;
+			using ResultType = std::vector<model::TransactionRange>;
 			static constexpr auto Packet_Type = ionet::PacketType::Pull_Transactions;
 			static constexpr auto Friendly_Name = "pull unconfirmed transactions";
+
+			UtTraits(const model::TransactionRegistry& registry, size_t batchSize)
+				: RegistryDependentTraits<model::Transaction>(registry)
+				, m_batchSize(batchSize)
+			{}
 
 			static auto CreateRequestPacketPayload(BlockFeeMultiplier minFeeMultiplier, model::ShortHashRange&& knownShortHashes) {
 				ionet::PacketPayloadBuilder builder(Packet_Type);
@@ -46,9 +51,12 @@ namespace catapult { namespace api {
 			using RegistryDependentTraits::RegistryDependentTraits;
 
 			bool tryParseResult(const ionet::Packet& packet, ResultType& result) const {
-				result = ionet::ExtractEntitiesFromPacket<model::Transaction>(packet, *this);
+				result = ionet::ExtractEntityBatchesFromPacket<model::Transaction>(packet, m_batchSize, *this);
 				return !result.empty() || sizeof(ionet::PacketHeader) == packet.Size;
 			}
+
+		private:
+			size_t m_batchSize;
 		};
 
 		// endregion
@@ -68,8 +76,9 @@ namespace catapult { namespace api {
 		public:
 			FutureType<UtTraits> unconfirmedTransactions(
 					BlockFeeMultiplier minFeeMultiplier,
-					model::ShortHashRange&& knownShortHashes) const override {
-				return m_impl.dispatch(UtTraits(m_registry), minFeeMultiplier, std::move(knownShortHashes));
+					model::ShortHashRange&& knownShortHashes,
+					size_t batchSize) const override {
+				return m_impl.dispatch(UtTraits(m_registry, batchSize), minFeeMultiplier, std::move(knownShortHashes));
 			}
 
 		private:

@@ -480,13 +480,13 @@ namespace catapult { namespace fastfinality {
 			bool isBlockProducer = (blockProducerIter != accounts.end());
 			fastFinalityData.setBlockProducer(isBlockProducer ? &(*blockProducerIter) : nullptr);
 
-			CATAPULT_LOG(debug) << "block producer selection result: is block producer = " << isBlockProducer << ", round time = " << round.RoundTimeMillis << "ms";
+			CATAPULT_LOG(debug) << "block producer selection result: is block producer = " << isBlockProducer << ", round start " << GetTimeString(round.RoundStart) << ", round time = " << round.RoundTimeMillis << "ms";
 			auto now = state.timeSupplier()();
 			bool skipBlockProducing = ((now.unwrap() - roundStart.unwrap()) > round.RoundTimeMillis / chain::CommitteePhaseCount);
 			if (isBlockProducer && !skipBlockProducing) {
 				pFsmShared->processEvent(GenerateBlock{});
 			} else {
-				if (skipBlockProducing)
+				if (isBlockProducer)
 					CATAPULT_LOG(debug) << "skipping block producing, current time is too far in the round";
 				pFsmShared->processEvent(WaitForBlock{});
 			}
@@ -545,7 +545,12 @@ namespace catapult { namespace fastfinality {
 			pBlockHeader->Beneficiary = fastFinalityData.beneficiary();
 			pBlockHeader->setRound(round.Round);
 			pBlockHeader->setCommitteePhaseTime(round.RoundTimeMillis / 4u);
-			auto pBlock = utils::UniqueToShared(blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock));
+
+			std::atomic_bool stopTransactionFetching = false;
+			DelayAction(pFsmWeak, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis / 2, [&stopTransactionFetching] { stopTransactionFetching = true; });
+			auto pBlock = utils::UniqueToShared(blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock, [&stopTransactionFetching] { return stopTransactionFetching.load(); }));
+			pFsmShared->timer().cancel();
+
 			if (pBlock) {
 				model::SignBlockHeader(*fastFinalityData.blockProducer(), *pBlock);
 				auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);

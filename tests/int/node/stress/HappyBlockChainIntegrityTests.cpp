@@ -81,6 +81,7 @@ namespace catapult { namespace local {
 			nodeConfig.ApiPort = port + 1;
 			nodeConfig.FeeInterest = 1;
 			nodeConfig.FeeInterestDenominator = 2;
+			nodeConfig.TransactionBatchSize = 50;
 
 			// 2. specify custom network settings
 			UpdateBlockChainConfiguration(const_cast<model::NetworkConfiguration&>(config.Network));

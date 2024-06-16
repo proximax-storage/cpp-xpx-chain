@@ -86,7 +86,8 @@ namespace catapult { namespace sync {
 						return config::GetMinFeeMultiplier(pConfigHolder->Config());
 					},
 					[&cache = state.utCache()]() { return cache.view().shortHashes(); },
-					state.hooks().transactionRangeConsumerFactory()(Sync_Source));
+					state.hooks().transactionRangeConsumerFactory()(Sync_Source),
+					state.config().Node.TransactionBatchSize);
 
 			thread::Task task;
 			task.Name = "pull unconfirmed transactions task";

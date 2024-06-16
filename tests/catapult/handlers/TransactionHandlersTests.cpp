@@ -57,7 +57,7 @@ namespace catapult { namespace handlers {
 					ionet::ServerPacketHandlers& handlers,
 					const model::TransactionRegistry& registry,
 					const TransactionRangeHandler& rangeHandler) {
-				return RegisterPushTransactionsHandler(handlers, registry, rangeHandler);
+				return RegisterPushTransactionsHandler(handlers, registry, rangeHandler, 10);
 			}
 		};
 	}

@@ -27,10 +27,11 @@ namespace catapult { namespace handlers {
 	void RegisterPushTransactionsHandler(
 			ionet::ServerPacketHandlers& handlers,
 			const model::TransactionRegistry& registry,
-			const TransactionRangeHandler& transactionRangeHandler) {
+			const TransactionRangeHandler& transactionRangeHandler,
+			size_t batchSize) {
 		handlers.registerHandler(
 				ionet::PacketType::Push_Transactions,
-				CreatePushEntityHandler<model::Transaction>(registry, transactionRangeHandler));
+				CreateBatchedPushEntityHandler<model::Transaction>(registry, batchSize, transactionRangeHandler));
 	}
 
 	namespace {

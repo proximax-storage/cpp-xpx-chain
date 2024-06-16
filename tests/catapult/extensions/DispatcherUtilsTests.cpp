@@ -145,7 +145,7 @@ namespace catapult { namespace extensions {
 		// Act:
 		task.Callback();
 
-		// Assert: batched elements were pushed { (1, 2), (3) }
-		EXPECT_EQ(2u, pDispatcher->numAddedElements());
+		// Assert: batched elements were pushed { (1), (2), (3) }
+		EXPECT_EQ(3u, pDispatcher->numAddedElements());
 	}
 }}

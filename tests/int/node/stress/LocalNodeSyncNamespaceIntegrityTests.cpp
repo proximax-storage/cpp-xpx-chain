@@ -161,7 +161,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanRegisterNamespace) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunRegisterNamespaceTest(context));
@@ -172,7 +174,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanRegisterNamespaceWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunRegisterNamespaceTest(context));
@@ -245,7 +249,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanExpireNamespace) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireNamespaceTest(context));
@@ -256,7 +262,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanExpireNamespaceWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireNamespaceTest(context));
@@ -292,7 +300,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanPruneNamespace) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunPruneNamespaceTest(context));
@@ -303,7 +313,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanPruneNamespaceWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunPruneNamespaceTest(context));
@@ -382,7 +394,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanRegisterAndDeactivateNamespace_SingleChainPart) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunRegisterAndDeactivateNamespaceTest(context));
@@ -396,7 +410,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanRegisterAndDeactivateNamespaceWithStateHashEnabled_SingleChainPart) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunRegisterAndDeactivateNamespaceTest(context));
@@ -498,7 +514,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanExpireAndRollbackNamespace) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireAndRollbackNamespaceTest(context));
@@ -509,7 +527,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanExpireAndRollbackNamespaceWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireAndRollbackNamespaceTest(context));
@@ -539,7 +559,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanPruneAndRollbackNamespace) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunPruneAndRollbackNamespaceTest(context));
@@ -550,7 +572,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanPruneAndRollbackNamespaceWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunPruneAndRollbackNamespaceTest(context));
