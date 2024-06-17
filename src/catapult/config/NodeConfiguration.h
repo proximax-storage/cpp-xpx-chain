@@ -147,6 +147,9 @@ namespace catapult { namespace config {
 		/// Maximum number of nodes to track in memory.
 		uint32_t MaxTrackedNodes;
 
+		/// Maximum number of transactions put into transaction range consumer at a time.
+		uint16_t TransactionBatchSize;
+
 	public:
 		/// Local node configuration.
 		struct LocalSubConfiguration {

@@ -566,7 +566,7 @@ namespace catapult { namespace fastfinality {
 			pBlockHeader->Beneficiary = committeeData.beneficiary();
 			pBlockHeader->setRound(committeeRound.Round);
 			pBlockHeader->setCommitteePhaseTime(committeeRound.PhaseTimeMillis);
-			auto pBlock = utils::UniqueToShared(blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock));
+			auto pBlock = utils::UniqueToShared(blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock, []() { return false; }));
 			if (pBlock) {
 				model::SignBlockHeader(*committeeData.blockProposer(), *pBlock);
 				committeeData.addValidatedProposedBlockSignature(pBlock->Signature);

@@ -78,7 +78,9 @@ namespace catapult { namespace config {
 							{ "incomingSecurityModes", "None, Signed" },
 
 							{ "maxCacheDatabaseWriteBatchSize", "17KB" },
-							{ "maxTrackedNodes", "222" }
+							{ "maxTrackedNodes", "222" },
+
+							{ "transactionBatchSize", "50" },
 						}
 					},
 					{
@@ -174,6 +176,8 @@ namespace catapult { namespace config {
 				EXPECT_EQ(utils::FileSize::FromMegabytes(0), config.MaxCacheDatabaseWriteBatchSize);
 				EXPECT_EQ(0u, config.MaxTrackedNodes);
 
+				EXPECT_EQ(0u, config.TransactionBatchSize);
+
 				EXPECT_EQ("", config.Local.Host);
 				EXPECT_EQ("", config.Local.FriendlyName);
 				EXPECT_EQ(0u, config.Local.Version);
@@ -240,6 +244,8 @@ namespace catapult { namespace config {
 
 				EXPECT_EQ(utils::FileSize::FromKilobytes(17), config.MaxCacheDatabaseWriteBatchSize);
 				EXPECT_EQ(222u, config.MaxTrackedNodes);
+
+				EXPECT_EQ(50u, config.TransactionBatchSize);
 
 				EXPECT_EQ("alice.com", config.Local.Host);
 				EXPECT_EQ("a GREAT node", config.Local.FriendlyName);

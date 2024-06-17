@@ -87,7 +87,8 @@ namespace catapult { namespace observers {
 				const TNotification& notification,
 				ObserverContext& context,
 				const std::shared_ptr<TWeightedVotingCommitteeManager>& pCommitteeManager,
-				const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
+				const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector,
+				bool exitOnInvalidCommitteeRound) {
 			auto& committeeCache = context.Cache.sub<cache::CommitteeCache>();
 			const auto& networkConfig = context.Config.Network;
 			auto maxRollbackBlocks = networkConfig.MaxRollbackBlocks;
@@ -113,7 +114,9 @@ namespace catapult { namespace observers {
 			auto committee = pCommitteeManager->committee();
 			if (committee.Round != notification.Round) {
 				CATAPULT_LOG(error) << "invalid committee round " << committee.Round << " (expected " << notification.Round << ")";
-				return;
+				CATAPULT_THROW_RUNTIME_ERROR_2("invalid committee round", committee.Round, notification.Round)
+				if (exitOnInvalidCommitteeRound)
+					return;
 			}
 			CATAPULT_LOG(debug) << "block " << context.Height << ": committee round " << notification.Round;
 
@@ -188,7 +191,7 @@ namespace catapult { namespace observers {
 			const std::shared_ptr<chain::WeightedVotingCommitteeManagerV2>& pCommitteeManager,
 			const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
 		return MAKE_OBSERVER(UpdateHarvestersV2, model::BlockCommitteeNotification<2>, ([pCommitteeManager, pAccountCollector](const auto& notification, auto& context) {
-			UpdateHarvestersV2(notification, context, pCommitteeManager, pAccountCollector);
+			UpdateHarvestersV2(notification, context, pCommitteeManager, pAccountCollector, true);
 		}));
 	}
 
@@ -196,7 +199,7 @@ namespace catapult { namespace observers {
 			const std::shared_ptr<chain::WeightedVotingCommitteeManagerV3>& pCommitteeManager,
 			const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
 		return MAKE_OBSERVER(UpdateHarvestersV3, model::BlockCommitteeNotification<3>, ([pCommitteeManager, pAccountCollector](const auto& notification, auto& context) {
-			UpdateHarvestersV2(notification, context, pCommitteeManager, pAccountCollector);
+			UpdateHarvestersV2(notification, context, pCommitteeManager, pAccountCollector, false);
 		}));
 	}
 }}

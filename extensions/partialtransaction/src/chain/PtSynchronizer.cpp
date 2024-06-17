@@ -47,6 +47,10 @@ namespace catapult { namespace chain {
 				m_transactionInfosConsumer(std::move(transactionInfos));
 			}
 
+			static size_t size(const partialtransaction::CosignedTransactionInfos& range) {
+				return range.size();
+			}
+
 		private:
 			partialtransaction::ShortHashPairsSupplier m_shortHashPairsSupplier;
 			partialtransaction::CosignedTransactionInfosConsumer m_transactionInfosConsumer;

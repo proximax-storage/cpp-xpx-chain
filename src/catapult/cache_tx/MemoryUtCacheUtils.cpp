@@ -22,14 +22,17 @@
 
 namespace catapult { namespace cache {
 
-	std::vector<const model::TransactionInfo*> GetFirstTransactionInfoPointers(const MemoryUtCacheView& utCacheView, uint32_t count) {
+	std::vector<const model::TransactionInfo*> GetFirstTransactionInfoPointers(
+			const MemoryUtCacheView& utCacheView,
+			uint32_t count,
+			const StopTransactionFetchingFunc& stopCallback) {
 		std::vector<const model::TransactionInfo*> transactionInfoPointers;
 		transactionInfoPointers.reserve(std::min<size_t>(utCacheView.size(), count));
 
 		if (0 != count) {
-			utCacheView.forEach([count, &transactionInfoPointers](const auto& transactionInfo) {
+			utCacheView.forEach([count, &transactionInfoPointers, stopCallback](const auto& transactionInfo) {
 				transactionInfoPointers.push_back(&transactionInfo);
-				return transactionInfoPointers.size() != count;
+				return transactionInfoPointers.size() != count && !stopCallback();
 			});
 		}
 
@@ -39,16 +42,17 @@ namespace catapult { namespace cache {
 	std::vector<const model::TransactionInfo*> GetFirstTransactionInfoPointers(
 			const MemoryUtCacheView& utCacheView,
 			uint32_t count,
-			const predicate<const model::TransactionInfo&>& filter) {
+			const predicate<const model::TransactionInfo&>& filter,
+			const StopTransactionFetchingFunc& stopCallback) {
 		std::vector<const model::TransactionInfo*> transactionInfoPointers;
 		transactionInfoPointers.reserve(std::min<size_t>(utCacheView.size(), count));
 
 		if (0 != count) {
-			utCacheView.forEach([count, filter, &transactionInfoPointers](const auto& transactionInfo) {
+			utCacheView.forEach([count, filter, &transactionInfoPointers, stopCallback](const auto& transactionInfo) {
 				if (filter(transactionInfo))
 					transactionInfoPointers.push_back(&transactionInfo);
 
-				return transactionInfoPointers.size() != count;
+				return transactionInfoPointers.size() != count && !stopCallback();
 			});
 		}
 
@@ -59,13 +63,15 @@ namespace catapult { namespace cache {
 			const MemoryUtCacheView& utCacheView,
 			uint32_t count,
 			const predicate<const model::TransactionInfo*, const model::TransactionInfo*>& sortComparer,
-			const predicate<const model::TransactionInfo&>& filter) {
+			const predicate<const model::TransactionInfo&>& filter,
+			const StopTransactionFetchingFunc& stopCallback) {
+
 		// 1. load all UTs
 		std::vector<const model::TransactionInfo*> allTransactionInfoPointers;
 		allTransactionInfoPointers.reserve(utCacheView.size());
-		utCacheView.forEach([&allTransactionInfoPointers](const auto& transactionInfo) {
+		utCacheView.forEach([&allTransactionInfoPointers, stopCallback](const auto& transactionInfo) {
 			allTransactionInfoPointers.push_back(&transactionInfo);
-			return true;
+			return !stopCallback();
 		});
 
 		// 2. sort by predicate (use stable_sort to prefer older when otherwise equal)
@@ -75,7 +81,7 @@ namespace catapult { namespace cache {
 		std::vector<const model::TransactionInfo*> candidateTransactionInfoPointers;
 		candidateTransactionInfoPointers.reserve(std::min<size_t>(utCacheView.size(), count));
 		for (const auto* pTransactionInfo : allTransactionInfoPointers) {
-			if (count == candidateTransactionInfoPointers.size())
+			if (count == candidateTransactionInfoPointers.size() || stopCallback())
 				break;
 
 			if (filter(*pTransactionInfo))

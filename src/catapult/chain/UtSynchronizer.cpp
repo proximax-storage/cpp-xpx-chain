@@ -34,33 +34,46 @@ namespace catapult { namespace chain {
 			explicit UtTraits(
 					const MinFeeMultiplierSupplier& minFeeMultiplierSupplier,
 					const ShortHashesSupplier& shortHashesSupplier,
-					const handlers::TransactionRangeHandler& transactionRangeConsumer)
+					const handlers::TransactionRangeHandler& transactionRangeConsumer,
+					size_t batchSize)
 					: m_minFeeMultiplierSupplier(minFeeMultiplierSupplier)
 					, m_shortHashesSupplier(shortHashesSupplier)
 					, m_transactionRangeConsumer(transactionRangeConsumer)
+					, m_batchSize(batchSize)
 			{}
 
 		public:
-			thread::future<model::TransactionRange> apiCall(const RemoteApiType& api) const {
-				return api.unconfirmedTransactions(m_minFeeMultiplierSupplier(), m_shortHashesSupplier());
+			thread::future<std::vector<model::TransactionRange>> apiCall(const RemoteApiType& api) const {
+				return api.unconfirmedTransactions(m_minFeeMultiplierSupplier(), m_shortHashesSupplier(), m_batchSize);
 			}
 
-			void consume(model::TransactionRange&& range, const Key& sourcePublicKey) const {
-				m_transactionRangeConsumer(model::AnnotatedTransactionRange(std::move(range), sourcePublicKey));
+			void consume(std::vector<model::TransactionRange>&& ranges, const Key& sourcePublicKey) const {
+				for (auto& range : ranges)
+					m_transactionRangeConsumer(model::AnnotatedTransactionRange(std::move(range), sourcePublicKey));
+			}
+
+			static size_t size(const std::vector<model::TransactionRange>& ranges) {
+				auto entityCount = 0u;
+				for (const auto& range : ranges)
+					entityCount += range.size();
+
+				return entityCount;
 			}
 
 		private:
 			MinFeeMultiplierSupplier m_minFeeMultiplierSupplier;
 			ShortHashesSupplier m_shortHashesSupplier;
 			handlers::TransactionRangeHandler m_transactionRangeConsumer;
+			size_t m_batchSize;
 		};
 	}
 
 	RemoteNodeSynchronizer<api::RemoteTransactionApi> CreateUtSynchronizer(
 			const MinFeeMultiplierSupplier& minFeeMultiplierSupplier,
 			const ShortHashesSupplier& shortHashesSupplier,
-			const handlers::TransactionRangeHandler& transactionRangeConsumer) {
-		auto traits = UtTraits(minFeeMultiplierSupplier, shortHashesSupplier, transactionRangeConsumer);
+			const handlers::TransactionRangeHandler& transactionRangeConsumer,
+			size_t batchSize) {
+		auto traits = UtTraits(minFeeMultiplierSupplier, shortHashesSupplier, transactionRangeConsumer, batchSize);
 		auto pSynchronizer = std::make_shared<EntitiesSynchronizer<UtTraits>>(std::move(traits));
 		return CreateRemoteNodeSynchronizer(pSynchronizer);
 	}

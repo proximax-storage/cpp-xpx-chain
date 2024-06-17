@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "TransactionsInfoSupplier.h"
 #include "catapult/model/Block.h"
 #include "catapult/model/TransactionSelectionStrategy.h"
 #include "catapult/model/EntityPtr.h"
@@ -31,11 +32,11 @@ namespace catapult {
 namespace catapult { namespace harvesting {
 
 	/// Generates a block from a seed block header given a maximum number of transactions.
-	using BlockGenerator = std::function<model::UniqueEntityPtr<model::Block> (const model::Block&, uint32_t)>;
+	using BlockGenerator = std::function<model::UniqueEntityPtr<model::Block> (const model::Block&, uint32_t, const cache::StopTransactionFetchingFunc& stopCallback)>;
 
 	/// Creates a default block generator around \a utFacadeFactory and \a utCache for specified transaction \a strategy.
 	BlockGenerator CreateHarvesterBlockGenerator(
-			model::TransactionSelectionStrategy strategy,
-			const HarvestingUtFacadeFactory& utFacadeFactory,
-			const cache::MemoryUtCache& utCache);
+		model::TransactionSelectionStrategy strategy,
+		const HarvestingUtFacadeFactory& utFacadeFactory,
+		const cache::MemoryUtCache& utCache);
 }}

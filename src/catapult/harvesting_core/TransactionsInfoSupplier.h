@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/cache_tx/MemoryUtCacheUtils.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/TransactionSelectionStrategy.h"
 
@@ -47,5 +48,6 @@ namespace catapult { namespace harvesting {
 	/// Creates a default transactions info supplier around\a utCache for specified transaction \a strategy.
 	TransactionsInfoSupplier CreateTransactionsInfoSupplier(
 			model::TransactionSelectionStrategy strategy,
-			const cache::MemoryUtCache& utCache);
+			const cache::MemoryUtCache& utCache,
+			const cache::StopTransactionFetchingFunc& stopCallback);
 }}

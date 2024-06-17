@@ -60,7 +60,7 @@ namespace catapult { namespace api {
 			}
 
 			static auto Invoke(const RemoteTransactionApi& api) {
-				return api.unconfirmedTransactions(BlockFeeMultiplier(17), KnownShortHashes());
+				return api.unconfirmedTransactions(BlockFeeMultiplier(17), KnownShortHashes(), 10);
 			}
 
 			static auto CreateValidResponsePacket() {
@@ -83,11 +83,11 @@ namespace catapult { namespace api {
 				EXPECT_EQ_MEMORY(packet.Data() + sizeof(BlockFeeMultiplier), KnownHashesValues().data(), Request_Data_Size);
 			}
 
-			static void ValidateResponse(const ionet::Packet& response, const model::TransactionRange& transactions) {
-				ASSERT_EQ(3u, transactions.size());
+			static void ValidateResponse(const ionet::Packet& response, const std::vector<model::TransactionRange>& transactions) {
+				ASSERT_EQ(3u, transactions[0].size());
 
 				auto pExpectedData = response.Data();
-				auto parsedIter = transactions.cbegin();
+				auto parsedIter = transactions[0].cbegin();
 				for (auto i = 0u; i < transactions.size(); ++i) {
 					std::string message = "comparing transactions at " + std::to_string(i);
 					const auto& expectedTransaction = reinterpret_cast<const TransactionType&>(*pExpectedData);

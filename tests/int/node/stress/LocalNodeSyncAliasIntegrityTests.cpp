@@ -91,7 +91,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanApplyAlias) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunApplyAliasTest(context);
@@ -102,7 +104,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanApplyAliasWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunApplyAliasTest(context);
@@ -206,7 +210,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanRollbackAlias) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRollbackAliasTest(context);
@@ -217,7 +223,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanRollbackAliasWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRollbackAliasTest(context);

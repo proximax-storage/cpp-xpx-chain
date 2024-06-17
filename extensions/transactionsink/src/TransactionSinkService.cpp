@@ -40,9 +40,10 @@ namespace catapult { namespace transactionsink {
 				// add handlers
 				auto pushTransactionsCallback = CreateTransactionPushEntityCallback(state.hooks());
 				handlers::RegisterPushTransactionsHandler(
-						state.packetHandlers(),
-						state.pluginManager().transactionRegistry(),
-						pushTransactionsCallback);
+					state.packetHandlers(),
+					state.pluginManager().transactionRegistry(),
+					pushTransactionsCallback,
+					state.config().Node.TransactionBatchSize);
 			}
 		};
 	}

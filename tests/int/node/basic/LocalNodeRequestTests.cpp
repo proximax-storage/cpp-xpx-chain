@@ -28,7 +28,14 @@ namespace catapult { namespace local {
 #define TEST_CLASS LocalNodeRequestTests
 
 	namespace {
-		using TestContext = test::PeerLocalNodeTestContext;
+		class TestContext : public test::PeerLocalNodeTestContext {
+		public:
+			TestContext(test::NodeFlag nodeFlag = test::NodeFlag::Regular)
+				: test::PeerLocalNodeTestContext(nodeFlag, test::NonNemesisTransactionPlugins::None, [](auto& config) {
+					const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+				})
+			{}
+		};
 
 		uint64_t ReadIndexFileValue(const std::string& indexFilePath) {
 			return io::IndexFile(indexFilePath).get();

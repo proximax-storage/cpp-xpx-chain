@@ -423,6 +423,44 @@ namespace catapult { namespace ionet {
 
 	// region ExtractFixedSizeStructuresFromPacket
 
+	TEST(TEST_CLASS, CannotExtractTransactionBatches) {
+		// Arrange:
+		std::vector<model::UniqueEntityPtr<mocks::MockTransaction>> transactions;
+		uint32_t payloadSize = 0;
+		for (auto i = 0u; i < 7; ++i) {
+			auto pTransaction = mocks::CreateMockTransaction(test::RandomByte());
+			payloadSize += pTransaction->Size;
+			transactions.push_back(std::move(pTransaction));
+		}
+
+		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(payloadSize);
+		auto pData = pPacket->Data();
+		for (const auto& pTransaction : transactions) {
+			std::memcpy(static_cast<void*>(pData), pTransaction.get(), pTransaction->Size);
+			pData += pTransaction->Size;
+		}
+
+		// Act:
+		auto ranges = ExtractEntityBatchesFromPacket<model::Transaction>(*pPacket, 5, [](const auto&) { return true; });
+
+		// Assert:
+		ASSERT_EQ(2, ranges.size());
+
+		auto firstBatch = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(ranges[0]));
+		ASSERT_EQ(5, firstBatch.size());
+		for (auto i = 0u; i < 5; ++i)
+			EXPECT_EQ_MEMORY(transactions[i].get(), firstBatch[i].get(), transactions[i]->Size);
+
+		auto secondBatch = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(ranges[1]));
+		ASSERT_EQ(2, secondBatch.size());
+		for (auto i = 0u; i < 2; ++i)
+			EXPECT_EQ_MEMORY(transactions[i + 5].get(), secondBatch[i].get(), transactions[i + 5]->Size);
+	}
+
+	// endregion
+
+	// region ExtractFixedSizeStructuresFromPacket
+
 	namespace {
 		constexpr auto Fixed_Size = 62;
 		using FixedSizeStructure = std::array<uint8_t, Fixed_Size>;

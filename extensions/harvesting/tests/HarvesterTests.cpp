@@ -132,7 +132,7 @@ namespace catapult { namespace harvesting {
 			}
 
 			std::unique_ptr<Harvester> CreateHarvester(const config::BlockchainConfiguration& config) {
-				return CreateHarvester(config, [](const auto& blockHeader, auto) {
+				return CreateHarvester(config, [](const auto& blockHeader, auto, const auto&) {
 					auto pBlock = utils::MakeUniqueWithSize<model::Block>(sizeof(model::Block));
 					std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
 					return pBlock;
@@ -405,7 +405,7 @@ namespace catapult { namespace harvesting {
 		HarvesterContext context;
 		const_cast<uint32_t&>(context.Config.Network.MaxTransactionsPerBlock) = 123;
 		std::vector<std::pair<Key, uint32_t>> capturedParams;
-		auto pHarvester = context.CreateHarvester(context.Config, [&capturedParams](const auto& blockHeader, auto maxTransactionsPerBlock) {
+		auto pHarvester = context.CreateHarvester(context.Config, [&capturedParams](const auto& blockHeader, auto maxTransactionsPerBlock, const auto&) {
 			capturedParams.emplace_back(blockHeader.Signer, maxTransactionsPerBlock);
 			auto pBlock = test::GenerateEmptyRandomBlock();
 			pBlock->Signer = blockHeader.Signer;
@@ -433,7 +433,7 @@ namespace catapult { namespace harvesting {
 		HarvesterContext context;
 		const_cast<uint32_t&>(context.Config.Network.MaxTransactionsPerBlock) = 123;
 		std::vector<std::pair<Key, uint32_t>> capturedParams;
-		auto pHarvester = context.CreateHarvester(context.Config, [&capturedParams](const auto& blockHeader, auto maxTransactionsPerBlock) {
+		auto pHarvester = context.CreateHarvester(context.Config, [&capturedParams](const auto& blockHeader, auto maxTransactionsPerBlock, const auto&) {
 			capturedParams.emplace_back(blockHeader.Signer, maxTransactionsPerBlock);
 			return nullptr;
 		});
