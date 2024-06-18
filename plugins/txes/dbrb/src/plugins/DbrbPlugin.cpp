@@ -54,13 +54,14 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([&dbrbViewFetcher = *pDbrbViewFetcher](auto& builder) {
 		  	builder
 				.add(validators::CreateAddDbrbProcessValidator())
-				.add(validators::CreateRemoveDbrbProcessByNetworkValidator(dbrbViewFetcher));
+				.add(validators::CreateRemoveDbrbProcessByNetworkValidator(dbrbViewFetcher))
+				.add(validators::CreateNodeBootKeyValidator());
 		});
 
-		manager.addObserverHook([](auto& builder) {
+		manager.addObserverHook([&dbrbProcessUpdateListeners = manager.dbrbProcessUpdateListeners()](auto& builder) {
 			builder
 				.add(observers::CreateAddDbrbProcessObserver())
-				.add(observers::CreateDbrbProcessPruningObserver())
+				.add(observers::CreateDbrbProcessPruningObserver(dbrbProcessUpdateListeners))
 				.add(observers::CreateRemoveDbrbProcessObserver());
 		});
 	}

@@ -35,6 +35,9 @@ namespace catapult { namespace validators {
 		/// Voter's signature of node removal is invalid.
 		DEFINE_DBRB_RESULT(Node_Removal_Invalid_Signature, 7);
 
+		/// Boot key is not registered.
+		DEFINE_DBRB_RESULT(Process_Is_Not_Registered, 8);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 	}}
 #endif

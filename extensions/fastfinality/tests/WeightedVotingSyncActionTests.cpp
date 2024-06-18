@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "fastfinality/src/WeightedVotingFsm.h"
+#include "fastfinality/src/weighted_voting/WeightedVotingFsm.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockCommitteeManager.h"
@@ -45,14 +45,11 @@ namespace catapult { namespace fastfinality {
 		public:
 			explicit MockDbrbProcess()
 				: DbrbProcess(
-					{},
 					crypto::KeyPair::FromPrivate({}),
-					{},
-					std::make_shared<mocks::MockPacketWriters>(),
+					dbrb::CreateMessageSender({}, std::make_shared<mocks::MockPacketWriters>(), {}, false, nullptr, mocks::MockDbrbViewFetcher()),
 					test::CreateStartedIoThreadPool(1),
 					nullptr,
-					mocks::MockDbrbViewFetcher(),
-					dbrb::DbrbConfiguration::Uninitialized())
+					mocks::MockDbrbViewFetcher())
 			{}
 
 			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) override { return true; }
@@ -100,7 +97,7 @@ namespace catapult { namespace fastfinality {
 						pThis->m_counter++;
 						auto dbrbConfig = dbrb::DbrbConfiguration::Uninitialized();
 						const_cast<dbrb::DbrbConfiguration&>(dbrbConfig).IsDbrbProcess = true;
-						auto defaultCheckLocalChainAction = fastfinality::CreateDefaultCheckLocalChainAction(
+						auto defaultCheckLocalChainAction = fastfinality::CreateWeightedVotingCheckLocalChainAction(
 							pThis->m_pFsm,
 							[pThis]() -> std::vector<RemoteNodeState> {
 								auto states = pThis->m_states;

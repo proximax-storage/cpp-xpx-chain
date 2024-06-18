@@ -121,6 +121,14 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(EnableHarvesterExpiration);
 		config.EnableRemovingDbrbProcessOnShutdown = false;
 		TRY_LOAD_CHAIN_PROPERTY(EnableRemovingDbrbProcessOnShutdown);
+		config.EnableDbrbSharding = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableDbrbSharding);
+		config.DbrbShardSize = 6;
+		TRY_LOAD_CHAIN_PROPERTY(DbrbShardSize);
+		config.EnableDbrbFastFinality = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableDbrbFastFinality);
+		config.CheckNetworkHeightInterval = 10;
+		TRY_LOAD_CHAIN_PROPERTY(CheckNetworkHeightInterval);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

@@ -5,6 +5,8 @@
 **/
 
 #include "StorageTestUtils.h"
+
+#include <utility>
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -188,9 +190,9 @@ namespace catapult { namespace test {
     }
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(
-            Hash256 id,
-            Key consumer,
-			Key drive,
+            const Hash256& id,
+            const Key& consumer,
+			const Key& drive,
 			uint64_t downloadSize,
 			uint16_t downloadApprovalCount,
 			std::vector<Key> listOfPublicKeys,
@@ -200,8 +202,8 @@ namespace catapult { namespace test {
 		entry.setDrive(drive);
 		entry.setDownloadSize(downloadSize);
 		entry.setDownloadApprovalCountLeft(downloadApprovalCount);
-		entry.listOfPublicKeys() = listOfPublicKeys;
-		entry.cumulativePayments() = cumulativePayments;
+		entry.listOfPublicKeys() = std::move(listOfPublicKeys);
+		entry.cumulativePayments() = std::move(cumulativePayments);
 		entry.setQueuePrevious(GenerateRandomByteArray<Key>());
 		entry.setQueueNext(GenerateRandomByteArray<Key>());
 		entry.setLastDownloadApprovalInitiated(Timestamp(Random16()));
@@ -256,11 +258,15 @@ namespace catapult { namespace test {
     }
 
     state::ReplicatorEntry CreateReplicatorEntry(
-            Key key,
-            Amount capacity,
+            const Key& key,
+			VersionType version,
             uint16_t drivesCount,
-			uint16_t downloadChannelCount) {
+			uint16_t downloadChannelCount,
+			const Key& nodeBootKey) {
         state::ReplicatorEntry entry(key);
+		entry.setVersion(version);
+		if (version > 1)
+			entry.setNodeBootKey(nodeBootKey);
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
         for (auto i = 0u; i < downloadChannelCount; ++i)
@@ -269,13 +275,25 @@ namespace catapult { namespace test {
         return entry;
     }
 
-    void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry) {
-        EXPECT_EQ(expectedEntry.key(), entry.key());
+    void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& actualEntry) {
+        EXPECT_EQ(expectedEntry.key(), actualEntry.key());
+        EXPECT_EQ(expectedEntry.version(), actualEntry.version());
+        EXPECT_EQ(expectedEntry.nodeBootKey(), actualEntry.nodeBootKey());
 
-		AssertEqualDriveInfos(expectedEntry.drives(), entry.drives());
+		AssertEqualDriveInfos(expectedEntry.drives(), actualEntry.drives());
     }
 
-	void AddReplicators(cache::CatapultCache& cache, std::vector<crypto::KeyPair>& replicatorKeyPairs, const uint8_t count, const Height height) {
+    state::BootKeyReplicatorEntry CreateBootKeyReplicatorEntry(const Key& nodeBootKey, const Key& replicatorKey) {
+        return state::BootKeyReplicatorEntry(nodeBootKey, replicatorKey);
+    }
+
+    void AssertEqualBootKeyReplicatorData(const state::BootKeyReplicatorEntry& expectedEntry, const state::BootKeyReplicatorEntry& actualEntry) {
+		EXPECT_EQ(expectedEntry.version(), actualEntry.version());
+        EXPECT_EQ(expectedEntry.nodeBootKey(), actualEntry.nodeBootKey());
+        EXPECT_EQ(expectedEntry.replicatorKey(), actualEntry.replicatorKey());
+    }
+
+	void AddReplicators(cache::CatapultCache& cache, std::vector<crypto::KeyPair>& replicatorKeyPairs, const uint8_t count, const Height& height) {
 		auto delta = cache.createDelta();
 		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
 		const auto newSize = replicatorKeyPairs.size() + count;
@@ -293,7 +311,7 @@ namespace catapult { namespace test {
 		auto* const pCommonData = new uint8_t[size];
 		MutableRawBuffer mutableBuffer(pCommonData, size);
 		test::FillWithRandomData(mutableBuffer);
-		return RawBuffer(mutableBuffer.pData, mutableBuffer.Size);
+		return { mutableBuffer.pData, mutableBuffer.Size };
 	}
 
 	void PopulateReplicatorKeyPairs(std::vector<crypto::KeyPair>& replicatorKeyPairs, uint16_t replicatorCount) {

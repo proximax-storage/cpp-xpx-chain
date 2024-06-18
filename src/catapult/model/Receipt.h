@@ -247,6 +247,39 @@ namespace catapult { namespace model {
 		catapult::Amount AmountGiveReturned;
 	};
 
+	/// Binary layout for a storage receipt.
+	struct StorageReceipt : public Receipt {
+	public:
+		/// Creates a receipt around \a receiptType, \a sender, \a recipient, \a mosaicsPair and \a sentAmount.
+		StorageReceipt(
+				ReceiptType receiptType,
+				const Key& sender,
+				const Key& recipient,
+				std::pair<MosaicId, MosaicId> mosaicsPair,
+				catapult::Amount sentAmount)
+				: Sender(sender)
+				, Recipient(recipient)
+				, MosaicsPair(mosaicsPair)
+				, SentAmount(sentAmount) {
+			Size = sizeof(StorageReceipt);
+			Version = 1;
+			Type = receiptType;
+		}
+
+	public:
+		/// Sender public key.
+		Key Sender;
+
+		/// Recipient public key.
+		Key Recipient;
+
+		/// Mosaic IDs which are being sent by Sender and received by Recipient respectively.
+		std::pair<MosaicId, MosaicId> MosaicsPair;
+
+		/// Amount of the mosaic that is being sent.
+		catapult::Amount SentAmount;
+	};
+
 #pragma pack(pop)
 
 /// Defines constants for a receipt with \a TYPE and \a VERSION.

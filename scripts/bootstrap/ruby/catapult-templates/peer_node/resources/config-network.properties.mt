@@ -31,7 +31,7 @@ enableUnconfirmedTransactionMinFeeValidation = true
 enableUndoBlock = false
 enableBlockSync = false
 
-enableWeightedVoting = true
+enableWeightedVoting = false
 committeeSize = 3
 committeeApproval = 1
 committeePhaseTime = 5s
@@ -50,6 +50,12 @@ dbrbRegistrationGracePeriod = 1h
 
 enableHarvesterExpiration = true
 enableRemovingDbrbProcessOnShutdown = true
+
+enableDbrbSharding = false
+dbrbShardSize = 6
+
+enableDbrbFastFinality = true
+checkNetworkHeightInterval = 10
 
 [bootstrap.harvesters]
 
@@ -91,6 +97,8 @@ minGreedFeeInterestDenominator = 10
 
 activityScaleFactor = 1000000000
 weightScaleFactor = 1000000000000000000
+
+enableEqualWeights = true
 
 [plugin:catapult.plugins.config]
 
@@ -198,7 +206,7 @@ maxValueSize = 1024
 
 [plugin:catapult.plugins.liquidityprovider]
 enabled = true
-managerPublicKeys = E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21
+managerPublicKeys = FA04036C14B76B01FAC19F6522C487509691FC5566B7CD95BC0B2207A3F3D162
 maxWindowSize = 10
 percentsDigitsAfterDot = 2
 
@@ -221,6 +229,8 @@ shardSize = 20
 verificationExpirationCoefficient = 0.24
 verificationExpirationConstant = 10
 
+enableReplicatorBootKeyBinding = true
+
 [plugin:catapult.plugins.streaming]
 
 enabled = true
@@ -238,3 +248,6 @@ offerSortPolicy = 1
 [plugin:catapult.plugins.dbrb]
 
 enabled = true
+
+# 1 week = 7 days = 168 hours
+dbrbProcessLifetimeAfterExpiration = 168h

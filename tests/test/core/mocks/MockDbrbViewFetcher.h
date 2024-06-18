@@ -17,8 +17,12 @@ namespace catapult { namespace mocks {
 		explicit MockDbrbViewFetcher() = default;
 
 	public:
-		dbrb::ViewData getView(Timestamp timestamp) const override {}
-		Timestamp getExpirationTime(const dbrb::ProcessId& processId) const override {}
+		dbrb::ViewData getView(Timestamp timestamp) const override {
+			return {};
+		}
+		Timestamp getExpirationTime(const dbrb::ProcessId& processId) const override {
+			return Timestamp();
+		}
 		void logAllProcesses() const override {}
 		void logView(const dbrb::ViewData& view) const override {}
 	};

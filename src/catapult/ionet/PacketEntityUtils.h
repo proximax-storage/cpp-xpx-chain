@@ -79,4 +79,46 @@ namespace catapult { namespace ionet {
 				? model::EntityRange<TStructure>()
 				: model::EntityRange<TStructure>::CopyFixed(packet.Data(), numStructures);
 	}
+
+	/// Extracts batches of entities from \a packet with a validity check (\a isValid).
+	/// \note If the packet is invalid and/or contains partial entities, the returned result will be empty.
+	template<typename TEntity, typename TIsValidPredicate>
+	std::vector<model::EntityRange<TEntity>> ExtractEntityBatchesFromPacket(const Packet& packet, size_t batchSize, TIsValidPredicate isValid) {
+		if (!batchSize)
+			CATAPULT_THROW_RUNTIME_ERROR("batch size is not set")
+
+		auto dataSize = CalculatePacketDataSize(packet);
+		auto offsets = ExtractEntityOffsets<TEntity>({ packet.Data(), dataSize }, isValid);
+		std::vector<model::EntityRange<TEntity>> ranges;
+		if (offsets.empty())
+			return ranges;
+
+		if (offsets.size() <= batchSize) {
+			ranges.template emplace_back(model::EntityRange<TEntity>::CopyVariable(packet.Data(), dataSize, offsets));
+			return ranges;
+		}
+
+		auto offsetCount = offsets.size();
+		for (auto i = 0u; i < offsetCount; i += batchSize) {
+			auto endIndex = i + batchSize;
+			auto startOffset = offsets[i];
+
+			size_t endOffset;
+			if (endIndex >= offsetCount) {
+				endIndex = offsetCount;
+				endOffset = dataSize;
+			} else {
+				endOffset = offsets[endIndex];
+			}
+
+			std::vector<size_t> subOffsets;
+			subOffsets.reserve(batchSize);
+			for (auto k = i; k < endIndex; ++k)
+				subOffsets.push_back(offsets[k] - startOffset);
+
+			ranges.template emplace_back(model::EntityRange<TEntity>::CopyVariable(packet.Data() + startOffset, endOffset - startOffset, subOffsets));
+		}
+
+		return ranges;
+	}
 }}

@@ -6,7 +6,6 @@
 
 #pragma  once
 #include "DbrbViewFetcher.h"
-#include "catapult/ionet/Packet.h"
 #include "catapult/types.h"
 #include <algorithm>
 #include <map>
@@ -17,15 +16,14 @@
 
 namespace catapult { namespace dbrb {
 
-	using Payload = std::shared_ptr<ionet::Packet>;
-	using CertificateType = std::map<ProcessId, Signature>;
-
 	void Write(uint8_t*& pBuffer, const utils::RawBuffer& data);
 	void Write(uint8_t*& pBuffer, uint8_t byte);
+	void Write(uint8_t*& pBuffer, uint32_t value);
 	struct View;
 	void Write(uint8_t*& pBuffer, const View& view);
 	void Write(uint8_t*& pBuffer, const Payload& payload);
 	void Write(uint8_t*& pBuffer, const CertificateType& certificate);
+	void Write(uint8_t*& pBuffer, const DbrbTreeView& view);
 
 	template<typename T>
 	T Read(const uint8_t*& pBuffer);
@@ -41,6 +39,8 @@ namespace catapult { namespace dbrb {
 	Payload Read(const uint8_t*& pBuffer);
 	template<>
 	CertificateType Read(const uint8_t*& pBuffer);
+	template<>
+	DbrbTreeView Read(const uint8_t*& pBuffer);
 
 	Hash256 CalculateHash(const std::vector<RawBuffer>& buffers);
 	Hash256 CalculatePayloadHash(const Payload& payload);

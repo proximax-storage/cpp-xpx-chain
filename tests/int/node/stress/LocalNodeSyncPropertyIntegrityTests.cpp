@@ -155,7 +155,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanAddProperty) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunAddPropertyTest(context));
@@ -166,7 +168,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanAddPropertyWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunAddPropertyTest(context));
@@ -215,7 +219,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanRemoveProperty) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunRemovePropertyTest(context));
@@ -226,7 +232,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanRemovePropertyWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunRemovePropertyTest(context));
@@ -287,7 +295,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanAddAndRemoveProperty_SingleChainPart) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Property, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunAddAndRemovePropertyTest(context));
@@ -298,7 +308,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanAddAndRemovePropertyWithStateHashEnabled_SingleChainPart) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property);
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Property, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunAddAndRemovePropertyTest(context));

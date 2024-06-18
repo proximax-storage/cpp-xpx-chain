@@ -406,8 +406,8 @@ namespace catapult { namespace cache {
 				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder,
 				predicate<const PluginConfig&> cacheEnabledPredicate)
 			: HeightMixin()
-			, m_pConfigHolder(pConfigHolder)
-			, m_cacheEnabledPredicate(cacheEnabledPredicate)
+			, m_pConfigHolder(std::move(pConfigHolder))
+			, m_cacheEnabledPredicate(std::move(cacheEnabledPredicate))
 		{}
 
 	public:

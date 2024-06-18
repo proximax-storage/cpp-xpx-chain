@@ -36,7 +36,8 @@ namespace catapult { namespace handlers {
 	void RegisterPushTransactionsHandler(
 			ionet::ServerPacketHandlers& handlers,
 			const model::TransactionRegistry& registry,
-			const TransactionRangeHandler& transactionRangeHandler);
+			const TransactionRangeHandler& transactionRangeHandler,
+			size_t batchSize);
 
 	/// Prototype for a function that retrieves unconfirmed transactions given a set of short hashes.
 	using UtRetriever = std::function<UnconfirmedTransactions (BlockFeeMultiplier, const utils::ShortHashesSet&)>;

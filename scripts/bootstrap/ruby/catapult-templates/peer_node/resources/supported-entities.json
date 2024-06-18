@@ -3,7 +3,7 @@
 		{
 			"name": "Block",
 			"type": "33091",
-			"supportedVersions": [3, 4, 5]
+			"supportedVersions": [3, 4, 5, 6]
 		},
 		{
 			"name": "Nemesis_Block",
@@ -323,7 +323,7 @@
 		{
 			"name": "replicatorOnboarding",
 			"type": "18018",
-			"supportedVersions": [1]
+			"supportedVersions": [2]
 		},
 		{
 			"name": "storagePayment",
@@ -383,6 +383,11 @@
 		{
 			"name": "removeDbrbProcessByNetwork",
 			"type": "17260",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "replicatorsCleanup",
+			"type": "16482",
 			"supportedVersions": [1]
 		}
 	]

@@ -10,7 +10,7 @@
 namespace catapult { namespace config {
 
 	DbrbConfiguration DbrbConfiguration::Uninitialized() {
-		return DbrbConfiguration();
+		return {};
 	}
 
 	DbrbConfiguration DbrbConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
@@ -20,7 +20,10 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(Enabled);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 1);
+#define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
+		config.DbrbProcessLifetimeAfterExpiration = utils::TimeSpan();
+		TRY_LOAD_CHAIN_PROPERTY(DbrbProcessLifetimeAfterExpiration);
+#undef TRY_LOAD_CHAIN_PROPERTY
 
 		return config;
 	}

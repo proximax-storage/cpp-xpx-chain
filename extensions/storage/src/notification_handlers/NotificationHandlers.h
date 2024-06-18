@@ -40,7 +40,9 @@ namespace catapult { namespace notification_handlers {
 
 	DECLARE_HANDLER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
-	DECLARE_HANDLER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+	DECLARE_HANDLER(ReplicatorOnboardingV1, model::ReplicatorOnboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(ReplicatorOnboardingV2, model::ReplicatorOnboardingNotification<2>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(Verification, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 

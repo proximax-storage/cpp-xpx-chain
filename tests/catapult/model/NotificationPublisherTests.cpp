@@ -165,7 +165,7 @@ namespace catapult { namespace model {
 			// Assert:
 			EXPECT_EQ(static_cast<NetworkIdentifier>(0x90), notification.NetworkIdentifier);
 			EXPECT_EQ(pBlock->Type, notification.EntityType);
-			EXPECT_EQ(0x05u, notification.EntityVersion);
+			EXPECT_EQ(0x06u, notification.EntityVersion);
 		});
 	}
 
@@ -299,7 +299,7 @@ namespace catapult { namespace model {
 		pBlock->setTransactionPayloadSize(0u);
 
 		// Act:
-		PublishOne<BlockCommitteeNotification<2>>(*pBlock, [&block = *pBlock, numCosignatures](const auto& notification) {
+		PublishOne<BlockCommitteeNotification<3>>(*pBlock, [&block = *pBlock, numCosignatures](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(10, notification.Round);
 			EXPECT_EQ(2, notification.FeeInterest);
@@ -340,7 +340,7 @@ namespace catapult { namespace model {
 			auto i = 0u;
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[i++]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Core_Block_Committee_v2_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Core_Block_Committee_v3_Notification, sub.notificationTypes()[i++]);
 			for (auto k = 0u; k < numCosignatures; ++k)
 				EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);

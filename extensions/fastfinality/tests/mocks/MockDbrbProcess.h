@@ -11,6 +11,7 @@
 #include "catapult/dbrb/DbrbDefinitions.h"
 #include "catapult/dbrb/Messages.h"
 #include "catapult/ionet/NodeContainer.h"
+#include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
 
@@ -22,11 +23,10 @@ namespace catapult { namespace mocks {
 
 	public:
 		explicit MockDbrbProcess(
-				const dbrb::ProcessId& processId,
 				bool fakeDissemination = false,
 				std::weak_ptr<net::PacketWriters> pWriters = std::weak_ptr<mocks::MockPacketWriters>(),
 				const ionet::NodeContainer& nodeContainer = {},
-				const crypto::KeyPair& keyPair = crypto::KeyPair::FromPrivate({}),
+				const crypto::KeyPair& keyPair = crypto::KeyPair::FromPrivate(test::GenerateRandomPrivateKey()),
 				const std::shared_ptr<thread::IoThreadPool>& pPool = test::CreateStartedIoThreadPool(1),
 				const dbrb::DbrbViewFetcher& dbrbViewFetcher = MockDbrbViewFetcher(),
 				const dbrb::DbrbConfiguration& dbrbConfig = dbrb::DbrbConfiguration::Uninitialized());

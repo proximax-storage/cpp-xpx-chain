@@ -20,7 +20,6 @@
 
 #include "HarvesterBlockGenerator.h"
 #include "HarvestingUtFacadeFactory.h"
-#include "TransactionsInfoSupplier.h"
 
 namespace catapult { namespace harvesting {
 
@@ -44,8 +43,7 @@ namespace catapult { namespace harvesting {
 			model::TransactionSelectionStrategy strategy,
 			const HarvestingUtFacadeFactory& utFacadeFactory,
 			const cache::MemoryUtCache& utCache) {
-		auto transactionsInfoSupplier = CreateTransactionsInfoSupplier(strategy, utCache);
-		return [utFacadeFactory, transactionsInfoSupplier](const auto& blockHeader, auto maxTransactionsPerBlock) {
+		return [utFacadeFactory, strategy, &utCache](const auto& blockHeader, auto maxTransactionsPerBlock, auto stopCallback) {
 			// 1. check height consistency
 			auto pUtFacade = utFacadeFactory.create(blockHeader.Timestamp);
 			if (blockHeader.Height != pUtFacade->height()) {
@@ -56,6 +54,7 @@ namespace catapult { namespace harvesting {
 			}
 
 			// 2. select transactions
+			auto transactionsInfoSupplier = CreateTransactionsInfoSupplier(strategy, utCache, stopCallback);
 			auto transactionsInfo = transactionsInfoSupplier(*pUtFacade, maxTransactionsPerBlock);
 
 			// 3. build a block

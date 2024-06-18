@@ -181,17 +181,26 @@ namespace catapult { namespace validators {
 	/// Attempting to transfer a service unit.
 	DEFINE_STORAGE_RESULT(Service_Unit_Transfer, 55);
 
-	// Validation failed because supercontract is already deployed.
+	/// Validation failed because supercontract is already deployed.
 	DEFINE_STORAGE_RESULT(Owner_Management_Is_Forbidden, 56);
 
-	// Validation failed because too many replicators have been ordered
+	/// Validation failed because too many replicators have been ordered
 	DEFINE_STORAGE_RESULT(Replicator_Count_Exceeded, 57);
 
-	// Modification not ready for approval
+	/// Modification not ready for approval
 	DEFINE_STORAGE_RESULT(Modification_Not_Ready_For_Approval, 58);
 
-	// Modification upload size is invalid
+	/// Modification upload size is invalid
 	DEFINE_STORAGE_RESULT(Modification_Invalid_Upload_Size, 59);
+
+	/// Boot key is already registered with other replicator
+	DEFINE_STORAGE_RESULT(Boot_Key_Is_Registered_With_Other_Replicator, 60);
+
+	/// No replicators to remove
+	DEFINE_STORAGE_RESULT(No_Replicators_To_Remove, 61);
+
+	/// Replicator is bound with a boot key
+	DEFINE_STORAGE_RESULT(Replicator_Is_Bound_With_Boot_Key, 62);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

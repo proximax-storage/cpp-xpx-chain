@@ -30,10 +30,12 @@ namespace catapult { namespace local {
 		class TestContext {
 		public:
 			TestContext() : m_context(test::NodeFlag::With_Partner | test::NodeFlag::Simulated_Api, { test::CreateLocalPartnerNode() },
-		[](auto& config) {},
-		"",
-		"../seed/mijin-test-basic-extended")
-			{}
+					[](auto& config) {
+						const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+					},
+					"",
+					"../seed/mijin-test-basic-extended") {
+			}
 
 		public:
 			auto stats() const {

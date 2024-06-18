@@ -5,15 +5,21 @@
 **/
 
 #pragma  once
+#include "catapult/ionet/Packet.h"
 #include "catapult/types.h"
+#include "catapult/functions.h"
 #include <set>
-
-namespace catapult { namespace ionet { class Node; }}
 
 namespace catapult { namespace dbrb {
 
 	using ProcessId = Key;
 	using ViewData = std::set<ProcessId>;
+	using DbrbTreeView = std::vector<ProcessId>;
+	using Payload = std::shared_ptr<ionet::Packet>;
+	using CertificateType = std::map<ProcessId, Signature>;
 
 	constexpr size_t ProcessId_Size = Key_Size;
+
+	using ValidationCallback = predicate<const Payload&>;
+	using DeliverCallback = consumer<const Payload&>;
 }}

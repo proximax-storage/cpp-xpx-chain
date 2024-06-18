@@ -198,7 +198,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanLockSecretLock) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunLockSecretLockTest(context));
@@ -209,7 +211,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanLockSecretLockWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunLockSecretLockTest(context));
@@ -262,7 +266,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanUnlockSecretLock) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunUnlockSecretLockTest(context));
@@ -273,7 +279,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanUnlockSecretLockWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunUnlockSecretLockTest(context));
@@ -320,7 +328,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanExpireSecretLock) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireSecretLockTest(context));
@@ -331,7 +341,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanExpireSecretLockWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireSecretLockTest(context));
@@ -384,7 +396,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanUnlockAndRollbackSecretLock) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunUnlockAndRollbackSecretLockTest(context));
@@ -395,7 +409,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanUnlockAndRollbackSecretLockWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunUnlockAndRollbackSecretLockTest(context));
@@ -458,7 +474,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanExpireAndRollbackSecretLock) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireAndRollbackSecretLockTest(context));
@@ -469,7 +487,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanExpireAndRollbackSecretLockWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunExpireAndRollbackSecretLockTest(context));
@@ -563,6 +583,7 @@ namespace catapult { namespace local {
 			static void ConfigTransform(config::BlockchainConfiguration& config) {
 				// with importance grouping 1 the account state cache would change with every block, which is unwanted in the test
 				const_cast<model::NetworkConfiguration&>(config.Network).ImportanceGrouping = 100;
+				const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
 			}
 
 		private:
@@ -697,7 +718,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanLockAndUnlockSecretLock_SingleChainPart) {
 		// Arrange:
-		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunLockAndUnlockSecretLockTest(context));
@@ -708,7 +731,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, CanLockAndUnlockSecretLockWithStateHashEnabled_SingleChainPart) {
 		// Arrange:
-		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret);
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::Lock_Secret, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashesPair = test::Unzip(RunLockAndUnlockSecretLockTest(context));

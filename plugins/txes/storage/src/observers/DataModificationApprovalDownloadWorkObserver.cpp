@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -18,7 +18,9 @@ namespace catapult { namespace observers {
 		auto driveIter = driveCache.find(notification.DriveKey);
 		auto& driveEntry = driveIter.get();
 
+	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+	  	auto& statementBuilder = context.StatementBuilder();
 
 		auto pKey = notification.PublicKeysPtr;
 		for (auto i = 0; i < notification.PublicKeysCount; ++i, ++pKey) {
@@ -49,6 +51,12 @@ namespace catapult { namespace observers {
 			// Making mosaic transfers.
 			const auto mosaicAmount = Amount(approvableDownloadWork + driveInfo.InitialDownloadWorkMegabytes);
 			liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorEntry.key(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), mosaicAmount);
+
+			// Adding Download receipt.
+			const auto receiptType = model::Receipt_Type_Data_Modification_Approval_Download;
+			const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorEntry.key(),
+												{ streamingMosaicId, currencyMosaicId }, mosaicAmount);
+			statementBuilder.addTransactionReceipt(receipt);
 
 			// Updating current replicator's drive info.
 			driveInfo.LastApprovedDataModificationId = notification.DataModificationId;

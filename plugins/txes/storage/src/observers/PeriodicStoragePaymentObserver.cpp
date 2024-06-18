@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -62,6 +62,7 @@ namespace catapult { namespace observers {
 				const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 				const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 				const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
+				auto& statementBuilder = context.StatementBuilder();
 
 				auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 				auto driveStateIter = accountStateCache.find(driveEntry.key());
@@ -77,7 +78,15 @@ namespace catapult { namespace observers {
 					auto timeInConfirmedStorageSeconds = info.TimeInConfirmedStorage.unwrap() / 1000;
 
 					auto payment = Amount(((driveSize * timeInConfirmedStorageSeconds) / timeSinceLastPaymentSeconds).template convert_to<uint64_t>());
-					liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStorageMosaicId(context.Config.Immutable), payment);
+					liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey,
+													config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
+													payment);
+
+					// Adding Replicator Participation receipt.
+					const auto receiptType = model::Receipt_Type_Periodic_Payment_Replicator_Participation;
+					const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
+														{ storageMosaicId, currencyMosaicId }, payment);
+					statementBuilder.addTransactionReceipt(receipt);
 
 					info.TimeInConfirmedStorage = Timestamp(0);
 				}
@@ -128,16 +137,44 @@ namespace catapult { namespace observers {
 						for (const auto& replicatorKey : replicators) {
 							auto replicatorIter = accountStateCache.find(replicatorKey);
 							auto& replicatorState = replicatorIter.get();
-							liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey, config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), totalReplicatorAmount);
+							liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey,
+															config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+															totalReplicatorAmount);
+
+							// Adding Replicator Modification receipt.
+							const auto receiptType = model::Receipt_Type_Periodic_Payment_Replicator_Modification;
+							const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorKey,
+																{ streamingMosaicId, currencyMosaicId }, totalReplicatorAmount);
+							statementBuilder.addTransactionReceipt(receipt);
 						}
 					}
 
 					// Returning the rest to the drive owner
 					const auto refundStreamingAmount = driveState.Balances.get(streamingMosaicId);
-					liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), refundStreamingAmount);
+					liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+													config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+													refundStreamingAmount);
+
+					// Adding Owner Refund receipt for streaming mosaic.
+					{
+						const auto receiptType = model::Receipt_Type_Periodic_Payment_Owner_Refund;
+						const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+															{ streamingMosaicId, currencyMosaicId }, refundStreamingAmount);
+						statementBuilder.addTransactionReceipt(receipt);
+					}
 
 					const auto refundStorageAmount = driveState.Balances.get(storageMosaicId);
-					liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(), config::GetUnresolvedStorageMosaicId(context.Config.Immutable), refundStorageAmount);
+					liquidityProvider->debitMosaics(context, driveEntry.key(), driveEntry.owner(),
+													config::GetUnresolvedStorageMosaicId(context.Config.Immutable),
+													refundStorageAmount);
+
+					// Adding Owner Refund receipt for storage mosaic.
+					{
+						const auto receiptType = model::Receipt_Type_Periodic_Payment_Owner_Refund;
+						const model::StorageReceipt receipt(receiptType, driveEntry.key(), driveEntry.owner(),
+															{ storageMosaicId, currencyMosaicId }, refundStorageAmount);
+						statementBuilder.addTransactionReceipt(receipt);
+					}
 
 					// Simulate publishing of finish download for all download channels
 

@@ -1,15 +1,17 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
 
 #pragma once
 #include "catapult/observers/ObserverTypes.h"
+#include "catapult/observers/DbrbProcessUpdateListener.h"
 #include "src/config/StorageConfiguration.h"
 #include "catapult/model/StorageNotifications.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "src/model/InternalStorageNotifications.h"
+#include "src/model/StorageReceiptType.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/QueueCache.h"
@@ -19,11 +21,24 @@
 #include "catapult/observers/StorageUpdatesListener.h"
 #include <queue>
 
-namespace catapult { namespace state {
-	class StorageState;
-}} // namespace catapult::state
+namespace catapult { namespace state { class StorageState; }}
 
 namespace catapult { namespace observers {
+
+	class StorageDbrbProcessUpdateListener : public DbrbProcessUpdateListener {
+	public:
+		explicit StorageDbrbProcessUpdateListener(const std::unique_ptr<observers::LiquidityProviderExchangeObserver>& pLiquidityProvider)
+			: m_pLiquidityProvider(pLiquidityProvider)
+		{}
+
+		~StorageDbrbProcessUpdateListener() override = default;
+
+	public:
+		void OnDbrbProcessRemoved(ObserverContext& context, const dbrb::ProcessId& processId) const override;
+
+	private:
+		const std::unique_ptr<observers::LiquidityProviderExchangeObserver>& m_pLiquidityProvider;
+	};
 
 #define DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(NAME, NOTIFICATION_TYPE, HANDLER)   \
 	DECLARE_OBSERVER(NAME, NOTIFICATION_TYPE)                                       \
@@ -60,8 +75,11 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DataModificationCancel, model::DataModificationCancelNotification<1>)
 	(const std::unique_ptr<LiquidityProviderExchangeObserver>&);
 
-	/// Observes changes triggered by replicator onboarding notifications.
-	DECLARE_OBSERVER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)();
+	/// Observes changes triggered by replicator onboarding notifications V1.
+	DECLARE_OBSERVER(ReplicatorOnboardingV1, model::ReplicatorOnboardingNotification<1>)();
+
+	/// Observes changes triggered by replicator onboarding notifications V2.
+	DECLARE_OBSERVER(ReplicatorOnboardingV2, model::ReplicatorOnboardingNotification<2>)();
 
 	/// Observes changes triggered by drive closure notifications.
 	DECLARE_OBSERVER(DriveClosure, model::DriveClosureNotification<1>)
@@ -117,4 +135,11 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, model::BlockNotification<1>)();
 
 	DECLARE_OBSERVER(OwnerManagementProhibition, model::OwnerManagementProhibitionNotification<1>)();
-}} // namespace catapult::observers
+
+	/// Observes changes triggered by replicator / boot key notifications
+	DECLARE_OBSERVER(ReplicatorNodeBootKey, model::ReplicatorNodeBootKeyNotification<1>)();
+
+	/// Observes changes triggered by replicators cleanup notifications
+	DECLARE_OBSERVER(ReplicatorsCleanup, model::ReplicatorsCleanupNotification<1>)(const std::unique_ptr<LiquidityProviderExchangeObserver>& pLiquidityProvider);
+
+}}
