@@ -553,6 +553,13 @@ namespace catapult { namespace fastfinality {
 			auto pParentBlockElement = lastBlockElementSupplier();
 			NextBlockContext context(*pParentBlockElement, utils::FromTimePoint(committeeRound.RoundStart));
 			const auto& config = pConfigHolder->Config(context.Height);
+
+			if (!config.Network.EnableWeightedVoting) {
+				CATAPULT_LOG(warning) << "skipping block propose attempt due to weighted voting is disabled";
+				pFsmShared->processEvent(BlockGenerationFailed{});
+				return;
+			}
+
 			if (!context.tryCalculateDifficulty(cache.sub<cache::BlockDifficultyCache>(), config.Network)) {
 				CATAPULT_LOG(debug) << "skipping block propose attempt due to error calculating difficulty";
 				pFsmShared->processEvent(BlockGenerationFailed{});
