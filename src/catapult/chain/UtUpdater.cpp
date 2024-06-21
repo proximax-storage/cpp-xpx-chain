@@ -171,13 +171,6 @@ namespace catapult { namespace chain {
 				const auto& entity = *utInfo.pEntity;
 				const auto& entityHash = utInfo.EntityHash;
 
-				// TODO: remove after the slow block generation issue in mainnet is resolved.
-				// Reject all AddDbrbProcess transactions.
-				if (utils::to_underlying_type(entity.Type) == 16748) {
-					CATAPULT_LOG(debug) << "rejecting AddDbrbProcessTransaction";
-					continue;
-				}
-
 				if (!filter(utInfo))
 					continue;
 

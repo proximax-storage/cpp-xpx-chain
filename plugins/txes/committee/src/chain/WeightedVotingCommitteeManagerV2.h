@@ -19,7 +19,7 @@ namespace catapult { namespace chain {
 		explicit WeightedVotingCommitteeManagerV2(std::shared_ptr<cache::CommitteeAccountCollector> pAccountCollector);
 
 	public:
-		const Committee& selectCommittee(const model::NetworkConfiguration& config) override;
+		const Committee& selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) override;
 		Key getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const override;
 
 		void reset() override;
@@ -39,7 +39,10 @@ namespace catapult { namespace chain {
 		cache::AccountMap accounts();
 
 	protected:
-		std::multimap<int64_t, Key, std::greater<>> getCandidates(const model::NetworkConfiguration& networkConfig, const config::CommitteeConfiguration& config);
+		std::multimap<int64_t, Key, std::greater<>> getCandidates(
+			const model::NetworkConfiguration& networkConfig,
+			const config::CommitteeConfiguration& config,
+			const BlockchainVersion& blockchainVersion);
 		void decreaseActivities(const config::CommitteeConfiguration& config);
 		void logHarvesters() const;
 

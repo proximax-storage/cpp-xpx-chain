@@ -28,11 +28,11 @@ namespace catapult { namespace chain {
 		: WeightedVotingCommitteeManagerV2(std::move(pAccountCollector))
 	{}
 
-	const Committee& WeightedVotingCommitteeManagerV3::selectCommittee(const model::NetworkConfiguration& networkConfig) {
+	const Committee& WeightedVotingCommitteeManagerV3::selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) {
 		std::lock_guard<std::mutex> guard(m_mutex);
 
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
-		auto rates = getCandidates(networkConfig, config);
+		auto rates = getCandidates(networkConfig, config, blockchainVersion);
 
 		// The first account may be followed by the accounts with the same rate, select them all as candidates.
 		auto endRateIter = rates.begin();

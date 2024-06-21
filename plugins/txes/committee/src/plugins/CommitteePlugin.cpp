@@ -62,6 +62,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateUpdateHarvestersV3Observer(pCommitteeManagerV3, pAccountCollector))
 				.add(observers::CreateActiveHarvestersV1Observer())
 				.add(observers::CreateActiveHarvestersV2Observer())
+				.add(observers::CreateActiveHarvestersV3Observer())
 				.add(observers::CreateInactiveHarvestersObserver())
 				.add(observers::CreateRemoveDbrbProcessByNetworkObserver(pAccountCollector));
 		});

@@ -64,6 +64,9 @@ namespace catapult { namespace config {
 		/// Enables equal harvester weights.
 		bool EnableEqualWeights;
 
+		/// Enables software version validation when selecting block producer.
+		bool EnableBlockchainVersionValidation;
+
 	private:
 		CommitteeConfiguration() = default;
 

@@ -193,7 +193,10 @@ namespace catapult { namespace chain {
 		return {};
 	}
 
-	std::multimap<int64_t, Key, std::greater<>> WeightedVotingCommitteeManagerV2::getCandidates(const model::NetworkConfiguration& networkConfig, const config::CommitteeConfiguration& config) {
+	std::multimap<int64_t, Key, std::greater<>> WeightedVotingCommitteeManagerV2::getCandidates(
+			const model::NetworkConfiguration& networkConfig,
+			const config::CommitteeConfiguration& config,
+			const BlockchainVersion& blockchainVersion) {
 		auto previousRound = m_committee.Round;
 		logAccountData(m_accounts, config);
 		auto pLastBlockElement = lastBlockElementSupplier()();
@@ -223,12 +226,17 @@ namespace catapult { namespace chain {
 			if (!accountData.CanHarvest)
 				continue;
 
+			bool notBootstrapHarvester = (networkConfig.BootstrapHarvesters.find(key) == networkConfig.BootstrapHarvesters.cend());
+			bool notEmergencyHarvester = (networkConfig.EmergencyHarvesters.find(key) == networkConfig.EmergencyHarvesters.cend());
+
+			if (config.EnableBlockchainVersionValidation && accountData.BlockchainVersion < blockchainVersion && notBootstrapHarvester && notEmergencyHarvester)
+				continue;
+
 			if (networkConfig.BootstrapHarvesters.empty()) {
-				if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp && (networkConfig.EmergencyHarvesters.find(key) == networkConfig.EmergencyHarvesters.cend()))
+				if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp && notEmergencyHarvester)
 					continue;
 			} else {
-				auto iter = networkConfig.BootstrapHarvesters.find(key);
-				if (iter == networkConfig.BootstrapHarvesters.cend()) {
+				if (notBootstrapHarvester) {
 					if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp)
 						continue;
 
@@ -263,11 +271,11 @@ namespace catapult { namespace chain {
 		return rates;
 	}
 
-	const Committee& WeightedVotingCommitteeManagerV2::selectCommittee(const model::NetworkConfiguration& networkConfig) {
+	const Committee& WeightedVotingCommitteeManagerV2::selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) {
 		std::lock_guard<std::mutex> guard(m_mutex);
 
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
-		auto rates = getCandidates(networkConfig, config);
+		auto rates = getCandidates(networkConfig, config, blockchainVersion);
 
 		// The 21st account may be followed by the accounts with the same rate, select them all as candidates for
 		// the committee.

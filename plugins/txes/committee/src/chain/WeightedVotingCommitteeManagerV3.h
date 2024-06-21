@@ -18,6 +18,6 @@ namespace catapult { namespace chain {
 		void logCommittee() const override;
 
 	public:
-		const Committee& selectCommittee(const model::NetworkConfiguration& config) override;
+		const Committee& selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) override;
 	};
 }}

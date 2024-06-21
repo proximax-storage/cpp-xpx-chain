@@ -49,7 +49,7 @@ namespace catapult { namespace observers {
 
 			pCommitteeManager->reset();
 			while (pCommitteeManager->committee().Round < notification.Round)
-				pCommitteeManager->selectCommittee(networkConfig);
+				pCommitteeManager->selectCommittee(networkConfig, BlockchainVersion(0));
 			CATAPULT_LOG(debug) << "block " << context.Height << ": selected committee for round " << notification.Round;
 			pCommitteeManager->logCommittee();
 

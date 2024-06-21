@@ -88,7 +88,7 @@ namespace catapult { namespace test {
 		{}
 
 	public:
-		const chain::Committee& selectCommittee(const model::NetworkConfiguration& networkConfig) override {
+		const chain::Committee& selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) override {
 			if (m_round >= 0)
 				decreaseActivities(networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>());
 

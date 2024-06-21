@@ -99,6 +99,7 @@ activityScaleFactor = 1000000000
 weightScaleFactor = 1000000000000000000
 
 enableEqualWeights = true
+enableBlockchainVersionValidation = true
 
 [plugin:catapult.plugins.config]
 

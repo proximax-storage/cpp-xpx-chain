@@ -27,7 +27,7 @@ namespace catapult { namespace test {
 			bool canHarvest,
 			double activityObsolete,
 			double greedObsolete) {
-		return { lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, Timestamp(0), 0u, 1u, 1u, Key() };
+		return { lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, Timestamp(0), 0u, 1u, 1u, Key(), BlockchainVersion(0) };
 	}
 
 	void AssertEqualAccountData(const state::AccountData& data1, const state::AccountData& data2) {
