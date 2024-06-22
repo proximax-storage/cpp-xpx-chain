@@ -53,6 +53,8 @@ namespace catapult { namespace plugins {
 			pTransactionFeeCalculator->addLimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, version);
 		for (auto version = 1u; version <= model::RemoveDbrbProcessByNetworkTransaction::Current_Version; ++version)
 			pTransactionFeeCalculator->addLimitedFeeTransaction(model::RemoveDbrbProcessByNetworkTransaction::Entity_Type, version);
+		for (auto version = 1u; version <= model::AddOrUpdateDbrbProcessTransaction::Current_Version; ++version)
+			pTransactionFeeCalculator->addLimitedFeeTransaction(model::AddOrUpdateDbrbProcessTransaction::Entity_Type, version);
 
 		manager.addStatefulValidatorHook([&dbrbViewFetcher = *pDbrbViewFetcher](auto& builder) {
 		  	builder

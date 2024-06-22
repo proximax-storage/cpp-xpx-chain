@@ -93,8 +93,6 @@ namespace catapult { namespace fastfinality {
 
 			std::vector<RemoteNodeState> remoteNodeStates = retriever();
 
-			pFsmShared->dbrbProcess().messageSender()->broadcastThisNode();
-
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
 				DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
@@ -191,6 +189,8 @@ namespace catapult { namespace fastfinality {
 						pFsmShared->processEvent(NetworkHeightDetectionFailure{});
 					});
 				}
+
+				pFsmShared->dbrbProcess().messageSender()->broadcastThisNode();
 			}
 		};
 	}

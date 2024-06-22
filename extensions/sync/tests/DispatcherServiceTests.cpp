@@ -846,12 +846,11 @@ namespace catapult { namespace sync {
 		ValidationResults transactionValidationResults;
 		transactionValidationResults.Stateful = ValidationResult::Failure;
 		AssertCanConsumeTransactionRange(transactionValidationResults, test::CreateTransactionEntityRange(1), [](const auto& context) {
-			WAIT_FOR_ONE_EXPR(context.numNewTransactionsSinkCalls());
 			WAIT_FOR_ONE_EXPR(context.numTransactionStatuses());
 
 			// - the transaction was forwarded to the sink (it could theoretically pass validation on another node)
 			EXPECT_EQ(0u, context.numNewBlockSinkCalls());
-			EXPECT_EQ(1u, context.numNewTransactionsSinkCalls());
+			EXPECT_EQ(0u, context.numNewTransactionsSinkCalls());
 			EXPECT_EQ(1u, context.numTransactionStatuses());
 		});
 	}
