@@ -25,10 +25,10 @@ namespace catapult { namespace local {
 
 	namespace {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
-		constexpr size_t Network_Size = 30;
-		constexpr size_t Bootstrap_Node_Count = 6;
+		constexpr size_t Network_Size = 6;
+		constexpr size_t Bootstrap_Node_Count = 3;
 		constexpr uint64_t Mosaic_Supply = 8'999'999'998'000'000;
-		constexpr Height Max_Chain_Height = Height(10);
+		constexpr Height Max_Chain_Height = Height(2);
 		constexpr auto Process_Name = "server";
 
 		void RecursiveCopy(const boost::filesystem::path& source, const boost::filesystem::path& destination) {
