@@ -163,4 +163,19 @@ namespace catapult { namespace state {
 		// Assert:
 		EXPECT_EQ(bootKey, entry.bootKey());
 	}
+
+	TEST(TEST_CLASS, CanSetBlockchainVersion) {
+		// Arrange:
+		auto entry = CommitteeEntry(Key(), Key(), Height(), Importance(), false, 5.0, 0.5);
+		auto blockchainVersion = BlockchainVersion(test::Random());
+
+		// Sanity check:
+		EXPECT_EQ(BlockchainVersion(), entry.blockchainVersion());
+
+		// Act:
+		entry.setBlockchainVersion(blockchainVersion);
+
+		// Assert:
+		EXPECT_EQ(blockchainVersion, entry.blockchainVersion());
+	}
 }}

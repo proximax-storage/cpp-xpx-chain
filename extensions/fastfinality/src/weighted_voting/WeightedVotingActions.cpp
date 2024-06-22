@@ -300,10 +300,11 @@ namespace catapult { namespace fastfinality {
 				bool success = false;
 				for (const auto& pBlock : blocks) {
 					const auto& config = state.config(pBlock->Height).Network;
+					auto blockchainVersion = state.pluginManager().configHolder()->Version(pBlock->Height);
 					auto& committeeManager = state.pluginManager().getCommitteeManager(pBlock->EntityVersion());
 					committeeManager.reset();
 					while (committeeManager.committee().Round < pBlock->round())
-						committeeManager.selectCommittee(config);
+						committeeManager.selectCommittee(config, blockchainVersion);
 					CATAPULT_LOG(debug) << "block " << pBlock->Height << ": selected committee for round " << pBlock->round();
 					committeeManager.logCommittee();
 
@@ -374,7 +375,9 @@ namespace catapult { namespace fastfinality {
 
 			auto pLastBlockElement = lastBlockElementSupplier();
 			const auto& block = pLastBlockElement->Block;
-			const auto& config = state.pluginManager().config(block.Height + Height(1));
+			auto currentHeight = block.Height + Height(1);
+			const auto& config = state.pluginManager().config(currentHeight);
+			auto blockchainVersion = state.pluginManager().configHolder()->Version(currentHeight);
 
 			auto roundStart = block.Timestamp + Timestamp(chain::CommitteePhaseCount * block.committeePhaseTime());
 			auto currentTime = timeSupplier();
@@ -384,7 +387,7 @@ namespace catapult { namespace fastfinality {
 			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
 			chain::DecreasePhaseTime(phaseTimeMillis, config);
 			auto nextRoundStart = roundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
-			committeeManager.selectCommittee(config);
+			committeeManager.selectCommittee(config, blockchainVersion);
 
 			auto committeeSilenceInterval = Timestamp(config.CommitteeSilenceInterval.millis());
 			while (nextRoundStart <= timeSupplier() + committeeSilenceInterval) {
@@ -392,7 +395,7 @@ namespace catapult { namespace fastfinality {
 				chain::IncreasePhaseTime(phaseTimeMillis, config);
 				nextRoundStart = nextRoundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
 
-				committeeManager.selectCommittee(config);
+				committeeManager.selectCommittee(config, blockchainVersion);
 			}
 
 			CommitteePhase startPhase;
@@ -412,7 +415,7 @@ namespace catapult { namespace fastfinality {
 			CATAPULT_LOG(debug) << "detected stage: start phase " << round.StartPhase << ", start time " << GetTimeString(round.RoundStart) << ", phase time " << phaseTimeMillis << "ms, round " << round.Round;
 			auto& committeeData = pFsmShared->committeeData();
 			committeeData.setCommitteeRound(round);
-			committeeData.setCurrentBlockHeight(block.Height + Height(1));
+			committeeData.setCurrentBlockHeight(currentHeight);
 
 			DelayAction(pFsmWeak, pFsmShared->timer(), 0u, [pFsmWeak] {
 				TRY_GET_FSM()
@@ -448,8 +451,9 @@ namespace catapult { namespace fastfinality {
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid committee round", committee.Round, round.Round)
 
 			const auto& config = pConfigHolder->Config(committeeData.currentBlockHeight()).Network;
+			auto blockchainVersion = pConfigHolder->Version(committeeData.currentBlockHeight());
 			while (committeeManager.committee().Round < round.Round)
-				committeeManager.selectCommittee(config);
+				committeeManager.selectCommittee(config, blockchainVersion);
 			CATAPULT_LOG(debug) << "block " << committeeData.currentBlockHeight() << ": selected committee for round " << round.Round;
 			committeeManager.logCommittee();
 			committeeData.setIsBlockBroadcastEnabled(true);

@@ -36,12 +36,15 @@ namespace catapult { namespace state {
 
 			if (entry.version() > 3)
 				io::Write(output, entry.bootKey());
+
+			if (entry.version() > 4)
+				io::Write64(output, entry.blockchainVersion().unwrap());
 		}
 
 		CommitteeEntry LoadCommitteeEntry(io::InputStream& input, const LoadCommitteeEntryCallback& callback) {
 			// read version
 			VersionType version = io::Read32(input);
-			if (version > 4)
+			if (version > 5)
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of CommitteeEntry", version);
 
 			Key key;
@@ -68,6 +71,9 @@ namespace catapult { namespace state {
 				input.read(bootKey);
 				entry.setBootKey(bootKey);
 			}
+
+			if (entry.version() > 4)
+				entry.setBlockchainVersion(BlockchainVersion{io::Read64(input)});
 
 			return entry;
 		}

@@ -5,13 +5,14 @@
 **/
 
 #include "TransactionSender.h"
-#include "sdk/src/builders/AddDbrbProcessBuilder.h"
+#include "sdk/src/builders/AddOrUpdateDbrbProcessBuilder.h"
 #include "sdk/src/builders/RemoveDbrbProcessBuilder.h"
 #include "sdk/src/builders/RemoveDbrbProcessByNetworkBuilder.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/harvesting_core/UnlockedAccounts.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/utils/NetworkTime.h"
+#include "catapult/version/version.h"
 
 namespace catapult { namespace dbrb {
 
@@ -29,14 +30,15 @@ namespace catapult { namespace dbrb {
 		}
 
 		m_addDbrbProcessTxTime = now;
-		builders::AddDbrbProcessBuilder builder(m_networkIdentifier, m_pKeyPair->publicKey());
+		builders::AddOrUpdateDbrbProcessBuilder builder(m_networkIdentifier, m_pKeyPair->publicKey());
+		builder.setBlockchainVersion(version::CurrentBlockchainVersion);
 		for (const auto& keyPair : m_pHarvesterAccounts->view())
 			builder.addHarvesterKey(keyPair.publicKey());
 		auto pTransaction = utils::UniqueToShared(builder.build());
 		pTransaction->Deadline = now + m_transactionTimeout;
 		send(pTransaction);
 		m_addDbrbProcessTransactionHash = model::CalculateHash(*pTransaction, m_generationHash);
-		CATAPULT_LOG(debug) << "[DBRB] sent AddDbrbProcessTransaction " << m_addDbrbProcessTransactionHash;
+		CATAPULT_LOG(debug) << "[DBRB] sent AddOrUpdateDbrbProcessTransaction " << m_addDbrbProcessTransactionHash;
     }
 
 	std::future<bool> TransactionSender::sendRemoveDbrbProcessTransaction() {
@@ -87,7 +89,7 @@ namespace catapult { namespace dbrb {
 
 		for (const auto& transactionElement : blockElement.Transactions) {
 			if (m_addDbrbProcessTransactionHash == transactionElement.EntityHash) {
-				CATAPULT_LOG(debug) << "[DBRB] AddDbrbProcessTransaction " << m_addDbrbProcessTransactionHash << " confirmed";
+				CATAPULT_LOG(debug) << "[DBRB] AddOrUpdateDbrbProcessTransaction " << m_addDbrbProcessTransactionHash << " confirmed";
 				m_addDbrbProcessTxTime = Timestamp(0);
 				m_addDbrbProcessTransactionHash = Hash256();
 			} else if (m_removeDbrbProcessTransactionHash == transactionElement.EntityHash) {

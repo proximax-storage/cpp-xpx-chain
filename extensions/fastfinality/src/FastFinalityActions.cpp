@@ -303,10 +303,11 @@ namespace catapult { namespace fastfinality {
 				bool success = false;
 				for (const auto& pBlock : blocks) {
 					const auto& config = state.config(pBlock->Height).Network;
+					auto blockchainVersion = state.pluginManager().configHolder()->Version(pBlock->Height);
 					auto& committeeManager = state.pluginManager().getCommitteeManager(pBlock->EntityVersion());
 					committeeManager.reset();
 					while (committeeManager.committee().Round < pBlock->round())
-						committeeManager.selectCommittee(config);
+						committeeManager.selectCommittee(config, blockchainVersion);
 					CATAPULT_LOG(debug) << "block " << pBlock->Height << ": selected block producer for round " << pBlock->round();
 					committeeManager.logCommittee();
 
@@ -381,7 +382,9 @@ namespace catapult { namespace fastfinality {
 
 			auto pLastBlockElement = lastBlockElementSupplier();
 			const auto& block = pLastBlockElement->Block;
-			const auto& config = state.pluginManager().config(block.Height + Height(1));
+			auto currentHeight = block.Height + Height(1);
+			const auto& config = state.pluginManager().config(currentHeight);
+			auto blockchainVersion = state.pluginManager().configHolder()->Version(currentHeight);
 
 			auto roundStart = block.Timestamp + Timestamp(chain::CommitteePhaseCount * block.committeePhaseTime());
 			auto timeSupplier = state.timeSupplier();
@@ -392,7 +395,7 @@ namespace catapult { namespace fastfinality {
 			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
 			chain::DecreasePhaseTime(phaseTimeMillis, config);
 			auto nextRoundStart = roundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
-			committeeManager.selectCommittee(config);
+			committeeManager.selectCommittee(config, blockchainVersion);
 
 			auto committeeSilenceInterval = Timestamp(config.CommitteeSilenceInterval.millis());
 			while (nextRoundStart <= timeSupplier() + committeeSilenceInterval) {
@@ -400,7 +403,7 @@ namespace catapult { namespace fastfinality {
 				chain::IncreasePhaseTime(phaseTimeMillis, config);
 				nextRoundStart = nextRoundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
 
-				committeeManager.selectCommittee(config);
+				committeeManager.selectCommittee(config, blockchainVersion);
 			}
 
 			FastFinalityRound round{
@@ -412,7 +415,7 @@ namespace catapult { namespace fastfinality {
 			CATAPULT_LOG(debug) << "detected round: start time " << GetTimeString(round.RoundStart) << ", round time " << round.RoundTimeMillis << "ms, round " << round.Round;
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 			fastFinalityData.setRound(round);
-			fastFinalityData.setCurrentBlockHeight(block.Height + Height(1));
+			fastFinalityData.setCurrentBlockHeight(currentHeight);
 
 			DelayAction(pFsmWeak, pFsmShared->timer(), 0u, [pFsmWeak] {
 				TRY_GET_FSM()
@@ -466,8 +469,9 @@ namespace catapult { namespace fastfinality {
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid round", committee.Round, round.Round)
 
 			const auto& config = pConfigHolder->Config(fastFinalityData.currentBlockHeight()).Network;
+			auto blockchainVersion = pConfigHolder->Version(fastFinalityData.currentBlockHeight());
 			while (committeeManager.committee().Round < round.Round)
-				committeeManager.selectCommittee(config);
+				committeeManager.selectCommittee(config, blockchainVersion);
 			CATAPULT_LOG(debug) << "block " << fastFinalityData.currentBlockHeight() << ": selected committee for round " << round.Round;
 			committeeManager.logCommittee();
 			fastFinalityData.setIsBlockBroadcastEnabled(true);
@@ -623,10 +627,10 @@ namespace catapult { namespace fastfinality {
 				rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise, pBlock](auto, const auto& result) {
 					bool success = (disruptor::CompletionStatus::Aborted != result.CompletionStatus);
 					if (success) {
-						CATAPULT_LOG(info) << "successfully committed block produced by " << pBlock->Signer;
+						CATAPULT_LOG(info) << "successfully committed block " << pBlock->Height << " produced by " << pBlock->Signer;
 					} else {
 						auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
-						CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult)) << "block commit failed due to " << validationResult;
+						CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult)) << "commit of block " << pBlock->Height << " produced by " << pBlock->Signer << " failed due to " << validationResult;
 					}
 
 					pPromise->set_value(std::move(success));

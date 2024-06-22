@@ -23,7 +23,8 @@ namespace catapult { namespace state {
 				int64_t activity,
 				uint32_t feeInterest,
 				uint32_t feeInterestDenominator,
-				const Key& bootKey)
+				const Key& bootKey,
+				const BlockchainVersion& blockchainVersion)
 			: LastSigningBlockHeight(std::move(lastSigningBlockHeight))
 			, EffectiveBalance(std::move(effectiveBalance))
 			, CanHarvest(canHarvest)
@@ -34,6 +35,7 @@ namespace catapult { namespace state {
 			, FeeInterest(feeInterest)
 			, FeeInterestDenominator(feeInterestDenominator)
 			, BootKey(bootKey)
+			, BlockchainVersion(blockchainVersion)
 		{}
 
 	public:
@@ -93,6 +95,9 @@ namespace catapult { namespace state {
 
 		/// Boot key of the node where the harvesters are set up.
 		Key BootKey;
+
+		/// Current software version running on the node.
+		catapult::BlockchainVersion BlockchainVersion;
 	};
 
 	// Committee entry.
@@ -112,11 +117,12 @@ namespace catapult { namespace state {
 				int64_t activity = 0u,
 				uint32_t feeInterest = 0u,
 				uint32_t feeInterestDenominator = 0u,
-				const Key& bootKey = Key())
+				const Key& bootKey = Key(),
+				const BlockchainVersion& blockchainVersion = BlockchainVersion(0))
 			: m_key(key)
 			, m_owner(owner)
 			, m_disabledHeight(std::move(disabledHeight))
-			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, std::move(expirationTime), activity, feeInterest, feeInterestDenominator, bootKey)
+			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, std::move(expirationTime), activity, feeInterest, feeInterestDenominator, bootKey, blockchainVersion)
 			, m_version(version)
 		{}
 
@@ -265,8 +271,19 @@ namespace catapult { namespace state {
 			return m_data.BootKey;
 		}
 
+		/// Sets the boot key.
 		void setBootKey(const Key& bootKey) {
 			m_data.BootKey = bootKey;
+		}
+
+		/// Gets the blockchain version.
+		const BlockchainVersion& blockchainVersion() const {
+			return m_data.BlockchainVersion;
+		}
+
+		/// Sets the blockchain version.
+		void setBlockchainVersion(const BlockchainVersion& version) {
+			m_data.BlockchainVersion = version;
 		}
 
 	private:

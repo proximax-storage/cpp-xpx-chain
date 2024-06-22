@@ -46,6 +46,9 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by active harvesters notifications V2
 	DECLARE_OBSERVER(ActiveHarvestersV2, model::ActiveHarvestersNotification<2>)();
 
+	/// Observes changes triggered by active harvesters notifications V3
+	DECLARE_OBSERVER(ActiveHarvestersV3, model::ActiveHarvestersNotification<3>)();
+
 	/// Observes changes triggered by inactive harvesters notifications
 	DECLARE_OBSERVER(InactiveHarvesters, model::InactiveHarvestersNotification<1>)();
 

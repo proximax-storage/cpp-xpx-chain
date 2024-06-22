@@ -9,10 +9,12 @@
 #include "src/cache/DbrbViewCacheSubCachePlugin.h"
 #include "src/cache/DbrbViewFetcherImpl.h"
 #include "src/model/AddDbrbProcessTransaction.h"
+#include "src/model/AddOrUpdateDbrbProcessTransaction.h"
 #include "src/model/RemoveDbrbProcessTransaction.h"
 #include "src/model/RemoveDbrbProcessByNetworkTransaction.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/AddDbrbProcessTransactionPlugin.h"
+#include "src/plugins/AddOrUpdateDbrbProcessTransactionPlugin.h"
 #include "src/plugins/RemoveDbrbProcessTransactionPlugin.h"
 #include "src/plugins/RemoveDbrbProcessByNetworkTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -26,6 +28,7 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.addTransactionSupport(CreateAddDbrbProcessTransactionPlugin());
+		manager.addTransactionSupport(CreateAddOrUpdateDbrbProcessTransactionPlugin());
 		manager.addTransactionSupport(CreateRemoveDbrbProcessTransactionPlugin());
 		manager.addTransactionSupport(CreateRemoveDbrbProcessByNetworkTransactionPlugin());
 

@@ -90,10 +90,12 @@ namespace catapult { namespace chain {
 	}
 
 	WeightedVotingCommitteeManagerV2::WeightedVotingCommitteeManagerV2(std::shared_ptr<cache::CommitteeAccountCollector> pAccountCollector)
-		: m_pAccountCollector(std::move(pAccountCollector))
-		, m_accounts(m_pAccountCollector->accounts())
-		, m_phaseTime(0u)
-	{}
+			: m_pAccountCollector(std::move(pAccountCollector))
+			, m_accounts(m_pAccountCollector->accounts())
+			, m_phaseTime(0u) {
+		setFilter([](const Key& key, const config::CommitteeConfiguration& config) { return true; });
+		setIneligibleHarvesterHandler([](const Key& key) {});
+	}
 
 	void WeightedVotingCommitteeManagerV2::reset() {
 		std::lock_guard<std::mutex> guard(m_mutex);
@@ -193,7 +195,10 @@ namespace catapult { namespace chain {
 		return {};
 	}
 
-	std::multimap<int64_t, Key, std::greater<>> WeightedVotingCommitteeManagerV2::getCandidates(const model::NetworkConfiguration& networkConfig, const config::CommitteeConfiguration& config) {
+	std::multimap<int64_t, Key, std::greater<>> WeightedVotingCommitteeManagerV2::getCandidates(
+			const model::NetworkConfiguration& networkConfig,
+			const config::CommitteeConfiguration& config,
+			const BlockchainVersion& blockchainVersion) {
 		auto previousRound = m_committee.Round;
 		logAccountData(m_accounts, config);
 		auto pLastBlockElement = lastBlockElementSupplier()();
@@ -220,20 +225,39 @@ namespace catapult { namespace chain {
 			const auto& key = pair.first;
 			const auto& accountData = pair.second;
 
-			if (!accountData.CanHarvest)
+			if (!m_filter(key, config))
 				continue;
 
-			if (networkConfig.BootstrapHarvesters.empty()) {
-				if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp && (networkConfig.EmergencyHarvesters.find(key) == networkConfig.EmergencyHarvesters.cend()))
-					continue;
-			} else {
-				auto iter = networkConfig.BootstrapHarvesters.find(key);
-				if (iter == networkConfig.BootstrapHarvesters.cend()) {
-					if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp)
-						continue;
+			if (!accountData.CanHarvest) {
+				m_ineligibleHarvesterHandler(key);
+				continue;
+			}
 
-					if (accountData.BootKey == Key())
+			bool notBootstrapHarvester = (networkConfig.BootstrapHarvesters.find(key) == networkConfig.BootstrapHarvesters.cend());
+			bool notEmergencyHarvester = (networkConfig.EmergencyHarvesters.find(key) == networkConfig.EmergencyHarvesters.cend());
+
+			if (config.EnableBlockchainVersionValidation && accountData.BlockchainVersion < blockchainVersion && notBootstrapHarvester && notEmergencyHarvester) {
+				CATAPULT_LOG(debug) << "rejecting outdated harvester " << key << " (" << std::hex << accountData.BlockchainVersion << " < " << std::hex << blockchainVersion << ")";
+				m_ineligibleHarvesterHandler(key);
+				continue;
+			}
+
+			if (networkConfig.BootstrapHarvesters.empty()) {
+				if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp && notEmergencyHarvester) {
+					m_ineligibleHarvesterHandler(key);
+					continue;
+				}
+			} else {
+				if (notBootstrapHarvester) {
+					if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp) {
+						m_ineligibleHarvesterHandler(key);
 						continue;
+					}
+
+					if (accountData.BootKey == Key()) {
+						m_ineligibleHarvesterHandler(key);
+						continue;
+					}
 				}
 			}
 
@@ -263,11 +287,11 @@ namespace catapult { namespace chain {
 		return rates;
 	}
 
-	const Committee& WeightedVotingCommitteeManagerV2::selectCommittee(const model::NetworkConfiguration& networkConfig) {
+	const Committee& WeightedVotingCommitteeManagerV2::selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) {
 		std::lock_guard<std::mutex> guard(m_mutex);
 
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
-		auto rates = getCandidates(networkConfig, config);
+		auto rates = getCandidates(networkConfig, config, blockchainVersion);
 
 		// The 21st account may be followed by the accounts with the same rate, select them all as candidates for
 		// the committee.
