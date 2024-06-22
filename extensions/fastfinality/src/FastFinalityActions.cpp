@@ -627,10 +627,10 @@ namespace catapult { namespace fastfinality {
 				rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise, pBlock](auto, const auto& result) {
 					bool success = (disruptor::CompletionStatus::Aborted != result.CompletionStatus);
 					if (success) {
-						CATAPULT_LOG(info) << "successfully committed block produced by " << pBlock->Signer;
+						CATAPULT_LOG(info) << "successfully committed block " << pBlock->Height << " produced by " << pBlock->Signer;
 					} else {
 						auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
-						CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult)) << "block commit failed due to " << validationResult;
+						CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult)) << "commit of block " << pBlock->Height << " produced by " << pBlock->Signer << " failed due to " << validationResult;
 					}
 
 					pPromise->set_value(std::move(success));

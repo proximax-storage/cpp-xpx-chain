@@ -10,6 +10,32 @@
 
 namespace catapult { namespace chain {
 
+	WeightedVotingCommitteeManagerV3::WeightedVotingCommitteeManagerV3(std::shared_ptr<cache::CommitteeAccountCollector> pAccountCollector)
+			: WeightedVotingCommitteeManagerV2(std::move(pAccountCollector)) {
+		setFilter([&failedBlockProposers = m_failedBlockProposers](const Key& key, const config::CommitteeConfiguration& config) {
+			if (config.EnableHarvesterRotation && failedBlockProposers.find(key) != failedBlockProposers.cend()) {
+				CATAPULT_LOG(debug) << "rejecting failed harvester " << key;
+				return false;
+			}
+
+			return true;
+		});
+
+		setIneligibleHarvesterHandler([&ineligibleHarvesters = m_ineligibleHarvesters](const Key& key) {
+			ineligibleHarvesters.insert(key);
+		});
+	}
+
+	void WeightedVotingCommitteeManagerV3::reset() {
+		std::lock_guard<std::mutex> guard(m_mutex);
+
+		m_hashes.clear();
+		m_committee = Committee();
+		m_accounts = m_pAccountCollector->accounts();
+		m_failedBlockProposers.clear();
+		m_ineligibleHarvesters.clear();
+	}
+
 	void WeightedVotingCommitteeManagerV3::logCommittee() const {
 		std::lock_guard<std::mutex> guard(m_mutex);
 
@@ -23,10 +49,6 @@ namespace catapult { namespace chain {
 
 		CATAPULT_LOG(debug) << out.str();
 	}
-
-	WeightedVotingCommitteeManagerV3::WeightedVotingCommitteeManagerV3(std::shared_ptr<cache::CommitteeAccountCollector> pAccountCollector)
-		: WeightedVotingCommitteeManagerV2(std::move(pAccountCollector))
-	{}
 
 	const Committee& WeightedVotingCommitteeManagerV3::selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) {
 		std::lock_guard<std::mutex> guard(m_mutex);
@@ -59,6 +81,14 @@ namespace catapult { namespace chain {
 
 		m_committee.BlockProposer = blockProposerCandidates.begin()->second;
 		CATAPULT_LOG(trace) << "committee: block proposer " << m_committee.BlockProposer;
+
+		// Reject this harvester when selecting block proposer for the next round.
+		m_failedBlockProposers.insert(m_committee.BlockProposer);
+		// If all harvesters are failing or ineligible, let the failing ones try again.
+		if (m_failedBlockProposers.size() + m_ineligibleHarvesters.size() == m_accounts.size()) {
+			CATAPULT_LOG(debug) << "clearing failed harvesters";
+			m_failedBlockProposers.clear();
+		}
 
 		return m_committee;
 	}

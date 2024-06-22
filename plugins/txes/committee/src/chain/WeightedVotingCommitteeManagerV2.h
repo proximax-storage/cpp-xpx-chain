@@ -51,6 +51,14 @@ namespace catapult { namespace chain {
 		static void logAccountData(const cache::AccountMap& accounts, const config::CommitteeConfiguration& config);
 		static void decreaseActivity(const Key& key, cache::AccountMap& accounts, const config::CommitteeConfiguration& config);
 
+		void setFilter(predicate<const Key&, const config::CommitteeConfiguration&> filter) {
+			m_filter = std::move(filter);
+		}
+
+		void setIneligibleHarvesterHandler(consumer<const Key&> ineligibleHarvesterHandler) {
+			m_ineligibleHarvesterHandler = std::move(ineligibleHarvesterHandler);
+		}
+
 	protected:
 		class Hasher {
 		public:
@@ -105,5 +113,7 @@ namespace catapult { namespace chain {
 		Timestamp m_timestamp;
 		uint64_t m_phaseTime;
 		mutable std::mutex m_mutex;
+		predicate<const Key&, const config::CommitteeConfiguration&> m_filter;
+		consumer<const Key&> m_ineligibleHarvesterHandler;
 	};
 }}

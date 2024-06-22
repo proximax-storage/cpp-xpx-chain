@@ -156,10 +156,12 @@ namespace catapult { namespace observers {
 
 				auto iter = committeeCache.find(key);
 				auto& entry = iter.get();
-				if (networkConfig.BootstrapHarvesters.empty()) {
-					entry.setVersion(3);
-				} else {
+				if (pluginConfig.EnableBlockchainVersionValidation) {
+					entry.setVersion(5);
+				} else if (!networkConfig.BootstrapHarvesters.empty()) {
 					entry.setVersion(4);
+				} else {
+					entry.setVersion(3);
 				}
 				entry.setEffectiveBalance(effectiveBalance);
 				entry.setCanHarvest(canHarvest);
