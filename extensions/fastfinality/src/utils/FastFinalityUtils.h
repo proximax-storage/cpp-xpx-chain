@@ -141,35 +141,35 @@ namespace catapult { namespace fastfinality {
 
 			boost::asio::post(pFsmShared->dbrbProcess().strand(), [pFsmWeak, pConfigHolder, lastBlockElementSupplier, pPromise]() {
 				auto pFsmShared = pFsmWeak.lock();
-				if (!pFsmShared || pFsmShared->stopped() || pFsmShared->dbrbProcess().currentView().Data.empty()) {
-					CATAPULT_LOG(warning) << "aborting node states retrieval, current view is empty";
-					pPromise->set_value({});
-					return;
-				}
-
 				const auto& dbrbProcess = pFsmShared->dbrbProcess();
-				auto view = dbrbProcess.currentView();
-				auto maxUnreachableNodeCount = dbrb::View::maxInvalidProcesses(view.Data.size());
-				view.Data.erase(dbrbProcess.id());
-
-				auto pMessageSender = dbrbProcess.messageSender();
-				pMessageSender->clearQueue();
-				pMessageSender->requestNodes(view.Data, pConfigHolder);
-
-				auto unreachableNodeCount = pMessageSender->getUnreachableNodeCount(view.Data);
-				if (unreachableNodeCount > maxUnreachableNodeCount) {
-					CATAPULT_LOG(warning) << "unreachable node count " << unreachableNodeCount << " exceeds the limit " << maxUnreachableNodeCount;
+				if (!pFsmShared || pFsmShared->stopped() || dbrbProcess.currentView().Data.empty()) {
+					CATAPULT_LOG(warning) << "aborting node states retrieval, current view is empty";
 					pPromise->set_value({});
 					return;
 				}
 
 				auto chainHeight = lastBlockElementSupplier()->Block.Height;
 				const auto& config = pConfigHolder->Config(chainHeight);
+				auto view = config.Network.DbrbBootstrapProcesses;
+				auto maxUnreachableNodeCount = dbrb::View::maxInvalidProcesses(view.size());
+				view.erase(dbrbProcess.id());
+
+				auto pMessageSender = dbrbProcess.messageSender();
+				pMessageSender->clearQueue();
+				pMessageSender->requestNodes(view, pConfigHolder);
+
+				auto unreachableNodeCount = pMessageSender->getUnreachableNodeCount(view);
+				if (unreachableNodeCount > maxUnreachableNodeCount) {
+					CATAPULT_LOG(warning) << "unreachable node count " << unreachableNodeCount << " exceeds the limit " << maxUnreachableNodeCount;
+					pPromise->set_value({});
+					return;
+				}
+
 				const auto maxBlocksPerSyncAttempt = config.Node.MaxBlocksPerSyncAttempt;
 				const auto targetHeight = chainHeight + Height(maxBlocksPerSyncAttempt);
 
 				std::vector<thread::future<RemoteNodeState>> remoteNodeStateFutures;
-				for (const auto& identityKey : view.Data) {
+				for (const auto& identityKey : view) {
 					auto nodePacketIoPair = pMessageSender->getNodePacketIoPair(identityKey);
 					if (nodePacketIoPair) {
 						auto pDispatcher = std::make_shared<RemoteRequestDispatcher>(std::move(nodePacketIoPair), *pMessageSender);
@@ -191,7 +191,7 @@ namespace catapult { namespace fastfinality {
 					}).get();
 				}
 
-				auto minOpinionNumber = view.quorumSize();
+				auto minOpinionNumber = dbrb::View{ view }.quorumSize();
 				CATAPULT_LOG(debug) << "retrieved " << nodeStates.size() << " node states, min opinion number " << minOpinionNumber;
 
 				if (nodeStates.size() < minOpinionNumber)
