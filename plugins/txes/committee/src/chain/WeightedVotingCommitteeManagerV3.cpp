@@ -50,7 +50,7 @@ namespace catapult { namespace chain {
 		CATAPULT_LOG(debug) << out.str();
 	}
 
-	const Committee& WeightedVotingCommitteeManagerV3::selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) {
+	void WeightedVotingCommitteeManagerV3::selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) {
 		std::lock_guard<std::mutex> guard(m_mutex);
 
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
@@ -89,7 +89,5 @@ namespace catapult { namespace chain {
 			CATAPULT_LOG(debug) << "clearing failed harvesters";
 			m_failedBlockProposers.clear();
 		}
-
-		return m_committee;
 	}
 }}

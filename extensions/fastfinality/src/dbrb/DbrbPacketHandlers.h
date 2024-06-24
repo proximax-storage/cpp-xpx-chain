@@ -34,6 +34,16 @@ namespace catapult { namespace dbrb {
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		ionet::ServerPacketHandlers& handlers);
 
+	/// Registers a pull DBRB node handler in \a handlers.
+	void RegisterPullNodesHandler(
+		const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
+		ionet::ServerPacketHandlers& handlers);
+
+	/// Registers a pull DBRB node handler in \a handlers.
+	void RegisterPullNodesHandler(
+		const std::weak_ptr<ShardedDbrbProcess>& pDbrbProcessWeak,
+		ionet::ServerPacketHandlers& handlers);
+
 	/// Registers a remove DBRB node request handler in \a handlers.
 	void RegisterRemoveNodeRequestHandler(
 		const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,

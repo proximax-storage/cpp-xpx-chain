@@ -18,11 +18,11 @@ namespace catapult { namespace fastfinality {
 	struct FastFinalityTransitionTable {
 		auto operator()() const {
 			auto syncWithNetwork = [](const auto& event) {
-				return event.IsBroadcastStarted;
+				return event.SyncWithNetwork;
 			};
 
 			auto startNextRound = [](const auto& event) {
-				return !event.IsBroadcastStarted;
+				return !event.SyncWithNetwork;
 			};
 
 #define ACTION(NAME) [] (FastFinalityActions& actions) { actions.NAME(); }
@@ -49,7 +49,7 @@ namespace catapult { namespace fastfinality {
 				sml::state<BlocksDownloading> + sml::event<Hold> = sml::state<OnHold>,
 
 				sml::state<RoundDetection> + sml::on_entry<sml::_> / ACTION(DetectRound),
-				sml::state<RoundDetection> + sml::event<RoundDetectionSucceeded> = sml::state<ConnectionChecking>,
+				sml::state<RoundDetection> + sml::event<RoundDetectionCompleted> = sml::state<ConnectionChecking>,
 
 				sml::state<ConnectionChecking> + sml::on_entry<sml::_> / ACTION(CheckConnections),
 				sml::state<ConnectionChecking> + sml::event<ConnectionNumberSufficient> = sml::state<BlockProducerSelection>,

@@ -349,8 +349,6 @@ namespace catapult { namespace local {
 			auto success = TryWaitForMaxHeight(contexts, Max_Chain_Height.unwrap() * 10);
 			ASSERT_TRUE(success) << "test timed out";
 
-			threads.join_all();
-
 			for (auto i = 0u; i < Network_Size - 1; ++i) {
 				auto stats1 = GetStatistics(*contexts[i]);
 				auto stats2 = GetStatistics(*contexts[i + 1]);
@@ -358,6 +356,8 @@ namespace catapult { namespace local {
 				ASSERT_EQ(stats1.StateHash, stats2.StateHash);
 				ASSERT_EQ(stats1.Height, stats2.Height);
 			}
+
+			threads.join_all();
 		}
 
 		// endregion

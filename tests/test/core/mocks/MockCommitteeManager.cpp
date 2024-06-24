@@ -7,8 +7,7 @@
 #include "MockCommitteeManager.h"
 
 namespace catapult { namespace mocks {
-	const chain::Committee& MockCommitteeManager::selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) {
-		return chain::Committee(0);
+	void MockCommitteeManager::selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) {
 	}
 
 	Key MockCommitteeManager::getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const {

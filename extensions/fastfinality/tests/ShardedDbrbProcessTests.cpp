@@ -56,12 +56,10 @@ namespace catapult { namespace fastfinality {
 				return {};
 			}
 			void pushNodePacketIoPair(const dbrb::ProcessId& id, const ionet::NodePacketIoPair& nodePacketIoPair) override {}
-			void requestNodes(const dbrb::ViewData& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override {}
+			void findNodes(const dbrb::ViewData& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override {}
 			void addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override {}
+			void sendNodes(const std::vector<ionet::Node>& nodes, const dbrb::ProcessId& recipient) override {}
 			void removeNode(const dbrb::ProcessId& id) override {}
-			void broadcastNodes(const dbrb::Payload& payload) override {}
-			void broadcastThisNode() override {}
-			void clearBroadcastData() override {}
 			bool isNodeAdded(const dbrb::ProcessId& id) override {
 				return false;
 			}
@@ -73,6 +71,10 @@ namespace catapult { namespace fastfinality {
 					view.erase(id);
 
 				return m_unreachableNodes;
+			}
+
+			std::vector<ionet::Node> getKnownNodes(dbrb::ViewData& view) const {
+				return {};
 			}
 
 			size_t getUnreachableNodeCount(const dbrb::ViewData& view) const override {

@@ -46,7 +46,7 @@ namespace catapult { namespace chain {
 
 	public:
 		/// Selects new committee and increments round.
-		virtual const Committee& selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) = 0;
+		virtual void selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) = 0;
 
 		/// Selects new committee and increments round.
 		virtual Key getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const = 0;

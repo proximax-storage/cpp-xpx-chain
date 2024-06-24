@@ -64,7 +64,8 @@ namespace catapult { namespace chain {
 			pCommitteeManager->setLastBlockElementSupplier([pBlockElement]() { return pBlockElement; });
 
 			// Act:
-			auto actualCommittee = pCommitteeManager->selectCommittee(CreateConfig(), BlockchainVersion(0));
+			pCommitteeManager->selectCommittee(CreateConfig(), BlockchainVersion(0));
+			auto actualCommittee = pCommitteeManager->committee();
 
 			// Assert:
 			EXPECT_EQ(expectedCommittee.BlockProposer, actualCommittee.BlockProposer);

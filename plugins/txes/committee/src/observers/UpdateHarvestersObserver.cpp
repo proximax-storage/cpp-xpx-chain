@@ -114,7 +114,6 @@ namespace catapult { namespace observers {
 			auto committee = pCommitteeManager->committee();
 			if (committee.Round != notification.Round) {
 				CATAPULT_LOG(error) << "invalid committee round " << committee.Round << " (expected " << notification.Round << ")";
-				CATAPULT_THROW_RUNTIME_ERROR_2("invalid committee round", committee.Round, notification.Round)
 				if (exitOnInvalidCommitteeRound)
 					return;
 			}

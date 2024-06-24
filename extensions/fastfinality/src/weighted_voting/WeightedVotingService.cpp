@@ -166,6 +166,7 @@ namespace catapult { namespace fastfinality {
 				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
 				handlers::RegisterPullBlocksHandler(pFsmShared->packetHandlers(), state.storage(), CreatePullBlocksHandlerConfiguration(config.Node));
 				pFsmShared->dbrbProcess().registerDbrbPushNodesHandler(config.Immutable.NetworkIdentifier, pConfigHolder, pFsmShared->packetHandlers());
+				pFsmShared->dbrbProcess().registerDbrbPullNodesHandler(pFsmShared->packetHandlers());
 				pFsmShared->dbrbProcess().registerDbrbRemoveNodeRequestHandler(locator.keyPair(), pFsmShared->packetHandlers());
 				pFsmShared->dbrbProcess().registerDbrbRemoveNodeResponseHandler(pFsmShared->packetHandlers());
 
