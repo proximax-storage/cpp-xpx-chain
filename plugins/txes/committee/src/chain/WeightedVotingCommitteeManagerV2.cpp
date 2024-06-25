@@ -242,6 +242,12 @@ namespace catapult { namespace chain {
 				continue;
 			}
 
+			if (accountData.BanPeriod > BlockDuration(0) && notBootstrapHarvester && notEmergencyHarvester) {
+				CATAPULT_LOG(debug) << "rejecting harvester " << key << " (banned for " << accountData.BanPeriod << " blocks)";
+				m_ineligibleHarvesterHandler(key);
+				continue;
+			}
+
 			if (networkConfig.BootstrapHarvesters.empty()) {
 				if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp && notEmergencyHarvester) {
 					m_ineligibleHarvesterHandler(key);
@@ -287,7 +293,7 @@ namespace catapult { namespace chain {
 		return rates;
 	}
 
-	const Committee& WeightedVotingCommitteeManagerV2::selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) {
+	void WeightedVotingCommitteeManagerV2::selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) {
 		std::lock_guard<std::mutex> guard(m_mutex);
 
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
@@ -330,7 +336,5 @@ namespace catapult { namespace chain {
 		CATAPULT_LOG(trace) << "committee: block proposer " << m_committee.BlockProposer;
 		for (const auto& cosigner : m_committee.Cosigners)
 			CATAPULT_LOG(trace) << "committee: cosigner " << cosigner;
-
-		return m_committee;
 	}
 }}

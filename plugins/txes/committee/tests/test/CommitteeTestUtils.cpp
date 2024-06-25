@@ -18,7 +18,16 @@ namespace catapult { namespace test {
 			bool canHarvest,
 			double activityObsolete,
 			double greedObsolete) {
-		return { key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, disabledHeight };
+		VersionType version = 1;
+		Timestamp expirationTime = Timestamp(0);
+		int64_t activity = 0;
+		uint32_t feeInterest = 0;
+		uint32_t feeInterestDenominator = 0;
+		const Key& bootKey = Key();
+		const BlockchainVersion& blockchainVersion = BlockchainVersion(0);
+		auto banPeriod = BlockDuration(0);
+		return { key, owner, lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, disabledHeight, version, expirationTime,
+			activity, feeInterest, feeInterestDenominator, bootKey, blockchainVersion, banPeriod };
 	}
 
 	state::AccountData CreateAccountData(
@@ -27,7 +36,7 @@ namespace catapult { namespace test {
 			bool canHarvest,
 			double activityObsolete,
 			double greedObsolete) {
-		return { lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, Timestamp(0), 0u, 1u, 1u, Key(), BlockchainVersion(0) };
+		return { lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, Timestamp(0), 0u, 1u, 1u, Key(), BlockchainVersion(0), BlockDuration(0) };
 	}
 
 	void AssertEqualAccountData(const state::AccountData& data1, const state::AccountData& data2) {
@@ -41,6 +50,8 @@ namespace catapult { namespace test {
 		EXPECT_EQ(data1.FeeInterest, data2.FeeInterest);
 		EXPECT_EQ(data1.FeeInterestDenominator, data2.FeeInterestDenominator);
 		EXPECT_EQ(data1.BootKey, data2.BootKey);
+		EXPECT_EQ(data1.BlockchainVersion, data2.BlockchainVersion);
+		EXPECT_EQ(data1.BanPeriod, data2.BanPeriod);
 	}
 
 	void AssertEqualCommitteeEntry(const state::CommitteeEntry& entry1, const state::CommitteeEntry& entry2) {

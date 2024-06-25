@@ -114,6 +114,14 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
+		void registerDbrbPullNodesHandler(ionet::ServerPacketHandlers& packetHandlers) {
+			if (m_shardingEnabled) {
+				dbrb::RegisterPullNodesHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), packetHandlers);
+			} else {
+				dbrb::RegisterPullNodesHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), packetHandlers);
+			}
+		}
+
 		void registerDbrbRemoveNodeRequestHandler(const crypto::KeyPair& keyPair, ionet::ServerPacketHandlers& packetHandlers) {
 			if (m_shardingEnabled) {
 				dbrb::RegisterRemoveNodeRequestHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), keyPair, packetHandlers);

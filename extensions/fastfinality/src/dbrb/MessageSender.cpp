@@ -50,19 +50,19 @@ namespace catapult { namespace dbrb {
 
 		public:
 			// Node discovery
-			void requestNodes(const std::set<ProcessId>& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override;
+			void findNodes(const std::set<ProcessId>& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override;
 			void addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override;
+			void sendNodes(const std::vector<ionet::Node>& nodes, const ProcessId& recipient) override;
 			void removeNode(const ProcessId& id) override;
-			void broadcastNodes(const Payload& payload) override;
-			void broadcastThisNode() override;
-			void clearBroadcastData() override;
 			bool isNodeAdded(const ProcessId& id) override;
 			void addRemoveNodeResponse(const ProcessId& idToRemove, const ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature) override;
 			ViewData getUnreachableNodes(ViewData& view) const override;
 			size_t getUnreachableNodeCount(const dbrb::ViewData& view) const override;
+			std::vector<ionet::Node> getKnownNodes(ViewData& view) const override;
 
 		private:
-			void broadcastNodes(const std::vector<ionet::Node>& nodes);
+			void requestNodes(const std::set<ProcessId>& requestedIds);
+			void broadcast(const Payload& payload);
 
 		public:
 			void clearNodeRemovalData() override;
@@ -85,7 +85,6 @@ namespace catapult { namespace dbrb {
 			const ionet::NodeContainer& m_nodeContainer;
 			std::map<ProcessId, ionet::Node> m_nodes;
 			std::unordered_set<ProcessId, utils::ArrayHasher<ProcessId>> m_connectionInProgress;
-			std::map<ProcessId, std::unordered_set<Hash256, utils::ArrayHasher<Hash256>>> m_broadcastedPackets;
 			mutable std::mutex m_nodeMutex;
 
 			// Node removing
@@ -257,7 +256,7 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	void DefaultMessageSender::requestNodes(const std::set<ProcessId>& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+	void DefaultMessageSender::findNodes(const std::set<ProcessId>& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		std::vector<ionet::Node> nodes;
 		std::set<ProcessId> ids;
 
@@ -271,7 +270,7 @@ namespace catapult { namespace dbrb {
 
 		ids.erase(m_thisNode.identityKey());
 
-		CATAPULT_LOG(debug) << "[MESSAGE SENDER] requesting " << ids.size() << " nodes";
+		CATAPULT_LOG(debug) << "[MESSAGE SENDER] looking for " << ids.size() << " nodes";
 
 		if (ids.empty())
 			return;
@@ -279,10 +278,33 @@ namespace catapult { namespace dbrb {
 		nodes = m_nodeContainer.view().getNodes(ids);
 		nodes.erase(std::remove_if(nodes.begin(), nodes.end(), [](const auto& node) { return node.endpoint().Host.empty(); }), nodes.end());
 		CATAPULT_LOG(debug) << "[MESSAGE SENDER] got " << nodes.size() << " discovered nodes";
-		if (!nodes.empty()) {
+		if (!nodes.empty())
 			addNodes(nodes, pConfigHolder);
-			broadcastNodes(nodes);
+
+		for (const auto& node : nodes)
+			ids.erase(node.identityKey());
+
+		if (ids.empty())
+			return;
+
+		CATAPULT_LOG(debug) << "[MESSAGE SENDER] requesting " << ids.size() << " nodes";
+
+		requestNodes(ids);
+	}
+
+	void DefaultMessageSender::requestNodes(const std::set<ProcessId>& requestedIds) {
+		if (requestedIds.empty())
+			return;
+
+		auto pPacket = ionet::CreateSharedPacket<DbrbPullNodesPacket>(requestedIds.size() * ProcessId_Size);
+		pPacket->NodeCount = utils::checked_cast<size_t, uint16_t>(requestedIds.size());
+		auto* pBuffer = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
+		for (const auto& id : requestedIds) {
+			memcpy(pBuffer, id.data(), ProcessId_Size);
+			pBuffer += ProcessId_Size;
 		}
+
+		broadcast(pPacket);
 	}
 
 	void DefaultMessageSender::addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
@@ -325,7 +347,7 @@ namespace catapult { namespace dbrb {
 							pThis->m_nodes[node.identityKey()] = node;
 						}
 						CATAPULT_LOG(debug) << "[MESSAGE SENDER] Added node " << dbrbNode << " " << dbrbNode.identityKey();
-						pThis->broadcastThisNode();
+						pThis->sendNodes({ pThis->m_thisNode }, node.identityKey());
 					} else {
 						// TODO: uncomment and retest
 //						std::lock_guard<std::mutex> guard(pThis->m_removeNodeMutex);
@@ -357,12 +379,7 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	void DefaultMessageSender::broadcastThisNode() {
-		if (m_broadcastThisNode)
-			broadcastNodes({ m_thisNode });
-	}
-
-	void DefaultMessageSender::broadcastNodes(const std::vector<ionet::Node>& nodes) {
+	void DefaultMessageSender::sendNodes(const std::vector<ionet::Node>& nodes, const ProcessId& recipient) {
 		if (nodes.empty())
 			return;
 
@@ -383,27 +400,19 @@ namespace catapult { namespace dbrb {
 			pBuffer += pNetworkNode->Size;
 		}
 
-		broadcastNodes(pPacket);
+		enqueue(pPacket, { recipient });
 	}
 
-
-	void DefaultMessageSender::broadcastNodes(const Payload& payload) {
-		auto hash = CalculatePayloadHash(payload);
-
-		std::set<ProcessId> ids;
+	void DefaultMessageSender::broadcast(const Payload& payload) {
+		std::set<ProcessId> recipients;
 		{
 			std::lock_guard<std::mutex> guard(m_nodeMutex);
-			for (const auto& pair : m_nodes) {
-				auto& hashes = m_broadcastedPackets[pair.second.identityKey()];
-				if (hashes.find(hash) == hashes.cend()) {
-					hashes.emplace(hash);
-					ids.emplace(pair.second.identityKey());
-				}
-			}
+			for (const auto& [id, _] : m_nodes)
+				recipients.emplace(id);
 		}
 
-		if (!ids.empty())
-			enqueue(payload, ids);
+		if (!recipients.empty())
+			enqueue(payload, recipients);
 	}
 
 	void DefaultMessageSender::removeNode(const ProcessId& id) {
@@ -412,15 +421,6 @@ namespace catapult { namespace dbrb {
 		auto nodeIter = m_nodes.find(id);
 		if (nodeIter != m_nodes.end())
 			m_nodes.erase(nodeIter);
-
-		auto packetIter = m_broadcastedPackets.find(id);
-		if (packetIter != m_broadcastedPackets.end())
-			m_broadcastedPackets.erase(packetIter);
-	}
-
-	void DefaultMessageSender::clearBroadcastData() {
-		std::lock_guard<std::mutex> guard(m_nodeMutex);
-		m_broadcastedPackets.clear();
 	}
 
 	void DefaultMessageSender::clearNodeRemovalData() {
@@ -473,5 +473,17 @@ namespace catapult { namespace dbrb {
 		}
 
 		return count;
+	}
+
+	std::vector<ionet::Node> DefaultMessageSender::getKnownNodes(ViewData& view) const {
+		std::lock_guard<std::mutex> guard(m_nodeMutex);
+		std::vector<ionet::Node> nodes;
+		for (const auto& id : view) {
+			auto iter = m_nodes.find(id);
+			if (iter != m_nodes.cend())
+				nodes.push_back(iter->second);
+		}
+
+		return nodes;
 	}
 }}

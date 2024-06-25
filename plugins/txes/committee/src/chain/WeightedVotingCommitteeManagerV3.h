@@ -19,7 +19,7 @@ namespace catapult { namespace chain {
 		void logCommittee() const override;
 
 	public:
-		const Committee& selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) override;
+		void selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) override;
 
 	private:
 		utils::KeySet m_failedBlockProposers;

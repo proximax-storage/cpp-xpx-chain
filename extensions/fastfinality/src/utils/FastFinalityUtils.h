@@ -156,7 +156,7 @@ namespace catapult { namespace fastfinality {
 
 				auto pMessageSender = dbrbProcess.messageSender();
 				pMessageSender->clearQueue();
-				pMessageSender->requestNodes(view, pConfigHolder);
+				pMessageSender->findNodes(view, pConfigHolder);
 
 				auto unreachableNodeCount = pMessageSender->getUnreachableNodeCount(view);
 				if (unreachableNodeCount > maxUnreachableNodeCount) {

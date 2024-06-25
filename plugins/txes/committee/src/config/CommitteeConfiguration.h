@@ -7,6 +7,7 @@
 #pragma once
 #include "catapult/model/PluginConfiguration.h"
 #include "catapult/types.h"
+#include "catapult/utils/TimeSpan.h"
 #include <stdint.h>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
@@ -69,6 +70,12 @@ namespace catapult { namespace config {
 
 		/// Enables harvester rotation on block production failure (temporary do not select failed harvesters as block proposer).
 		bool EnableHarvesterRotation;
+
+		/// Harvester ban period.
+		utils::TimeSpan HarvesterBanPeriod;
+
+		/// Enables validation of block producers.
+		bool EnableBlockProducerValidation;
 
 	private:
 		CommitteeConfiguration() = default;

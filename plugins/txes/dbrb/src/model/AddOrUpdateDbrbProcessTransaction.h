@@ -19,7 +19,7 @@ namespace catapult { namespace model {
 		using TransactionType = AddOrUpdateDbrbProcessTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_AddOrUpdateDbrbProcess, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_AddOrUpdateDbrbProcess, 2)
 
 	public:
 		catapult::BlockchainVersion BlockchainVersion;

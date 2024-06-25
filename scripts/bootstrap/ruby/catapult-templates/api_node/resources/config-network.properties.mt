@@ -101,6 +101,9 @@ weightScaleFactor = 1000000000000000000
 enableEqualWeights = true
 enableBlockchainVersionValidation = true
 enableHarvesterRotation = true
+enableBlockProducerValidation = true
+
+harvesterBanPeriod = 1h
 
 [plugin:catapult.plugins.config]
 
