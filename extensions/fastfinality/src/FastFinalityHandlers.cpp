@@ -21,7 +21,7 @@
 namespace catapult { namespace fastfinality {
 
 	namespace {
-		constexpr VersionType Block_Version = 6;
+		constexpr VersionType Block_Version = 7;
 
 		std::shared_ptr<model::Block> GetBlockFromPacket(const plugins::PluginManager& pluginManager, const ionet::Packet& packet) {
 			const auto& registry = pluginManager.transactionRegistry();

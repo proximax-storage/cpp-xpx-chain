@@ -19,7 +19,7 @@
 namespace catapult { namespace fastfinality {
 
 	namespace {
-		constexpr VersionType Block_Version = 6;
+		constexpr VersionType Block_Version = 7;
 
 		bool ApprovalRatingSufficient(
 				const double approvalRating,
@@ -214,7 +214,7 @@ namespace catapult { namespace fastfinality {
 				return false;
 			}
 
-			if (pBlock->EntityVersion() >= Block_Version)
+			if (pBlock->EntityVersion() >= 6)
 				return true;
 
 			auto numCosignatures = pBlock->CosignaturesCount();

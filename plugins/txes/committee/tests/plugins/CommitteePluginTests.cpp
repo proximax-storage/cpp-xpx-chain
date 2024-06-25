@@ -64,6 +64,7 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+					"CommitteeValidator",
 					"AddHarvesterValidator",
 					"RemoveHarvesterValidator",
 				};
@@ -79,6 +80,8 @@ namespace catapult { namespace plugins {
 					"RemoveDbrbProcessByNetworkObserver",
 					"UpdateHarvestersV3Observer",
 					"ActiveHarvestersV3Observer",
+					"UpdateHarvestersV4Observer",
+					"ActiveHarvestersV4Observer",
 					"AddHarvesterObserver",
 					"RemoveHarvesterObserver",
 				};

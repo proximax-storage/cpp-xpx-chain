@@ -59,6 +59,9 @@ namespace catapult { namespace utils {
 
 		/// Returns the approximate number of blocks given the generation target time (\a generationTargetTime).
 		BlockDuration blocks(const TimeSpan& generationTargetTime) const {
+			if (m_hours == 0)
+				return BlockDuration(0);
+
 			auto millisPerHour = TimeSpan::FromHours(1).millis();
 			if (m_hours > std::numeric_limits<uint64_t>::max() / millisPerHour)
 				CATAPULT_THROW_RUNTIME_ERROR_1("overflow while calculating blocks from hours", m_hours);

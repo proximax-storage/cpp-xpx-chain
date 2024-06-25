@@ -242,6 +242,12 @@ namespace catapult { namespace chain {
 				continue;
 			}
 
+			if (accountData.BanPeriod > BlockDuration(0) && notBootstrapHarvester && notEmergencyHarvester) {
+				CATAPULT_LOG(debug) << "rejecting harvester " << key << " (banned for " << accountData.BanPeriod << " blocks)";
+				m_ineligibleHarvesterHandler(key);
+				continue;
+			}
+
 			if (networkConfig.BootstrapHarvesters.empty()) {
 				if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp && notEmergencyHarvester) {
 					m_ineligibleHarvesterHandler(key);

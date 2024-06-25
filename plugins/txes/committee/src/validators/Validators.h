@@ -10,7 +10,7 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
-namespace catapult { namespace chain { class WeightedVotingCommitteeManager; }}
+namespace catapult { namespace chain { class WeightedVotingCommitteeManagerV3; }}
 
 namespace catapult { namespace validators {
 	/// A validator implementation that applies to add harvester notification and validates that:
@@ -25,4 +25,9 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid
 	DECLARE_STATELESS_VALIDATOR(CommitteePluginConfig, model::PluginConfigNotification<1>)();
+
+	/// A validator implementation that applies to block committee notification V4 and validates that:
+	/// - selected committee round is the same as in block
+	/// - block signer is block proposer
+	DECLARE_STATEFUL_VALIDATOR(Committee, model::BlockCommitteeNotification<4>)(const std::shared_ptr<chain::WeightedVotingCommitteeManagerV3>& pCommitteeManager);
 }}

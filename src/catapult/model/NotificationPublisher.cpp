@@ -96,6 +96,13 @@ namespace catapult { namespace model {
 
 				// raise an entity notification
 				switch (block.EntityVersion()) {
+				case 7: {
+					if (block.EntityVersion() == 7)
+						sub.notify(BlockCommitteeNotification<4>(block.round(), block.FeeInterest, block.FeeInterestDenominator, block.Signer));
+
+					[[fallthrough]];
+				}
+
 				case 6: {
 					if (block.EntityVersion() == 6)
 						sub.notify(BlockCommitteeNotification<3>(block.round(), block.FeeInterest, block.FeeInterestDenominator));

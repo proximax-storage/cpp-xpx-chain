@@ -24,7 +24,8 @@ namespace catapult { namespace state {
 				uint32_t feeInterest,
 				uint32_t feeInterestDenominator,
 				const Key& bootKey,
-				const BlockchainVersion& blockchainVersion)
+				const BlockchainVersion& blockchainVersion,
+				const BlockDuration& banPeriod)
 			: LastSigningBlockHeight(std::move(lastSigningBlockHeight))
 			, EffectiveBalance(std::move(effectiveBalance))
 			, CanHarvest(canHarvest)
@@ -36,6 +37,7 @@ namespace catapult { namespace state {
 			, FeeInterestDenominator(feeInterestDenominator)
 			, BootKey(bootKey)
 			, BlockchainVersion(blockchainVersion)
+			, BanPeriod(banPeriod)
 		{}
 
 	public:
@@ -98,6 +100,9 @@ namespace catapult { namespace state {
 
 		/// Current software version running on the node.
 		catapult::BlockchainVersion BlockchainVersion;
+
+		/// Harvester ban period in blocks. Zero ban period means harvester is not banned.
+		BlockDuration BanPeriod;
 	};
 
 	// Committee entry.
@@ -118,11 +123,12 @@ namespace catapult { namespace state {
 				uint32_t feeInterest = 0u,
 				uint32_t feeInterestDenominator = 0u,
 				const Key& bootKey = Key(),
-				const BlockchainVersion& blockchainVersion = BlockchainVersion(0))
+				const BlockchainVersion& blockchainVersion = BlockchainVersion(0),
+				const BlockDuration& banPeriod = BlockDuration(0))
 			: m_key(key)
 			, m_owner(owner)
 			, m_disabledHeight(std::move(disabledHeight))
-			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, std::move(expirationTime), activity, feeInterest, feeInterestDenominator, bootKey, blockchainVersion)
+			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, std::move(expirationTime), activity, feeInterest, feeInterestDenominator, bootKey, blockchainVersion, banPeriod)
 			, m_version(version)
 		{}
 
@@ -284,6 +290,22 @@ namespace catapult { namespace state {
 		/// Sets the blockchain version.
 		void setBlockchainVersion(const BlockchainVersion& version) {
 			m_data.BlockchainVersion = version;
+		}
+
+		/// Sets the harvester ban period.
+		void setBanPeriod(const BlockDuration& banPeriod) {
+			m_data.BanPeriod = banPeriod;
+		}
+
+		/// Decrements the harvester ban period by one.
+		void decrementBanPeriod() {
+			if (m_data.BanPeriod > BlockDuration(0))
+				m_data.BanPeriod = m_data.BanPeriod - BlockDuration(1);
+		}
+
+		/// Gets the harvester ban period.
+		const BlockDuration& banPeriod() const {
+			return m_data.BanPeriod;
 		}
 
 	private:
