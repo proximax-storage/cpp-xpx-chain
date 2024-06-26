@@ -274,8 +274,12 @@ namespace catapult { namespace chain {
 			auto hit = *reinterpret_cast<const uint64_t*>(hash.data());
 			if (hit == 0u)
 				hit = 1u;
-			if (config.EnableEqualWeights)
-				weight *= utils::checked_cast<uint64_t, double>((pLastBlockElement->Block.Height + Height(1) - accountData.LastSigningBlockHeight).unwrap());
+			if (config.EnableEqualWeights) {
+				auto nextHeight = pLastBlockElement->Block.Height + Height(1);
+				if (nextHeight <= accountData.LastSigningBlockHeight)
+					CATAPULT_THROW_INVALID_ARGUMENT_2("invalid last signing block height", key, accountData.LastSigningBlockHeight)
+				weight *= static_cast<double>((nextHeight - accountData.LastSigningBlockHeight).unwrap());
+			}
 			auto stake = static_cast<double>(accountData.EffectiveBalance.unwrap()) / static_cast<double>(hit);
 			auto fRate = stake * weight;
 			auto nRate = std::numeric_limits<int64_t>::max();
