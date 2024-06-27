@@ -5,9 +5,10 @@
 **/
 
 #pragma once
-#include "CommitteeData.h"
-#include "WeightedVotingTransitionTable.h"
-#include "dbrb/DbrbProcessContainer.h"
+#include "FastFinalityData.h"
+#include "FastFinalityRound.h"
+#include "FastFinalityTransitionTable.h"
+#include "fastfinality/src/dbrb/DbrbProcessContainer.h"
 #include "catapult/thread/IoThreadPool.h"
 
 namespace catapult { namespace ionet { class NodePacketIoPair; } }
@@ -25,17 +26,17 @@ namespace catapult { namespace fastfinality {
 		std::vector<Key> NodeIdentityKeys;
 	};
 
-	class WeightedVotingFsm : public std::enable_shared_from_this<WeightedVotingFsm> {
+	class FastFinalityFsm : public std::enable_shared_from_this<FastFinalityFsm> {
 	public:
-		WeightedVotingFsm(
+		FastFinalityFsm(
 				std::shared_ptr<thread::IoThreadPool> pPool,
 				const config::BlockchainConfiguration& config,
 				std::shared_ptr<dbrb::DbrbProcess> pDbrbProcess,
 				const plugins::PluginManager& pluginManager)
 			: m_pPool(std::move(pPool))
 			, m_timer(m_pPool->ioContext())
-			, m_sm(boost::sml::sm<WeightedVotingTransitionTable>(m_actions))
-			, m_committeeData(pluginManager)
+			, m_sm(boost::sml::sm<FastFinalityTransitionTable>(m_actions))
+			, m_fastFinalityData(pluginManager)
 			, m_strand(m_pPool->ioContext())
 			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
@@ -43,15 +44,15 @@ namespace catapult { namespace fastfinality {
 			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32())
 		{}
 
-		WeightedVotingFsm(
+		FastFinalityFsm(
 				std::shared_ptr<thread::IoThreadPool> pPool,
 				const config::BlockchainConfiguration& config,
 				std::shared_ptr<dbrb::ShardedDbrbProcess> pDbrbProcess,
 				const plugins::PluginManager& pluginManager)
 			: m_pPool(std::move(pPool))
 			, m_timer(m_pPool->ioContext())
-			, m_sm(boost::sml::sm<WeightedVotingTransitionTable>(m_actions))
-			, m_committeeData(pluginManager)
+			, m_sm(boost::sml::sm<FastFinalityTransitionTable>(m_actions))
+			, m_fastFinalityData(pluginManager)
 			, m_strand(m_pPool->ioContext())
 			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
@@ -82,7 +83,7 @@ namespace catapult { namespace fastfinality {
 			m_stopped = true;
 			m_timer.cancel();
 			processEvent(Stop{});
-			m_actions = WeightedVotingActions{};
+			m_actions = FastFinalityActions{};
 			m_pPool.reset();
 			m_dbrbProcess.shutdown();
 		}
@@ -106,30 +107,20 @@ namespace catapult { namespace fastfinality {
 			m_pChainSyncData.reset();
 		}
 
-		auto& committeeData() {
-			return m_committeeData;
+		auto& fastFinalityData() {
+			return m_fastFinalityData;
 		}
 
-		const auto& committeeData() const {
-			return m_committeeData;
+		const auto& fastFinalityData() const {
+			return m_fastFinalityData;
 		}
 
-		void resetCommitteeData() {
-			m_committeeData.setCommitteeRound(CommitteeRound{});
-			m_committeeData.setBlockProposer(nullptr);
-			m_committeeData.localCommittee().clear();
-			m_committeeData.setTotalSumOfVotes(chain::HarvesterWeight{});
-			m_committeeData.setProposedBlock(nullptr);
-			m_committeeData.setConfirmedBlock(nullptr);
-			m_committeeData.clearVotes();
-			m_committeeData.setSumOfPrevotesSufficient(false);
-			m_committeeData.setSumOfPrecommitsSufficient(false);
-			m_committeeData.setUnexpectedProposedBlockHeight(false);
-			m_committeeData.setUnexpectedConfirmedBlockHeight(false);
-			m_committeeData.removeBootKeys();
-			m_committeeData.removeValidatedProposedBlockSignatures();
-			m_committeeData.removeValidatedConfirmedBlockSignatures();
-			m_committeeData.setIsBlockBroadcastEnabled(false);
+		void resetFastFinalityData() {
+			m_fastFinalityData.setRound(FastFinalityRound{});
+			m_fastFinalityData.setBlockProducer(nullptr);
+			m_fastFinalityData.setProposedBlock(nullptr);
+			m_fastFinalityData.setBlock(nullptr);
+			m_fastFinalityData.setUnexpectedBlockHeight(false);
 		}
 
 		bool stopped() const {
@@ -159,10 +150,10 @@ namespace catapult { namespace fastfinality {
 	private:
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 		boost::asio::system_timer m_timer;
-		WeightedVotingActions m_actions;
-		boost::sml::sm<WeightedVotingTransitionTable> m_sm;
+		FastFinalityActions m_actions;
+		boost::sml::sm<FastFinalityTransitionTable> m_sm;
 		std::unique_ptr<ChainSyncData> m_pChainSyncData;
-		CommitteeData m_committeeData;
+		FastFinalityData m_fastFinalityData;
 		boost::asio::io_context::strand m_strand;
 		NodeWorkState m_nodeWorkState;
 		bool m_stopped;

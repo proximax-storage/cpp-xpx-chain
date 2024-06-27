@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "fastfinality/src/WeightedVotingFsm.h"
+#include "fastfinality/src/weighted_voting/WeightedVotingFsm.h"
 #include "src/catapult/ionet/Packet.h"
 #include "mocks/MockDbrbProcess.h"
 #include "tests/test/core/mocks/MockDbrbViewFetcher.h"

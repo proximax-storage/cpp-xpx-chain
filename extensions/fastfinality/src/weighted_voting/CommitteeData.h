@@ -317,7 +317,7 @@ namespace catapult { namespace fastfinality {
 
 	private:
 		bool isSumOfVotesSufficient(const VoteMap& votes) {
-			const auto& committeeManager = m_pluginManager.getCommitteeManager(model::Block::Current_Version);
+			const auto& committeeManager = m_pluginManager.getCommitteeManager(Block_Version);
 			const auto& config = m_pluginManager.configHolder()->Config(m_currentBlockHeight).Network;
 			auto actualSumOfVotes = committeeManager.zeroWeight();
 			for (const auto& pair : votes)
@@ -331,6 +331,8 @@ namespace catapult { namespace fastfinality {
 		}
 
 	private:
+		static constexpr VersionType Block_Version = 5;
+
 		const plugins::PluginManager& m_pluginManager;
 
 		Key m_beneficiary;

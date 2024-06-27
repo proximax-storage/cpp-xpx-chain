@@ -37,9 +37,10 @@ namespace catapult { namespace api {
 	public:
 		/// Gets all unconfirmed transactions from the remote that have a fee multiplier at least \a minFeeMultiplier
 		/// and do not have a short hash in \a knownShortHashes.
-		virtual thread::future<model::TransactionRange> unconfirmedTransactions(
-				BlockFeeMultiplier minFeeMultiplier,
-				model::ShortHashRange&& knownShortHashes) const = 0;
+		virtual thread::future<std::vector<model::TransactionRange>> unconfirmedTransactions(
+			BlockFeeMultiplier minFeeMultiplier,
+			model::ShortHashRange&& knownShortHashes,
+			size_t batchSize) const = 0;
 	};
 
 	/// Creates a transaction api for interacting with a remote node with the specified \a io with public key (\a remotePublicKey)

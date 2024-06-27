@@ -17,7 +17,7 @@ namespace catapult { namespace mocks {
 		}
 
 	public:
-		const chain::Committee& selectCommittee(const model::NetworkConfiguration& config) override;
+		void selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) override;
 		Key getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const override;
 		void reset() override;
 		chain::Committee committee() const override {

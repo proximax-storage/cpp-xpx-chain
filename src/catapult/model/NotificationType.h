@@ -150,6 +150,18 @@ namespace catapult { namespace model {
 	/// Remove DBRB process by network.
 	DEFINE_CORE_NOTIFICATION(RemoveDbrbProcessByNetwork_v1, 0x0016, All);
 
+	/// Block cosignatures.
+	DEFINE_CORE_NOTIFICATION(Block_Committee_v3, 0x0017, All);
+
+	/// Active harvesters.
+	DEFINE_CORE_NOTIFICATION(Active_Harvesters_v3, 0x0018, All);
+
+	/// Block cosignatures.
+	DEFINE_CORE_NOTIFICATION(Block_Committee_v4, 0x0019, All);
+
+	/// Active harvesters.
+	DEFINE_CORE_NOTIFICATION(Active_Harvesters_v4, 0x001A, All);
+
 #undef DEFINE_CORE_NOTIFICATION
 
 	// endregion

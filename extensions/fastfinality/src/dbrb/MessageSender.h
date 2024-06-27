@@ -41,16 +41,16 @@ namespace catapult { namespace dbrb {
 
 	public:
 		// Node discovery
-		virtual void requestNodes(const std::set<ProcessId>& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) = 0;
+		virtual void findNodes(const std::set<ProcessId>& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) = 0;
 		virtual void addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) = 0;
+		virtual void sendNodes(const std::vector<ionet::Node>& nodes, const ProcessId& recipient) = 0;
 		virtual void removeNode(const ProcessId& id) = 0;
-		virtual void broadcastNodes(const Payload& payload) = 0;
-		virtual void broadcastThisNode() = 0;
-		virtual void clearBroadcastData() = 0;
 		virtual bool isNodeAdded(const ProcessId& id) = 0;
 		virtual void addRemoveNodeResponse(const ProcessId& idToRemove, const ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature) = 0;
 		virtual void clearNodeRemovalData() = 0;
-		virtual ViewData getUnreachableNodes(ViewData& view) = 0;
+		virtual ViewData getUnreachableNodes(ViewData& view) const = 0;
+		virtual size_t getUnreachableNodeCount(const dbrb::ViewData& view) const = 0;
+		virtual std::vector<ionet::Node> getKnownNodes(ViewData& view) const = 0;
 	};
 
 	std::shared_ptr<MessageSender> CreateMessageSender(

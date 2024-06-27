@@ -31,11 +31,17 @@ namespace catapult { namespace test {
 	/// Creates a node endpoint referencing the local host with the specified \a port.
 	ionet::NodeEndpoint CreateLocalHostNodeEndpoint(unsigned short port);
 
+	/// Creates a node endpoint referencing the local host with the specified \a port and \a dbrbPort.
+	ionet::NodeEndpoint CreateLocalHostNodeEndpoint(unsigned short port, unsigned short dbrbPort);
+
 	/// Creates a node referencing the local host with the default port and specified public key (\a publicKey).
 	ionet::Node CreateLocalHostNode(const Key& publicKey);
 
 	/// Creates a node referencing the local host with the specified \a port and public key (\a publicKey).
 	ionet::Node CreateLocalHostNode(const Key& publicKey, unsigned short port);
+
+	/// Creates a node referencing the local host with the specified \a publicKey, \a port and \a dbrbPort.
+	ionet::Node CreateLocalHostNode(const Key& publicKey, unsigned short port, unsigned short dbrbPort);
 
 	/// Creates a node with \a identityKey, \a name and \a roles.
 	ionet::Node CreateNamedNode(const Key& identityKey, const std::string& name, ionet::NodeRoles roles = ionet::NodeRoles::None);

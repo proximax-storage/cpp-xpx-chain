@@ -358,18 +358,10 @@ namespace catapult { namespace dbrb {
 
 		bool quorumCollected = data.QuorumManager.update(message, data.Payload->Type);
 		if (quorumCollected) {
-			onDeliverQuorumCollected(data.Payload);
+			CATAPULT_LOG(debug) << "[DBRB] DELIVER: delivering payload " << data.Payload->Type;
+			m_deliverCallback(data.Payload);
 
 			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: operation took " << (utils::NetworkTime().unwrap() - data.Begin.unwrap()) << " ms to deliver " << data.Payload->Type;
-		}
-	}
-
-	void DbrbProcess::onDeliverQuorumCollected(const Payload& payload) {
-		if (payload) { // Should always be set.
-			CATAPULT_LOG(debug) << "[DBRB] DELIVER: delivering payload " << payload->Type;
-			m_deliverCallback(payload);
-		} else {
-			CATAPULT_LOG(error) << "[DBRB] DELIVER: NO PAYLOAD!!!";
 		}
 	}
 
@@ -409,11 +401,9 @@ namespace catapult { namespace dbrb {
 				return;
 
 			pThis->m_pMessageSender->clearQueue();
-			pThis->m_pMessageSender->clearBroadcastData();
 			pThis->m_pMessageSender->clearNodeRemovalData();
 			pThis->m_broadcastData.clear();
 
-			pThis->m_pMessageSender->requestNodes(view.Data, pConfigHolder);
 			pThis->m_currentView = view;
 			CATAPULT_LOG(debug) << "[DBRB] Current view (" << view.Data.size() << ") is now set to " << view;
 

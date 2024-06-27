@@ -6,7 +6,6 @@
 
 #include "WeightedVotingHandlers.h"
 #include "WeightedVotingFsm.h"
-#include "utils/WeightedVotingUtils.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/crypto/KeyUtils.h"
@@ -22,6 +21,8 @@
 namespace catapult { namespace fastfinality {
 
 	namespace {
+		constexpr VersionType Block_Version = 5;
+
 		std::shared_ptr<model::Block> GetBlockFromPacket(const plugins::PluginManager& pluginManager, const ionet::Packet& packet) {
 			const auto& registry = pluginManager.transactionRegistry();
 			auto pBlock = utils::UniqueToShared(ionet::ExtractEntityFromPacket<model::Block>(packet, [&registry](const auto& entity) {
@@ -186,7 +187,7 @@ namespace catapult { namespace fastfinality {
 				return false;
 			}
 
-			const auto& committeeManager = state.pluginManager().getCommitteeManager(model::Block::Current_Version);
+			const auto& committeeManager = state.pluginManager().getCommitteeManager(Block_Version);
 			auto committee = committeeManager.committee();
 			if (committee.Round < 0) {
 				CATAPULT_LOG(warning) << "rejecting " << name << " block (committee is not yet selected)";
@@ -223,6 +224,13 @@ namespace catapult { namespace fastfinality {
 
 			return isBlockValid;
 		}
+	}
+
+	RawBuffer CommitteeMessageDataBuffer(const CommitteeMessage &message) {
+		return {
+			reinterpret_cast<const uint8_t *>(&message),
+			sizeof(CommitteeMessage) - sizeof(Signature)
+		};
 	}
 
 	bool ValidateProposedBlock(

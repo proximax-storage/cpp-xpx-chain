@@ -19,8 +19,7 @@ namespace catapult { namespace fastfinality {
 
 namespace catapult { namespace fastfinality {
 
-	/// A retriever that returns remote node states from all available peers.
-	using RemoteNodeStateRetriever = std::function<std::vector<RemoteNodeState> ()>;
+	RawBuffer CommitteeMessageDataBuffer(const CommitteeMessage &message);
 
 	/// Validates a push proposed block message.
 	bool ValidateProposedBlock(

@@ -109,7 +109,7 @@ namespace catapult { namespace harvesting {
 				blockHeader.Height = blockHeight;
 				blockHeader.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, model::BlockHeader::Current_Version);
 				blockHeader.Size = sizeof(model::BlockHeaderV4);
-				return m_generator(reinterpret_cast<model::Block&>(blockHeader), maxTransactionsPerBlock);
+				return m_generator(reinterpret_cast<model::Block&>(blockHeader), maxTransactionsPerBlock, []() { return false; });
 			}
 
 		public:

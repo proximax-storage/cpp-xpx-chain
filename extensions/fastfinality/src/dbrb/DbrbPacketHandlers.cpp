@@ -52,10 +52,29 @@ namespace catapult { namespace dbrb {
 					return;
 
 				pDbrbProcessShared->messageSender()->addNodes(nodes, pConfigHolder);
+			});
+		}
 
-				auto pResponsePacket = ionet::CreateSharedPacket<DbrbPushNodesPacket>(packet.Size - sizeof(DbrbPushNodesPacket));
-				memcpy(pResponsePacket.get(), &packet, packet.Size);
-				pDbrbProcessShared->messageSender()->broadcastNodes(pResponsePacket);
+		template<typename TDbrbProcess>
+		void RegisterPullNodesHandlerImpl(
+				const std::weak_ptr<TDbrbProcess>& pDbrbProcessWeak,
+				ionet::ServerPacketHandlers& handlers) {
+			handlers.registerHandler(ionet::PacketType::Dbrb_Pull_Nodes, [pDbrbProcessWeak](const ionet::Packet& packet, auto& context) {
+				auto pDbrbProcessShared = pDbrbProcessWeak.lock();
+				if (!pDbrbProcessShared)
+					return;
+
+				std::set<ProcessId> requestedIds;
+				const auto* pPacket = reinterpret_cast<const DbrbPullNodesPacket*>(&packet);
+				const auto* pProcessId = reinterpret_cast<const ProcessId*>(pPacket + 1);
+				for (auto i = 0; i < pPacket->NodeCount; ++i, ++pProcessId)
+					requestedIds.insert(*pProcessId);
+
+				auto pMessageSender = pDbrbProcessShared->messageSender();
+				auto nodes = pMessageSender->getKnownNodes(requestedIds);
+				for (const auto& node : nodes)
+					CATAPULT_LOG(trace) << "[MESSAGE SENDER] sharing node " << node << " [dbrb port " << node.endpoint().DbrbPort << "] " << node.identityKey();
+				pMessageSender->sendNodes(nodes, context.key());
 			});
 		}
 
@@ -116,6 +135,18 @@ namespace catapult { namespace dbrb {
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			ionet::ServerPacketHandlers& handlers) {
 		RegisterPushNodesHandlerImpl(pDbrbProcessWeak, networkIdentifier, pConfigHolder, handlers);
+	}
+
+	void RegisterPullNodesHandler(
+			const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
+			ionet::ServerPacketHandlers& handlers) {
+		RegisterPullNodesHandlerImpl(pDbrbProcessWeak, handlers);
+	}
+
+	void RegisterPullNodesHandler(
+			const std::weak_ptr<ShardedDbrbProcess>& pDbrbProcessWeak,
+			ionet::ServerPacketHandlers& handlers) {
+		RegisterPullNodesHandlerImpl(pDbrbProcessWeak, handlers);
 	}
 
 	void RegisterRemoveNodeRequestHandler(

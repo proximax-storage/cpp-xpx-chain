@@ -92,6 +92,15 @@ namespace catapult { namespace utils {
 			return static_cast<uint64_t>(m_millis.count());
 		}
 
+		/// Returns the approximate number of blocks given the generation target time (\a generationTargetTime).
+		BlockDuration blocks(const TimeSpan& generationTargetTime) const {
+			auto milliseconds = millis();
+			if (milliseconds == 0)
+				return BlockDuration(0);
+
+			return BlockDuration(milliseconds / std::max(generationTargetTime.millis(), static_cast<u_int64_t>(1)));
+		}
+
 	public:
 		/// Returns \c true if this time span is equal to \a rhs.
 		constexpr bool operator==(const TimeSpan& rhs) const {

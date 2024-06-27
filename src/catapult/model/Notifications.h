@@ -339,6 +339,35 @@ namespace catapult { namespace model {
 		{}
 	};
 
+	template<>
+	struct BlockCommitteeNotification<3> : public BasicBlockCommitteeNotification<BlockCommitteeNotification<3>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Committee_v3_Notification;
+
+	public:
+		 BlockCommitteeNotification(int64_t round, uint32_t feeInterest, uint32_t feeInterestDenominator)
+			: BasicBlockCommitteeNotification(round, feeInterest, feeInterestDenominator)
+		{}
+	};
+
+	template<>
+	struct BlockCommitteeNotification<4> : public BasicBlockCommitteeNotification<BlockCommitteeNotification<4>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Committee_v4_Notification;
+
+	public:
+		 BlockCommitteeNotification(int64_t round, uint32_t feeInterest, uint32_t feeInterestDenominator, const Key& blockSigner)
+			: BasicBlockCommitteeNotification(round, feeInterest, feeInterestDenominator)
+			, BlockSigner(blockSigner)
+		{}
+
+	public:
+		/// Block signer.
+		Key BlockSigner;
+	};
+
 	// endregion
 
 	// region transaction
@@ -734,6 +763,48 @@ namespace catapult { namespace model {
 	public:
 		/// Boot key of the node where the harvesters are set up.
 		Key BootKey;
+	};
+
+	template<>
+	struct ActiveHarvestersNotification<3> :  public BasicHarvestersNotification<ActiveHarvestersNotification<3>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Active_Harvesters_v3_Notification;
+
+	public:
+		ActiveHarvestersNotification(const Key& bootKey, const Key* pHarvesterKeys, uint16_t harvesterKeysCount, BlockchainVersion blockchainVersion)
+			: BasicHarvestersNotification(pHarvesterKeys, harvesterKeysCount)
+			, BootKey(bootKey)
+			, BlockchainVersion(std::move(blockchainVersion))
+		{}
+
+	public:
+		/// Boot key of the node where the harvesters are set up.
+		Key BootKey;
+
+		/// Current software version running on the node.
+		catapult::BlockchainVersion BlockchainVersion;
+	};
+
+	template<>
+	struct ActiveHarvestersNotification<4> :  public BasicHarvestersNotification<ActiveHarvestersNotification<4>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Active_Harvesters_v4_Notification;
+
+	public:
+		ActiveHarvestersNotification(const Key& bootKey, const Key* pHarvesterKeys, uint16_t harvesterKeysCount, BlockchainVersion blockchainVersion)
+			: BasicHarvestersNotification(pHarvesterKeys, harvesterKeysCount)
+			, BootKey(bootKey)
+			, BlockchainVersion(std::move(blockchainVersion))
+		{}
+
+	public:
+		/// Boot key of the node where the harvesters are set up.
+		Key BootKey;
+
+		/// Current software version running on the node.
+		catapult::BlockchainVersion BlockchainVersion;
 	};
 
 	/// Notification of active harvesters.

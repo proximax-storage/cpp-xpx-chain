@@ -75,8 +75,8 @@ namespace catapult { namespace disruptor {
 			}
 
 			for (auto& pair : rangesMap) {
-				auto mergedRange = EntityRange::MergeRanges(std::move(pair.second));
-				m_dispatcher.processElement(ConsumerInput({ std::move(mergedRange), pair.first.SourcePublicKey }, pair.first.Source));
+				for (auto& range : pair.second)
+					m_dispatcher.processElement(ConsumerInput({ std::move(range), pair.first.SourcePublicKey }, pair.first.Source));
 			}
 		}
 

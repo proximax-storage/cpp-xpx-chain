@@ -193,7 +193,7 @@ namespace catapult { namespace chain {
 		return Key();
 	}
 
-	const Committee& WeightedVotingCommitteeManager::selectCommittee(const model::NetworkConfiguration& networkConfig) {
+	void WeightedVotingCommitteeManager::selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) {
 		auto previousRound = m_committee.Round;
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
 		auto pLastBlockElement = lastBlockElementSupplier()();
@@ -273,7 +273,5 @@ namespace catapult { namespace chain {
 		CATAPULT_LOG(trace) << "committee: block proposer " << m_committee.BlockProposer;
 		for (const auto& cosigner : m_committee.Cosigners)
 			CATAPULT_LOG(trace) << "committee: cosigner " << cosigner;
-
-		return m_committee;
 	}
 }}

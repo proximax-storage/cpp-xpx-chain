@@ -56,23 +56,29 @@ namespace catapult { namespace fastfinality {
 				return {};
 			}
 			void pushNodePacketIoPair(const dbrb::ProcessId& id, const ionet::NodePacketIoPair& nodePacketIoPair) override {}
-			void requestNodes(const dbrb::ViewData& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override {}
+			void findNodes(const dbrb::ViewData& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override {}
 			void addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override {}
+			void sendNodes(const std::vector<ionet::Node>& nodes, const dbrb::ProcessId& recipient) override {}
 			void removeNode(const dbrb::ProcessId& id) override {}
-			void broadcastNodes(const dbrb::Payload& payload) override {}
-			void broadcastThisNode() override {}
-			void clearBroadcastData() override {}
 			bool isNodeAdded(const dbrb::ProcessId& id) override {
 				return false;
 			}
 			void addRemoveNodeResponse(const dbrb::ProcessId& idToRemove, const dbrb::ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature) override {}
 			void clearNodeRemovalData() override {}
 
-			dbrb::ViewData getUnreachableNodes(dbrb::ViewData& view) override {
+			dbrb::ViewData getUnreachableNodes(dbrb::ViewData& view) const override {
 				for (const auto& id : m_unreachableNodes)
 					view.erase(id);
 
 				return m_unreachableNodes;
+			}
+
+			std::vector<ionet::Node> getKnownNodes(dbrb::ViewData& view) const {
+				return {};
+			}
+
+			size_t getUnreachableNodeCount(const dbrb::ViewData& view) const override {
+				return m_unreachableNodes.size();
 			}
 
 			void addProcess(const std::shared_ptr<dbrb::ShardedDbrbProcess>& pProcess) {

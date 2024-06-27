@@ -102,7 +102,7 @@ namespace catapult { namespace dbrb {
 			if (m_shardingEnabled) {
 				m_pShardedDbrbProcess->broadcast(payload, std::move(recipients));
 			} else {
-				m_pDbrbProcess->broadcast(payload, recipients);
+				m_pDbrbProcess->broadcast(payload, std::move(recipients));
 			}
 		}
 
@@ -111,6 +111,14 @@ namespace catapult { namespace dbrb {
 				dbrb::RegisterPushNodesHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), networkIdentifier, pConfigHolder, packetHandlers);
 			} else {
 				dbrb::RegisterPushNodesHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), networkIdentifier, pConfigHolder, packetHandlers);
+			}
+		}
+
+		void registerDbrbPullNodesHandler(ionet::ServerPacketHandlers& packetHandlers) {
+			if (m_shardingEnabled) {
+				dbrb::RegisterPullNodesHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), packetHandlers);
+			} else {
+				dbrb::RegisterPullNodesHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), packetHandlers);
 			}
 		}
 

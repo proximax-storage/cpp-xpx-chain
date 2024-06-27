@@ -49,6 +49,7 @@ incomingSecurityModes = None
 maxCacheDatabaseWriteBatchSize = 5MB
 maxTrackedNodes = 5'000
 
+transactionBatchSize = 50
 
 [localnode]
 

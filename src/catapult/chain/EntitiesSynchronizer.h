@@ -44,10 +44,11 @@ namespace catapult { namespace chain {
 			return m_traits.apiCall(api).then([&traits = m_traits, sourcePublicKey = api.remotePublicKey()](auto&& rangeFuture) {
 				try {
 					auto range = rangeFuture.get();
-					if (range.empty())
+					auto entityCount = TSynchronizerTraits::size(range);
+					if (!entityCount)
 						return ionet::NodeInteractionResultCode::Neutral;
 
-					CATAPULT_LOG(debug) << "peer returned " << range.size() << " " << TSynchronizerTraits::Name;
+					CATAPULT_LOG(debug) << "peer returned " << entityCount << " " << TSynchronizerTraits::Name;
 					traits.consume(std::move(range), sourcePublicKey);
 					return ionet::NodeInteractionResultCode::Success;
 				} catch (const catapult_runtime_error& e) {

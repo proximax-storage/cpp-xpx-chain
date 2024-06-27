@@ -81,6 +81,7 @@ namespace catapult { namespace local {
 			nodeConfig.ApiPort = port + 1;
 			nodeConfig.FeeInterest = 1;
 			nodeConfig.FeeInterestDenominator = 2;
+			nodeConfig.TransactionBatchSize = 50;
 
 			// 2. specify custom network settings
 			UpdateBlockChainConfiguration(const_cast<model::NetworkConfiguration&>(config.Network));
@@ -311,6 +312,7 @@ namespace catapult { namespace local {
 			std::vector<ChainStatistics> chainStatsPerNode;
 			chainStatsPerNode.resize(networkSize);
 			ChainStatistics bestChainStats;
+			std::set<uint8_t> heights;
 			for (auto i = 0u; i < networkSize; ++i) {
 				// - give each node a separate directory
 				auto nodeFlag = test::NodeFlag::Require_Explicit_Boot | TVerifyTraits::Node_Flag;
@@ -329,7 +331,10 @@ namespace catapult { namespace local {
 
 				// - push a random number of different (valid) blocks to each node
 				// - vary time spacing so that all chains will have different scores
-				auto numBlocks = RandomByteClamped(Max_Rollback_Blocks - 1) + 1u; // always generate at least one block
+				auto numBlocks = 0;
+				do {
+					numBlocks = RandomByteClamped(Max_Rollback_Blocks - 1) + 1u; // always generate at least one block
+				} while (!heights.insert(numBlocks).second);
 
 				// - when stateHashCalculator data directory is empty, there is no cache lock so node resources can be used directly
 				CATAPULT_LOG(debug) << "pushing initial chain to node " << i;

@@ -36,6 +36,14 @@ namespace catapult { namespace config {
 		TRY_LOAD_CHAIN_PROPERTY(WeightScaleFactor);
 		config.EnableEqualWeights = false;
 		TRY_LOAD_CHAIN_PROPERTY(EnableEqualWeights);
+		config.EnableBlockchainVersionValidation = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableBlockchainVersionValidation);
+		config.EnableHarvesterRotation = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableHarvesterRotation);
+		config.HarvesterBanPeriod = utils::TimeSpan();
+		TRY_LOAD_CHAIN_PROPERTY(HarvesterBanPeriod);
+		config.EnableBlockProducerValidation = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableBlockProducerValidation);
 #undef TRY_LOAD_CHAIN_PROPERTY
 
 		config.InitialActivityInt = static_cast<int64_t>(config.InitialActivity * config.ActivityScaleFactor);

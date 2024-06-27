@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "fastfinality/src/WeightedVotingTransitionTable.h"
+#include "fastfinality/src/weighted_voting/WeightedVotingTransitionTable.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace fastfinality {

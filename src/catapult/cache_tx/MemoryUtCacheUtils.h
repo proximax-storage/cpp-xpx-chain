@@ -23,22 +23,29 @@
 
 namespace catapult { namespace cache {
 
+	using StopTransactionFetchingFunc = predicate<>;
+
 	/// Gets pointers to the first \a count transaction infos in \a utCacheView.
 	/// \note Pointers are only safe to access during the lifetime of \a utCacheView.
-	std::vector<const model::TransactionInfo*> GetFirstTransactionInfoPointers(const MemoryUtCacheView& utCacheView, uint32_t count);
+	std::vector<const model::TransactionInfo*> GetFirstTransactionInfoPointers(
+		const MemoryUtCacheView& utCacheView,
+		uint32_t count,
+		const StopTransactionFetchingFunc& stopCallback);
 
 	/// Gets pointers to the first \a count transaction infos in \a utCacheView that pass \a filter.
 	/// \note Pointers are only safe to access during the lifetime of \a utCacheView.
 	std::vector<const model::TransactionInfo*> GetFirstTransactionInfoPointers(
-			const MemoryUtCacheView& utCacheView,
-			uint32_t count,
-			const predicate<const model::TransactionInfo&>& filter);
+		const MemoryUtCacheView& utCacheView,
+		uint32_t count,
+		const predicate<const model::TransactionInfo&>& filter,
+		const StopTransactionFetchingFunc& stopCallback);
 
 	/// Gets pointers to the first \a count transaction infos in \a utCacheView that pass \a filter after sorting by \a sortComparer.
 	/// \note Pointers are only safe to access during the lifetime of \a utCacheView.
 	std::vector<const model::TransactionInfo*> GetFirstTransactionInfoPointers(
-			const MemoryUtCacheView& utCacheView,
-			uint32_t count,
-			const predicate<const model::TransactionInfo*, const model::TransactionInfo*>& sortComparer,
-			const predicate<const model::TransactionInfo&>& filter);
+		const MemoryUtCacheView& utCacheView,
+		uint32_t count,
+		const predicate<const model::TransactionInfo*, const model::TransactionInfo*>& sortComparer,
+		const predicate<const model::TransactionInfo&>& filter,
+		const StopTransactionFetchingFunc& stopCallback);
 }}

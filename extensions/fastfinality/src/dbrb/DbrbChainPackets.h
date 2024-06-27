@@ -18,6 +18,12 @@ namespace catapult { namespace dbrb {
 		uint16_t NodeCount;
 	};
 
+	struct DbrbPullNodesPacket : public ionet::Packet {
+		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Pull_Nodes;
+
+		uint16_t NodeCount;
+	};
+
 	struct DbrbRemoveNodeRequestPacket : public ionet::Packet {
 		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Remove_Node_Request;
 

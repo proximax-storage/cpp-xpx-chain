@@ -12,6 +12,7 @@ namespace catapult {
 	namespace chain {
 		class WeightedVotingCommitteeManager;
 		class WeightedVotingCommitteeManagerV2;
+		class WeightedVotingCommitteeManagerV3;
 	}
 	namespace cache { class CommitteeAccountCollector; }
 }
@@ -34,11 +35,27 @@ namespace catapult { namespace observers {
 		const std::shared_ptr<chain::WeightedVotingCommitteeManagerV2>& pCommitteeManager,
 		const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector);
 
+	/// Observes changes triggered by block cosignatures notifications V2
+	DECLARE_OBSERVER(UpdateHarvestersV3, model::BlockCommitteeNotification<3>)(
+		const std::shared_ptr<chain::WeightedVotingCommitteeManagerV3>& pCommitteeManager,
+		const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector);
+
+	/// Observes changes triggered by block cosignatures notifications V2
+	DECLARE_OBSERVER(UpdateHarvestersV4, model::BlockCommitteeNotification<4>)(
+		const std::shared_ptr<chain::WeightedVotingCommitteeManagerV3>& pCommitteeManager,
+		const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector);
+
 	/// Observes changes triggered by active harvesters notifications V1
 	DECLARE_OBSERVER(ActiveHarvestersV1, model::ActiveHarvestersNotification<1>)();
 
 	/// Observes changes triggered by active harvesters notifications V2
 	DECLARE_OBSERVER(ActiveHarvestersV2, model::ActiveHarvestersNotification<2>)();
+
+	/// Observes changes triggered by active harvesters notifications V3
+	DECLARE_OBSERVER(ActiveHarvestersV3, model::ActiveHarvestersNotification<3>)();
+
+	/// Observes changes triggered by active harvesters notifications V4
+	DECLARE_OBSERVER(ActiveHarvestersV4, model::ActiveHarvestersNotification<4>)();
 
 	/// Observes changes triggered by inactive harvesters notifications
 	DECLARE_OBSERVER(InactiveHarvesters, model::InactiveHarvestersNotification<1>)();
