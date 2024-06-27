@@ -93,7 +93,7 @@ namespace catapult { namespace chain {
 		}
 
 		m_committee.BlockProposer = blockProposerCandidates.begin()->second;
-		CATAPULT_LOG(trace) << "committee: block proposer " << m_committee.BlockProposer;
+		CATAPULT_LOG(trace) << "committee: block proposer " << m_committee.BlockProposer << " (stake " << (m_accounts.at(m_committee.BlockProposer).EffectiveBalance.unwrap() / 1'000'000) << " XPX";
 
 		// Reject this harvester when selecting block proposer for the next round.
 		m_failedBlockProposers.insert(m_committee.BlockProposer);
