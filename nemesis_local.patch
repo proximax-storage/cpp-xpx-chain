@@ -1,0 +1,75 @@
+Index: cpp-xpx-chain/resources/config-user.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/cpp-xpx-chain/resources/config-user.properties b/cpp-xpx-chain/resources/config-user.properties
+--- a/cpp-xpx-chain/resources/config-user.properties	(revision cb639a576349709523bda14c9d05337fff646b06)
++++ b/cpp-xpx-chain/resources/config-user.properties	(date 1598520993265)
+@@ -5,5 +5,5 @@
+
+ [storage]
+
+-dataDirectory = ../data
++dataDirectory = ../../data
+ pluginsDirectory = .
+Index: cpp-xpx-chain/tools/nemgen/resources/mijin-test.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/cpp-xpx-chain/tools/nemgen/resources/mijin-test.properties b/cpp-xpx-chain/tools/nemgen/resources/mijin-test.properties
+--- a/cpp-xpx-chain/tools/nemgen/resources/mijin-test.properties	(revision cb639a576349709523bda14c9d05337fff646b06)
++++ b/cpp-xpx-chain/tools/nemgen/resources/mijin-test.properties	(date 1598520805443)
+@@ -11,12 +11,12 @@
+
+ [cpp]
+
+-cppFileHeader = ../HEADER.inc
++cppFileHeader = ../../HEADER.inc
+
+ [output]
+
+-cppFile = ../tests/test/nodeps/data/NemesisMemoryBlockStorage_data.h
+-binDirectory = ../seed/mijin-test
++cppFile = ../../tests/test/nodeps/data/NemesisMemoryBlockStorage_data.h
++binDirectory = ../../seed/mijin-test
+
+ [namespaces]
+
+Index: cpp-xpx-chain/resources/config-node.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/cpp-xpx-chain/resources/config-node.properties b/cpp-xpx-chain/resources/config-node.properties
+--- a/cpp-xpx-chain/resources/config-node.properties	(revision cb639a576349709523bda14c9d05337fff646b06)
++++ b/cpp-xpx-chain/resources/config-node.properties	(date 1598521356469)
+@@ -4,7 +4,7 @@
+ apiPort = 7901
+ shouldAllowAddressReuse = false
+ shouldUseSingleThreadPool = false
+-shouldUseCacheDatabaseStorage = true
++shouldUseCacheDatabaseStorage = false
+ shouldEnableAutoSyncCleanup = true
+
+ shouldEnableTransactionSpamThrottling = true
+Index: cpp-xpx-chain/resources/config-immutable.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/cpp-xpx-chain/resources/config-immutable.properties b/cpp-xpx-chain/resources/config-immutable.properties
+--- a/cpp-xpx-chain/resources/config-immutable.properties	(revision cb639a576349709523bda14c9d05337fff646b06)
++++ b/cpp-xpx-chain/resources/config-immutable.properties	(date 1598521366621)
+@@ -3,8 +3,8 @@
+ networkIdentifier = mijin-test
+ generationHash = 57F7DA205008026C776CB6AED843393F04CD458E0AA2D9F1D5F31A402072B2D6
+
+-shouldEnableVerifiableState = true
+-shouldEnableVerifiableReceipts = true
++shouldEnableVerifiableState = false
++shouldEnableVerifiableReceipts = false
+
+ currencyMosaicId = 0x0DC6'7FBE'1CAD'29E3
+ harvestingMosaicId = 0x0DC6'7FBE'1CAD'29E3
