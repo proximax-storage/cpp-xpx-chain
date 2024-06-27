@@ -79,6 +79,7 @@ namespace catapult { namespace fastfinality {
 		}
 
 		void shutdown() {
+			std::lock_guard<std::mutex> guard(m_mutex);
 			m_stopped = true;
 			m_timer.cancel();
 			processEvent(Stop{});
@@ -134,6 +135,10 @@ namespace catapult { namespace fastfinality {
 			m_nodeWorkState = state;
 		}
 
+		auto& mutex() {
+			return m_mutex;
+		}
+
 		auto& dbrbProcess() {
 			return m_dbrbProcess;
 		}
@@ -151,7 +156,8 @@ namespace catapult { namespace fastfinality {
 		FastFinalityData m_fastFinalityData;
 		boost::asio::io_context::strand m_strand;
 		NodeWorkState m_nodeWorkState;
-		std::atomic_bool m_stopped;
+		bool m_stopped;
+		mutable std::mutex m_mutex;
 		dbrb::DbrbProcessContainer m_dbrbProcess;
 		ionet::ServerPacketHandlers m_packetHandlers;
 	};

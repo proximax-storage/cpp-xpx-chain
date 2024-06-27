@@ -72,6 +72,8 @@ namespace catapult { namespace dbrb {
 
 				auto pMessageSender = pDbrbProcessShared->messageSender();
 				auto nodes = pMessageSender->getKnownNodes(requestedIds);
+				for (const auto& node : nodes)
+					CATAPULT_LOG(trace) << "[MESSAGE SENDER] sharing node " << node << " [dbrb port " << node.endpoint().DbrbPort << "] " << node.identityKey();
 				pMessageSender->sendNodes(nodes, context.key());
 			});
 		}

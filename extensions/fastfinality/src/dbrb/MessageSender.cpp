@@ -318,6 +318,10 @@ namespace catapult { namespace dbrb {
 				continue;
 
 			const auto& endpoint = node.endpoint();
+			if (!endpoint.DbrbPort) {
+				CATAPULT_LOG(trace) << "[MESSAGE SENDER] no DBRB port " << node << " " << id;
+				continue;
+			}
 			auto dbrbNode = ionet::Node(node.identityKey(), ionet::NodeEndpoint{ endpoint.Host, endpoint.DbrbPort }, node.metadata());
 			auto identities = pWriters->identities();
 			if ((identities.find(id) != identities.cend())) {
@@ -347,6 +351,7 @@ namespace catapult { namespace dbrb {
 							pThis->m_nodes[node.identityKey()] = node;
 						}
 						CATAPULT_LOG(debug) << "[MESSAGE SENDER] Added node " << dbrbNode << " " << dbrbNode.identityKey();
+						CATAPULT_LOG(debug) << "[MESSAGE SENDER] sharing this node " << pThis->m_thisNode << " [dbrb port " << pThis->m_thisNode.endpoint().DbrbPort << "] " << pThis->m_thisNode.identityKey();
 						pThis->sendNodes({ pThis->m_thisNode }, node.identityKey());
 					} else {
 						// TODO: uncomment and retest
@@ -480,8 +485,11 @@ namespace catapult { namespace dbrb {
 		std::vector<ionet::Node> nodes;
 		for (const auto& id : view) {
 			auto iter = m_nodes.find(id);
-			if (iter != m_nodes.cend())
+			if (iter != m_nodes.cend()) {
 				nodes.push_back(iter->second);
+			} if (id == m_thisNode.identityKey()) {
+				nodes.push_back(m_thisNode);
+			}
 		}
 
 		return nodes;

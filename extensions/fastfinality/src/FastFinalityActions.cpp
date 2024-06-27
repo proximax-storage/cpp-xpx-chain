@@ -316,6 +316,8 @@ namespace catapult { namespace fastfinality {
 					committeeManager.logCommittee();
 
 					if (ValidateBlockCosignatures(pBlock, committeeManager, config)) {
+						std::lock_guard<std::mutex> guard(pFsmShared->mutex());
+
 						auto pPromise = std::make_shared<thread::promise<bool>>();
 						rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise, pBlock](auto, const auto& result) {
 							bool success = (disruptor::CompletionStatus::Aborted != result.CompletionStatus);
@@ -496,14 +498,6 @@ namespace catapult { namespace fastfinality {
 					CATAPULT_LOG(debug) << "skipping block producing, current time is too far in the round";
 				pFsmShared->processEvent(WaitForBlock{});
 			}
-
-			DelayAction(pFsmWeak, pFsmShared->timer(), round.RoundTimeMillis * 3 / 4, [pFsmWeak, pConfigHolder] {
-				TRY_GET_FSM()
-
-				auto dbrbProcess = pFsmShared->dbrbProcess();
-				auto pMessageSender = dbrbProcess.messageSender();
-				pMessageSender->findNodes(dbrbProcess.currentView().Data, pConfigHolder);
-			});
 		};
 	}
 
@@ -630,22 +624,28 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, rangeConsumer, &state]() {
 			TRY_GET_FSM()
 
+			bool success = false;
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 			auto pBlock = fastFinalityData.block();
-			auto pPromise = std::make_shared<thread::promise<bool>>();
-			rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise, pBlock](auto, const auto& result) {
-				bool success = (disruptor::CompletionStatus::Aborted != result.CompletionStatus);
-				if (success) {
-					CATAPULT_LOG(info) << "successfully committed block " << pBlock->Height << " produced by " << pBlock->Signer;
-				} else {
-					auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
-					CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult)) << "commit of block " << pBlock->Height << " produced by " << pBlock->Signer << " failed due to " << validationResult;
-				}
+			{
+				// Commit block.
+				std::lock_guard<std::mutex> guard(pFsmShared->mutex());
 
-				pPromise->set_value(std::move(success));
-			});
+				auto pPromise = std::make_shared<thread::promise<bool>>();
+				rangeConsumer(model::BlockRange::FromEntity(pBlock), [pPromise, pBlock](auto, const auto& result) {
+					bool success = (disruptor::CompletionStatus::Aborted != result.CompletionStatus);
+					if (success) {
+						CATAPULT_LOG(info) << "successfully committed block " << pBlock->Height << " produced by " << pBlock->Signer;
+					} else {
+						auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
+						CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult)) << "commit of block " << pBlock->Height << " produced by " << pBlock->Signer << " failed due to " << validationResult;
+					}
 
-			bool success = pPromise->get_future().get();
+					pPromise->set_value(std::move(success));
+				});
+
+				success = pPromise->get_future().get();
+			}
 
 			DelayAction(pFsmWeak, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis, [pFsmWeak, success, &state] {
 				TRY_GET_FSM()
