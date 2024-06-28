@@ -21,9 +21,8 @@ namespace catapult { namespace dbrb {
 		void RegisterPushNodesHandlerImpl(
 				const std::weak_ptr<TDbrbProcess>& pDbrbProcessWeak,
 				model::NetworkIdentifier networkIdentifier,
-				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				ionet::ServerPacketHandlers& handlers) {
-			handlers.registerHandler(ionet::PacketType::Dbrb_Push_Nodes, [pDbrbProcessWeak, networkIdentifier, pConfigHolder](const ionet::Packet& packet, auto& context) {
+			handlers.registerHandler(ionet::PacketType::Dbrb_Push_Nodes, [pDbrbProcessWeak, networkIdentifier](const ionet::Packet& packet, auto& context) {
 				auto pDbrbProcessShared = pDbrbProcessWeak.lock();
 				if (!pDbrbProcessShared)
 					return;
@@ -51,7 +50,7 @@ namespace catapult { namespace dbrb {
 				if (nodes.empty())
 					return;
 
-				pDbrbProcessShared->messageSender()->addNodes(nodes, pConfigHolder);
+				pDbrbProcessShared->messageSender()->addNodes(nodes);
 			});
 		}
 
@@ -124,17 +123,15 @@ namespace catapult { namespace dbrb {
 	void RegisterPushNodesHandler(
 			const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
 			model::NetworkIdentifier networkIdentifier,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			ionet::ServerPacketHandlers& handlers) {
-		RegisterPushNodesHandlerImpl(pDbrbProcessWeak, networkIdentifier, pConfigHolder, handlers);
+		RegisterPushNodesHandlerImpl(pDbrbProcessWeak, networkIdentifier, handlers);
 	}
 
 	void RegisterPushNodesHandler(
 			const std::weak_ptr<ShardedDbrbProcess>& pDbrbProcessWeak,
 			model::NetworkIdentifier networkIdentifier,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			ionet::ServerPacketHandlers& handlers) {
-		RegisterPushNodesHandlerImpl(pDbrbProcessWeak, networkIdentifier, pConfigHolder, handlers);
+		RegisterPushNodesHandlerImpl(pDbrbProcessWeak, networkIdentifier, handlers);
 	}
 
 	void RegisterPullNodesHandler(

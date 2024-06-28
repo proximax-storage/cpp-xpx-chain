@@ -45,7 +45,6 @@ namespace catapult { namespace mocks {
 		void onCommitMessageReceived(const dbrb::CommitMessage& message) override;
 
 		const std::set<Hash256>& deliveredPayloads();
-		const dbrb::ProcessId& id();
 		std::map<Hash256, dbrb::BroadcastData>& broadcastData();
 		const DisseminationHistory& disseminationHistory();
 		dbrb::QuorumManager& getQuorumManager(const Hash256& payloadHash);

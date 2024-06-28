@@ -152,7 +152,7 @@ namespace catapult { namespace dbrb {
 		}
 
 		if (!recipients.empty())
-			m_pMessageSender->enqueue(pPacket, recipients);
+			m_pMessageSender->enqueue(pPacket, false, recipients);
 	}
 
 	void ShardedDbrbProcess::send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient) {
@@ -541,6 +541,7 @@ namespace catapult { namespace dbrb {
 			pThis->m_pMessageSender->clearNodeRemovalData();
 			pThis->m_broadcastData.clear();
 
+			pThis->m_pMessageSender->findNodes(view.Data);
 			pThis->m_shardSize = shardSize;
 			pThis->m_currentView = view;
 			CATAPULT_LOG(debug) << "[DBRB] Current view (" << view.Data.size() << ") is now set to " << view;

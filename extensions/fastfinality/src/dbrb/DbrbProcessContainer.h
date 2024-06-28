@@ -106,11 +106,11 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		void registerDbrbPushNodesHandler(model::NetworkIdentifier networkIdentifier, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, ionet::ServerPacketHandlers& packetHandlers) {
+		void registerDbrbPushNodesHandler(model::NetworkIdentifier networkIdentifier, ionet::ServerPacketHandlers& packetHandlers) {
 			if (m_shardingEnabled) {
-				dbrb::RegisterPushNodesHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), networkIdentifier, pConfigHolder, packetHandlers);
+				dbrb::RegisterPushNodesHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), networkIdentifier, packetHandlers);
 			} else {
-				dbrb::RegisterPushNodesHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), networkIdentifier, pConfigHolder, packetHandlers);
+				dbrb::RegisterPushNodesHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), networkIdentifier, packetHandlers);
 			}
 		}
 

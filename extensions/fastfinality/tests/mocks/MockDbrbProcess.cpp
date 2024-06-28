@@ -21,7 +21,16 @@ namespace catapult { namespace mocks {
 		const dbrb::DbrbConfiguration& dbrbConfig)
 			: DbrbProcess(
 				keyPair,
-				dbrb::CreateMessageSender(ionet::Node{ keyPair.publicKey(), ionet::NodeEndpoint(), ionet::NodeMetadata() }, std::move(pWriters), nodeContainer, dbrbConfig.IsDbrbProcess, nullptr, dbrbViewFetcher),
+				dbrb::CreateMessageSender(ionet::Node{
+					keyPair.publicKey(),
+					ionet::NodeEndpoint(),
+					ionet::NodeMetadata() },
+					std::move(pWriters),
+					nodeContainer,
+					dbrbConfig.IsDbrbProcess,
+					nullptr,
+					pPool,
+					utils::TimeSpan::FromMilliseconds(500)),
 				pPool,
 				nullptr,
 				dbrbViewFetcher) {
@@ -170,10 +179,6 @@ namespace catapult { namespace mocks {
 
 	const std::set<Hash256>& MockDbrbProcess::deliveredPayloads() {
 		return m_deliveredPayloads;
-	}
-
-	const dbrb::ProcessId& MockDbrbProcess::id() {
-		return m_id;
 	}
 
 	std::map<Hash256, dbrb::BroadcastData>& MockDbrbProcess::broadcastData() {

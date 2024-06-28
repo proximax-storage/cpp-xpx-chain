@@ -35,7 +35,7 @@ namespace catapult { namespace fastfinality {
 			~MockMessageSender() override = default;
 
 		public:
-			void enqueue(const dbrb::Payload& payload, const dbrb::ViewData& recipients) override {
+			void enqueue(const dbrb::Payload& payload, bool dropOnFailure, const dbrb::ViewData& recipients) override {
 				auto pMessage = m_converter.toMessage(*payload);
 				boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pMessage, recipients]() {
 					auto pThis = pThisWeak.lock();
@@ -56,8 +56,8 @@ namespace catapult { namespace fastfinality {
 				return {};
 			}
 			void pushNodePacketIoPair(const dbrb::ProcessId& id, const ionet::NodePacketIoPair& nodePacketIoPair) override {}
-			void findNodes(const dbrb::ViewData& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override {}
-			void addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override {}
+			void findNodes(const dbrb::ViewData& requestedIds) override {}
+			void addNodes(const std::vector<ionet::Node>& nodes) override {}
 			void sendNodes(const std::vector<ionet::Node>& nodes, const dbrb::ProcessId& recipient) override {}
 			void removeNode(const dbrb::ProcessId& id) override {}
 			bool isNodeAdded(const dbrb::ProcessId& id) override {

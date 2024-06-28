@@ -46,7 +46,7 @@ namespace catapult { namespace fastfinality {
 			explicit MockDbrbProcess()
 				: DbrbProcess(
 					crypto::KeyPair::FromPrivate({}),
-					dbrb::CreateMessageSender({}, std::make_shared<mocks::MockPacketWriters>(), {}, false, nullptr, mocks::MockDbrbViewFetcher()),
+					dbrb::CreateMessageSender({}, std::make_shared<mocks::MockPacketWriters>(), {}, false, nullptr, test::CreateStartedIoThreadPool(1), utils::TimeSpan::FromMilliseconds(500)),
 					test::CreateStartedIoThreadPool(1),
 					nullptr,
 					mocks::MockDbrbViewFetcher())

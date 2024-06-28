@@ -98,7 +98,6 @@ namespace catapult { namespace fastfinality {
 
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
-				pMessageSender->findNodes(dbrbProcess.currentView().Data, pConfigHolder);
 				DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 					TRY_GET_FSM()
 
@@ -151,8 +150,6 @@ namespace catapult { namespace fastfinality {
 				});
 
 			} else {
-
-				pMessageSender->findNodes(dbrbProcess.currentView().Data, pConfigHolder);
 
 				double approvalRating = 0;
 				double totalRating = 0;
@@ -498,6 +495,14 @@ namespace catapult { namespace fastfinality {
 					CATAPULT_LOG(debug) << "skipping block producing, current time is too far in the round";
 				pFsmShared->processEvent(WaitForBlock{});
 			}
+
+			DelayAction(pFsmWeak, pFsmShared->timer(), round.RoundTimeMillis / 4, [pFsmWeak] {
+				TRY_GET_FSM()
+
+				auto dbrbProcess = pFsmShared->dbrbProcess();
+				auto pMessageSender = dbrbProcess.messageSender();
+				pMessageSender->findNodes(dbrbProcess.currentView().Data);
+			});
 		};
 	}
 

@@ -15,34 +15,28 @@ namespace catapult {
 		class Packet;
 	}
 	namespace net { class PacketWriters; }
-	namespace dbrb {
-		class DbrbViewFetcher;
-		class TransactionSender;
-	}
+	namespace dbrb { class TransactionSender; }
 	namespace config { class BlockchainConfigurationHolder; }
+	namespace thread { class IoThreadPool; }
+	namespace utils { class TimeSpan; }
 }
 
 namespace catapult { namespace dbrb {
 
-	using NodePacketIoPairMap = std::map<ProcessId, ionet::NodePacketIoPair>;
-
 	class MessageSender {
-	public:
-		using BufferType = std::vector<std::pair<Payload, std::set<ProcessId>>>;
-
 	public:
 		virtual ~MessageSender() = default;
 
 		// Message sending
-		virtual void enqueue(const Payload& payload, const std::set<ProcessId>& recipients) = 0;
+		virtual void enqueue(const Payload& payload, bool dropOnFailure, const std::set<ProcessId>& recipients) = 0;
 		virtual void clearQueue() = 0;
 		virtual ionet::NodePacketIoPair getNodePacketIoPair(const ProcessId& id) = 0;
 		virtual void pushNodePacketIoPair(const ProcessId& id, const ionet::NodePacketIoPair& nodePacketIoPair) = 0;
 
 	public:
 		// Node discovery
-		virtual void findNodes(const std::set<ProcessId>& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) = 0;
-		virtual void addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) = 0;
+		virtual void findNodes(const std::set<ProcessId>& requestedIds) = 0;
+		virtual void addNodes(const std::vector<ionet::Node>& nodes) = 0;
 		virtual void sendNodes(const std::vector<ionet::Node>& nodes, const ProcessId& recipient) = 0;
 		virtual void removeNode(const ProcessId& id) = 0;
 		virtual bool isNodeAdded(const ProcessId& id) = 0;
@@ -59,5 +53,6 @@ namespace catapult { namespace dbrb {
 		const ionet::NodeContainer& nodeContainer,
 		bool broadcastThisNode,
 		std::shared_ptr<TransactionSender> pTransactionSender,
-		const dbrb::DbrbViewFetcher& dbrbViewFetcher);
+		const std::shared_ptr<thread::IoThreadPool>& pPool,
+		const utils::TimeSpan& resendMessagesInterval);
 }}
