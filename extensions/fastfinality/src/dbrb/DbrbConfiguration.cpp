@@ -29,6 +29,8 @@ namespace catapult { namespace dbrb {
 
 		config.IsDbrbProcess = true;
 		TRY_LOAD_CHAIN_PROPERTY(IsDbrbProcess);
+		config.ResendMessagesInterval = utils::TimeSpan::FromMilliseconds(500);
+		TRY_LOAD_CHAIN_PROPERTY(ResendMessagesInterval);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

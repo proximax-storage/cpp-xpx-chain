@@ -24,14 +24,12 @@ namespace catapult { namespace dbrb {
 	void RegisterPushNodesHandler(
 		const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
 		model::NetworkIdentifier networkIdentifier,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		ionet::ServerPacketHandlers& handlers);
 
 	/// Registers a push DBRB node handler in \a handlers.
 	void RegisterPushNodesHandler(
 		const std::weak_ptr<ShardedDbrbProcess>& pDbrbProcessWeak,
 		model::NetworkIdentifier networkIdentifier,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		ionet::ServerPacketHandlers& handlers);
 
 	/// Registers a pull DBRB node handler in \a handlers.

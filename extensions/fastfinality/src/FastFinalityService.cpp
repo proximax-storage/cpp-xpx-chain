@@ -84,7 +84,7 @@ namespace catapult { namespace fastfinality {
 						dbrbShardingEnabled,
 						dbrbShardSize](const std::shared_ptr<thread::IoThreadPool>&) {
 					pTransactionSender->init(&keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local), pUnlockedAccounts);
-					auto pMessageSender = dbrb::CreateMessageSender(config::ToLocalNode(config), pWritersWeak, state.nodes(), dbrbConfig.IsDbrbProcess, pTransactionSender, state.pluginManager().dbrbViewFetcher());
+					auto pMessageSender = dbrb::CreateMessageSender(config::ToLocalNode(config), pWritersWeak, state.nodes(), dbrbConfig.IsDbrbProcess, pTransactionSender, pDbrbPool, dbrbConfig.ResendMessagesInterval);
 					if (dbrbShardingEnabled) {
 						auto pDbrbProcess = std::make_shared<dbrb::ShardedDbrbProcess>(keyPair, pMessageSender, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher(), dbrbShardSize);
 						return std::make_shared<FastFinalityFsm>(pFastFinalityFsmPool, config, pDbrbProcess, state.pluginManager());
@@ -145,7 +145,7 @@ namespace catapult { namespace fastfinality {
 
 				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
 				handlers::RegisterPullBlocksHandler(pFsmShared->packetHandlers(), state.storage(), CreatePullBlocksHandlerConfiguration(config.Node));
-				pFsmShared->dbrbProcess().registerDbrbPushNodesHandler(config.Immutable.NetworkIdentifier, pConfigHolder, pFsmShared->packetHandlers());
+				pFsmShared->dbrbProcess().registerDbrbPushNodesHandler(config.Immutable.NetworkIdentifier, pFsmShared->packetHandlers());
 				pFsmShared->dbrbProcess().registerDbrbPullNodesHandler(pFsmShared->packetHandlers());
 				pFsmShared->dbrbProcess().registerDbrbRemoveNodeRequestHandler(locator.keyPair(), pFsmShared->packetHandlers());
 				pFsmShared->dbrbProcess().registerDbrbRemoveNodeResponseHandler(pFsmShared->packetHandlers());

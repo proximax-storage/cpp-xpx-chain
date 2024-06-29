@@ -40,11 +40,15 @@ namespace catapult { namespace fastfinality {
 				dbrb::View view;
 				for (const auto& node : nodes)
 					view.Data.emplace(node);
+				dbrb::View bootstrapView;
+				for (auto i = 0u; i < nodes.size() / 2; ++i)
+					bootstrapView.Data.emplace(nodes[i]);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
-				return dbrb::PrepareMessage(nodes[0], payload, view);
+				return dbrb::PrepareMessage(nodes[0], payload, view, bootstrapView);
 			},
 			[](const dbrb::PrepareMessage& originalMessage, const dbrb::PrepareMessage& unpackedMessage) {
 				EXPECT_EQ(originalMessage.View, unpackedMessage.View);
+				EXPECT_EQ(originalMessage.BootstrapView, unpackedMessage.BootstrapView);
 				EXPECT_EQ(originalMessage.Payload->Size, unpackedMessage.Payload->Size);
 				EXPECT_EQ_MEMORY(originalMessage.Payload.get(), unpackedMessage.Payload.get(), originalMessage.Payload->Size);
 			});

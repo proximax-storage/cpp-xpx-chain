@@ -91,14 +91,12 @@ namespace catapult { namespace fastfinality {
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 
 			auto dbrbProcess = pFsmShared->dbrbProcess();
-			auto pMessageSender = dbrbProcess.messageSender();
 			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight, false);
 
 			std::vector<RemoteNodeState> remoteNodeStates = retriever();
 
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
-				pMessageSender->findNodes(dbrbProcess.currentView().Data, pConfigHolder);
 				DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 					TRY_GET_FSM()
 
@@ -144,15 +142,13 @@ namespace catapult { namespace fastfinality {
 
 			} else if (!dbrbConfig.IsDbrbProcess) {
 
-				DelayAction(pFsmWeak, pFsmShared->timer(), 4 * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
+				DelayAction(pFsmWeak, pFsmShared->timer(), chain::CommitteePhaseCount * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
 					TRY_GET_FSM()
 
 					pFsmShared->processEvent(StartLocalChainCheck{});
 				});
 
 			} else {
-
-				pMessageSender->findNodes(dbrbProcess.currentView().Data, pConfigHolder);
 
 				double approvalRating = 0;
 				double totalRating = 0;
@@ -498,6 +494,14 @@ namespace catapult { namespace fastfinality {
 					CATAPULT_LOG(debug) << "skipping block producing, current time is too far in the round";
 				pFsmShared->processEvent(WaitForBlock{});
 			}
+
+			DelayAction(pFsmWeak, pFsmShared->timer(), round.RoundTimeMillis / chain::CommitteePhaseCount, [pFsmWeak] {
+				TRY_GET_FSM()
+
+				auto dbrbProcess = pFsmShared->dbrbProcess();
+				auto pMessageSender = dbrbProcess.messageSender();
+				pMessageSender->findNodes(dbrbProcess.currentView().Data);
+			});
 		};
 	}
 
@@ -559,10 +563,10 @@ namespace catapult { namespace fastfinality {
 			pBlockHeader->Timestamp = context.Timestamp;
 			pBlockHeader->Beneficiary = fastFinalityData.beneficiary();
 			pBlockHeader->setRound(round.Round);
-			pBlockHeader->setCommitteePhaseTime(round.RoundTimeMillis / 4u);
+			pBlockHeader->setCommitteePhaseTime(round.RoundTimeMillis / chain::CommitteePhaseCount);
 
 			std::atomic_bool stopTransactionFetching = false;
-			DelayAction(pFsmWeak, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis / 2, [&stopTransactionFetching] { stopTransactionFetching = true; });
+			DelayAction(pFsmWeak, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis / 3, [&stopTransactionFetching] { stopTransactionFetching = true; });
 			auto pBlock = utils::UniqueToShared(blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock, [&stopTransactionFetching] { return stopTransactionFetching.load(); }));
 			pFsmShared->timer().cancel();
 
@@ -675,7 +679,7 @@ namespace catapult { namespace fastfinality {
 			int64_t nextRound = currentRound.Round + 1;
 			CATAPULT_LOG(debug) << "incremented round " << nextRound;
 			auto nextRoundStart = currentRound.RoundStart + std::chrono::milliseconds(currentRound.RoundTimeMillis);
-			uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / 4u;
+			uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / chain::CommitteePhaseCount;
 			chain::IncreasePhaseTime(nextPhaseTimeMillis, pConfigHolder->Config(fastFinalityData.currentBlockHeight()).Network);
 			fastFinalityData.setRound(FastFinalityRound{
 				nextRound,
@@ -697,7 +701,7 @@ namespace catapult { namespace fastfinality {
 			state.pluginManager().getCommitteeManager(Block_Version).reset();
 
 			auto nextRoundStart = currentRound.RoundStart + std::chrono::milliseconds(currentRound.RoundTimeMillis);
-			uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / 4u;
+			uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / chain::CommitteePhaseCount;
 			chain::DecreasePhaseTime(nextPhaseTimeMillis, state.pluginManager().config(fastFinalityData.currentBlockHeight() + Height(1)));
 			fastFinalityData.incrementCurrentBlockHeight();
 			fastFinalityData.setRound(FastFinalityRound{

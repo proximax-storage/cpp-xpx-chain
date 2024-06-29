@@ -21,7 +21,16 @@ namespace catapult { namespace mocks {
 		const dbrb::DbrbConfiguration& dbrbConfig)
 			: DbrbProcess(
 				keyPair,
-				dbrb::CreateMessageSender(ionet::Node{ keyPair.publicKey(), ionet::NodeEndpoint(), ionet::NodeMetadata() }, std::move(pWriters), nodeContainer, dbrbConfig.IsDbrbProcess, nullptr, dbrbViewFetcher),
+				dbrb::CreateMessageSender(ionet::Node{
+					keyPair.publicKey(),
+					ionet::NodeEndpoint(),
+					ionet::NodeMetadata() },
+					std::move(pWriters),
+					nodeContainer,
+					dbrbConfig.IsDbrbProcess,
+					nullptr,
+					pPool,
+					utils::TimeSpan::FromMilliseconds(500)),
 				pPool,
 				nullptr,
 				dbrbViewFetcher) {
@@ -34,6 +43,10 @@ namespace catapult { namespace mocks {
 
 	void MockDbrbProcess::setCurrentView(const dbrb::View& view) {
 		m_currentView = view;
+	}
+
+	void MockDbrbProcess::setBootstrapView(const dbrb::View& view) {
+		m_bootstrapView = view;
 	}
 
 	void MockDbrbProcess::broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) {
@@ -53,9 +66,10 @@ namespace catapult { namespace mocks {
 		auto& data = m_broadcastData[payloadHash];
 		data.Payload = payload;
 		data.BroadcastView = broadcastView;
+		data.BootstrapView = m_bootstrapView;
 
 		CATAPULT_LOG(debug) << "[DBRB] BROADCAST: " << m_id << " is sending payload " << payload->Type;
-		auto pMessage = std::make_shared<dbrb::PrepareMessage>(m_id, payload, broadcastView);
+		auto pMessage = std::make_shared<dbrb::PrepareMessage>(m_id, payload, broadcastView, m_bootstrapView);
 		disseminate(pMessage, pMessage->View.Data);
 	}
 
@@ -170,10 +184,6 @@ namespace catapult { namespace mocks {
 
 	const std::set<Hash256>& MockDbrbProcess::deliveredPayloads() {
 		return m_deliveredPayloads;
-	}
-
-	const dbrb::ProcessId& MockDbrbProcess::id() {
-		return m_id;
 	}
 
 	std::map<Hash256, dbrb::BroadcastData>& MockDbrbProcess::broadcastData() {

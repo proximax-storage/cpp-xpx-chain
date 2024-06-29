@@ -44,6 +44,7 @@ namespace catapult { namespace dbrb {
 		boost::asio::io_context::strand& strand();
 		std::shared_ptr<MessageSender> messageSender();
 		const View& currentView();
+		const View& bootstrapView();
 		const ProcessId& id();
 
 	protected:
@@ -57,6 +58,7 @@ namespace catapult { namespace dbrb {
 		virtual void onAcknowledgedMessageReceived(const AcknowledgedMessage&);
 		virtual void onCommitMessageReceived(const CommitMessage&);
 		void onDeliverMessageReceived(const DeliverMessage&);
+		void onConfirmDeliverMessageReceived(const ConfirmDeliverMessage&);
 
 		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);
 
@@ -64,6 +66,7 @@ namespace catapult { namespace dbrb {
 		const crypto::KeyPair& m_keyPair;
 		ProcessId m_id;
 		View m_currentView;
+		View m_bootstrapView;
 		std::map<Hash256, BroadcastData> m_broadcastData;
 		NetworkPacketConverter m_converter;
 		ValidationCallback m_validationCallback;
