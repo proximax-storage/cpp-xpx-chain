@@ -167,9 +167,10 @@ namespace catapult { namespace fastfinality {
 			extensions::ServiceState& state,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
 			const std::shared_ptr<thread::IoThreadPool>& pValidatorPool) {
+		std::lock_guard<std::mutex> guard(fsm.mutex());
 		auto& fastFinalityData = fsm.fastFinalityData();
 		if (fastFinalityData.proposedBlock()) {
-			CATAPULT_LOG(warning) << "rejecting proposed block, there is one already";
+			CATAPULT_LOG(warning) << "rejecting block, there is one already";
 			return false;
 		}
 

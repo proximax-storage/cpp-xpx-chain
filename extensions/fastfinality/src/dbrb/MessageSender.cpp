@@ -126,7 +126,7 @@ namespace catapult { namespace dbrb {
 
 		public:
 			// Node discovery
-			void findNodes(const std::set<ProcessId>& requestedIds) override;
+			void findNodes(std::set<ProcessId> requestedIds) override;
 			void addNodes(const std::vector<ionet::Node>& nodes) override;
 			void sendNodes(const std::vector<ionet::Node>& nodes, const ProcessId& recipient) override;
 			void removeNode(const ProcessId& id) override;
@@ -395,7 +395,7 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	void DefaultMessageSender::findNodes(const std::set<ProcessId>& requestedIds) {
+	void DefaultMessageSender::findNodes(std::set<ProcessId> requestedIds) {
 		std::vector<ionet::Node> nodes;
 		std::set<ProcessId> ids;
 

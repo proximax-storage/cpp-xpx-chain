@@ -56,7 +56,7 @@ namespace catapult { namespace fastfinality {
 				return {};
 			}
 			void pushNodePacketIoPair(const dbrb::ProcessId& id, const ionet::NodePacketIoPair& nodePacketIoPair) override {}
-			void findNodes(const dbrb::ViewData& requestedIds) override {}
+			void findNodes(dbrb::ViewData requestedIds) override {}
 			void addNodes(const std::vector<ionet::Node>& nodes) override {}
 			void sendNodes(const std::vector<ionet::Node>& nodes, const dbrb::ProcessId& recipient) override {}
 			void removeNode(const dbrb::ProcessId& id) override {}

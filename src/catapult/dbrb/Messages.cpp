@@ -31,6 +31,10 @@ namespace catapult { namespace dbrb {
 			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Deliver_Message;
 		};
 
+		struct ConfirmDeliverMessagePacket : public MessagePacket {
+			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Confirm_Deliver_Message;
+		};
+
 		struct ShardPrepareMessagePacket : public MessagePacket {
 			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Shard_Prepare_Message;
 		};
@@ -108,8 +112,9 @@ namespace catapult { namespace dbrb {
 			auto pBuffer = pMessagePacket->payload();
 			auto payload = Read<Payload>(pBuffer);
 			auto view = Read<View>(pBuffer);
+			auto bootstrapView = Read<View>(pBuffer);
 
-			auto pMessage = std::make_shared<PrepareMessage>(pMessagePacket->Sender, payload, view);
+			auto pMessage = std::make_shared<PrepareMessage>(pMessagePacket->Sender, payload, view, bootstrapView);
 			pMessage->Signature = pMessagePacket->Signature;
 
 			return pMessage;
@@ -153,6 +158,18 @@ namespace catapult { namespace dbrb {
 			return pMessage;
 		});
 
+		registerConverter(ionet::PacketType::Dbrb_Confirm_Deliver_Message, [](const ionet::Packet& packet) {
+			const auto* pMessagePacket = reinterpret_cast<const ConfirmDeliverMessagePacket*>(&packet);
+			auto pBuffer = pMessagePacket->payload();
+			auto payloadHash = Read<Hash256>(pBuffer);
+			auto view = Read<View>(pBuffer);
+
+			auto pMessage = std::make_shared<ConfirmDeliverMessage>(pMessagePacket->Sender, payloadHash, view);
+			pMessage->Signature = pMessagePacket->Signature;
+
+			return pMessage;
+		});
+
 		registerConverter(ionet::PacketType::Dbrb_Shard_Prepare_Message, [](const ionet::Packet& packet) {
 			const auto* pMessagePacket = reinterpret_cast<const ShardPrepareMessagePacket*>(&packet);
 			auto pBuffer = pMessagePacket->payload();
@@ -180,12 +197,13 @@ namespace catapult { namespace dbrb {
 	}
 
 	std::shared_ptr<MessagePacket> PrepareMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
-		auto pPacket = ionet::CreateSharedPacket<PrepareMessagePacket>(Payload->Size + View.packedSize());
+		auto pPacket = ionet::CreateSharedPacket<PrepareMessagePacket>(Payload->Size + View.packedSize() + BootstrapView.packedSize());
 		pPacket->Sender = Sender;
 
 		auto pBuffer = pPacket->payload();
 		Write(pBuffer, Payload);
 		Write(pBuffer, View);
+		Write(pBuffer, BootstrapView);
 
 		MaybeSignMessage(pKeyPair, pPacket.get(), this);
 
@@ -223,6 +241,19 @@ namespace catapult { namespace dbrb {
 
 	std::shared_ptr<MessagePacket> DeliverMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
 		auto pPacket = ionet::CreateSharedPacket<DeliverMessagePacket>(Hash256_Size + View.packedSize());
+		pPacket->Sender = Sender;
+
+		auto pBuffer = pPacket->payload();
+		Write(pBuffer, PayloadHash);
+		Write(pBuffer, View);
+
+		MaybeSignMessage(pKeyPair, pPacket.get(), this);
+
+		return pPacket;
+	}
+
+	std::shared_ptr<MessagePacket> ConfirmDeliverMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
+		auto pPacket = ionet::CreateSharedPacket<ConfirmDeliverMessagePacket>(Hash256_Size + View.packedSize());
 		pPacket->Sender = Sender;
 
 		auto pBuffer = pPacket->payload();

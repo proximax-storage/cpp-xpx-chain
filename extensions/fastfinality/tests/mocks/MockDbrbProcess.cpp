@@ -45,6 +45,10 @@ namespace catapult { namespace mocks {
 		m_currentView = view;
 	}
 
+	void MockDbrbProcess::setBootstrapView(const dbrb::View& view) {
+		m_bootstrapView = view;
+	}
+
 	void MockDbrbProcess::broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) {
 		dbrb::View broadcastView{ recipients };
 		if (!(broadcastView <= m_currentView)) {
@@ -62,9 +66,10 @@ namespace catapult { namespace mocks {
 		auto& data = m_broadcastData[payloadHash];
 		data.Payload = payload;
 		data.BroadcastView = broadcastView;
+		data.BootstrapView = m_bootstrapView;
 
 		CATAPULT_LOG(debug) << "[DBRB] BROADCAST: " << m_id << " is sending payload " << payload->Type;
-		auto pMessage = std::make_shared<dbrb::PrepareMessage>(m_id, payload, broadcastView);
+		auto pMessage = std::make_shared<dbrb::PrepareMessage>(m_id, payload, broadcastView, m_bootstrapView);
 		disseminate(pMessage, pMessage->View.Data);
 	}
 

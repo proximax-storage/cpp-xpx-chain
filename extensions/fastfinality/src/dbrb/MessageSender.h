@@ -35,7 +35,7 @@ namespace catapult { namespace dbrb {
 
 	public:
 		// Node discovery
-		virtual void findNodes(const std::set<ProcessId>& requestedIds) = 0;
+		virtual void findNodes(std::set<ProcessId> requestedIds) = 0;
 		virtual void addNodes(const std::vector<ionet::Node>& nodes) = 0;
 		virtual void sendNodes(const std::vector<ionet::Node>& nodes, const ProcessId& recipient) = 0;
 		virtual void removeNode(const ProcessId& id) = 0;

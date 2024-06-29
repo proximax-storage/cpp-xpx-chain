@@ -17,18 +17,22 @@ namespace catapult { namespace fastfinality {
 #define TEST_CLASS DbrbProcessTests
 
 	namespace {
-		void CreateMockDbrbProcesses(uint8_t count = 1, bool fakeDissemination = false) {
-			dbrb::ViewData viewData;
+		void CreateMockDbrbProcesses(uint8_t count = 1, uint8_t bootstrapCount = 1, bool fakeDissemination = false) {
+			dbrb::View currentView;
+			dbrb::View bootstrapView;
 			for (uint8_t i = 0u; i < count; ++i) {
 				auto pProcess = std::make_shared<MockDbrbProcess>(fakeDissemination);
 				pProcess->setValidationCallback([](const auto&){ return true; });
-				viewData.insert(pProcess->id());
+				currentView.Data.insert(pProcess->id());
+				if (i < bootstrapCount)
+					bootstrapView.Data.insert(pProcess->id());
 				MockDbrbProcess::DbrbProcessPool.emplace_back(std::move(pProcess));
 			}
 
-			const dbrb::View currentView{ viewData };
-			for (auto& pProcess : MockDbrbProcess::DbrbProcessPool)
+			for (auto& pProcess : MockDbrbProcess::DbrbProcessPool) {
 				pProcess->setCurrentView(currentView);
+				pProcess->setBootstrapView(bootstrapView);
+			}
 		}
 
 		std::shared_ptr<ionet::Packet> CreatePayload(
@@ -53,7 +57,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, PayloadDeliverySuccess) {
 		// Arrange:
-		CreateMockDbrbProcesses(4);
+		CreateMockDbrbProcesses(4, 2);
 		const auto pBroadcaster = MockDbrbProcess::DbrbProcessPool.front();
 
 		const auto payload = CreatePayload();
@@ -82,7 +86,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, PrepareMessageReceiverIsNotParticipant) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -92,7 +96,8 @@ namespace catapult { namespace fastfinality {
 		const auto pMessage = CreateMessage<dbrb::PrepareMessage>(
 				pSender->id(),
 				CreatePayload(),
-				pSender->currentView());
+				pSender->currentView(),
+				pSender->bootstrapView());
 
 		// Act:
 		pReceiver->processMessage(*pMessage);
@@ -105,7 +110,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, PrepareMessageSenderIsNotInSuppliedView) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -114,7 +119,8 @@ namespace catapult { namespace fastfinality {
 		const auto pMessage = CreateMessage<dbrb::PrepareMessage>(
 				pSender->id(),
 				CreatePayload(),
-				suppliedView);
+				suppliedView,
+				pSender->bootstrapView());
 
 		// Act:
 		pReceiver->processMessage(*pMessage);
@@ -127,7 +133,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, PrepareMessageSuppliedViewIsNotCurrent) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -137,7 +143,8 @@ namespace catapult { namespace fastfinality {
 		const auto pMessage = CreateMessage<dbrb::PrepareMessage>(
 				pSender->id(),
 				CreatePayload(),
-				suppliedView);
+				suppliedView,
+				pSender->bootstrapView());
 
 		// Act:
 		pReceiver->processMessage(*pMessage);
@@ -150,14 +157,15 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, PrepareMessageSuccess) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
 		const auto pMessage = CreateMessage<dbrb::PrepareMessage>(
 				pSender->id(),
 				CreatePayload(),
-				pSender->currentView());
+				pSender->currentView(),
+				pSender->bootstrapView());
 
 		// Act:
 		pReceiver->processMessage(*pMessage);
@@ -174,7 +182,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, AcknowledgedMessageSenderIsNotInSuppliedView) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -202,7 +210,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, AcknowledgedMessageNoPayload) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -229,7 +237,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, AcknowledgedMessageSuccess) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -259,7 +267,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, AcknowledgedMessageSuccessWithQuorumCollected) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -300,7 +308,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, CommitMessageSuppliedViewIsNotCurrent) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -327,7 +335,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, CommitMessageNoPayload) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -354,7 +362,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, CommitMessageSuccess) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -382,7 +390,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, CommitMessageSuccessWithCommitReceived) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -416,7 +424,7 @@ namespace catapult { namespace fastfinality {
 
 	TEST(TEST_CLASS, DeliverMessageReceivererIsNotParticipant) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -437,15 +445,15 @@ namespace catapult { namespace fastfinality {
 		pReceiver->processMessage(*pMessage);
 
 		// Assert:
-		const auto& deliveredProcesses = pReceiver->getQuorumManager(payloadHash).DeliveredProcesses;
-		ASSERT_TRUE(deliveredProcesses.empty());
+		const auto& deliverQuorumCollectedProcesses = pReceiver->getQuorumManager(payloadHash).DeliverQuorumCollectedProcesses;
+		ASSERT_TRUE(deliverQuorumCollectedProcesses.empty());
 
 		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, DeliverMessageSenderIsNotInSuppliedView) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -466,15 +474,15 @@ namespace catapult { namespace fastfinality {
 		pReceiver->processMessage(*pMessage);
 
 		// Assert:
-		const auto& deliveredProcesses = pReceiver->getQuorumManager(payloadHash).DeliveredProcesses;
-		ASSERT_TRUE(deliveredProcesses.empty());
+		const auto& deliverQuorumCollectedProcesses = pReceiver->getQuorumManager(payloadHash).DeliverQuorumCollectedProcesses;
+		ASSERT_TRUE(deliverQuorumCollectedProcesses.empty());
 
 		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, DeliverMessageSenderNoPayload) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -493,15 +501,15 @@ namespace catapult { namespace fastfinality {
 		pReceiver->processMessage(*pMessage);
 
 		// Assert:
-		const auto& deliveredProcesses = pReceiver->getQuorumManager(payloadHash).DeliveredProcesses;
-		ASSERT_TRUE(deliveredProcesses.empty());
+		const auto& deliverQuorumCollectedProcesses = pReceiver->getQuorumManager(payloadHash).DeliverQuorumCollectedProcesses;
+		ASSERT_TRUE(deliverQuorumCollectedProcesses.empty());
 
 		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, DeliverMessageSenderSuccess) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 1, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -510,6 +518,7 @@ namespace catapult { namespace fastfinality {
 		auto& data = pReceiver->broadcastData()[payloadHash];	// Creating correct entry in broadcastData.
 		data.Payload = payload;
 		data.BroadcastView = pSender->currentView();
+		data.BootstrapView = pSender->bootstrapView();
 
 		const auto pMessage = CreateMessage<dbrb::DeliverMessage>(
 				pSender->id(),
@@ -520,16 +529,16 @@ namespace catapult { namespace fastfinality {
 		pReceiver->processMessage(*pMessage);
 
 		// Assert:
-		const auto& deliveredProcesses = pReceiver->getQuorumManager(payloadHash).DeliveredProcesses;
+		const auto& deliverQuorumCollectedProcesses = pReceiver->getQuorumManager(payloadHash).DeliverQuorumCollectedProcesses;
 		const auto& currentView = pReceiver->currentView();
-		ASSERT_EQ(deliveredProcesses.count(currentView), 1u);
+		ASSERT_EQ(deliverQuorumCollectedProcesses.count(currentView), 1u);
 
 		MockDbrbProcess::DbrbProcessPool.clear();
 	}
 
 	TEST(TEST_CLASS, DeliverMessageSenderSuccessWithQuorumCollected) {
 		// Arrange:
-		CreateMockDbrbProcesses(2, true);
+		CreateMockDbrbProcesses(2, 2, true);
 		const auto pSender = MockDbrbProcess::DbrbProcessPool.front();
 		const auto pReceiver = MockDbrbProcess::DbrbProcessPool.back();
 
@@ -539,10 +548,10 @@ namespace catapult { namespace fastfinality {
 		data.Payload = payload;
 		data.BroadcastView = pSender->currentView();
 
-		// Adding Receiver to his list of DeliveredProcesses.
+		// Adding Receiver to his list of DeliverQuorumCollectedProcesses.
 		const auto& currentView = pReceiver->currentView();
-		auto& deliveredProcesses = pReceiver->getQuorumManager(payloadHash).DeliveredProcesses;
-		deliveredProcesses[currentView].emplace(pReceiver->id());
+		auto& deliverQuorumCollectedProcesses = pReceiver->getQuorumManager(payloadHash).DeliverQuorumCollectedProcesses;
+		deliverQuorumCollectedProcesses[currentView].emplace(pReceiver->id());
 
 		const auto pMessage = CreateMessage<dbrb::DeliverMessage>(
 				pSender->id(),
@@ -553,8 +562,7 @@ namespace catapult { namespace fastfinality {
 		pReceiver->processMessage(*pMessage);
 
 		// Assert:
-		ASSERT_EQ(deliveredProcesses[currentView].size(), 2u);	// Sender's message is added to DeliveredProcesses.
-		ASSERT_EQ(pReceiver->deliveredPayloads().count(payloadHash), 1u);	// Payload is delivered.
+		ASSERT_EQ(deliverQuorumCollectedProcesses[currentView].size(), 2u);	// Sender's message is added to DeliverQuorumCollectedProcesses.
 
 		MockDbrbProcess::DbrbProcessPool.clear();
 	}
