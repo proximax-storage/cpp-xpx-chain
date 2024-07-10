@@ -48,6 +48,7 @@ namespace catapult { namespace dbrb {
 		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Acknowledged_Message, handler);
 		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Commit_Message, handler);
 		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Deliver_Message, handler);
+		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Confirm_Deliver_Message, handler);
 	}
 
 	void DbrbProcess::setValidationCallback(const ValidationCallback& callback) {
@@ -68,6 +69,10 @@ namespace catapult { namespace dbrb {
 
 	const View& DbrbProcess::currentView() {
 		return m_currentView;
+	}
+
+	const View& DbrbProcess::bootstrapView() {
+		return m_bootstrapView;
 	}
 
 	const ProcessId& DbrbProcess::id() {
@@ -95,8 +100,13 @@ namespace catapult { namespace dbrb {
 				return;
 			}
 
+			if (!(pThis->m_bootstrapView <= broadcastView)) {
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: bootstrap view " << pThis->m_bootstrapView << " is not a subview of the broadcast view " << broadcastView << ", aborting broadcast";
+				return;
+			}
+
 			if (!broadcastView.isMember(pThis->m_id)) {
-				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the current view " << pThis->m_currentView << ", aborting broadcast";
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the broadcast view " << broadcastView << ", aborting broadcast";
 				return;
 			}
 
@@ -105,9 +115,10 @@ namespace catapult { namespace dbrb {
 			data.Begin = utils::NetworkTime();
 			data.Payload = payload;
 			data.BroadcastView = broadcastView;
+			data.BootstrapView = pThis->m_bootstrapView;
 
 			CATAPULT_LOG(trace) << "[DBRB] BROADCAST: sending payload " << payload->Type;
-			auto pMessage = std::make_shared<PrepareMessage>(pThis->m_id, payload, broadcastView);
+			auto pMessage = std::make_shared<PrepareMessage>(pThis->m_id, payload, broadcastView, data.BootstrapView);
 			pThis->disseminate(pMessage, pMessage->View.Data);
 		});
 	}
@@ -134,6 +145,11 @@ namespace catapult { namespace dbrb {
 				onDeliverMessageReceived(dynamic_cast<const DeliverMessage&>(message));
 				break;
 			}
+			case ionet::PacketType::Dbrb_Confirm_Deliver_Message: {
+				CATAPULT_LOG(trace) << "[DBRB] Received CONFIRM DELIVER message from " << message.Sender;
+				onConfirmDeliverMessageReceived(dynamic_cast<const ConfirmDeliverMessage&>(message));
+				break;
+			}
 			default:
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid DBRB message type", message.Type)
 		}
@@ -156,7 +172,7 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		m_pMessageSender->enqueue(pPacket, recipients);
+		m_pMessageSender->enqueue(pPacket, false, recipients);
 	}
 
 	void DbrbProcess::send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient) {
@@ -215,6 +231,11 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
+		if (message.BootstrapView != m_bootstrapView) {
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (invalid bootstrap view)";
+			return;
+		}
+
 		auto payloadHash = CalculatePayloadHash(message.Payload);
 		if (message.Sender != m_id) {
 			auto& data = m_broadcastData[payloadHash];
@@ -222,6 +243,7 @@ namespace catapult { namespace dbrb {
 				data.Begin = utils::NetworkTime();
 				data.Payload = message.Payload;
 				data.BroadcastView = message.View;
+				data.BootstrapView = message.BootstrapView;
 			}
 		}
 
@@ -290,7 +312,7 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onCommitMessageReceived(const CommitMessage& message) {
 		if (!message.View.isMember(m_id)) {
-			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Aborting message processing (node is not a participant).";
+			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Aborting message processing (process is not a participant).";
 			return;
 		}
 
@@ -350,15 +372,47 @@ namespace catapult { namespace dbrb {
 		}
 
 		if (message.View != data.BroadcastView) {
-			CATAPULT_LOG(debug) << "[DBRB] COMMIT: Aborting message processing (supplied view is not the broadcast view)";
+			CATAPULT_LOG(debug) << "[DBRB] DELIVER: Aborting message processing (supplied view is not the broadcast view)";
 			return;
 		}
 
 		CATAPULT_LOG(trace) << "[DBRB] DELIVER: payload " << data.Payload->Type << " from " << message.Sender;
 
-		bool quorumCollected = data.QuorumManager.update(message, data.Payload->Type);
+		auto quorumCollected = data.QuorumManager.update(message, data.Payload->Type);
+		if (quorumCollected && data.BootstrapView.isMember(m_id)) {
+			CATAPULT_LOG(trace) << "[DBRB] DELIVER: Disseminating Confirm Deliver message with payload " << data.Payload->Type;
+			auto pMessage = std::make_shared<ConfirmDeliverMessage>(m_id, message.PayloadHash, message.View);
+			disseminate(pMessage, message.View.Data);
+		}
+	}
+
+	void DbrbProcess::onConfirmDeliverMessageReceived(const ConfirmDeliverMessage& message) {
+		if (!message.View.isMember(m_id)) {
+			CATAPULT_LOG(debug) << "[DBRB] CONFIRM DELIVER: Aborting message processing (node is not a participant)";
+			return;
+		}
+
+		if (!message.View.isMember(message.Sender)) {
+			CATAPULT_LOG(debug) << "[DBRB] CONFIRM DELIVER: Aborting message processing (sender is not in supplied view)";
+			return;
+		}
+
+		auto& data = m_broadcastData[message.PayloadHash];
+		if (!data.Payload) {
+			CATAPULT_LOG(debug) << "[DBRB] CONFIRM DELIVER: Aborting message processing (no payload)";
+			return;
+		}
+
+		if (message.View != data.BroadcastView) {
+			CATAPULT_LOG(debug) << "[DBRB] CONFIRM DELIVER: Aborting message processing (supplied view is not the broadcast view)";
+			return;
+		}
+
+		CATAPULT_LOG(trace) << "[DBRB] CONFIRM DELIVER: payload " << data.Payload->Type << " from " << message.Sender;
+
+		bool quorumCollected = data.QuorumManager.update(message, data.BootstrapView, data.Payload->Type);
 		if (quorumCollected) {
-			CATAPULT_LOG(debug) << "[DBRB] DELIVER: delivering payload " << data.Payload->Type;
+			CATAPULT_LOG(debug) << "[DBRB] CONFIRM DELIVER: delivering payload " << data.Payload->Type;
 			m_deliverCallback(data.Payload);
 
 			CATAPULT_LOG(debug) << "[DBRB] BROADCAST: operation took " << (utils::NetworkTime().unwrap() - data.Begin.unwrap()) << " ms to deliver " << data.Payload->Type;
@@ -389,13 +443,11 @@ namespace catapult { namespace dbrb {
 			CATAPULT_LOG(debug) << "[DBRB] no bootstrap nodes, getting config at height " << height + Height(1);
 			bootstrapView = View{ pConfigHolder->Config(height + Height(1)).Network.DbrbBootstrapProcesses };
 		}
+		if (bootstrapView.Data.empty())
+			CATAPULT_THROW_RUNTIME_ERROR("Bootstrap view is empty")
 		auto isBootstrapProcess = bootstrapView.isMember(m_id);
 
-		view.merge(bootstrapView);
-		if (view.Data.empty())
-			CATAPULT_THROW_RUNTIME_ERROR("no DBRB processes")
-
-		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, view, isTemporaryProcess, isBootstrapProcess, gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis()), registerSelf]() {
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, view, isTemporaryProcess, isBootstrapProcess, gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis()), registerSelf, bootstrapView]() {
 			auto pThis = pThisWeak.lock();
 			if (!pThis)
 				return;
@@ -405,7 +457,12 @@ namespace catapult { namespace dbrb {
 			pThis->m_broadcastData.clear();
 
 			pThis->m_currentView = view;
-			CATAPULT_LOG(debug) << "[DBRB] Current view (" << view.Data.size() << ") is now set to " << view;
+			pThis->m_bootstrapView = bootstrapView;
+			auto bootstrapViewCopy = bootstrapView;
+			pThis->m_currentView.merge(bootstrapViewCopy);
+			CATAPULT_LOG(debug) << "[DBRB] Current view (" << pThis->m_currentView.Data.size() << ") is now set to " << view;
+
+			pThis->m_pMessageSender->findNodes(pThis->m_currentView.Data);
 
 			if (registerSelf) {
 				bool isRegistrationRequired = false;

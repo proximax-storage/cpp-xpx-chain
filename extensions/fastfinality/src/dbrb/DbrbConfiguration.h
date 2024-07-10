@@ -23,6 +23,9 @@ namespace catapult { namespace dbrb {
 		/// True if this node is a DBRB process.
 		bool IsDbrbProcess;
 
+		/// Interval between resending messages that failed to be delivered to recipients.
+		utils::TimeSpan ResendMessagesInterval;
+
 	private:
 		DbrbConfiguration() = default;
 

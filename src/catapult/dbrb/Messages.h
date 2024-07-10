@@ -107,9 +107,10 @@ namespace catapult { namespace dbrb {
 	struct PrepareMessage : BaseMessage {
 	public:
 		PrepareMessage() = delete;
-		PrepareMessage(const ProcessId& sender, Payload payload, dbrb::View view)
+		PrepareMessage(const ProcessId& sender, Payload payload, dbrb::View view, dbrb::View bootstrapView)
 			: BaseMessage(sender, ionet::PacketType::Dbrb_Prepare_Message, std::move(view))
 			, Payload(std::move(payload))
+			, BootstrapView(std::move(bootstrapView))
 		{}
 
 	public:
@@ -118,6 +119,9 @@ namespace catapult { namespace dbrb {
 	public:
 		/// Message to be broadcast.
 		dbrb::Payload Payload;
+
+		/// Current bootstrap view of the system from the perspective of the sender.
+		dbrb::View BootstrapView;
 	};
 
 	struct AcknowledgedMessage : BaseMessage {
@@ -165,6 +169,22 @@ namespace catapult { namespace dbrb {
 		DeliverMessage() = delete;
 		explicit DeliverMessage(const ProcessId& sender, const Hash256& payloadHash, dbrb::View view)
 			: BaseMessage(sender, ionet::PacketType::Dbrb_Deliver_Message, std::move(view))
+			, PayloadHash(payloadHash)
+		{}
+
+	public:
+		std::shared_ptr<MessagePacket> toNetworkPacket(const crypto::KeyPair* pKeyPair) override;
+
+	public:
+		/// Hash of the payload.
+		Hash256 PayloadHash;
+	};
+
+	struct ConfirmDeliverMessage : BaseMessage {
+	public:
+		ConfirmDeliverMessage() = delete;
+		explicit ConfirmDeliverMessage(const ProcessId& sender, const Hash256& payloadHash, dbrb::View view)
+			: BaseMessage(sender, ionet::PacketType::Dbrb_Confirm_Deliver_Message, std::move(view))
 			, PayloadHash(payloadHash)
 		{}
 

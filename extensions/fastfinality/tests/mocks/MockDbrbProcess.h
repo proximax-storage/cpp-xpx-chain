@@ -32,6 +32,7 @@ namespace catapult { namespace mocks {
 				const dbrb::DbrbConfiguration& dbrbConfig = dbrb::DbrbConfiguration::Uninitialized());
 
 		void setCurrentView(const dbrb::View& view);
+		void setBootstrapView(const dbrb::View& view);
 
 		void broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) override;
 		void processMessage(const dbrb::Message& message) override;
@@ -45,7 +46,6 @@ namespace catapult { namespace mocks {
 		void onCommitMessageReceived(const dbrb::CommitMessage& message) override;
 
 		const std::set<Hash256>& deliveredPayloads();
-		const dbrb::ProcessId& id();
 		std::map<Hash256, dbrb::BroadcastData>& broadcastData();
 		const DisseminationHistory& disseminationHistory();
 		dbrb::QuorumManager& getQuorumManager(const Hash256& payloadHash);

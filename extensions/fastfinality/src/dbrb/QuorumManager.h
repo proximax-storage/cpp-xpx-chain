@@ -15,11 +15,15 @@ namespace catapult { namespace dbrb {
 		std::map<View, std::set<std::pair<ProcessId, Hash256>>> AcknowledgedPayloads;
 
 		/// Maps views to sets of process IDs ready for delivery.
-		std::map<View, std::set<ProcessId>> DeliveredProcesses;
+		std::map<View, std::set<ProcessId>> DeliverQuorumCollectedProcesses;
+
+		/// Maps views to sets of process IDs that confirmed collecting deliver quorum.
+		std::map<View, std::set<ProcessId>> ConfirmedDeliverProcesses;
 
 		/// Overloaded methods for updating respective counters.
 		/// Returns whether the quorum has just been collected on this update.
 		bool update(const AcknowledgedMessage& message, ionet::PacketType payloadType);
 		bool update(const DeliverMessage& message, ionet::PacketType payloadType);
+		bool update(const ConfirmDeliverMessage& message, const View& bootstrapView, ionet::PacketType payloadType);
 	};
 }}

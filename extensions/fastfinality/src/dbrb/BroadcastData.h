@@ -25,6 +25,9 @@ namespace catapult { namespace dbrb {
 		/// View associated with the broadcast operation.
 		View BroadcastView;
 
+		/// View consisting of bootstrap processes associated with the broadcast operation.
+		View BootstrapView;
+
 		/// Quorum manager.
 		dbrb::QuorumManager QuorumManager;
 

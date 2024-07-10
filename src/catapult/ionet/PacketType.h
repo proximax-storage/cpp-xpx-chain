@@ -133,6 +133,10 @@ namespace catapult { namespace ionet {
 	\
 	ENUM_VALUE(Dbrb_Shard_Deliver_Message, 567) \
 	\
+	ENUM_VALUE(Dbrb_Confirm_Deliver_Message, 568) \
+	\
+	ENUM_VALUE(Dbrb_Shard_Confirm_Deliver_Message, 569) \
+	\
 	/* node discovery packets have types [600, 700) */ \
 	\
 	/* Node information has been pushed by a peer. */ \
