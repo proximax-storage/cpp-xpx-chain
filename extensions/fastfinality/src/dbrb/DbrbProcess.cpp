@@ -232,7 +232,7 @@ namespace catapult { namespace dbrb {
 		}
 
 		if (message.BootstrapView != m_bootstrapView) {
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (invalid bootstrap view)";
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (invalid bootstrap view)\nExpected bootstrap view: " << m_bootstrapView << "\nActual bootstrap view:   " << message.BootstrapView;
 			return;
 		}
 
@@ -460,13 +460,13 @@ namespace catapult { namespace dbrb {
 			pThis->m_bootstrapView = bootstrapView;
 			auto bootstrapViewCopy = bootstrapView;
 			pThis->m_currentView.merge(bootstrapViewCopy);
-			CATAPULT_LOG(debug) << "[DBRB] Current view (" << pThis->m_currentView.Data.size() << ") is now set to " << view;
+			CATAPULT_LOG(debug) << "[DBRB] Current view (" << pThis->m_currentView.Data.size() << ") is now set to " << pThis->m_currentView;
 
 			pThis->m_pMessageSender->findNodes(pThis->m_currentView.Data);
 
 			if (registerSelf) {
 				bool isRegistrationRequired = false;
-				if (!isTemporaryProcess && !isBootstrapProcess) {
+				if (!isTemporaryProcess && !isBootstrapProcess && (pThis->m_dbrbViewFetcher.getBanPeriod(pThis->m_id) == BlockDuration(0))) {
 					CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
 					isRegistrationRequired = true;
 				} else if (isTemporaryProcess) {

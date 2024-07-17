@@ -114,6 +114,10 @@ namespace catapult { namespace fastfinality {
 			Timestamp getExpirationTime(const dbrb::ProcessId& processId) const override {
 				return Timestamp();
 			}
+
+			BlockDuration getBanPeriod(const dbrb::ProcessId& processId) const override {
+				return BlockDuration();
+			}
 			
 			void logAllProcesses() const override {}
 			void logView(const dbrb::ViewData& view) const override {}

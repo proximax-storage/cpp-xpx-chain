@@ -548,7 +548,7 @@ namespace catapult { namespace dbrb {
 
 			if (registerSelf) {
 				bool isRegistrationRequired = false;
-				if (!isTemporaryProcess && !isBootstrapProcess) {
+				if (!isTemporaryProcess && !isBootstrapProcess && (pThis->m_dbrbViewFetcher.getBanPeriod(pThis->m_id) == BlockDuration(0))) {
 					CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
 					isRegistrationRequired = true;
 				} else if (isTemporaryProcess) {

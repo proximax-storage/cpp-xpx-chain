@@ -12,6 +12,7 @@
 namespace catapult {
 	namespace cache { class DbrbViewFetcherImpl; }
 	namespace observers { class DbrbProcessUpdateListener; }
+	namespace plugins { class PluginManager; }
 }
 
 namespace catapult { namespace observers {
@@ -24,4 +25,7 @@ namespace catapult { namespace observers {
 
 		/// Observes changes triggered by remove DBRB process notifications.
 		DECLARE_OBSERVER(RemoveDbrbProcess, model::RemoveDbrbProcessNotification<1>)();
+
+		/// Observes changes triggered by block notifications.
+		DECLARE_OBSERVER(DbrbProcessUpdate, model::BlockNotification<1>)(const plugins::PluginManager& pluginManager);
 }}

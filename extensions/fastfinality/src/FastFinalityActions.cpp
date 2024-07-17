@@ -116,7 +116,11 @@ namespace catapult { namespace fastfinality {
 
 			if (chainSyncData.NetworkHeight < chainSyncData.LocalHeight) {
 
-				pFsmShared->processEvent(NetworkHeightLessThanLocal{});
+				DelayAction(pFsmWeak, pFsmShared->timer(), chain::CommitteePhaseCount * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
+					TRY_GET_FSM()
+
+					pFsmShared->processEvent(NetworkHeightLessThanLocal{});
+				});
 
 			} else if (chainSyncData.NetworkHeight > chainSyncData.LocalHeight) {
 
@@ -175,12 +179,16 @@ namespace catapult { namespace fastfinality {
 					if (isInDbrbSystem) {
 						pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 					} else {
-						pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::NetworkTime(), localHeight, true);
-						DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
+						dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight, true);
+						auto banned = (state.pluginManager().dbrbViewFetcher().getBanPeriod(dbrbProcess.id()) > BlockDuration(0));
+						DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak, banned] {
 							TRY_GET_FSM()
 
-							CATAPULT_LOG(debug) << "not registered in the DBRB system";
-							pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
+							if (banned) {
+								pFsmShared->processEvent(DbrbProcessBanned{});
+							} else {
+								pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
+							}
 						});
 					}
 				} else {
@@ -455,15 +463,22 @@ namespace catapult { namespace fastfinality {
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 			fastFinalityData.setUnexpectedBlockHeight(false);
 			auto round = fastFinalityData.round();
-			auto pConfigHolder = state.pluginManager().configHolder();
+			const auto& pluginManager = state.pluginManager();
+			auto pConfigHolder = pluginManager.configHolder();
 			auto roundStart = utils::FromTimePoint(round.RoundStart);
-			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, roundStart, fastFinalityData.currentBlockHeight(), true);
+			auto& dbrbProcess = pFsmShared->dbrbProcess();
+			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, roundStart, fastFinalityData.currentBlockHeight(), true);
 			if (!isInDbrbSystem) {
-				pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
+				auto banned = (pluginManager.dbrbViewFetcher().getBanPeriod(dbrbProcess.id()) > BlockDuration(0));
+				if (banned) {
+					pFsmShared->processEvent(DbrbProcessBanned{});
+				} else {
+					pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
+				}
 				return;
 			}
 
-			auto& committeeManager = state.pluginManager().getCommitteeManager(Block_Version);
+			auto& committeeManager = pluginManager.getCommitteeManager(Block_Version);
 			auto committee = committeeManager.committee();
 			if (committee.Round > round.Round)
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid round", committee.Round, round.Round)
@@ -575,7 +590,13 @@ namespace catapult { namespace fastfinality {
 				auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);
 				pPacket->Type = ionet::PacketType::Push_Block;
 				std::memcpy(static_cast<void*>(pPacket->Data()), pBlock.get(), pBlock->Size);
-				pFsmShared->dbrbProcess().broadcast(pPacket, pFsmShared->dbrbProcess().currentView().Data);
+
+				DelayAction(pFsmWeak, pFsmShared->timer(), config.Network.CommitteeSilenceInterval.millis(), [pFsmWeak, pPacket] {
+					TRY_GET_FSM()
+
+					pFsmShared->dbrbProcess().broadcast(pPacket, pFsmShared->dbrbProcess().currentView().Data);
+				});
+
 				pFsmShared->processEvent(BlockGenerationSucceeded{});
 			} else {
 				pFsmShared->processEvent(BlockGenerationFailed{});

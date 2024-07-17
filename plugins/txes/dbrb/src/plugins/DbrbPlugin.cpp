@@ -63,10 +63,11 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateNodeBootKeyValidator());
 		});
 
-		manager.addObserverHook([&dbrbProcessUpdateListeners = manager.dbrbProcessUpdateListeners()](auto& builder) {
+		manager.addObserverHook([&manager](auto& builder) {
 			builder
 				.add(observers::CreateAddDbrbProcessObserver())
-				.add(observers::CreateDbrbProcessPruningObserver(dbrbProcessUpdateListeners))
+				.add(observers::CreateDbrbProcessPruningObserver(manager.dbrbProcessUpdateListeners()))
+				.add(observers::CreateDbrbProcessUpdateObserver(manager))
 				.add(observers::CreateRemoveDbrbProcessObserver());
 		});
 	}
