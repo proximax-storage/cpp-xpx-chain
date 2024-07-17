@@ -57,6 +57,8 @@ dbrbShardSize = 6
 enableDbrbFastFinality = true
 checkNetworkHeightInterval = 10
 
+blockTimeUpdateStrategy = increase-coefficient
+
 [bootstrap.harvesters]
 
 10E8A1CCCFE02C4C22C12D42277520F1FC7D471E570C9FE2A2961ECB020BC596 =

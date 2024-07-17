@@ -401,14 +401,43 @@ namespace catapult { namespace fastfinality {
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid current time", currentTime, block.Timestamp)
 
 			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
-			chain::DecreasePhaseTime(phaseTimeMillis, config);
+			switch (config.BlockTimeUpdateStrategy) {
+				case model::BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient: {
+					chain::DecreasePhaseTime(phaseTimeMillis, config);
+					break;
+				}
+				case model::BlockTimeUpdateStrategy::Increase_Coefficient: {
+					phaseTimeMillis = config.MinCommitteePhaseTime.millis();
+					break;
+				}
+				case model::BlockTimeUpdateStrategy::None: {
+					break;
+				}
+				default: {
+					CATAPULT_THROW_INVALID_ARGUMENT_1("invalid block time update strategy value", utils::to_underlying_type(config.BlockTimeUpdateStrategy))
+				}
+			}
+
 			auto nextRoundStart = roundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
 			committeeManager.selectCommittee(config, blockchainVersion);
 
-			auto committeeSilenceInterval = Timestamp(config.CommitteeSilenceInterval.millis());
-			while (nextRoundStart <= timeSupplier() + committeeSilenceInterval) {
+			while (nextRoundStart <= timeSupplier()) {
 				roundStart = nextRoundStart;
-				chain::IncreasePhaseTime(phaseTimeMillis, config);
+				switch (config.BlockTimeUpdateStrategy) {
+					case model::BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient: {
+						[[fallthrough]];
+					}
+					case model::BlockTimeUpdateStrategy::Increase_Coefficient: {
+						chain::IncreasePhaseTime(phaseTimeMillis, config);
+						break;
+					}
+					case model::BlockTimeUpdateStrategy::None: {
+						break;
+					}
+					default: {
+						CATAPULT_THROW_INVALID_ARGUMENT_1("invalid block time update strategy value", utils::to_underlying_type(config.BlockTimeUpdateStrategy))
+					}
+				}
 				nextRoundStart = nextRoundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
 
 				committeeManager.selectCommittee(config, blockchainVersion);
@@ -700,12 +729,32 @@ namespace catapult { namespace fastfinality {
 			int64_t nextRound = currentRound.Round + 1;
 			CATAPULT_LOG(debug) << "incremented round " << nextRound;
 			auto nextRoundStart = currentRound.RoundStart + std::chrono::milliseconds(currentRound.RoundTimeMillis);
+			auto config = pConfigHolder->Config(fastFinalityData.currentBlockHeight()).Network;
+			uint64_t roundTimeMillis = 0;
+			switch (config.BlockTimeUpdateStrategy) {
+				case model::BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient: {
+					[[fallthrough]];
+				}
+				case model::BlockTimeUpdateStrategy::Increase_Coefficient: {
+					uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / chain::CommitteePhaseCount;
+					chain::IncreasePhaseTime(nextPhaseTimeMillis, config);
+					roundTimeMillis = chain::CommitteePhaseCount * nextPhaseTimeMillis;
+					break;
+				}
+				case model::BlockTimeUpdateStrategy::None: {
+					roundTimeMillis = currentRound.RoundTimeMillis;
+					break;
+				}
+				default: {
+					CATAPULT_THROW_INVALID_ARGUMENT_1("invalid block time update strategy value", utils::to_underlying_type(config.BlockTimeUpdateStrategy))
+				}
+			}
 			uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / chain::CommitteePhaseCount;
-			chain::IncreasePhaseTime(nextPhaseTimeMillis, pConfigHolder->Config(fastFinalityData.currentBlockHeight()).Network);
+			chain::IncreasePhaseTime(nextPhaseTimeMillis, config);
 			fastFinalityData.setRound(FastFinalityRound{
 				nextRound,
 				nextRoundStart,
-				chain::CommitteePhaseCount * nextPhaseTimeMillis,
+				roundTimeMillis,
 			});
 		};
 	}
@@ -722,13 +771,32 @@ namespace catapult { namespace fastfinality {
 			state.pluginManager().getCommitteeManager(Block_Version).reset();
 
 			auto nextRoundStart = currentRound.RoundStart + std::chrono::milliseconds(currentRound.RoundTimeMillis);
-			uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / chain::CommitteePhaseCount;
-			chain::DecreasePhaseTime(nextPhaseTimeMillis, state.pluginManager().config(fastFinalityData.currentBlockHeight() + Height(1)));
+			const auto& config = state.pluginManager().config(fastFinalityData.currentBlockHeight() + Height(1));
+			uint64_t roundTimeMillis = 0;
+			switch (config.BlockTimeUpdateStrategy) {
+				case model::BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient: {
+					uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / chain::CommitteePhaseCount;
+					chain::DecreasePhaseTime(nextPhaseTimeMillis, config);
+					roundTimeMillis = chain::CommitteePhaseCount * nextPhaseTimeMillis;
+					break;
+				}
+				case model::BlockTimeUpdateStrategy::Increase_Coefficient: {
+					roundTimeMillis = chain::CommitteePhaseCount * config.MinCommitteePhaseTime.millis();
+					break;
+				}
+				case model::BlockTimeUpdateStrategy::None: {
+					roundTimeMillis = currentRound.RoundTimeMillis;
+					break;
+				}
+				default: {
+					CATAPULT_THROW_INVALID_ARGUMENT_1("invalid block time update strategy value", utils::to_underlying_type(config.BlockTimeUpdateStrategy))
+				}
+			}
 			fastFinalityData.incrementCurrentBlockHeight();
 			fastFinalityData.setRound(FastFinalityRound{
 				0u,
 				nextRoundStart,
-				chain::CommitteePhaseCount * nextPhaseTimeMillis,
+				roundTimeMillis,
 			});
 		};
 	}

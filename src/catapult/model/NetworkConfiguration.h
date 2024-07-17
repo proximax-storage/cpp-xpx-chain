@@ -21,6 +21,7 @@
 #pragma once
 #include "NetworkInfo.h"
 #include "PluginConfiguration.h"
+#include "BlockTimeUpdateStrategy.h"
 #include "catapult/dbrb/DbrbDefinitions.h"
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/FileSize.h"
@@ -30,7 +31,7 @@
 #include "catapult/exceptions.h"
 #include "catapult/types.h"
 #include <unordered_map>
-#include <stdint.h>
+#include <cstdint>
 
 namespace catapult { namespace model {
 
@@ -184,6 +185,9 @@ namespace catapult { namespace model {
 
 		/// Number of failed rounds of block generation before checking the network height and synchronizing if necessary.
 		uint32_t CheckNetworkHeightInterval;
+
+		/// Block time update strategy.
+		model::BlockTimeUpdateStrategy BlockTimeUpdateStrategy;
 
 	private:
 		/// Map of plugin configurations.
