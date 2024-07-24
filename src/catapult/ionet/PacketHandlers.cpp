@@ -62,13 +62,49 @@ namespace catapult { namespace ionet {
 
 	// region ServerPacketHandlers
 
-	ServerPacketHandlers::ServerPacketHandlers(uint32_t maxPacketDataSize) : m_maxPacketDataSize(maxPacketDataSize)
+	ServerPacketHandlers::ServerPacketHandlers(uint32_t maxPacketDataSize, bool ignoreUnknownPackets)
+		: m_maxPacketDataSize(maxPacketDataSize)
+		, m_ignoreUnknownPackets(ignoreUnknownPackets)
 	{}
+
+	ServerPacketHandlers::ServerPacketHandlers(const ServerPacketHandlers& rhs)
+		: m_maxPacketDataSize(rhs.m_maxPacketDataSize)
+		, m_handlers(rhs.m_handlers)
+		, m_removableHandlers(rhs.m_removableHandlers)
+		, m_ignoreUnknownPackets(rhs.m_ignoreUnknownPackets)
+	{}
+
+	ServerPacketHandlers::ServerPacketHandlers(ServerPacketHandlers&& rhs)
+		: m_maxPacketDataSize(rhs.m_maxPacketDataSize)
+		, m_handlers(std::move(rhs.m_handlers))
+		, m_removableHandlers(std::move(rhs.m_removableHandlers))
+		, m_ignoreUnknownPackets(rhs.m_ignoreUnknownPackets)
+	{}
+
+	ServerPacketHandlers& ServerPacketHandlers::operator=(const ServerPacketHandlers& rhs) {
+		m_maxPacketDataSize = rhs.m_maxPacketDataSize;
+		m_handlers = rhs.m_handlers;
+		m_removableHandlers = rhs.m_removableHandlers;
+		m_ignoreUnknownPackets = rhs.m_ignoreUnknownPackets;
+	}
+
+	ServerPacketHandlers& ServerPacketHandlers::operator=(ServerPacketHandlers&& rhs) {
+		m_maxPacketDataSize = rhs.m_maxPacketDataSize;
+		m_handlers = std::move(rhs.m_handlers);
+		m_removableHandlers = std::move(rhs.m_removableHandlers);
+		m_ignoreUnknownPackets = rhs.m_ignoreUnknownPackets;
+	}
 
 	size_t ServerPacketHandlers::size() const {
 		size_t numHandlers = 0;
 		for (const auto& handler : m_handlers)
 			numHandlers += handler ? 1 : 0;
+
+		{
+			std::lock_guard<std::mutex> guard(m_mutex);
+			for (const auto& handler : m_removableHandlers)
+				numHandlers += handler ? 1 : 0;
+		}
 
 		return numHandlers;
 	}
@@ -84,15 +120,21 @@ namespace catapult { namespace ionet {
 	}
 
 	bool ServerPacketHandlers::canProcess(const Packet& packet) const {
-		return !!findHandler(packet);
+		return !!findHandler(packet) || !!findRemovableHandler(packet);
 	}
 
 	bool ServerPacketHandlers::process(const Packet& packet, ContextType& context) const {
 		const auto* pHandler = findHandler(packet);
-		if (!pHandler)
-			return false;
+		if (!pHandler) {
+			pHandler = findRemovableHandler(packet);
+			if (!pHandler) {
+				CATAPULT_LOG(warning) << "requested unknown handler: " << packet;
+				return m_ignoreUnknownPackets;
+			}
+		}
 
 		CATAPULT_LOG(trace) << "processing " << packet;
+
 		(*pHandler)(packet, context);
 		return true;
 	}
@@ -108,14 +150,41 @@ namespace catapult { namespace ionet {
 		m_handlers[rawType] = handler;
 	}
 
+	void ServerPacketHandlers::registerRemovableHandler(PacketType type, const PacketHandler& handler) {
+		std::lock_guard<std::mutex> guard(m_mutex);
+		auto rawType = utils::to_underlying_type(type);
+		if (rawType >= m_removableHandlers.size())
+			m_removableHandlers.resize(rawType + 1);
+
+		if (m_removableHandlers[rawType])
+			CATAPULT_THROW_RUNTIME_ERROR_1("removable handler for type is already registered", rawType);
+
+		m_removableHandlers[rawType] = handler;
+	}
+
+	void ServerPacketHandlers::removeHandler(PacketType type) {
+		std::lock_guard<std::mutex> guard(m_mutex);
+		auto rawType = utils::to_underlying_type(type);
+		if (rawType < m_removableHandlers.size())
+			m_removableHandlers[rawType] = nullptr;
+	}
+
 	const ServerPacketHandlers::PacketHandler* ServerPacketHandlers::findHandler(const Packet& packet) const {
 		auto rawType = utils::to_underlying_type(packet.Type);
-		if (rawType >= m_handlers.size()) {
-			CATAPULT_LOG(warning) << "requested unknown handler: " << packet;
+		if (rawType >= m_handlers.size())
 			return nullptr;
-		}
 
 		const auto& handler = m_handlers[rawType];
+		return handler ? &handler : nullptr;
+	}
+
+	const ServerPacketHandlers::PacketHandler* ServerPacketHandlers::findRemovableHandler(const Packet& packet) const {
+		std::lock_guard<std::mutex> guard(m_mutex);
+		auto rawType = utils::to_underlying_type(packet.Type);
+		if (rawType >= m_removableHandlers.size())
+			return nullptr;
+
+		const auto& handler = m_removableHandlers[rawType];
 		return handler ? &handler : nullptr;
 	}
 

@@ -122,22 +122,6 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		void registerDbrbRemoveNodeRequestHandler(const crypto::KeyPair& keyPair, ionet::ServerPacketHandlers& packetHandlers) {
-			if (m_shardingEnabled) {
-				dbrb::RegisterRemoveNodeRequestHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), keyPair, packetHandlers);
-			} else {
-				dbrb::RegisterRemoveNodeRequestHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), keyPair, packetHandlers);
-			}
-		}
-
-		void registerDbrbRemoveNodeResponseHandler(ionet::ServerPacketHandlers& packetHandlers) {
-			if (m_shardingEnabled) {
-				dbrb::RegisterRemoveNodeResponseHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), packetHandlers);
-			} else {
-				dbrb::RegisterRemoveNodeResponseHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), packetHandlers);
-			}
-		}
-
 	private:
 		std::shared_ptr<dbrb::DbrbProcess> m_pDbrbProcess;
 		std::shared_ptr<dbrb::ShardedDbrbProcess> m_pShardedDbrbProcess;

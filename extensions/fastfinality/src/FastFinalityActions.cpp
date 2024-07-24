@@ -6,12 +6,14 @@
 
 #include "FastFinalityFsm.h"
 #include "fastfinality/src/utils/FastFinalityUtils.h"
+#include "catapult/api/ChainPackets.h"
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/harvesting_core/UnlockedAccounts.h"
+#include "catapult/ionet/PacketEntityUtils.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/StackLogger.h"
 #include "catapult/validators/AggregateEntityValidator.h"
@@ -91,7 +93,7 @@ namespace catapult { namespace fastfinality {
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 
 			auto dbrbProcess = pFsmShared->dbrbProcess();
-			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight, false);
+			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight + Height(1), false);
 
 			std::vector<RemoteNodeState> remoteNodeStates = retriever();
 
@@ -179,7 +181,7 @@ namespace catapult { namespace fastfinality {
 					if (isInDbrbSystem) {
 						pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 					} else {
-						dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight, true);
+						dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight + Height(1), true);
 						auto banned = (state.pluginManager().dbrbViewFetcher().getBanPeriod(dbrbProcess.id()) > BlockDuration(0));
 						DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak, banned] {
 							TRY_GET_FSM()
@@ -281,32 +283,45 @@ namespace catapult { namespace fastfinality {
 			pMessageSender->clearQueue();
 			for (const auto& identityKey : chainSyncData.NodeIdentityKeys) {
 				std::vector<std::shared_ptr<model::Block>> blocks;
-				{
-					auto packetIoPair = pMessageSender->getNodePacketIoPair(identityKey);
-					if (!packetIoPair) {
-						CATAPULT_LOG(debug) << "no packet IO to get blocks from " << identityKey;
+				auto pPromise = std::make_shared<std::promise<std::vector<std::shared_ptr<model::Block>>>>();
+				pFsmShared->packetHandlers().registerRemovableHandler(ionet::PacketType::Pull_Blocks_Response, [pPromise, identityKey, &transactionRegistry = state.pluginManager().transactionRegistry()](
+						const auto& packet, auto& context) {
+					auto blockRange = ionet::ExtractEntitiesFromPacket<model::Block>(packet, [&transactionRegistry](const model::Block& block) {
+						return IsSizeValid(block, transactionRegistry);
+					});
+					if (!blockRange.empty() || sizeof(ionet::PacketHeader) == packet.Size) {
+						pPromise->set_value(model::EntityRange<model::Block>::ExtractEntitiesFromRange(std::move(blockRange)));
+					} else {
+						std::ostringstream message;
+						message << identityKey << " returned malformed packet for blocks from request";
+						pPromise->set_exception(std::make_exception_ptr(catapult_runtime_error(message.str().data())));
+					}
+				});
+
+				try {
+					auto pPacket = ionet::CreateSharedPacket<api::PullBlocksRequest>();
+					pPacket->Height = startHeight;
+					pPacket->NumBlocks = blocksFromOptions.NumBlocks;
+					pPacket->NumResponseBytes = blocksFromOptions.NumBytes;
+					pMessageSender->enqueue(pPacket, true, { identityKey });
+					auto future = pPromise->get_future();
+					auto status = future.wait_for(std::chrono::seconds(5));
+					if (std::future_status::ready != status) {
+						CATAPULT_LOG(warning) << "pull blocks request timed out";
 						continue;
 					}
-
-					auto pRemoteChainApi = api::CreateRemoteChainApi(
-						*packetIoPair.io(),
-						identityKey,
-						state.pluginManager().transactionRegistry());
-
-					try {
-						auto blockRange = pRemoteChainApi->blocksFrom(startHeight, blocksFromOptions).get();
-						blocks = model::EntityRange<model::Block>::ExtractEntitiesFromRange(std::move(blockRange));
-						pMessageSender->pushNodePacketIoPair(identityKey, packetIoPair);
-					} catch (std::exception const& error) {
-						CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
-						pMessageSender->removeNode(identityKey);
-						continue;
-					} catch (...) {
-						CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
-						pMessageSender->removeNode(identityKey);
-						continue;
-					}
+					blocks = future.get();
+				} catch (std::exception const& error) {
+					CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
+					pMessageSender->removeNode(identityKey);
+					continue;
+				} catch (...) {
+					CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
+					pMessageSender->removeNode(identityKey);
+					continue;
 				}
+
+				pFsmShared->packetHandlers().removeHandler(ionet::PacketType::Pull_Blocks_Response);
 
 				bool success = false;
 				for (const auto& pBlock : blocks) {
@@ -329,8 +344,7 @@ namespace catapult { namespace fastfinality {
 								CATAPULT_LOG(info) << "successfully committed block (height " << pBlock->Height << ", signer " << pBlock->Signer << ")";
 							} else {
 								auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
-								CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult))
-									<< "block (height " << pBlock->Height << ") commit failed due to " << validationResult;
+								CATAPULT_LOG(warning) << "block (height " << pBlock->Height << ") commit failed due to " << validationResult;
 							}
 
 							pPromise->set_value(std::move(success));

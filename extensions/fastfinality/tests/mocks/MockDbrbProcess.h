@@ -24,7 +24,6 @@ namespace catapult { namespace mocks {
 	public:
 		explicit MockDbrbProcess(
 				bool fakeDissemination = false,
-				std::weak_ptr<net::PacketWriters> pWriters = std::weak_ptr<mocks::MockPacketWriters>(),
 				const ionet::NodeContainer& nodeContainer = {},
 				const crypto::KeyPair& keyPair = crypto::KeyPair::FromPrivate(test::GenerateRandomPrivateKey()),
 				const std::shared_ptr<thread::IoThreadPool>& pPool = test::CreateStartedIoThreadPool(1),

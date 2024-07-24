@@ -19,25 +19,33 @@
 **/
 
 #pragma once
+#include "ConnectionSettings.h"
 #include "catapult/ionet/PacketSocket.h"
+#include "catapult/ionet/SslPacketSocket.h"
 
 namespace catapult { namespace thread { class IoThreadPool; } }
 
 namespace catapult { namespace net {
 
 	using AcceptHandler = consumer<const ionet::AcceptedPacketSocketInfo&>;
+	using SslAcceptHandler = consumer<const ionet::SslPacketSocketInfo&>;
 
-	using ConfigureSocketHandler = consumer<ionet::socket&>;
+	using ConfigureSocketHandler = consumer<ionet::NetworkSocket&>;
 
 	/// Settings used to configure AsyncTcpServer behavior.
-	struct AsyncTcpServerSettings {
+	template<typename TAcceptHandler>
+	struct AsyncTcpServerSettingsT {
 	public:
 		/// Creates a structure with a preconfigured accept handler (\a accept).
-		explicit AsyncTcpServerSettings(const AcceptHandler& accept);
+		explicit AsyncTcpServerSettingsT(const TAcceptHandler& accept)
+			: Accept(accept)
+			, ConfigureSocket([](const auto&) {})
+			, PacketSocketOptions(ConnectionSettings().toSocketOptions())
+		{}
 
 	public:
 		/// Accept handler (must be set via constructor).
-		const AcceptHandler Accept;
+		const TAcceptHandler Accept;
 
 		// The configure socket handler.
 		ConfigureSocketHandler ConfigureSocket;
@@ -54,6 +62,9 @@ namespace catapult { namespace net {
 		/// \c true if the server should reuse ports already in use.
 		bool AllowAddressReuse = false;
 	};
+
+	using AsyncTcpServerSettings = AsyncTcpServerSettingsT<AcceptHandler>;
+	using AsyncSslTcpServerSettings = AsyncTcpServerSettingsT<SslAcceptHandler>;
 
 	/// An async TCP server.
 	class AsyncTcpServer {
@@ -81,4 +92,11 @@ namespace catapult { namespace net {
 			const std::shared_ptr<thread::IoThreadPool>& pPool,
 			const boost::asio::ip::tcp::endpoint& endpoint,
 			const AsyncTcpServerSettings& settings);
+
+	/// Creates an async tcp server listening on \a endpoint with the specified \a settings using the specified
+	/// thread pool (\a pPool).
+	std::shared_ptr<AsyncTcpServer> CreateAsyncSslTcpServer(
+			const std::shared_ptr<thread::IoThreadPool>& pPool,
+			const boost::asio::ip::tcp::endpoint& endpoint,
+			const AsyncSslTcpServerSettings& settings);
 }}

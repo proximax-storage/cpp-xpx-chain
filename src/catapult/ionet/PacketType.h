@@ -82,7 +82,13 @@ namespace catapult { namespace ionet {
     ENUM_VALUE(Pull_Remote_Node_State, 17) \
 	\
 	/* A block confirmed by committee has been pushed by a peer. */ \
-		ENUM_VALUE(Push_Confirmed_Block, 18) \
+	ENUM_VALUE(Push_Confirmed_Block, 18) \
+	\
+	/* Blocks have been pushed by a peer. */ \
+	ENUM_VALUE(Pull_Blocks_Response, 19) \
+	\
+    /* A remote node state has been pushed by a peer. */ \
+    ENUM_VALUE(Pull_Remote_Node_State_Response, 20) \
 	\
 	/* api only packets have types [500, 550) */ \
 	\

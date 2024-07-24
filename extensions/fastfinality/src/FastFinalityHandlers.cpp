@@ -218,6 +218,7 @@ namespace catapult { namespace fastfinality {
 			const auto& view = pFsmShared->fastFinalityData().unlockedAccounts()->view();
 			const uint8_t harvesterKeysCount = 1 + view.size();	// Extra one for a BootKey
 			auto pResponsePacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>(Key_Size * harvesterKeysCount);
+			pResponsePacket->Type = ionet::PacketType::Pull_Remote_Node_State_Response;
 
 			const auto targetHeight = std::min(lastBlockElementSupplier()->Block.Height, pRequest->Height);
 			const auto pBlockElement = blockElementGetter(targetHeight);

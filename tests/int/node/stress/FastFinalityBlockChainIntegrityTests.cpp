@@ -68,11 +68,12 @@ namespace catapult { namespace local {
 			pt::write_ini(configFilePath, properties);
 		}
 
-		void SetUserProperties(const std::string& configFilePath, const std::string& dataPath, const std::string& bootPrivateKey) {
+		void SetUserProperties(const std::string& configFilePath, const std::string& dataPath, const std::string& certificatePath, const std::string& bootPrivateKey) {
 			pt::ptree properties;
 			pt::read_ini(configFilePath, properties);
 			properties.put("account.bootKey", bootPrivateKey);
 			properties.put("storage.dataDirectory", dataPath);
+			properties.put("storage.certificateDirectory", certificatePath);
 			pt::write_ini(configFilePath, properties);
 		}
 
@@ -80,6 +81,7 @@ namespace catapult { namespace local {
 			auto sourcePath = boost::filesystem::path(seedPath);
 			auto destinationPath = boost::filesystem::path(destination);
 			auto dataPath = destinationPath / "data";
+			auto certificatePath = destinationPath / "certificate";
 			auto resourcesPath = destinationPath / "resources";
 
 			RecursiveCopy(sourcePath / "data", dataPath);
@@ -92,7 +94,7 @@ namespace catapult { namespace local {
 			SetNodeProperties(nodeConfigPath.generic_string(), id);
 
 			auto userConfigPath = resourcesPath / "config-user.properties";
-			SetUserProperties(userConfigPath.generic_string(), dataPath.generic_string(), bootPrivateKey);
+			SetUserProperties(userConfigPath.generic_string(), dataPath.generic_string(), certificatePath.generic_string(), bootPrivateKey);
 		}
 
 		class LocalNodeTestContext {

@@ -41,7 +41,7 @@ namespace catapult { namespace fastfinality {
 			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
 			, m_dbrbProcess(std::move(pDbrbProcess))
-			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32())
+			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32(), true)
 		{}
 
 		FastFinalityFsm(

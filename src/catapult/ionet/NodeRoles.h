@@ -33,7 +33,13 @@ namespace catapult { namespace ionet {
 		Peer = 0x01,
 
 		/// An api node.
-		Api = 0x02
+		Api = 0x02,
+
+		/// IPv4 compatible node.
+		IPv4 = 0x40,
+
+		/// IPv6 compatible node.
+		IPv6 = 0x80
 	};
 
 	MAKE_BITWISE_ENUM(NodeRoles)

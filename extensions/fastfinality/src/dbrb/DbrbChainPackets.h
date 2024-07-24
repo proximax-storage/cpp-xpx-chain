@@ -24,20 +24,5 @@ namespace catapult { namespace dbrb {
 		uint16_t NodeCount;
 	};
 
-	struct DbrbRemoveNodeRequestPacket : public ionet::Packet {
-		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Remove_Node_Request;
-
-		catapult::Timestamp Timestamp;
-		dbrb::ProcessId ProcessId;
-	};
-
-	struct DbrbRemoveNodeResponsePacket : public ionet::Packet {
-		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Remove_Node_Response;
-
-		catapult::Timestamp Timestamp;
-		dbrb::ProcessId ProcessId;
-		catapult::Signature Signature;
-	};
-
 #pragma pack(pop)
 }}

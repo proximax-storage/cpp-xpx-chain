@@ -33,11 +33,6 @@ namespace catapult { namespace dbrb {
 
 	void ShardedDbrbProcess::registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers) {
 		auto handler = [pThisWeak = weak_from_this(), &converter = m_converter, &strand = m_strand](const auto& packet, auto& context) {
-			const auto& messagePacket = static_cast<const MessagePacket&>(packet);
-			auto hash = CalculateHash(messagePacket.buffers());
-			if (!crypto::Verify(messagePacket.Sender, hash, messagePacket.Signature))
-				return;
-
 			auto pMessage = converter.toMessage(packet);
 			boost::asio::post(strand, [pThisWeak, pMessage]() {
 				auto pThis = pThisWeak.lock();
@@ -138,7 +133,7 @@ namespace catapult { namespace dbrb {
 
 	void ShardedDbrbProcess::disseminate(const std::shared_ptr<Message>& pMessage, ViewData recipients) {
 		CATAPULT_LOG(trace) << "[DBRB] disseminating message " << pMessage->Type << " to " << View{ recipients };
-		auto pPacket = pMessage->toNetworkPacket(&m_keyPair);
+		auto pPacket = pMessage->toNetworkPacket();
 		for (auto iter = recipients.begin(); iter != recipients.end(); ++iter) {
 			if (m_id == *iter) {
 				boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pMessage]() {
@@ -282,15 +277,6 @@ namespace catapult { namespace dbrb {
 		data.ChildShardQuorumSize = data.SubTreeView.quorumSize();
 
 		auto signature = sign(ionet::PacketType::Dbrb_Shard_Acknowledged_Message, message.Payload, message.View);
-		std::ostringstream out;
-		out << " view: ";
-		bool empty = true;
-		for (const auto& id : message.View) {
-			if (!empty)
-				out << ", ";
-			out << id;
-			empty = false;
-		}
 		data.AcknowledgeCertificate.emplace(m_id, signature);
 		if (!data.Acknowledged && data.AcknowledgeCertificate.size() >= data.ChildShardQuorumSize) {
 			CATAPULT_LOG(trace) << "[DBRB] PREPARE: Sending Acknowledged message to sender " << message.Sender;
@@ -538,7 +524,6 @@ namespace catapult { namespace dbrb {
 				return;
 
 			pThis->m_pMessageSender->clearQueue();
-			pThis->m_pMessageSender->clearNodeRemovalData();
 			pThis->m_broadcastData.clear();
 
 			pThis->m_pMessageSender->findNodes(view.Data);

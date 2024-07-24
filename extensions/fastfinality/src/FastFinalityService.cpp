@@ -16,15 +16,13 @@
 #include "catapult/handlers/ChainHandlers.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/ionet/NodeContainer.h"
-#include "catapult/net/PacketReaders.h"
-#include "catapult/net/PacketWriters.h"
+#include "catapult/net/PacketReadersWriters.h"
 #include <utility>
 
 namespace catapult { namespace fastfinality {
 
 	namespace {
 		constexpr auto Writers_Service_Name = "fast.finality.writers";
-		constexpr auto Readers_Service_Name = "fast.finality.readers";
 		constexpr auto Service_Id = ionet::ServiceIdentifier(0x54654144);
 
 		class FastFinalityServiceRegistrar : public extensions::ServiceRegistrar {
@@ -43,11 +41,8 @@ namespace catapult { namespace fastfinality {
 			}
 
 			void registerServiceCounters(extensions::ServiceLocator& locator) override {
-				locator.registerServiceCounter<net::PacketWriters>(Writers_Service_Name, "FF WRITERS", [](const auto& writers) {
-					return writers.numActiveWriters();
-				});
-				locator.registerServiceCounter<net::PacketReaders>(Readers_Service_Name, "FF READERS", [](const auto& readers) {
-					return readers.numActiveReaders();
+				locator.registerServiceCounter<net::PacketReadersWriters>(Writers_Service_Name, "FF WRITERS", [](const auto& writers) {
+					return writers.numActiveConnections();
 				});
 			}
 
@@ -64,15 +59,10 @@ namespace catapult { namespace fastfinality {
 				auto pFastFinalityFsmPool = state.pool().pushIsolatedPool("fast finality fsm");
 				auto pServiceGroup = state.pool().pushServiceGroup("fast finality");
 
-				auto connectionSettings = extensions::GetConnectionSettings(config);
-				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
-				locator.registerService(Writers_Service_Name, pWriters);
-
 				auto pUnlockedAccounts = CreateUnlockedAccounts(m_harvestingConfig);
 				auto dbrbShardingEnabled = nextConfig.EnableDbrbSharding;
 				auto dbrbShardSize = config.Network.DbrbShardSize;
 				auto pFsmShared = pServiceGroup->pushService([
-						pWritersWeak = std::weak_ptr<net::PacketWriters>(pWriters),
 						&config,
 						&keyPair = locator.keyPair(),
 						&state,
@@ -84,7 +74,7 @@ namespace catapult { namespace fastfinality {
 						dbrbShardingEnabled,
 						dbrbShardSize](const std::shared_ptr<thread::IoThreadPool>&) {
 					pTransactionSender->init(&keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local), pUnlockedAccounts);
-					auto pMessageSender = dbrb::CreateMessageSender(config::ToLocalNode(config), pWritersWeak, state.nodes(), dbrbConfig.IsDbrbProcess, pTransactionSender, pDbrbPool, dbrbConfig.ResendMessagesInterval);
+					auto pMessageSender = dbrb::CreateMessageSender(config::ToLocalNode(config), state.nodes(), dbrbConfig.IsDbrbProcess, pDbrbPool, dbrbConfig.ResendMessagesInterval);
 					if (dbrbShardingEnabled) {
 						auto pDbrbProcess = std::make_shared<dbrb::ShardedDbrbProcess>(keyPair, pMessageSender, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher(), dbrbShardSize);
 						return std::make_shared<FastFinalityFsm>(pFastFinalityFsmPool, config, pDbrbProcess, state.pluginManager());
@@ -144,19 +134,19 @@ namespace catapult { namespace fastfinality {
 				pluginManager.getCommitteeManager(6).setLastBlockElementSupplier(lastBlockElementSupplier);
 
 				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
-				handlers::RegisterPullBlocksHandler(pFsmShared->packetHandlers(), state.storage(), CreatePullBlocksHandlerConfiguration(config.Node));
+				handlers::RegisterPullBlocksHandler(pFsmShared->packetHandlers(), state.storage(), CreatePullBlocksHandlerConfiguration(config.Node), ionet::PacketType::Pull_Blocks_Response);
 				pFsmShared->dbrbProcess().registerDbrbPushNodesHandler(config.Immutable.NetworkIdentifier, pFsmShared->packetHandlers());
 				pFsmShared->dbrbProcess().registerDbrbPullNodesHandler(pFsmShared->packetHandlers());
-				pFsmShared->dbrbProcess().registerDbrbRemoveNodeRequestHandler(locator.keyPair(), pFsmShared->packetHandlers());
-				pFsmShared->dbrbProcess().registerDbrbRemoveNodeResponseHandler(pFsmShared->packetHandlers());
 
-				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, 2u);
-				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, [&acceptor = *pReaders](
+				auto connectionSettings = extensions::GetSslConnectionSettings(config);
+				auto pWriters = pServiceGroup->pushService(net::CreatePacketReadersWriters, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, state);
+				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, [&acceptor = *pWriters](
 					const auto& socketInfo,
 					const auto& callback) {
 					acceptor.accept(socketInfo, callback);
 				});
-				locator.registerService(Readers_Service_Name, pReaders);
+				locator.registerService(Writers_Service_Name, pWriters);
+				pFsmShared->dbrbProcess().messageSender()->setWriters(std::weak_ptr<net::PacketReadersWriters>(pWriters));
 
 				auto& fastFinalityData = pFsmShared->fastFinalityData();
 				fastFinalityData.setUnlockedAccounts(pUnlockedAccounts);

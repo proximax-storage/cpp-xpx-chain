@@ -23,13 +23,11 @@ namespace catapult { namespace fastfinality {
 			};
 
 			auto originalMessage = createMessage(nodes);
-			auto keyPair = crypto::KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98534");
-			auto pPacket = originalMessage.toNetworkPacket(&keyPair);
+			auto pPacket = originalMessage.toNetworkPacket();
 			auto pUnpackedMessage = dbrb::NetworkPacketConverter().toMessage(*pPacket);
 			const auto& unpackedMessage = reinterpret_cast<const TMessage&>(*pUnpackedMessage);
 			EXPECT_EQ(originalMessage.Sender, unpackedMessage.Sender);
 			EXPECT_EQ(originalMessage.Type, unpackedMessage.Type);
-			EXPECT_EQ(originalMessage.Signature, unpackedMessage.Signature);
 
 			callback(originalMessage, unpackedMessage);
 		}

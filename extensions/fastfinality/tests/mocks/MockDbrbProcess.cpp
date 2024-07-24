@@ -13,7 +13,6 @@ namespace catapult { namespace mocks {
 
 	MockDbrbProcess::MockDbrbProcess(
 		bool fakeDissemination,
-		std::weak_ptr<net::PacketWriters> pWriters,
 		const ionet::NodeContainer& nodeContainer,
 		const crypto::KeyPair& keyPair,
 		const std::shared_ptr<thread::IoThreadPool>& pPool,
@@ -25,10 +24,8 @@ namespace catapult { namespace mocks {
 					keyPair.publicKey(),
 					ionet::NodeEndpoint(),
 					ionet::NodeMetadata() },
-					std::move(pWriters),
 					nodeContainer,
 					dbrbConfig.IsDbrbProcess,
-					nullptr,
 					pPool,
 					utils::TimeSpan::FromMilliseconds(500)),
 				pPool,
@@ -91,7 +88,7 @@ namespace catapult { namespace mocks {
 	}
 
 	void MockDbrbProcess::disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients) {
-		auto pPacket = pMessage->toNetworkPacket(&m_keyPair);
+		auto pPacket = pMessage->toNetworkPacket();
 		m_disseminationHistory.emplace_back(pMessage, recipients);
 
 		if (m_fakeDissemination)
