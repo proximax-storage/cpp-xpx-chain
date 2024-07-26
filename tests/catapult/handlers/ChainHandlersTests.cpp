@@ -108,7 +108,7 @@ namespace catapult { namespace handlers {
 				return ionet::CreateSharedPacket<api::PullBlockRequest>();
 			}
 
-			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, std::unique_ptr<test::ServiceTestState>& pServiceState) {
+			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, test::ServiceTestState&) {
 				RegisterPullBlockHandler(handlers, storage);
 			}
 		};
@@ -220,7 +220,7 @@ namespace catapult { namespace handlers {
 				return ionet::CreateSharedPacket<api::BlockHashesRequest>();
 			}
 
-			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, std::unique_ptr<test::ServiceTestState>& pServiceState) {
+			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, test::ServiceTestState&) {
 				RegisterBlockHashesHandler(handlers, storage, 10);
 			}
 		};
@@ -229,7 +229,7 @@ namespace catapult { namespace handlers {
 	DEFINE_HEIGHT_REQUEST_HANDLER_TESTS(BlockHashesHandlerTraits, BlockHashesHandler)
 
 	namespace {
-		void AssertCanRetrieveHashes(uint32_t maxRequestedHashes, Height requestHeight, const std::vector<Height>& expectedHeights) {
+		void AssertCanRetrieveHashes(uint32_t maxRequestedHashes, const Height& requestHeight, const std::vector<Height>& expectedHeights) {
 			// Arrange: 12 blocks, on remote side allow at most 7 hashes
 			ionet::ServerPacketHandlers handlers;
 			auto pStorage = CreateStorage(12);
@@ -300,7 +300,7 @@ namespace catapult { namespace handlers {
 				return pRequest;
 			}
 
-			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, std::unique_ptr<test::ServiceTestState>& pServiceState) {
+			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, test::ServiceTestState&) {
 				PullBlocksHandlerConfiguration config;
 				config.MaxBlocks = 100;
 				config.MaxResponseBytes = 10 * 1024 * 1024;

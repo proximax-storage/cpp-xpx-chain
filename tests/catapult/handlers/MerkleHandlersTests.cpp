@@ -59,12 +59,11 @@ namespace catapult { namespace handlers {
 				return ionet::CreateSharedPacket<SubCacheMerkleRootsRequestPacket>();
 			}
 
-			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, std::unique_ptr<test::ServiceTestState>& pServiceState) {
-				pServiceState = std::make_unique<test::ServiceTestState>();
-				EnableVerifiableState(*pServiceState);
-				CopyStorage(storage, pServiceState->state().storage());
-				RegisterSubCacheMerkleRootsHandler(pServiceState->state());
-				handlers = pServiceState->state().packetHandlers();
+			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, test::ServiceTestState& serviceState) {
+				EnableVerifiableState(serviceState);
+				CopyStorage(storage, serviceState.state().storage());
+				RegisterSubCacheMerkleRootsHandler(serviceState.state());
+				handlers = serviceState.state().packetHandlers();
 			}
 		};
 	}

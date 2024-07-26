@@ -30,7 +30,7 @@ namespace catapult { namespace test {
 	/// Helpers for creating a block chain with variable sized blocks.
 	struct VariableSizedBlockChain {
 		/// Gets the block size at \a height.
-		static constexpr uint32_t GetBlockSizeAtHeight(Height height) {
+		static constexpr uint32_t GetBlockSizeAtHeight(const Height& height) {
 			return static_cast<uint32_t>(sizeof(model::BlockHeader) + height.unwrap() * 100);
 		}
 
@@ -71,12 +71,12 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		static void AssertWritesEmptyResponse(size_t numBlocks, Height requestHeight) {
+		static void AssertWritesEmptyResponse(size_t numBlocks, const Height& requestHeight) {
 			// Arrange:
 			ionet::ServerPacketHandlers handlers;
-			std::unique_ptr<test::ServiceTestState> pServiceState;
+			test::ServiceTestState serviceState;
 			auto pStorage = CreateStorage(numBlocks);
-			TTraits::Register(handlers, *pStorage, pServiceState);
+			TTraits::Register(handlers, *pStorage, serviceState);
 
 			auto pPacket = TTraits::CreateRequestPacket();
 			pPacket->Height = requestHeight;
@@ -94,9 +94,9 @@ namespace catapult { namespace test {
 		static void AssertDoesNotRespondToMalformedRequest() {
 			// Arrange:
 			ionet::ServerPacketHandlers handlers;
-			std::unique_ptr<test::ServiceTestState> pServiceState;
+			test::ServiceTestState serviceState;
 			auto pStorage = CreateStorage(12);
-			TTraits::Register(handlers, *pStorage, pServiceState);
+			TTraits::Register(handlers, *pStorage, serviceState);
 
 			// - create a malformed request
 			auto pPacket = TTraits::CreateRequestPacket();
