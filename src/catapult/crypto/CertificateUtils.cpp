@@ -20,7 +20,6 @@
 **/
 
 #include "CertificateUtils.h"
-#include "catapult/utils/HexParser.h"
 #include "catapult/exceptions.h"
 #include <cstring>
 

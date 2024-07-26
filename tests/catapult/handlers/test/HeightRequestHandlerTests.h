@@ -22,6 +22,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -73,8 +74,9 @@ namespace catapult { namespace test {
 		static void AssertWritesEmptyResponse(size_t numBlocks, Height requestHeight) {
 			// Arrange:
 			ionet::ServerPacketHandlers handlers;
+			std::unique_ptr<test::ServiceTestState> pServiceState;
 			auto pStorage = CreateStorage(numBlocks);
-			TTraits::Register(handlers, *pStorage);
+			TTraits::Register(handlers, *pStorage, pServiceState);
 
 			auto pPacket = TTraits::CreateRequestPacket();
 			pPacket->Height = requestHeight;
@@ -92,8 +94,9 @@ namespace catapult { namespace test {
 		static void AssertDoesNotRespondToMalformedRequest() {
 			// Arrange:
 			ionet::ServerPacketHandlers handlers;
+			std::unique_ptr<test::ServiceTestState> pServiceState;
 			auto pStorage = CreateStorage(12);
-			TTraits::Register(handlers, *pStorage);
+			TTraits::Register(handlers, *pStorage, pServiceState);
 
 			// - create a malformed request
 			auto pPacket = TTraits::CreateRequestPacket();

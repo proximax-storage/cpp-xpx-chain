@@ -21,7 +21,6 @@
 #include "catapult/handlers/MerkleHandlers.h"
 #include "catapult/api/ChainPackets.h"
 #include "tests/catapult/handlers/test/HeightRequestHandlerTests.h"
-#include "tests/test/local/ServiceLocatorTestContext.h"
 
 namespace catapult { namespace handlers {
 
@@ -60,8 +59,7 @@ namespace catapult { namespace handlers {
 				return ionet::CreateSharedPacket<SubCacheMerkleRootsRequestPacket>();
 			}
 
-			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage) {
-				static std::unique_ptr<test::ServiceTestState> pServiceState;
+			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, std::unique_ptr<test::ServiceTestState>& pServiceState) {
 				pServiceState = std::make_unique<test::ServiceTestState>();
 				EnableVerifiableState(*pServiceState);
 				CopyStorage(storage, pServiceState->state().storage());

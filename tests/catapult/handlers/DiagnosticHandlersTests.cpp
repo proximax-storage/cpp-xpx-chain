@@ -368,7 +368,7 @@ namespace catapult { namespace handlers {
 				return ionet::CreateSharedPacket<BlockStatementRequestPacket>();
 			}
 
-			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage) {
+			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, std::unique_ptr<test::ServiceTestState>& pServiceState) {
 				RegisterDiagnosticBlockStatementHandler(handlers, storage);
 			}
 		};
