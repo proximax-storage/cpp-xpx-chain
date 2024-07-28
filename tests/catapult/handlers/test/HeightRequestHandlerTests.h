@@ -74,9 +74,8 @@ namespace catapult { namespace test {
 		static void AssertWritesEmptyResponse(size_t numBlocks, const Height& requestHeight) {
 			// Arrange:
 			ionet::ServerPacketHandlers handlers;
-			test::ServiceTestState serviceState;
 			auto pStorage = CreateStorage(numBlocks);
-			TTraits::Register(handlers, *pStorage, serviceState);
+			TTraits::Register(handlers, *pStorage);
 
 			auto pPacket = TTraits::CreateRequestPacket();
 			pPacket->Height = requestHeight;
@@ -94,9 +93,8 @@ namespace catapult { namespace test {
 		static void AssertDoesNotRespondToMalformedRequest() {
 			// Arrange:
 			ionet::ServerPacketHandlers handlers;
-			test::ServiceTestState serviceState;
 			auto pStorage = CreateStorage(12);
-			TTraits::Register(handlers, *pStorage, serviceState);
+			TTraits::Register(handlers, *pStorage);
 
 			// - create a malformed request
 			auto pPacket = TTraits::CreateRequestPacket();

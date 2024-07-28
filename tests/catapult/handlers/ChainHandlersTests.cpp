@@ -108,7 +108,7 @@ namespace catapult { namespace handlers {
 				return ionet::CreateSharedPacket<api::PullBlockRequest>();
 			}
 
-			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, test::ServiceTestState&) {
+			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage) {
 				RegisterPullBlockHandler(handlers, storage);
 			}
 		};
@@ -220,7 +220,7 @@ namespace catapult { namespace handlers {
 				return ionet::CreateSharedPacket<api::BlockHashesRequest>();
 			}
 
-			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, test::ServiceTestState&) {
+			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage) {
 				RegisterBlockHashesHandler(handlers, storage, 10);
 			}
 		};
@@ -300,7 +300,7 @@ namespace catapult { namespace handlers {
 				return pRequest;
 			}
 
-			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, test::ServiceTestState&) {
+			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage) {
 				PullBlocksHandlerConfiguration config;
 				config.MaxBlocks = 100;
 				config.MaxResponseBytes = 10 * 1024 * 1024;

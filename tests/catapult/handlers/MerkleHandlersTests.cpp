@@ -59,11 +59,8 @@ namespace catapult { namespace handlers {
 				return ionet::CreateSharedPacket<SubCacheMerkleRootsRequestPacket>();
 			}
 
-			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, test::ServiceTestState& serviceState) {
-				EnableVerifiableState(serviceState);
-				CopyStorage(storage, serviceState.state().storage());
-				RegisterSubCacheMerkleRootsHandler(serviceState.state());
-				handlers = serviceState.state().packetHandlers();
+			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage) {
+				RegisterSubCacheMerkleRootsHandler(handlers, storage, true);
 			}
 		};
 	}
@@ -71,12 +68,13 @@ namespace catapult { namespace handlers {
 	DEFINE_HEIGHT_REQUEST_HANDLER_TESTS(SubCacheMerkleRootsHandlerTraits, SubCacheMerkleRootsHandler)
 
 	namespace {
-		void AssertCanRetrieveSubCacheMerkleRoots(size_t numBlocks, Height requestHeight) {
+		void AssertCanRetrieveSubCacheMerkleRoots(size_t numBlocks, const Height& requestHeight) {
 			// Arrange:
 			auto serviceState = test::ServiceTestState();
 			EnableVerifiableState(serviceState);
 			FillStorage(serviceState.state().storage(), numBlocks);
-			RegisterSubCacheMerkleRootsHandler(serviceState.state());
+			auto& state = serviceState.state();
+			RegisterSubCacheMerkleRootsHandler(state.packetHandlers(), state.storage(), true);
 
 			auto pPacket = ionet::CreateSharedPacket<SubCacheMerkleRootsRequestPacket>();
 			pPacket->Height = requestHeight;
@@ -113,7 +111,8 @@ namespace catapult { namespace handlers {
 		// Arrange:
 		auto serviceState = test::ServiceTestState();
 		EnableVerifiableState(serviceState);
-		RegisterSubCacheMerkleRootsHandler(serviceState.state());
+		auto& state = serviceState.state();
+		RegisterSubCacheMerkleRootsHandler(state.packetHandlers(), state.storage(), true);
 
 		{
 			auto storageModifier = serviceState.state().storage().modifier();
