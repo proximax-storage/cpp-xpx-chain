@@ -292,23 +292,24 @@ namespace catapult { namespace fastfinality {
 					pPacket->NumResponseBytes = blocksFromOptions.NumBytes;
 					pMessageSender->enqueue(pPacket, true, { identityKey });
 					auto future = pPromise->get_future();
-					auto status = future.wait_for(std::chrono::seconds(5));
+					auto status = future.wait_for(std::chrono::seconds(60));
 					if (std::future_status::ready != status) {
 						CATAPULT_LOG(warning) << "pull blocks request timed out";
+						pFsmShared->packetHandlers().removeHandler(ionet::PacketType::Pull_Blocks_Response);
 						continue;
 					}
 					blocks = future.get();
 				} catch (std::exception const& error) {
 					CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
 					pMessageSender->removeNode(identityKey);
+					pFsmShared->packetHandlers().removeHandler(ionet::PacketType::Pull_Blocks_Response);
 					continue;
 				} catch (...) {
 					CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
 					pMessageSender->removeNode(identityKey);
+					pFsmShared->packetHandlers().removeHandler(ionet::PacketType::Pull_Blocks_Response);
 					continue;
 				}
-
-				pFsmShared->packetHandlers().removeHandler(ionet::PacketType::Pull_Blocks_Response);
 
 				bool success = false;
 				for (const auto& pBlock : blocks) {
