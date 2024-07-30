@@ -5,6 +5,7 @@
 **/
 
 #include "DbrbProcess.h"
+#include "DelayedExecutor.h"
 #include "catapult/dbrb/Messages.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/ionet/NetworkNode.h"
@@ -28,7 +29,9 @@ namespace catapult { namespace dbrb {
 			, m_pPool(std::move(pPool))
 			, m_strand(m_pPool->ioContext())
 			, m_pTransactionSender(std::move(pTransactionSender))
-			, m_dbrbViewFetcher(dbrbViewFetcher) {}
+			, m_dbrbViewFetcher(dbrbViewFetcher)
+			, m_pDelayedExecutor(CreateDelayedExecutor(m_pPool))
+	{}
 
 	void DbrbProcess::registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers) {
 		auto handler = [pThisWeak = weak_from_this(), &converter = m_converter, &strand = m_strand](const auto& packet, auto& context) {
@@ -40,6 +43,7 @@ namespace catapult { namespace dbrb {
 			});
 		};
 		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Prepare_Message, handler);
+		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Acknowledged_Declined_Message, handler);
 		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Acknowledged_Message, handler);
 		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Commit_Message, handler);
 		packetHandlers.registerHandler(ionet::PacketType::Dbrb_Deliver_Message, handler);
@@ -114,7 +118,7 @@ namespace catapult { namespace dbrb {
 
 			CATAPULT_LOG(trace) << "[DBRB] BROADCAST: sending payload " << payload->Type;
 			auto pMessage = std::make_shared<PrepareMessage>(pThis->m_id, payload, broadcastView, data.BootstrapView);
-			pThis->disseminate(pMessage, pMessage->View.Data);
+			pThis->disseminate(pMessage, pMessage->View.Data, 0);
 		});
 	}
 
@@ -123,6 +127,11 @@ namespace catapult { namespace dbrb {
 			case ionet::PacketType::Dbrb_Prepare_Message: {
 				CATAPULT_LOG(trace) << "[DBRB] Received PREPARE message from " << message.Sender;
 				onPrepareMessageReceived(dynamic_cast<const PrepareMessage&>(message));
+				break;
+			}
+			case ionet::PacketType::Dbrb_Acknowledged_Declined_Message: {
+				CATAPULT_LOG(trace) << "[DBRB] Received ACKNOWLEDGED (DECLINED) message from " << message.Sender;
+				onAcknowledgedDeclinedMessageReceived(dynamic_cast<const AcknowledgedDeclinedMessage&>(message));
 				break;
 			}
 			case ionet::PacketType::Dbrb_Acknowledged_Message: {
@@ -146,18 +155,18 @@ namespace catapult { namespace dbrb {
 				break;
 			}
 			default:
-				CATAPULT_THROW_RUNTIME_ERROR_1("invalid DBRB message type", message.Type)
+				CATAPULT_LOG(error) << "invalid DBRB message type" << message.Type;
 		}
 	}
 
 	// Basic private methods:
 
-	void DbrbProcess::disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients) {
+	void DbrbProcess::disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients, uint64_t delayMillis) {
 		CATAPULT_LOG(trace) << "[DBRB] disseminating message " << pMessage->Type << " to " << View{ recipients };
 		auto pPacket = pMessage->toNetworkPacket();
 		for (auto iter = recipients.begin(); iter != recipients.end(); ++iter) {
 			if (m_id == *iter) {
-				boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pMessage]() {
+				m_pDelayedExecutor->execute(delayMillis, [pThisWeak = weak_from_this(), pMessage]() {
 					auto pThis = pThisWeak.lock();
 					if (pThis)
 						pThis->processMessage(*pMessage);
@@ -167,11 +176,19 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		m_pMessageSender->enqueue(pPacket, false, recipients);
+		if (delayMillis) {
+			m_pDelayedExecutor->execute(delayMillis, [pThisWeak = weak_from_this(), pPacket, recipients]() {
+				auto pThis = pThisWeak.lock();
+				if (pThis)
+					pThis->m_pMessageSender->enqueue(pPacket, false, recipients);
+			});
+		} else {
+			m_pMessageSender->enqueue(pPacket, false, recipients);
+		}
 	}
 
-	void DbrbProcess::send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient) {
-		disseminate(pMessage, std::set<ProcessId>{ recipient });
+	void DbrbProcess::send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient, uint64_t delayMillis) {
+		disseminate(pMessage, std::set<ProcessId>{ recipient }, delayMillis);
 	}
 
 	Signature DbrbProcess::sign(const Payload& payload, const View& view) {
@@ -206,10 +223,6 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onPrepareMessageReceived(const PrepareMessage& message) {
 		CATAPULT_LOG(trace) << "[DBRB] PREPARE: received payload " << message.Payload->Type << " from " << message.Sender;
-		if (!m_validationCallback(message.Payload)) {
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (message invalid)";
-			return;
-		}
 
 		if (!(message.View <= m_currentView)) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (supplied view is not a subview of the current view)";
@@ -231,7 +244,25 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
+		auto validationResult = m_validationCallback(message.Payload);
 		auto payloadHash = CalculatePayloadHash(message.Payload);
+		switch (validationResult) {
+			case MessageValidationResult::Message_Valid: {
+				CATAPULT_LOG(debug) << "[DBRB] PREPARE: Message valid";
+				break;
+			}
+			case MessageValidationResult::Message_Broadcast_Paused: {
+				CATAPULT_LOG(debug) << "[DBRB] PREPARE: Broadcast paused";
+				auto pMessage = std::make_shared<AcknowledgedDeclinedMessage>(m_id, payloadHash);
+				send(pMessage, message.Sender, 0);
+				return;
+			}
+			default: {
+				CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (" << validationResult << ")";
+				return;
+			}
+		}
+
 		if (message.Sender != m_id) {
 			auto& data = m_broadcastData[payloadHash];
 			if (!data.Payload) {
@@ -245,7 +276,25 @@ namespace catapult { namespace dbrb {
 		CATAPULT_LOG(trace) << "[DBRB] PREPARE: Sending Acknowledged message to " << message.Sender;
 		Signature payloadSignature = sign(message.Payload, message.View);
 		auto pMessage = std::make_shared<AcknowledgedMessage>(m_id, payloadHash, message.View, payloadSignature);
-		send(pMessage, message.Sender);
+		send(pMessage, message.Sender, 0);
+	}
+
+	void DbrbProcess::onAcknowledgedDeclinedMessageReceived(const AcknowledgedDeclinedMessage& message) {
+		auto& data = m_broadcastData[message.PayloadHash];
+		if (!data.Payload) {
+			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED (DECLINED): Aborting message processing (no payload)";
+			return;
+		}
+
+		if (!data.BroadcastView.isMember(message.Sender)) {
+			CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED (DECLINED): Aborting message processing (node is not a participant)";
+			return;
+		}
+
+		CATAPULT_LOG(trace) << "[DBRB] ACKNOWLEDGED (DECLINED): payload " << data.Payload->Type << " from " << message.Sender;
+
+		auto pMessage = std::make_shared<PrepareMessage>(m_id, data.Payload, data.BroadcastView, data.BootstrapView);
+		send(pMessage, message.Sender, 500);
 	}
 
 	void DbrbProcess::onAcknowledgedMessageReceived(const AcknowledgedMessage& message) {
@@ -301,7 +350,7 @@ namespace catapult { namespace dbrb {
 
 			CATAPULT_LOG(trace) << "[DBRB] ACKNOWLEDGED: Disseminating Commit message with payload " << data.Payload->Type;
 			auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, data.Certificate, message.View);
-			disseminate(pMessage, message.View.Data);
+			disseminate(pMessage, message.View.Data, 0);
 		}
 	}
 
@@ -341,12 +390,12 @@ namespace catapult { namespace dbrb {
 
 			CATAPULT_LOG(trace) << "[DBRB] COMMIT: Disseminating Commit message with payload " << data.Payload->Type;
 			auto pMessage = std::make_shared<CommitMessage>(m_id, message.PayloadHash, message.Certificate, message.View);
-			disseminate(pMessage, message.View.Data);
+			disseminate(pMessage, message.View.Data, 0);
 		}
 
 		CATAPULT_LOG(trace) << "[DBRB] COMMIT: Sending Deliver message with payload " << data.Payload->Type << " to " << message.Sender;
 		auto pMessage = std::make_shared<DeliverMessage>(m_id, message.PayloadHash, message.View);
-		send(pMessage, message.Sender);
+		send(pMessage, message.Sender, 0);
 	}
 
 	void DbrbProcess::onDeliverMessageReceived(const DeliverMessage& message) {
@@ -377,7 +426,7 @@ namespace catapult { namespace dbrb {
 		if (quorumCollected && data.BootstrapView.isMember(m_id)) {
 			CATAPULT_LOG(trace) << "[DBRB] DELIVER: Disseminating Confirm Deliver message with payload " << data.Payload->Type;
 			auto pMessage = std::make_shared<ConfirmDeliverMessage>(m_id, message.PayloadHash, message.View);
-			disseminate(pMessage, message.View.Data);
+			disseminate(pMessage, message.View.Data, 0);
 		}
 	}
 
@@ -426,6 +475,8 @@ namespace catapult { namespace dbrb {
 	}
 
 	bool DbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) {
+		m_pDelayedExecutor->cancel();
+
 		auto view = View{ m_dbrbViewFetcher.getView(now) };
 		m_dbrbViewFetcher.logAllProcesses();
 		m_dbrbViewFetcher.logView(view.Data);

@@ -108,6 +108,22 @@ namespace catapult { namespace dbrb {
 		dbrb::View BootstrapView;
 	};
 
+	struct AcknowledgedDeclinedMessage : Message {
+	public:
+		AcknowledgedDeclinedMessage() = delete;
+		AcknowledgedDeclinedMessage(const ProcessId& sender, const Hash256& payloadHash)
+			: Message(sender, ionet::PacketType::Dbrb_Acknowledged_Declined_Message)
+			, PayloadHash(payloadHash)
+		{}
+
+	public:
+		std::shared_ptr<MessagePacket> toNetworkPacket() override;
+
+	public:
+		/// Hash of the payload.
+		Hash256 PayloadHash;
+	};
+
 	struct AcknowledgedMessage : BaseMessage {
 	public:
 		AcknowledgedMessage() = delete;

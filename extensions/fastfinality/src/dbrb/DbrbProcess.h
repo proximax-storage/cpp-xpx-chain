@@ -15,7 +15,10 @@
 #include "catapult/net/PacketWriters.h"
 #include "catapult/types.h"
 
-namespace catapult { namespace thread { class IoThreadPool; }}
+namespace catapult {
+	namespace dbrb { class DelayedExecutor; }
+	namespace thread { class IoThreadPool; }
+}
 
 namespace catapult { namespace dbrb {
 
@@ -48,13 +51,14 @@ namespace catapult { namespace dbrb {
 		const ProcessId& id();
 
 	protected:
-		virtual void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients);
-		virtual void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient);
+		virtual void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients, uint64_t delayMillis);
+		virtual void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient, uint64_t delayMillis);
 
 		Signature sign(const Payload& payload, const View& view);
 		static bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
 
 		void onPrepareMessageReceived(const PrepareMessage&);
+		void onAcknowledgedDeclinedMessageReceived(const AcknowledgedDeclinedMessage&);
 		virtual void onAcknowledgedMessageReceived(const AcknowledgedMessage&);
 		virtual void onCommitMessageReceived(const CommitMessage&);
 		void onDeliverMessageReceived(const DeliverMessage&);
@@ -76,5 +80,6 @@ namespace catapult { namespace dbrb {
 		boost::asio::io_context::strand m_strand;
 		std::shared_ptr<TransactionSender> m_pTransactionSender;
 		const dbrb::DbrbViewFetcher& m_dbrbViewFetcher;
+		std::shared_ptr<DelayedExecutor> m_pDelayedExecutor;
 	};
 }}

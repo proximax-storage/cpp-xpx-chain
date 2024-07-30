@@ -214,7 +214,7 @@ namespace catapult { namespace dbrb {
 
 	void ShardedDbrbProcess::onPrepareMessageReceived(const ShardPrepareMessage& message) {
 		CATAPULT_LOG(trace) << "[DBRB] PREPARE: received payload " << message.Payload->Type << " from " << message.Sender;
-		if (!m_validationCallback(message.Payload)) {
+		if (m_validationCallback(message.Payload) != MessageValidationResult::Message_Valid) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (message invalid)";
 			return;
 		}

@@ -58,8 +58,8 @@ namespace catapult { namespace fastfinality {
 			void processMessage(const dbrb::Message& message) override {}
 
 		protected:
-			void disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients) override {}
-			void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient) override {}
+			void disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients, uint64_t delayMillis) override {}
+			void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient, uint64_t delayMillis) override {}
 
 			void onAcknowledgedMessageReceived(const dbrb::AcknowledgedMessage& message) override {}
 			void onCommitMessageReceived(const dbrb::CommitMessage& message) override {}

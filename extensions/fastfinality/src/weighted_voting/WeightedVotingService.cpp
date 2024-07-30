@@ -127,24 +127,29 @@ namespace catapult { namespace fastfinality {
 				pFsmShared->dbrbProcess().setValidationCallback([pFsmWeak, &pluginManager, &state, lastBlockElementSupplier, pValidatorPool](const std::shared_ptr<ionet::Packet>& pPacket) {
 					auto pFsmShared = pFsmWeak.lock();
 					if (!pFsmShared || pFsmShared->stopped())
-						return false;
+						return dbrb::MessageValidationResult::Message_Broadcast_Stopped;
 
+					bool valid = false;
 					switch (pPacket->Type) {
 						case ionet::PacketType::Push_Proposed_Block: {
-							return ValidateProposedBlock(*pFsmShared, *pPacket, state, lastBlockElementSupplier, pValidatorPool);
+							valid = ValidateProposedBlock(*pFsmShared, *pPacket, state, lastBlockElementSupplier, pValidatorPool);
+							break;
 						}
 						case ionet::PacketType::Push_Confirmed_Block: {
-							return ValidateConfirmedBlock(*pFsmShared, *pPacket, state, lastBlockElementSupplier, pValidatorPool);
+							valid = ValidateConfirmedBlock(*pFsmShared, *pPacket, state, lastBlockElementSupplier, pValidatorPool);
+							break;
 						}
 						case ionet::PacketType::Push_Prevote_Messages: {
-							return ValidatePrevoteMessages(*pFsmShared, *pPacket);
+							valid = ValidatePrevoteMessages(*pFsmShared, *pPacket);
+							break;
 						}
 						case ionet::PacketType::Push_Precommit_Messages: {
-							return ValidatePrecommitMessages(*pFsmShared, *pPacket);
+							valid = ValidatePrecommitMessages(*pFsmShared, *pPacket);
+							break;
 						}
 					}
 
-					return false;
+					return (valid ? dbrb::MessageValidationResult::Message_Valid : dbrb::MessageValidationResult::Message_Invalid);
 				});
 
 				const auto& pConfigHolder = pluginManager.configHolder();

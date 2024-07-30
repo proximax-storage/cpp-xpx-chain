@@ -128,11 +128,6 @@ namespace catapult { namespace fastfinality {
 				const model::BlockElementSupplier& lastBlockElementSupplier,
 				const std::shared_ptr<thread::IoThreadPool>& pValidatorPool) {
 			auto& fastFinalityData = fsm.fastFinalityData();
-			if (!fastFinalityData.isBlockBroadcastEnabled()) {
-				CATAPULT_LOG(warning) << "rejecting block (broadcast is disabled)";
-				return false;
-			}
-
 			auto expectedHeight = fastFinalityData.currentBlockHeight();
 			if (expectedHeight != block.Height) {
 				CATAPULT_LOG(warning) << "rejecting block (height " << block.Height << " does not equal to expected height " << expectedHeight << ")";

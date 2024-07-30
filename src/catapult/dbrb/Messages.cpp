@@ -19,6 +19,10 @@ namespace catapult { namespace dbrb {
 			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Prepare_Message;
 		};
 
+		struct AcknowledgedDeclinedMessagePacket : public MessagePacket {
+			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Acknowledged_Declined_Message;
+		};
+
 		struct AcknowledgedMessagePacket : public MessagePacket {
 			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Acknowledged_Message;
 		};
@@ -106,6 +110,14 @@ namespace catapult { namespace dbrb {
 			return std::make_shared<PrepareMessage>(pMessagePacket->Sender, payload, view, bootstrapView);
 		});
 
+		registerConverter(ionet::PacketType::Dbrb_Acknowledged_Declined_Message, [](const ionet::Packet& packet) {
+			const auto* pMessagePacket = reinterpret_cast<const AcknowledgedDeclinedMessagePacket*>(&packet);
+			auto pBuffer = pMessagePacket->payload();
+			auto payloadHash = Read<Hash256>(pBuffer);
+
+			return std::make_shared<AcknowledgedDeclinedMessage>(pMessagePacket->Sender, payloadHash);
+		});
+
 		registerConverter(ionet::PacketType::Dbrb_Acknowledged_Message, [](const ionet::Packet& packet) {
 			const auto* pMessagePacket = reinterpret_cast<const AcknowledgedMessagePacket*>(&packet);
 			auto pBuffer = pMessagePacket->payload();
@@ -175,6 +187,16 @@ namespace catapult { namespace dbrb {
 		Write(pBuffer, Payload);
 		Write(pBuffer, View);
 		Write(pBuffer, BootstrapView);
+
+		return pPacket;
+	}
+
+	std::shared_ptr<MessagePacket> AcknowledgedDeclinedMessage::toNetworkPacket() {
+		auto pPacket = ionet::CreateSharedPacket<AcknowledgedDeclinedMessagePacket>(Hash256_Size);
+		pPacket->Sender = Sender;
+
+		auto pBuffer = pPacket->payload();
+		Write(pBuffer, PayloadHash);
 
 		return pPacket;
 	}

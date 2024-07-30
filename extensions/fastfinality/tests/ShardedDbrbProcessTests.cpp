@@ -155,7 +155,7 @@ namespace catapult { namespace fastfinality {
 				reachableNodes.emplace(keyPair.publicKey());
 				auto pProcess = std::make_shared<dbrb::ShardedDbrbProcess>(keyPair, pMessageSender, pPool, nullptr, dbrbViewFetcher, shardSize);
 				pProcess->updateView(pConfigHolder, Timestamp(), Height(1), false);
-				pProcess->setValidationCallback([](const auto&) { return true; });
+				pProcess->setValidationCallback([](const auto&) { return dbrb::MessageValidationResult::Message_Valid; });
 				pProcess->setDeliverCallback(deliverCallback);
 				pMessageSender->addProcess(pProcess);
 				processes.emplace(keyPair.publicKey(), std::move(pProcess));
