@@ -298,6 +298,7 @@ namespace catapult { namespace fastfinality {
 					}
 				});
 
+				bool pullBlocksFailure = false;
 				try {
 					auto pPacket = ionet::CreateSharedPacket<api::PullBlocksRequest>();
 					pPacket->Height = startHeight;
@@ -308,21 +309,23 @@ namespace catapult { namespace fastfinality {
 					auto status = future.wait_for(std::chrono::seconds(60));
 					if (std::future_status::ready != status) {
 						CATAPULT_LOG(warning) << "pull blocks request timed out";
-						pFsmShared->packetHandlers().removeHandler(ionet::PacketType::Pull_Blocks_Response);
-						continue;
+						pullBlocksFailure = true;
 					}
 					blocks = future.get();
 				} catch (std::exception const& error) {
 					CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
 					pMessageSender->removeNode(identityKey);
-					pFsmShared->packetHandlers().removeHandler(ionet::PacketType::Pull_Blocks_Response);
-					continue;
+					pullBlocksFailure = true;
 				} catch (...) {
 					CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
 					pMessageSender->removeNode(identityKey);
-					pFsmShared->packetHandlers().removeHandler(ionet::PacketType::Pull_Blocks_Response);
-					continue;
+					pullBlocksFailure = true;
 				}
+
+				pFsmShared->packetHandlers().removeHandler(ionet::PacketType::Pull_Blocks_Response);
+
+				if (pullBlocksFailure)
+					continue;
 
 				bool success = false;
 				for (const auto& pBlock : blocks) {
