@@ -21,6 +21,6 @@ namespace catapult { namespace dbrb {
 
 	constexpr size_t ProcessId_Size = Key_Size;
 
-	using ValidationCallback = std::function<MessageValidationResult (const Payload&)>;
+	using ValidationCallback = std::function<MessageValidationResult (const Payload&, const Hash256&)>;
 	using DeliverCallback = consumer<const Payload&>;
 }}

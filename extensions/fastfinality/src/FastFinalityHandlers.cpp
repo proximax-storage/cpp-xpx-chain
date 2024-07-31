@@ -159,14 +159,21 @@ namespace catapult { namespace fastfinality {
 	bool ValidateBlock(
 			FastFinalityFsm& fsm,
 			const ionet::Packet& packet,
+			const Hash256& payloadHash,
 			extensions::ServiceState& state,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
 			const std::shared_ptr<thread::IoThreadPool>& pValidatorPool) {
 		std::lock_guard<std::mutex> guard(fsm.mutex());
 		auto& fastFinalityData = fsm.fastFinalityData();
-		if (fastFinalityData.proposedBlock()) {
-			CATAPULT_LOG(warning) << "rejecting block, there is one already";
-			return false;
+		auto blockHash = fastFinalityData.proposedBlockHash();
+		if (blockHash != Hash256()) {
+			if (blockHash == payloadHash) {
+				CATAPULT_LOG(trace) << "block has already been validated";
+				return true;
+			} else {
+				CATAPULT_LOG(warning) << "rejecting block (differs from validated one)";
+				return false;
+			}
 		}
 
 		auto pBlock = GetBlockFromPacket(state.pluginManager(), packet);
@@ -175,7 +182,7 @@ namespace catapult { namespace fastfinality {
 		
 		auto isBlockValid = ValidateBlock(fsm, *pBlock, state, lastBlockElementSupplier, pValidatorPool);
 		if (isBlockValid)
-			fastFinalityData.setProposedBlock(pBlock);
+			fastFinalityData.setProposedBlockHash(payloadHash);
 
 		return isBlockValid;
 	}

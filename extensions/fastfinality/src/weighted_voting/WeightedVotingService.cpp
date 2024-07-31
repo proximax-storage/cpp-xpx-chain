@@ -124,7 +124,7 @@ namespace catapult { namespace fastfinality {
 					auto storageView = storage.view();
 					return storageView.loadBlockElement(storageView.chainHeight());
 				};
-				pFsmShared->dbrbProcess().setValidationCallback([pFsmWeak, &pluginManager, &state, lastBlockElementSupplier, pValidatorPool](const std::shared_ptr<ionet::Packet>& pPacket) {
+				pFsmShared->dbrbProcess().setValidationCallback([pFsmWeak, &pluginManager, &state, lastBlockElementSupplier, pValidatorPool](const std::shared_ptr<ionet::Packet>& pPacket, const Hash256&) {
 					auto pFsmShared = pFsmWeak.lock();
 					if (!pFsmShared || pFsmShared->stopped())
 						return dbrb::MessageValidationResult::Message_Broadcast_Stopped;

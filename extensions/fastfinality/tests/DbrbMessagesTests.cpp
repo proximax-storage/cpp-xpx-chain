@@ -52,6 +52,17 @@ namespace catapult { namespace fastfinality {
 			});
 	}
 
+	TEST(TEST_CLASS, ValidateAcknowledgedDeclinedMessageSerialization) {
+		RunMessageSerializationTest<dbrb::AcknowledgedDeclinedMessage>([](const auto& nodes) {
+				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
+				auto payloadHash = dbrb::CalculatePayloadHash(payload);
+				return dbrb::AcknowledgedDeclinedMessage(nodes[0], payloadHash);
+			},
+			[](const dbrb::AcknowledgedDeclinedMessage& originalMessage, const dbrb::AcknowledgedDeclinedMessage& unpackedMessage) {
+				EXPECT_EQ(originalMessage.PayloadHash, unpackedMessage.PayloadHash);
+			});
+	}
+
 	TEST(TEST_CLASS, ValidateAcknowledgedMessageSerialization) {
 		RunMessageSerializationTest<dbrb::AcknowledgedMessage>([](const auto& nodes) {
 				dbrb::View view;

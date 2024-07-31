@@ -680,7 +680,7 @@ namespace catapult { namespace fastfinality {
 					pFsmShared->processEvent(UnexpectedBlockHeight{});
 				} else {
 					const auto& config = pConfigHolder->Config(fastFinalityData.currentBlockHeight());
-					bool syncWithNetwork = !!fastFinalityData.proposedBlock() || (fastFinalityData.round().Round % config.Network.CheckNetworkHeightInterval == 0);
+					bool syncWithNetwork = (fastFinalityData.proposedBlockHash() != Hash256()) || (fastFinalityData.round().Round % config.Network.CheckNetworkHeightInterval == 0);
 					if (syncWithNetwork)
 						fastFinalityData.setIsBlockBroadcastEnabled(false);
 					pFsmShared->processEvent(BlockNotReceived{ syncWithNetwork });

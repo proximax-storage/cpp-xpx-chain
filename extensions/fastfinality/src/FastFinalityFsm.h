@@ -118,7 +118,7 @@ namespace catapult { namespace fastfinality {
 		void resetFastFinalityData() {
 			m_fastFinalityData.setRound(FastFinalityRound{});
 			m_fastFinalityData.setBlockProducer(nullptr);
-			m_fastFinalityData.setProposedBlock(nullptr);
+			m_fastFinalityData.setProposedBlockHash(Hash256());
 			m_fastFinalityData.setBlock(nullptr);
 			m_fastFinalityData.setUnexpectedBlockHeight(false);
 		}

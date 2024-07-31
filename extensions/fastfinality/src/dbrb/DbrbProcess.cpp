@@ -244,8 +244,8 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
-		auto validationResult = m_validationCallback(message.Payload);
 		auto payloadHash = CalculatePayloadHash(message.Payload);
+		auto validationResult = m_validationCallback(message.Payload, payloadHash);
 		switch (validationResult) {
 			case MessageValidationResult::Message_Valid: {
 				CATAPULT_LOG(debug) << "[DBRB] PREPARE: Message valid";
@@ -270,6 +270,10 @@ namespace catapult { namespace dbrb {
 				data.Payload = message.Payload;
 				data.BroadcastView = message.View;
 				data.BootstrapView = message.BootstrapView;
+
+				CATAPULT_LOG(trace) << "[DBRB] PREPARE: sending payload " << data.Payload->Type;
+				auto pMessage = std::make_shared<PrepareMessage>(m_id, data.Payload, data.BroadcastView, data.BootstrapView);
+				disseminate(pMessage, pMessage->View.Data, 0);
 			}
 		}
 

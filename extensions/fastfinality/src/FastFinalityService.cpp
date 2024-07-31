@@ -103,7 +103,7 @@ namespace catapult { namespace fastfinality {
 					auto storageView = storage.view();
 					return storageView.loadBlockElement(storageView.chainHeight());
 				};
-				pFsmShared->dbrbProcess().setValidationCallback([pFsmWeak, &pluginManager, &state, lastBlockElementSupplier, pValidatorPool](const std::shared_ptr<ionet::Packet>& pPacket) {
+				pFsmShared->dbrbProcess().setValidationCallback([pFsmWeak, &pluginManager, &state, lastBlockElementSupplier, pValidatorPool](const std::shared_ptr<ionet::Packet>& pPacket, const Hash256& payloadHash) {
 					auto pFsmShared = pFsmWeak.lock();
 					if (!pFsmShared || pFsmShared->stopped())
 						return dbrb::MessageValidationResult::Message_Broadcast_Stopped;
@@ -111,7 +111,7 @@ namespace catapult { namespace fastfinality {
 					switch (pPacket->Type) {
 						case ionet::PacketType::Push_Block: {
 							if (pFsmShared->fastFinalityData().isBlockBroadcastEnabled()) {
-								bool valid = ValidateBlock(*pFsmShared, *pPacket, state, lastBlockElementSupplier, pValidatorPool);
+								bool valid = ValidateBlock(*pFsmShared, *pPacket, payloadHash, state, lastBlockElementSupplier, pValidatorPool);
 								return (valid ? dbrb::MessageValidationResult::Message_Valid : dbrb::MessageValidationResult::Message_Invalid);
 							} else {
 								return dbrb::MessageValidationResult::Message_Broadcast_Paused;
