@@ -44,14 +44,7 @@ namespace catapult { namespace storage {
 
 				m_pReplicatorService->setServiceState(&state);
 
-				const auto& storage = state.storage();
-				auto lastBlockElementSupplier = [&storage]() {
-					auto storageView = storage.view();
-					return storageView.loadBlockElement(storageView.chainHeight());
-				};
                 auto& storageState = state.pluginManager().storageState();
-				storageState.setLastBlockElementSupplier(lastBlockElementSupplier);
-
                 if (storageState.isReplicatorRegistered(m_pReplicatorService->replicatorKey())) {
                     CATAPULT_LOG(debug) << "starting replicator service";
                     m_pReplicatorService->start();
