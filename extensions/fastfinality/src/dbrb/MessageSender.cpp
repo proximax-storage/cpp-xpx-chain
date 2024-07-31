@@ -272,7 +272,7 @@ namespace catapult { namespace dbrb {
 						continue;
 					}
 
-					CATAPULT_LOG(debug) << "[MESSAGE SENDER] sending " << *message.Payload << " to " << node << " " << recipient;
+					CATAPULT_LOG(trace) << "[MESSAGE SENDER] sending " << *message.Payload << " to " << node << " " << recipient;
 					auto pPromise = std::make_shared<thread::promise<bool>>();
 					completionStatusFutures.push_back(pPromise->get_future());
 					pWriters->write(recipient, ionet::PacketPayload(message.Payload), [pThisWeak = weak_from_this(), message, pPromise, recipient, node](ionet::SocketOperationCode code) {
@@ -362,14 +362,14 @@ namespace catapult { namespace dbrb {
 
 		ids.erase(m_thisNode.identityKey());
 
-		CATAPULT_LOG(debug) << "[MESSAGE SENDER] looking for " << ids.size() << " nodes";
+		CATAPULT_LOG(trace) << "[MESSAGE SENDER] looking for " << ids.size() << " nodes";
 
 		if (ids.empty())
 			return;
 
 		nodes = m_nodeContainer.view().getNodes(ids);
 		nodes.erase(std::remove_if(nodes.begin(), nodes.end(), [](const auto& node) { return node.endpoint().Host.empty(); }), nodes.end());
-		CATAPULT_LOG(debug) << "[MESSAGE SENDER] got " << nodes.size() << " discovered nodes";
+		CATAPULT_LOG(trace) << "[MESSAGE SENDER] got " << nodes.size() << " discovered nodes";
 		if (!nodes.empty())
 			addNodes(nodes);
 
