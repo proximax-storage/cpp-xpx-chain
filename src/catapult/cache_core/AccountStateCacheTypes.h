@@ -102,9 +102,18 @@ namespace catapult { namespace cache {
 			using Serializer = KeyAddressPairSerializer;
 
 		public:
-			static auto GetKeyFromValue(const ValueType& pair) {
+			static Key GetKeyFromValue(const ValueType& pair) {
 				return pair.first;
 			}
+
+			static Address GetAddressFromValue(const ValueType& pair) {
+				return pair.second;
+			}
+
+		public:
+			// To be able to support LookupContainsMixin, descriptor must define ToTargetKey function
+			// that converts its ValueType to the key type of the target set.
+			static constexpr auto ToTargetKey = GetAddressFromValue;
 		};
 
 	// endregion
