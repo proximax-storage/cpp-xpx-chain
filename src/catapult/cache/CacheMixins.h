@@ -91,24 +91,17 @@ namespace catapult { namespace cache {
 	public:
 		/// Gets a value indicating whether or not target set contains an element corresponding to \a lookupKey.
 		bool contains(const LookupKeyType& lookupKey) const {
-			if (!m_lookupSet.contains(lookupKey)) {
-				CATAPULT_LOG(debug) << "Lookup key " << lookupKey << " not found in the lookup set.";
+			if (!m_lookupSet.contains(lookupKey))
 				return false;
-			}
 
-			const LookupValueType* pLookupValue = m_lookupSet.find(lookupKey).get();
-			if (!pLookupValue) {
-				CATAPULT_LOG(warning) << "Key " << lookupKey
-									  << " is contained in the lookup set, but find() returned an empty iterator.";
-				return false;
-			}
+			const auto lookupValueIter = m_lookupSet.find(lookupKey);
+			const LookupValueType* pLookupValue = lookupValueIter.get();
+
+			if (!pLookupValue)
+				CATAPULT_THROW_RUNTIME_ERROR_1("value not found", lookupKey)
 
 			const auto& targetKey = TLookupCacheDescriptor::ToTargetKey(*pLookupValue);
-			const bool result = m_targetSet.contains(targetKey);
-			CATAPULT_LOG(debug) << "Target key " << targetKey << " (produced from lookup key "
-								<< lookupKey << ") " << (result ? "found" : "not found") << " in the target set.";
-
-			return result;
+			return m_targetSet.contains(targetKey);
 		}
 
 	private:
