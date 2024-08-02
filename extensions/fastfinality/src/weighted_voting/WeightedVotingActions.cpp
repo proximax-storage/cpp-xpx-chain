@@ -84,7 +84,7 @@ namespace catapult { namespace fastfinality {
 			pFsmShared->resetCommitteeData();
 
 			auto localHeight = lastBlockElementSupplier()->Block.Height;
-			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::NetworkTime(), localHeight, false);
+			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::NetworkTime(), localHeight);
 
 			std::vector<RemoteNodeState> remoteNodeStates = retriever();
 
@@ -168,7 +168,6 @@ namespace catapult { namespace fastfinality {
 					if (isInDbrbSystem) {
 						pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 					} else {
-						pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::NetworkTime(), localHeight, true);
 						DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 							TRY_GET_FSM()
 
@@ -453,7 +452,7 @@ namespace catapult { namespace fastfinality {
 			committeeData.setUnexpectedConfirmedBlockHeight(false);
 			auto round = committeeData.committeeRound();
 			auto pConfigHolder = state.pluginManager().configHolder();
-			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight(), true);
+			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight());
 			if (!isInDbrbSystem) {
 				pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
 				return;

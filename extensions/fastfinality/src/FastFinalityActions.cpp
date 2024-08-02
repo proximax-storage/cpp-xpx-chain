@@ -93,7 +93,7 @@ namespace catapult { namespace fastfinality {
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 
 			auto dbrbProcess = pFsmShared->dbrbProcess();
-			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight + Height(1), false);
+			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight + Height(1));
 
 			std::vector<RemoteNodeState> remoteNodeStates = retriever();
 
@@ -508,7 +508,7 @@ namespace catapult { namespace fastfinality {
 			auto pConfigHolder = pluginManager.configHolder();
 			auto roundStart = utils::FromTimePoint(round.RoundStart);
 			auto& dbrbProcess = pFsmShared->dbrbProcess();
-			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, roundStart, fastFinalityData.currentBlockHeight(), true);
+			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, roundStart, fastFinalityData.currentBlockHeight());
 			if (!isInDbrbSystem) {
 				auto banned = (pluginManager.dbrbViewFetcher().getBanPeriod(dbrbProcess.id()) > BlockDuration(0));
 				if (banned) {

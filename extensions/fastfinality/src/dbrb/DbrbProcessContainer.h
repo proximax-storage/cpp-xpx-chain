@@ -90,11 +90,11 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) {
+		bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) {
 			if (m_shardingEnabled) {
-				return m_pShardedDbrbProcess->updateView(pConfigHolder, now, height, registerSelf);
+				return m_pShardedDbrbProcess->updateView(pConfigHolder, now, height);
 			} else {
-				return m_pDbrbProcess->updateView(pConfigHolder, now, height, registerSelf);
+				return m_pDbrbProcess->updateView(pConfigHolder, now, height);
 			}
 		}
 

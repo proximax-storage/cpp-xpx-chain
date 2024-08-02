@@ -52,7 +52,7 @@ namespace catapult { namespace fastfinality {
 					mocks::MockDbrbViewFetcher())
 			{}
 
-			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) override { return true; }
+			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) override { return true; }
 
 			void broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) override {}
 			void processMessage(const dbrb::Message& message) override {}

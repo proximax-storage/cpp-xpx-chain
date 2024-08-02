@@ -498,7 +498,7 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	bool ShardedDbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) {
+	bool ShardedDbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) {
 		auto view = View{ m_dbrbViewFetcher.getView(now) };
 		m_dbrbViewFetcher.logAllProcesses();
 		m_dbrbViewFetcher.logView(view.Data);
@@ -518,7 +518,7 @@ namespace catapult { namespace dbrb {
 			CATAPULT_THROW_RUNTIME_ERROR("no DBRB processes")
 
 		auto shardSize = config.DbrbShardSize;
-		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, view, isTemporaryProcess, isBootstrapProcess, shardSize, gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis()), registerSelf]() {
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, view, isTemporaryProcess, isBootstrapProcess, shardSize, gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis())]() {
 			auto pThis = pThisWeak.lock();
 			if (!pThis)
 				return;
@@ -531,28 +531,26 @@ namespace catapult { namespace dbrb {
 			pThis->m_currentView = view;
 			CATAPULT_LOG(debug) << "[DBRB] Current view (" << view.Data.size() << ") is now set to " << view;
 
-			if (registerSelf) {
-				bool isRegistrationRequired = false;
-				if (!isTemporaryProcess && !isBootstrapProcess && (pThis->m_dbrbViewFetcher.getBanPeriod(pThis->m_id) == BlockDuration(0))) {
-					CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
+			bool isRegistrationRequired = false;
+			if (!isTemporaryProcess && !isBootstrapProcess && (pThis->m_dbrbViewFetcher.getBanPeriod(pThis->m_id) == BlockDuration(0))) {
+				CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
+				isRegistrationRequired = true;
+			} else if (isTemporaryProcess) {
+				auto expirationTime = pThis->m_dbrbViewFetcher.getExpirationTime(pThis->m_id);
+				LogTime("[DBRB] process expires at ", expirationTime);
+				if (expirationTime < gracePeriod)
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid expiration time", pThis->m_id)
+
+				auto gracePeriodStart = expirationTime - gracePeriod;
+				LogTime("[DBRB] process grace period starts at ", gracePeriodStart);
+				if (now >= gracePeriodStart) {
+					CATAPULT_LOG(debug) << "[DBRB] node registration in the DBRB system soon expires";
 					isRegistrationRequired = true;
-				} else if (isTemporaryProcess) {
-					auto expirationTime = pThis->m_dbrbViewFetcher.getExpirationTime(pThis->m_id);
-					LogTime("[DBRB] process expires at ", expirationTime);
-					if (expirationTime < gracePeriod)
-						CATAPULT_THROW_RUNTIME_ERROR_1("invalid expiration time", pThis->m_id)
-
-					auto gracePeriodStart = expirationTime - gracePeriod;
-					LogTime("[DBRB] process grace period starts at ", gracePeriodStart);
-					if (now >= gracePeriodStart) {
-						CATAPULT_LOG(debug) << "[DBRB] node registration in the DBRB system soon expires";
-						isRegistrationRequired = true;
-					}
 				}
-
-				if (isRegistrationRequired)
-					pThis->m_pTransactionSender->sendAddDbrbProcessTransaction();
 			}
+
+			if (isRegistrationRequired)
+				pThis->m_pTransactionSender->sendAddDbrbProcessTransaction();
 		});
 
 		return isTemporaryProcess || isBootstrapProcess;
