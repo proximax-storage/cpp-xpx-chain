@@ -36,8 +36,6 @@ namespace catapult { namespace fastfinality {
 				utils::TimePoint expirationTime,
 				const action& callback,
 				const action& cancelledCallback = [](){}) {
-			TRY_GET_FSM()
-
 			timer.expires_at(expirationTime);
 			timer.async_wait([pFsmWeak, callback, cancelledCallback](const boost::system::error_code& ec) {
 				TRY_GET_FSM()
@@ -57,15 +55,13 @@ namespace catapult { namespace fastfinality {
 		}
 
 		void DelayAction(
-				const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
+				const std::shared_ptr<FastFinalityFsm>& pFsmShared,
 				boost::asio::system_timer& timer,
 				uint64_t delay,
 				const action& callback,
 				const action& cancelledCallback = [](){}) {
-			TRY_GET_FSM()
-
 			auto expirationTime = pFsmShared->fastFinalityData().round().RoundStart + std::chrono::milliseconds(delay);
-			DelayAction(pFsmWeak, timer, expirationTime, callback, cancelledCallback);
+			DelayAction(pFsmShared, timer, expirationTime, callback, cancelledCallback);
 		}
 	}
 
@@ -99,7 +95,7 @@ namespace catapult { namespace fastfinality {
 
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
-				DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
+				DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 					TRY_GET_FSM()
 
 					CATAPULT_LOG(debug) << "got no remote node states";
@@ -118,7 +114,7 @@ namespace catapult { namespace fastfinality {
 
 			if (chainSyncData.NetworkHeight < chainSyncData.LocalHeight) {
 
-				DelayAction(pFsmWeak, pFsmShared->timer(), chain::CommitteePhaseCount * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
+				DelayAction(pFsmShared, pFsmShared->timer(), chain::CommitteePhaseCount * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
 					TRY_GET_FSM()
 
 					pFsmShared->processEvent(NetworkHeightLessThanLocal{});
@@ -148,7 +144,7 @@ namespace catapult { namespace fastfinality {
 
 			} else if (!dbrbConfig.IsDbrbProcess) {
 
-				DelayAction(pFsmWeak, pFsmShared->timer(), chain::CommitteePhaseCount * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
+				DelayAction(pFsmShared, pFsmShared->timer(), chain::CommitteePhaseCount * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
 					TRY_GET_FSM()
 
 					pFsmShared->processEvent(StartLocalChainCheck{});
@@ -182,7 +178,7 @@ namespace catapult { namespace fastfinality {
 						pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 					} else {
 						auto banned = (state.pluginManager().dbrbViewFetcher().getBanPeriod(dbrbProcess.id()) > BlockDuration(0));
-						DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak, banned] {
+						DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak, banned] {
 							TRY_GET_FSM()
 
 							if (banned) {
@@ -193,7 +189,7 @@ namespace catapult { namespace fastfinality {
 						});
 					}
 				} else {
-					DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
+					DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 						TRY_GET_FSM()
 
 						CATAPULT_LOG(debug) << "approval rating not sufficient";
@@ -376,7 +372,7 @@ namespace catapult { namespace fastfinality {
 				}
 			}
 
-			DelayAction(pFsmWeak, pFsmShared->timer(), state.config().Network.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
+			DelayAction(pFsmShared, pFsmShared->timer(), state.config().Network.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 				TRY_GET_FSM()
 
 				pFsmShared->processEvent(DownloadBlocksFailed{});
@@ -470,7 +466,12 @@ namespace catapult { namespace fastfinality {
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 			fastFinalityData.setRound(round);
 			fastFinalityData.setCurrentBlockHeight(currentHeight);
-			pFsmShared->processEvent(RoundDetectionCompleted{});
+
+			DelayAction(pFsmShared, pFsmShared->timer(), 0, [pFsmWeak] {
+				TRY_GET_FSM()
+
+				pFsmShared->processEvent(RoundDetectionCompleted{});
+			});
 		};
 	}
 
@@ -551,7 +552,7 @@ namespace catapult { namespace fastfinality {
 				pFsmShared->processEvent(WaitForBlock{});
 			}
 
-			DelayAction(pFsmWeak, pFsmShared->timer(), round.RoundTimeMillis / chain::CommitteePhaseCount, [pFsmWeak] {
+			DelayAction(pFsmShared, pFsmShared->timer(), round.RoundTimeMillis / chain::CommitteePhaseCount, [pFsmWeak] {
 				TRY_GET_FSM()
 
 				auto dbrbProcess = pFsmShared->dbrbProcess();
@@ -622,7 +623,7 @@ namespace catapult { namespace fastfinality {
 			pBlockHeader->setCommitteePhaseTime(round.RoundTimeMillis / chain::CommitteePhaseCount);
 
 			std::atomic_bool stopTransactionFetching = false;
-			DelayAction(pFsmWeak, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis / 3, [&stopTransactionFetching] { stopTransactionFetching = true; });
+			DelayAction(pFsmShared, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis / 3, [&stopTransactionFetching] { stopTransactionFetching = true; });
 			auto pBlock = utils::UniqueToShared(blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock, [&stopTransactionFetching] { return stopTransactionFetching.load(); }));
 			pFsmShared->timer().cancel();
 
@@ -632,7 +633,7 @@ namespace catapult { namespace fastfinality {
 				pPacket->Type = ionet::PacketType::Push_Block;
 				std::memcpy(static_cast<void*>(pPacket->Data()), pBlock.get(), pBlock->Size);
 
-				DelayAction(pFsmWeak, pFsmShared->timer(), config.Network.CommitteeSilenceInterval.millis(), [pFsmWeak, pPacket] {
+				DelayAction(pFsmShared, pFsmShared->timer(), config.Network.CommitteeSilenceInterval.millis(), [pFsmWeak, pPacket] {
 					TRY_GET_FSM()
 
 					pFsmShared->dbrbProcess().broadcast(pPacket, pFsmShared->dbrbProcess().currentView().Data);
@@ -713,7 +714,7 @@ namespace catapult { namespace fastfinality {
 				success = pPromise->get_future().get();
 			}
 
-			DelayAction(pFsmWeak, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis, [pFsmWeak, success, &state] {
+			DelayAction(pFsmShared, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis, [pFsmWeak, success, &state] {
 				TRY_GET_FSM()
 
 				const auto& maxChainHeight = state.maxChainHeight();
