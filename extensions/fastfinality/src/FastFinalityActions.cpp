@@ -181,7 +181,6 @@ namespace catapult { namespace fastfinality {
 					if (isInDbrbSystem) {
 						pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 					} else {
-						dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight + Height(1), true);
 						auto banned = (state.pluginManager().dbrbViewFetcher().getBanPeriod(dbrbProcess.id()) > BlockDuration(0));
 						DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak, banned] {
 							TRY_GET_FSM()
@@ -471,12 +470,7 @@ namespace catapult { namespace fastfinality {
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 			fastFinalityData.setRound(round);
 			fastFinalityData.setCurrentBlockHeight(currentHeight);
-
-			DelayAction(pFsmWeak, pFsmShared->timer(), 0u, [pFsmWeak] {
-				TRY_GET_FSM()
-
-				pFsmShared->processEvent(RoundDetectionCompleted{});
-			});
+			pFsmShared->processEvent(RoundDetectionCompleted{});
 		};
 	}
 
