@@ -248,7 +248,7 @@ namespace catapult { namespace dbrb {
 		auto validationResult = m_validationCallback(message.Payload, payloadHash);
 		switch (validationResult) {
 			case MessageValidationResult::Message_Valid: {
-				CATAPULT_LOG(debug) << "[DBRB] PREPARE: Message valid";
+				CATAPULT_LOG(trace) << "[DBRB] PREPARE: Message valid";
 				break;
 			}
 			case MessageValidationResult::Message_Broadcast_Paused: {
