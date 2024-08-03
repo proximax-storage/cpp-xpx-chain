@@ -104,13 +104,13 @@ namespace catapult { namespace local {
 					const std::vector<crypto::KeyPair>& bootKeys,
 					const std::vector<crypto::KeyPair>& harvesterKeys,
 					uint32_t id,
-					const std::string& seedPath)
+					std::string seedPath)
 				: m_bootstrapNodes(bootstrapNodes)
 				, m_bootKeys(bootKeys)
 				, m_harvesterKeys(harvesterKeys)
 				, m_tempDir("lntc_" + std::to_string(id))
 				, m_id(id)
-				, m_seedDataPath(seedPath)
+				, m_seedDataPath(std::move(seedPath))
 				, m_booted(false)
 			{}
 

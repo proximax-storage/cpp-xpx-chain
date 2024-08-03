@@ -41,7 +41,7 @@ namespace catapult { namespace mocks {
 		void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient, uint64_t delayMillis) override;
 
 		void onAcknowledgedMessageReceived(const dbrb::AcknowledgedMessage& message) override;
-		void onAcknowledgedQuorumCollected(const dbrb::AcknowledgedMessage& message);
+		void onAcknowledgedQuorumCollected(const dbrb::AcknowledgedMessage& message, dbrb::BroadcastData& data);
 		void onCommitMessageReceived(const dbrb::CommitMessage& message) override;
 
 		const std::set<Hash256>& deliveredPayloads();

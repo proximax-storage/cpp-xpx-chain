@@ -64,7 +64,7 @@ namespace catapult { namespace dbrb {
 		void onDeliverMessageReceived(const DeliverMessage&);
 		void onConfirmDeliverMessageReceived(const ConfirmDeliverMessage&);
 
-		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);
+		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&, BroadcastData&);
 
 	protected:
 		const crypto::KeyPair& m_keyPair;

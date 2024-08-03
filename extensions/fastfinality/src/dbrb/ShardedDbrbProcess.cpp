@@ -32,9 +32,13 @@ namespace catapult { namespace dbrb {
 	{}
 
 	void ShardedDbrbProcess::registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers) {
-		auto handler = [pThisWeak = weak_from_this(), &converter = m_converter, &strand = m_strand](const auto& packet, auto& context) {
-			auto pMessage = converter.toMessage(packet);
-			boost::asio::post(strand, [pThisWeak, pMessage]() {
+		auto handler = [pThisWeak = weak_from_this()](const auto& packet, auto& context) {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
+				return;
+
+			auto pMessage = pThis->m_converter.toMessage(packet);
+			boost::asio::post(pThis->m_strand, [pThisWeak, pMessage]() {
 				auto pThis = pThisWeak.lock();
 				if (pThis)
 					pThis->processMessage(*pMessage);

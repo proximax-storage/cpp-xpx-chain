@@ -127,12 +127,11 @@ namespace catapult { namespace mocks {
 		data.Signatures[std::make_pair(message.View, message.Sender)] = message.PayloadSignature;
 		bool quorumCollected = data.QuorumManager.update(message, data.Payload->Type);
 		if (quorumCollected && data.Certificate.empty())
-			onAcknowledgedQuorumCollected(message);
+			onAcknowledgedQuorumCollected(message, data);
 	}
 
-	void MockDbrbProcess::onAcknowledgedQuorumCollected(const dbrb::AcknowledgedMessage& message) {
+	void MockDbrbProcess::onAcknowledgedQuorumCollected(const dbrb::AcknowledgedMessage& message, dbrb::BroadcastData& data) {
 		// Replacing certificate.
-		auto& data = m_broadcastData[message.PayloadHash];
 		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: " << m_id << " collected quorum";
 		data.Certificate.clear();
 		const auto& acknowledgedSet = data.QuorumManager.AcknowledgedPayloads[message.View];

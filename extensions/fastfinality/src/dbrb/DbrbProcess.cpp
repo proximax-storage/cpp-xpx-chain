@@ -34,9 +34,13 @@ namespace catapult { namespace dbrb {
 	{}
 
 	void DbrbProcess::registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers) {
-		auto handler = [pThisWeak = weak_from_this(), &converter = m_converter, &strand = m_strand](const auto& packet, auto& context) {
-			auto pMessage = converter.toMessage(packet);
-			boost::asio::post(strand, [pThisWeak, pMessage]() {
+		auto handler = [pThisWeak = weak_from_this()](const auto& packet, auto& context) {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
+				return;
+
+			auto pMessage = pThis->m_converter.toMessage(packet);
+			boost::asio::post(pThis->m_strand, [pThisWeak, pMessage]() {
 				auto pThis = pThisWeak.lock();
 				if (pThis)
 					pThis->processMessage(*pMessage);
@@ -166,11 +170,25 @@ namespace catapult { namespace dbrb {
 		auto pPacket = pMessage->toNetworkPacket();
 		for (auto iter = recipients.begin(); iter != recipients.end(); ++iter) {
 			if (m_id == *iter) {
-				m_pDelayedExecutor->execute(delayMillis, [pThisWeak = weak_from_this(), pMessage]() {
-					auto pThis = pThisWeak.lock();
-					if (pThis)
-						pThis->processMessage(*pMessage);
-				});
+				if (delayMillis) {
+					m_pDelayedExecutor->execute(delayMillis, [pThisWeak = weak_from_this(), pMessage]() {
+						auto pThis = pThisWeak.lock();
+						if (!pThis)
+							return;
+
+						boost::asio::post(pThis->m_strand, [pThisWeak, pMessage]() {
+							auto pThis = pThisWeak.lock();
+							if (pThis)
+								pThis->processMessage(*pMessage);
+						});
+					});
+				} else {
+					boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pMessage]() {
+						auto pThis = pThisWeak.lock();
+						if (pThis)
+							pThis->processMessage(*pMessage);
+					});
+				}
 				recipients.erase(iter);
 				break;
 			}
@@ -333,12 +351,11 @@ namespace catapult { namespace dbrb {
 		data.Signatures[std::make_pair(message.View, message.Sender)] = message.PayloadSignature;
 		bool quorumCollected = data.QuorumManager.update(message, data.Payload->Type);
 		if (quorumCollected && data.Certificate.empty())
-			onAcknowledgedQuorumCollected(message);
+			onAcknowledgedQuorumCollected(message, data);
 	}
 
-	void DbrbProcess::onAcknowledgedQuorumCollected(const AcknowledgedMessage& message) {
+	void DbrbProcess::onAcknowledgedQuorumCollected(const AcknowledgedMessage& message, BroadcastData& data) {
 		// Replacing certificate.
-		auto& data = m_broadcastData[message.PayloadHash];
 		CATAPULT_LOG(trace) << "[DBRB] ACKNOWLEDGED: Quorum collected in view " << message.View << ". Payload " << data.Payload->Type;
 		data.Certificate.clear();
 		const auto& acknowledgedSet = data.QuorumManager.AcknowledgedPayloads[message.View];
