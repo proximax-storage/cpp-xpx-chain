@@ -46,20 +46,20 @@ namespace catapult { namespace fastfinality {
 			explicit MockDbrbProcess()
 				: DbrbProcess(
 					crypto::KeyPair::FromPrivate({}),
-					dbrb::CreateMessageSender({}, std::make_shared<mocks::MockPacketWriters>(), {}, false, nullptr, test::CreateStartedIoThreadPool(1), utils::TimeSpan::FromMilliseconds(500)),
+					dbrb::CreateMessageSender({}, {}, false, test::CreateStartedIoThreadPool(1), utils::TimeSpan::FromMilliseconds(500)),
 					test::CreateStartedIoThreadPool(1),
 					nullptr,
 					mocks::MockDbrbViewFetcher())
 			{}
 
-			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) override { return true; }
+			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) override { return true; }
 
 			void broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) override {}
 			void processMessage(const dbrb::Message& message) override {}
 
 		protected:
-			void disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients) override {}
-			void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient) override {}
+			void disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients, uint64_t delayMillis) override {}
+			void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient, uint64_t delayMillis) override {}
 
 			void onAcknowledgedMessageReceived(const dbrb::AcknowledgedMessage& message) override {}
 			void onCommitMessageReceived(const dbrb::CommitMessage& message) override {}

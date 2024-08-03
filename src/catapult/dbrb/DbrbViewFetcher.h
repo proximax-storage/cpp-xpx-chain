@@ -21,6 +21,9 @@ namespace catapult { namespace dbrb {
 		/// Returns the expiration time of the process with \a processId.
 		virtual Timestamp getExpirationTime(const ProcessId& processId) const = 0;
 
+		/// Returns the ban period of the process with \a processId.
+		virtual BlockDuration getBanPeriod(const ProcessId& processId) const = 0;
+
 		/// Logs all known DBRB processes.
 		virtual void logAllProcesses() const = 0;
 

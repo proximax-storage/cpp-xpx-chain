@@ -100,7 +100,7 @@ namespace catapult { namespace ionet {
 	};
 
 	/// Callback for configuring a socket before initiating an accept.
-	using ConfigureSocketCallback = consumer<socket&>;
+	using ConfigureSocketCallback = consumer<NetworkSocket&>;
 
 	/// Callback for an accepted socket.
 	using AcceptCallback = consumer<const AcceptedPacketSocketInfo&>;

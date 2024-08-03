@@ -41,7 +41,7 @@ namespace catapult { namespace fastfinality {
 			, m_nodeWorkState(NodeWorkState::None)
 			, m_stopped(false)
 			, m_dbrbProcess(std::move(pDbrbProcess))
-			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32())
+			, m_packetHandlers(config.Node.MaxPacketDataSize.bytes32(), true)
 		{}
 
 		FastFinalityFsm(
@@ -118,7 +118,7 @@ namespace catapult { namespace fastfinality {
 		void resetFastFinalityData() {
 			m_fastFinalityData.setRound(FastFinalityRound{});
 			m_fastFinalityData.setBlockProducer(nullptr);
-			m_fastFinalityData.setProposedBlock(nullptr);
+			m_fastFinalityData.setProposedBlockHash(Hash256());
 			m_fastFinalityData.setBlock(nullptr);
 			m_fastFinalityData.setUnexpectedBlockHeight(false);
 		}

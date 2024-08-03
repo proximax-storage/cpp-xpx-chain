@@ -37,6 +37,9 @@ namespace catapult { namespace config {
 		/// Plugins directory.
 		std::string PluginsDirectory;
 
+		/// Certificate directory.
+		std::string CertificateDirectory;
+
 	private:
 		UserConfiguration() = default;
 

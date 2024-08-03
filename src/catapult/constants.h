@@ -35,4 +35,7 @@ namespace catapult {
 
 	/// Duration of eternal artifact.
 	constexpr BlockDuration Eternal_Artifact_Duration(0);
+
+	/// Default maximum packet data size when not explicitly specified.
+	constexpr uint32_t Default_Max_Packet_Data_Size = 100 * 1024 * 1024;
 }

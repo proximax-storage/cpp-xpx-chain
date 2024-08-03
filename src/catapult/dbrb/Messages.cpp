@@ -19,6 +19,10 @@ namespace catapult { namespace dbrb {
 			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Prepare_Message;
 		};
 
+		struct AcknowledgedDeclinedMessagePacket : public MessagePacket {
+			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Acknowledged_Declined_Message;
+		};
+
 		struct AcknowledgedMessagePacket : public MessagePacket {
 			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Dbrb_Acknowledged_Message;
 		};
@@ -53,14 +57,6 @@ namespace catapult { namespace dbrb {
 
 #pragma pack(pop)
 
-		void MaybeSignMessage(const crypto::KeyPair* pKeyPair, MessagePacket* pPacket, Message* pMessage) {
-			if (pKeyPair) {
-				auto hash = CalculateHash(pPacket->buffers());
-				crypto::Sign(*pKeyPair, hash, pMessage->Signature);
-			}
-			pPacket->Signature = pMessage->Signature;
-		}
-
 		template<typename MessagePacketType, typename MessageType>
 		auto ToShardMessage(const ionet::Packet& packet) {
 			const auto* pMessagePacket = reinterpret_cast<const MessagePacketType*>(&packet);
@@ -68,10 +64,7 @@ namespace catapult { namespace dbrb {
 			auto payloadHash = Read<Hash256>(pBuffer);
 			auto certificate = Read<CertificateType>(pBuffer);
 
-			auto pMessage = std::make_shared<MessageType>(pMessagePacket->Sender, payloadHash, certificate);
-			pMessage->Signature = pMessagePacket->Signature;
-
-			return pMessage;
+			return std::make_shared<MessageType>(pMessagePacket->Sender, payloadHash, certificate);
 		}
 	}
 
@@ -114,10 +107,15 @@ namespace catapult { namespace dbrb {
 			auto view = Read<View>(pBuffer);
 			auto bootstrapView = Read<View>(pBuffer);
 
-			auto pMessage = std::make_shared<PrepareMessage>(pMessagePacket->Sender, payload, view, bootstrapView);
-			pMessage->Signature = pMessagePacket->Signature;
+			return std::make_shared<PrepareMessage>(pMessagePacket->Sender, payload, view, bootstrapView);
+		});
 
-			return pMessage;
+		registerConverter(ionet::PacketType::Dbrb_Acknowledged_Declined_Message, [](const ionet::Packet& packet) {
+			const auto* pMessagePacket = reinterpret_cast<const AcknowledgedDeclinedMessagePacket*>(&packet);
+			auto pBuffer = pMessagePacket->payload();
+			auto payloadHash = Read<Hash256>(pBuffer);
+
+			return std::make_shared<AcknowledgedDeclinedMessage>(pMessagePacket->Sender, payloadHash);
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Acknowledged_Message, [](const ionet::Packet& packet) {
@@ -127,10 +125,7 @@ namespace catapult { namespace dbrb {
 			auto view = Read<View>(pBuffer);
 			auto payloadSignature = Read<Signature>(pBuffer);
 
-			auto pMessage = std::make_shared<AcknowledgedMessage>(pMessagePacket->Sender, payloadHash, view, payloadSignature);
-			pMessage->Signature = pMessagePacket->Signature;
-
-			return pMessage;
+			return std::make_shared<AcknowledgedMessage>(pMessagePacket->Sender, payloadHash, view, payloadSignature);
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Commit_Message, [](const ionet::Packet& packet) {
@@ -140,10 +135,7 @@ namespace catapult { namespace dbrb {
 			auto certificate = Read<CertificateType>(pBuffer);
 			auto view = Read<View>(pBuffer);
 
-			auto pMessage = std::make_shared<CommitMessage>(pMessagePacket->Sender, payloadHash, certificate, view);
-			pMessage->Signature = pMessagePacket->Signature;
-
-			return pMessage;
+			return std::make_shared<CommitMessage>(pMessagePacket->Sender, payloadHash, certificate, view);
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Deliver_Message, [](const ionet::Packet& packet) {
@@ -152,10 +144,7 @@ namespace catapult { namespace dbrb {
 			auto payloadHash = Read<Hash256>(pBuffer);
 			auto view = Read<View>(pBuffer);
 
-			auto pMessage = std::make_shared<DeliverMessage>(pMessagePacket->Sender, payloadHash, view);
-			pMessage->Signature = pMessagePacket->Signature;
-
-			return pMessage;
+			return std::make_shared<DeliverMessage>(pMessagePacket->Sender, payloadHash, view);
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Confirm_Deliver_Message, [](const ionet::Packet& packet) {
@@ -164,10 +153,7 @@ namespace catapult { namespace dbrb {
 			auto payloadHash = Read<Hash256>(pBuffer);
 			auto view = Read<View>(pBuffer);
 
-			auto pMessage = std::make_shared<ConfirmDeliverMessage>(pMessagePacket->Sender, payloadHash, view);
-			pMessage->Signature = pMessagePacket->Signature;
-
-			return pMessage;
+			return std::make_shared<ConfirmDeliverMessage>(pMessagePacket->Sender, payloadHash, view);
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Shard_Prepare_Message, [](const ionet::Packet& packet) {
@@ -177,10 +163,7 @@ namespace catapult { namespace dbrb {
 			auto view = Read<DbrbTreeView>(pBuffer);
 			auto broadcasterSignature = Read<Signature>(pBuffer);
 
-			auto pMessage = std::make_shared<ShardPrepareMessage>(pMessagePacket->Sender, payload, view, broadcasterSignature);
-			pMessage->Signature = pMessagePacket->Signature;
-
-			return pMessage;
+			return std::make_shared<ShardPrepareMessage>(pMessagePacket->Sender, payload, view, broadcasterSignature);
 		});
 
 		registerConverter(ionet::PacketType::Dbrb_Shard_Acknowledged_Message, [](const ionet::Packet& packet) {
@@ -196,7 +179,7 @@ namespace catapult { namespace dbrb {
 		});
 	}
 
-	std::shared_ptr<MessagePacket> PrepareMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
+	std::shared_ptr<MessagePacket> PrepareMessage::toNetworkPacket() {
 		auto pPacket = ionet::CreateSharedPacket<PrepareMessagePacket>(Payload->Size + View.packedSize() + BootstrapView.packedSize());
 		pPacket->Sender = Sender;
 
@@ -205,12 +188,20 @@ namespace catapult { namespace dbrb {
 		Write(pBuffer, View);
 		Write(pBuffer, BootstrapView);
 
-		MaybeSignMessage(pKeyPair, pPacket.get(), this);
+		return pPacket;
+	}
+
+	std::shared_ptr<MessagePacket> AcknowledgedDeclinedMessage::toNetworkPacket() {
+		auto pPacket = ionet::CreateSharedPacket<AcknowledgedDeclinedMessagePacket>(Hash256_Size);
+		pPacket->Sender = Sender;
+
+		auto pBuffer = pPacket->payload();
+		Write(pBuffer, PayloadHash);
 
 		return pPacket;
 	}
 
-	std::shared_ptr<MessagePacket> AcknowledgedMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
+	std::shared_ptr<MessagePacket> AcknowledgedMessage::toNetworkPacket() {
 		auto pPacket = ionet::CreateSharedPacket<AcknowledgedMessagePacket>(Hash256_Size + View.packedSize() + Signature_Size);
 		pPacket->Sender = Sender;
 
@@ -219,12 +210,10 @@ namespace catapult { namespace dbrb {
 		Write(pBuffer, View);
 		Write(pBuffer, PayloadSignature);
 
-		MaybeSignMessage(pKeyPair, pPacket.get(), this);
-
 		return pPacket;
 	}
 
-	std::shared_ptr<MessagePacket> CommitMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
+	std::shared_ptr<MessagePacket> CommitMessage::toNetworkPacket() {
 		auto payloadSize = Hash256_Size + sizeof(uint32_t) + Certificate.size() * (ProcessId_Size + Signature_Size) + View.packedSize();
 		auto pPacket = ionet::CreateSharedPacket<CommitMessagePacket>(payloadSize);
 		pPacket->Sender = Sender;
@@ -234,12 +223,10 @@ namespace catapult { namespace dbrb {
 		Write(pBuffer, Certificate);
 		Write(pBuffer, View);
 
-		MaybeSignMessage(pKeyPair, pPacket.get(), this);
-
 		return pPacket;
 	}
 
-	std::shared_ptr<MessagePacket> DeliverMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
+	std::shared_ptr<MessagePacket> DeliverMessage::toNetworkPacket() {
 		auto pPacket = ionet::CreateSharedPacket<DeliverMessagePacket>(Hash256_Size + View.packedSize());
 		pPacket->Sender = Sender;
 
@@ -247,12 +234,10 @@ namespace catapult { namespace dbrb {
 		Write(pBuffer, PayloadHash);
 		Write(pBuffer, View);
 
-		MaybeSignMessage(pKeyPair, pPacket.get(), this);
-
 		return pPacket;
 	}
 
-	std::shared_ptr<MessagePacket> ConfirmDeliverMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
+	std::shared_ptr<MessagePacket> ConfirmDeliverMessage::toNetworkPacket() {
 		auto pPacket = ionet::CreateSharedPacket<ConfirmDeliverMessagePacket>(Hash256_Size + View.packedSize());
 		pPacket->Sender = Sender;
 
@@ -260,12 +245,10 @@ namespace catapult { namespace dbrb {
 		Write(pBuffer, PayloadHash);
 		Write(pBuffer, View);
 
-		MaybeSignMessage(pKeyPair, pPacket.get(), this);
-
 		return pPacket;
 	}
 
-	std::shared_ptr<MessagePacket> ShardPrepareMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
+	std::shared_ptr<MessagePacket> ShardPrepareMessage::toNetworkPacket() {
 		auto pPacket = ionet::CreateSharedPacket<ShardPrepareMessagePacket>(Payload->Size + sizeof(uint32_t) + View.size() * ProcessId_Size + Signature_Size);
 		pPacket->Sender = Sender;
 
@@ -274,14 +257,12 @@ namespace catapult { namespace dbrb {
 		Write(pBuffer, View);
 		Write(pBuffer, BroadcasterSignature);
 
-		MaybeSignMessage(pKeyPair, pPacket.get(), this);
-
 		return pPacket;
 	}
 
 	namespace {
 		template<typename ShardMessagePacket>
-		std::shared_ptr<MessagePacket> ToNetworkPacket(const crypto::KeyPair* pKeyPair, ShardBaseMessage* message) {
+		std::shared_ptr<MessagePacket> ToNetworkPacket(ShardBaseMessage* message) {
 			auto pPacket = ionet::CreateSharedPacket<ShardMessagePacket>(Hash256_Size + sizeof(uint32_t) + message->Certificate.size() * (ProcessId_Size + Signature_Size));
 			pPacket->Sender = message->Sender;
 
@@ -289,21 +270,19 @@ namespace catapult { namespace dbrb {
 			Write(pBuffer, message->PayloadHash);
 			Write(pBuffer, message->Certificate);
 
-			MaybeSignMessage(pKeyPair, pPacket.get(), message);
-
 			return pPacket;
 		}
 	}
 
-	std::shared_ptr<MessagePacket> ShardAcknowledgedMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
-		return ToNetworkPacket<ShardAcknowledgedMessagePacket>(pKeyPair, this);
+	std::shared_ptr<MessagePacket> ShardAcknowledgedMessage::toNetworkPacket() {
+		return ToNetworkPacket<ShardAcknowledgedMessagePacket>(this);
 	}
 
-	std::shared_ptr<MessagePacket> ShardCommitMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
-		return ToNetworkPacket<ShardCommitMessagePacket>(pKeyPair, this);
+	std::shared_ptr<MessagePacket> ShardCommitMessage::toNetworkPacket() {
+		return ToNetworkPacket<ShardCommitMessagePacket>(this);
 	}
 
-	std::shared_ptr<MessagePacket> ShardDeliverMessage::toNetworkPacket(const crypto::KeyPair* pKeyPair) {
-		return ToNetworkPacket<ShardDeliverMessagePacket>(pKeyPair, this);
+	std::shared_ptr<MessagePacket> ShardDeliverMessage::toNetworkPacket() {
+		return ToNetworkPacket<ShardDeliverMessagePacket>(this);
 	}
 }}

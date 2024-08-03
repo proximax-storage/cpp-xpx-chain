@@ -41,26 +41,4 @@ namespace catapult { namespace dbrb {
 	void RegisterPullNodesHandler(
 		const std::weak_ptr<ShardedDbrbProcess>& pDbrbProcessWeak,
 		ionet::ServerPacketHandlers& handlers);
-
-	/// Registers a remove DBRB node request handler in \a handlers.
-	void RegisterRemoveNodeRequestHandler(
-		const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
-		const crypto::KeyPair& keyPair,
-		ionet::ServerPacketHandlers& handlers);
-
-	/// Registers a remove DBRB node request handler in \a handlers.
-	void RegisterRemoveNodeRequestHandler(
-		const std::weak_ptr<ShardedDbrbProcess>& pDbrbProcessWeak,
-		const crypto::KeyPair& keyPair,
-		ionet::ServerPacketHandlers& handlers);
-
-	/// Registers a remove DBRB node response handler in \a handlers.
-	void RegisterRemoveNodeResponseHandler(
-		const std::weak_ptr<DbrbProcess>& pDbrbProcessWeak,
-		ionet::ServerPacketHandlers& handlers);
-
-	/// Registers a remove DBRB node response handler in \a handlers.
-	void RegisterRemoveNodeResponseHandler(
-		const std::weak_ptr<ShardedDbrbProcess>& pDbrbProcessWeak,
-		ionet::ServerPacketHandlers& handlers);
 }}

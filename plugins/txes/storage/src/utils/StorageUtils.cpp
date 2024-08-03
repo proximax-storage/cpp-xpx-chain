@@ -99,7 +99,10 @@ namespace catapult { namespace utils {
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		const auto zeroKey = Key();
 
-		if (!accountStateCache.contains(zeroKey))
+		const bool zeroKeyFound = accountStateCache.contains(zeroKey);
+		CATAPULT_LOG(debug) << "Zero key " << (zeroKeyFound ? "found" : "not found") << " in account state cache.";
+
+		if (!zeroKeyFound)
 			accountStateCache.addAccount(zeroKey, context.Height);
 
 		return accountStateCache.find(zeroKey);

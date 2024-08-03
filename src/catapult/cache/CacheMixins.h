@@ -71,6 +71,44 @@ namespace catapult { namespace cache {
 		const TSet& m_set;
 	};
 
+	/// A mixin for adding two-stage contains support to a cache.
+	/// First checks if a value is contained in \a TLookupSet; if it is, performs an additional check in \a TTargetSet.
+	template<typename TLookupSet, typename TLookupCacheDescriptor, typename TTargetSet>
+	class LookupContainsMixin {
+	private:
+		using LookupKeyType = typename TLookupCacheDescriptor::KeyType;
+		using LookupValueType = typename TLookupCacheDescriptor::ValueType;
+
+	public:
+		/// Creates a mixin around \a lookupSet and \a targetSet.
+		explicit LookupContainsMixin(
+				const TLookupSet& lookupSet,
+				const TTargetSet& targetSet)
+			: m_lookupSet(lookupSet)
+			, m_targetSet(targetSet)
+		{}
+
+	public:
+		/// Gets a value indicating whether or not target set contains an element corresponding to \a lookupKey.
+		bool contains(const LookupKeyType& lookupKey) const {
+			if (!m_lookupSet.contains(lookupKey))
+				return false;
+
+			const auto lookupValueIter = m_lookupSet.find(lookupKey);
+			const LookupValueType* pLookupValue = lookupValueIter.get();
+
+			if (!pLookupValue)
+				CATAPULT_THROW_RUNTIME_ERROR_1("value not found", lookupKey)
+
+			const auto& targetKey = TLookupCacheDescriptor::ToTargetKey(*pLookupValue);
+			return m_targetSet.contains(targetKey);
+		}
+
+	private:
+		const TLookupSet& m_lookupSet;
+		const TTargetSet& m_targetSet;
+	};
+
 	/// A mixin for adding iteration support to a cache.
 	template<typename TSet>
 	class IterationMixin {

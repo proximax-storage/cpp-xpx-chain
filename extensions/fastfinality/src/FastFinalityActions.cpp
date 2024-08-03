@@ -6,12 +6,14 @@
 
 #include "FastFinalityFsm.h"
 #include "fastfinality/src/utils/FastFinalityUtils.h"
+#include "catapult/api/ChainPackets.h"
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/harvesting_core/UnlockedAccounts.h"
+#include "catapult/ionet/PacketEntityUtils.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/StackLogger.h"
 #include "catapult/validators/AggregateEntityValidator.h"
@@ -34,8 +36,6 @@ namespace catapult { namespace fastfinality {
 				utils::TimePoint expirationTime,
 				const action& callback,
 				const action& cancelledCallback = [](){}) {
-			TRY_GET_FSM()
-
 			timer.expires_at(expirationTime);
 			timer.async_wait([pFsmWeak, callback, cancelledCallback](const boost::system::error_code& ec) {
 				TRY_GET_FSM()
@@ -55,15 +55,13 @@ namespace catapult { namespace fastfinality {
 		}
 
 		void DelayAction(
-				const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
+				const std::shared_ptr<FastFinalityFsm>& pFsmShared,
 				boost::asio::system_timer& timer,
 				uint64_t delay,
 				const action& callback,
 				const action& cancelledCallback = [](){}) {
-			TRY_GET_FSM()
-
 			auto expirationTime = pFsmShared->fastFinalityData().round().RoundStart + std::chrono::milliseconds(delay);
-			DelayAction(pFsmWeak, timer, expirationTime, callback, cancelledCallback);
+			DelayAction(pFsmShared, timer, expirationTime, callback, cancelledCallback);
 		}
 	}
 
@@ -91,13 +89,13 @@ namespace catapult { namespace fastfinality {
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 
 			auto dbrbProcess = pFsmShared->dbrbProcess();
-			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight, false);
+			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight + Height(1));
 
 			std::vector<RemoteNodeState> remoteNodeStates = retriever();
 
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
-				DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
+				DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 					TRY_GET_FSM()
 
 					CATAPULT_LOG(debug) << "got no remote node states";
@@ -116,7 +114,11 @@ namespace catapult { namespace fastfinality {
 
 			if (chainSyncData.NetworkHeight < chainSyncData.LocalHeight) {
 
-				pFsmShared->processEvent(NetworkHeightLessThanLocal{});
+				DelayAction(pFsmShared, pFsmShared->timer(), chain::CommitteePhaseCount * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
+					TRY_GET_FSM()
+
+					pFsmShared->processEvent(NetworkHeightLessThanLocal{});
+				});
 
 			} else if (chainSyncData.NetworkHeight > chainSyncData.LocalHeight) {
 
@@ -142,7 +144,7 @@ namespace catapult { namespace fastfinality {
 
 			} else if (!dbrbConfig.IsDbrbProcess) {
 
-				DelayAction(pFsmWeak, pFsmShared->timer(), chain::CommitteePhaseCount * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
+				DelayAction(pFsmShared, pFsmShared->timer(), chain::CommitteePhaseCount * config.MinCommitteePhaseTime.millis(), [pFsmWeak] {
 					TRY_GET_FSM()
 
 					pFsmShared->processEvent(StartLocalChainCheck{});
@@ -175,16 +177,19 @@ namespace catapult { namespace fastfinality {
 					if (isInDbrbSystem) {
 						pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 					} else {
-						pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::NetworkTime(), localHeight, true);
-						DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
+						auto banned = (state.pluginManager().dbrbViewFetcher().getBanPeriod(dbrbProcess.id()) > BlockDuration(0));
+						DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak, banned] {
 							TRY_GET_FSM()
 
-							CATAPULT_LOG(debug) << "not registered in the DBRB system";
-							pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
+							if (banned) {
+								pFsmShared->processEvent(DbrbProcessBanned{});
+							} else {
+								pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
+							}
 						});
 					}
 				} else {
-					DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
+					DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 						TRY_GET_FSM()
 
 						CATAPULT_LOG(debug) << "approval rating not sufficient";
@@ -273,32 +278,49 @@ namespace catapult { namespace fastfinality {
 			pMessageSender->clearQueue();
 			for (const auto& identityKey : chainSyncData.NodeIdentityKeys) {
 				std::vector<std::shared_ptr<model::Block>> blocks;
-				{
-					auto packetIoPair = pMessageSender->getNodePacketIoPair(identityKey);
-					if (!packetIoPair) {
-						CATAPULT_LOG(debug) << "no packet IO to get blocks from " << identityKey;
-						continue;
+				auto pPromise = std::make_shared<std::promise<std::vector<std::shared_ptr<model::Block>>>>();
+				pFsmShared->packetHandlers().registerRemovableHandler(ionet::PacketType::Pull_Blocks_Response, [pPromise, identityKey, &transactionRegistry = state.pluginManager().transactionRegistry()](
+						const auto& packet, auto& context) {
+					auto blockRange = ionet::ExtractEntitiesFromPacket<model::Block>(packet, [&transactionRegistry](const model::Block& block) {
+						return IsSizeValid(block, transactionRegistry);
+					});
+					if (!blockRange.empty() || sizeof(ionet::PacketHeader) == packet.Size) {
+						pPromise->set_value(model::EntityRange<model::Block>::ExtractEntitiesFromRange(std::move(blockRange)));
+					} else {
+						std::ostringstream message;
+						message << identityKey << " returned malformed packet for blocks from request";
+						pPromise->set_exception(std::make_exception_ptr(catapult_runtime_error(message.str().data())));
 					}
+				});
 
-					auto pRemoteChainApi = api::CreateRemoteChainApi(
-						*packetIoPair.io(),
-						identityKey,
-						state.pluginManager().transactionRegistry());
-
-					try {
-						auto blockRange = pRemoteChainApi->blocksFrom(startHeight, blocksFromOptions).get();
-						blocks = model::EntityRange<model::Block>::ExtractEntitiesFromRange(std::move(blockRange));
-						pMessageSender->pushNodePacketIoPair(identityKey, packetIoPair);
-					} catch (std::exception const& error) {
-						CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
-						pMessageSender->removeNode(identityKey);
-						continue;
-					} catch (...) {
-						CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
-						pMessageSender->removeNode(identityKey);
-						continue;
+				bool pullBlocksFailure = false;
+				try {
+					auto pPacket = ionet::CreateSharedPacket<api::PullBlocksRequest>();
+					pPacket->Height = startHeight;
+					pPacket->NumBlocks = blocksFromOptions.NumBlocks;
+					pPacket->NumResponseBytes = blocksFromOptions.NumBytes;
+					pMessageSender->enqueue(pPacket, true, { identityKey });
+					auto future = pPromise->get_future();
+					auto status = future.wait_for(std::chrono::seconds(60));
+					if (std::future_status::ready != status) {
+						CATAPULT_LOG(warning) << "pull blocks request timed out";
+						pullBlocksFailure = true;
 					}
+					blocks = future.get();
+				} catch (std::exception const& error) {
+					CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
+					pMessageSender->removeNode(identityKey);
+					pullBlocksFailure = true;
+				} catch (...) {
+					CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
+					pMessageSender->removeNode(identityKey);
+					pullBlocksFailure = true;
 				}
+
+				pFsmShared->packetHandlers().removeHandler(ionet::PacketType::Pull_Blocks_Response);
+
+				if (pullBlocksFailure)
+					continue;
 
 				bool success = false;
 				for (const auto& pBlock : blocks) {
@@ -321,8 +343,7 @@ namespace catapult { namespace fastfinality {
 								CATAPULT_LOG(info) << "successfully committed block (height " << pBlock->Height << ", signer " << pBlock->Signer << ")";
 							} else {
 								auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
-								CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult))
-									<< "block (height " << pBlock->Height << ") commit failed due to " << validationResult;
+								CATAPULT_LOG(warning) << "block (height " << pBlock->Height << ") commit failed due to " << validationResult;
 							}
 
 							pPromise->set_value(std::move(success));
@@ -351,7 +372,7 @@ namespace catapult { namespace fastfinality {
 				}
 			}
 
-			DelayAction(pFsmWeak, pFsmShared->timer(), state.config().Network.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
+			DelayAction(pFsmShared, pFsmShared->timer(), state.config().Network.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 				TRY_GET_FSM()
 
 				pFsmShared->processEvent(DownloadBlocksFailed{});
@@ -393,14 +414,43 @@ namespace catapult { namespace fastfinality {
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid current time", currentTime, block.Timestamp)
 
 			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
-			chain::DecreasePhaseTime(phaseTimeMillis, config);
+			switch (config.BlockTimeUpdateStrategy) {
+				case model::BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient: {
+					chain::DecreasePhaseTime(phaseTimeMillis, config);
+					break;
+				}
+				case model::BlockTimeUpdateStrategy::Increase_Coefficient: {
+					phaseTimeMillis = config.MinCommitteePhaseTime.millis();
+					break;
+				}
+				case model::BlockTimeUpdateStrategy::None: {
+					break;
+				}
+				default: {
+					CATAPULT_THROW_INVALID_ARGUMENT_1("invalid block time update strategy value", utils::to_underlying_type(config.BlockTimeUpdateStrategy))
+				}
+			}
+
 			auto nextRoundStart = roundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
 			committeeManager.selectCommittee(config, blockchainVersion);
 
-			auto committeeSilenceInterval = Timestamp(config.CommitteeSilenceInterval.millis());
-			while (nextRoundStart <= timeSupplier() + committeeSilenceInterval) {
+			while (nextRoundStart <= timeSupplier()) {
 				roundStart = nextRoundStart;
-				chain::IncreasePhaseTime(phaseTimeMillis, config);
+				switch (config.BlockTimeUpdateStrategy) {
+					case model::BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient: {
+						[[fallthrough]];
+					}
+					case model::BlockTimeUpdateStrategy::Increase_Coefficient: {
+						chain::IncreasePhaseTime(phaseTimeMillis, config);
+						break;
+					}
+					case model::BlockTimeUpdateStrategy::None: {
+						break;
+					}
+					default: {
+						CATAPULT_THROW_INVALID_ARGUMENT_1("invalid block time update strategy value", utils::to_underlying_type(config.BlockTimeUpdateStrategy))
+					}
+				}
 				nextRoundStart = nextRoundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
 
 				committeeManager.selectCommittee(config, blockchainVersion);
@@ -417,7 +467,7 @@ namespace catapult { namespace fastfinality {
 			fastFinalityData.setRound(round);
 			fastFinalityData.setCurrentBlockHeight(currentHeight);
 
-			DelayAction(pFsmWeak, pFsmShared->timer(), 0u, [pFsmWeak] {
+			DelayAction(pFsmShared, pFsmShared->timer(), 0, [pFsmWeak] {
 				TRY_GET_FSM()
 
 				pFsmShared->processEvent(RoundDetectionCompleted{});
@@ -455,15 +505,22 @@ namespace catapult { namespace fastfinality {
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 			fastFinalityData.setUnexpectedBlockHeight(false);
 			auto round = fastFinalityData.round();
-			auto pConfigHolder = state.pluginManager().configHolder();
+			const auto& pluginManager = state.pluginManager();
+			auto pConfigHolder = pluginManager.configHolder();
 			auto roundStart = utils::FromTimePoint(round.RoundStart);
-			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, roundStart, fastFinalityData.currentBlockHeight(), true);
+			auto& dbrbProcess = pFsmShared->dbrbProcess();
+			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, roundStart, fastFinalityData.currentBlockHeight());
 			if (!isInDbrbSystem) {
-				pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
+				auto banned = (pluginManager.dbrbViewFetcher().getBanPeriod(dbrbProcess.id()) > BlockDuration(0));
+				if (banned) {
+					pFsmShared->processEvent(DbrbProcessBanned{});
+				} else {
+					pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
+				}
 				return;
 			}
 
-			auto& committeeManager = state.pluginManager().getCommitteeManager(Block_Version);
+			auto& committeeManager = pluginManager.getCommitteeManager(Block_Version);
 			auto committee = committeeManager.committee();
 			if (committee.Round > round.Round)
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid round", committee.Round, round.Round)
@@ -495,7 +552,7 @@ namespace catapult { namespace fastfinality {
 				pFsmShared->processEvent(WaitForBlock{});
 			}
 
-			DelayAction(pFsmWeak, pFsmShared->timer(), round.RoundTimeMillis / chain::CommitteePhaseCount, [pFsmWeak] {
+			DelayAction(pFsmShared, pFsmShared->timer(), round.RoundTimeMillis / chain::CommitteePhaseCount, [pFsmWeak] {
 				TRY_GET_FSM()
 
 				auto dbrbProcess = pFsmShared->dbrbProcess();
@@ -566,7 +623,7 @@ namespace catapult { namespace fastfinality {
 			pBlockHeader->setCommitteePhaseTime(round.RoundTimeMillis / chain::CommitteePhaseCount);
 
 			std::atomic_bool stopTransactionFetching = false;
-			DelayAction(pFsmWeak, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis / 3, [&stopTransactionFetching] { stopTransactionFetching = true; });
+			DelayAction(pFsmShared, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis / 3, [&stopTransactionFetching] { stopTransactionFetching = true; });
 			auto pBlock = utils::UniqueToShared(blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock, [&stopTransactionFetching] { return stopTransactionFetching.load(); }));
 			pFsmShared->timer().cancel();
 
@@ -575,7 +632,13 @@ namespace catapult { namespace fastfinality {
 				auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);
 				pPacket->Type = ionet::PacketType::Push_Block;
 				std::memcpy(static_cast<void*>(pPacket->Data()), pBlock.get(), pBlock->Size);
-				pFsmShared->dbrbProcess().broadcast(pPacket, pFsmShared->dbrbProcess().currentView().Data);
+
+				DelayAction(pFsmShared, pFsmShared->timer(), config.Network.CommitteeSilenceInterval.millis(), [pFsmWeak, pPacket] {
+					TRY_GET_FSM()
+
+					pFsmShared->dbrbProcess().broadcast(pPacket, pFsmShared->dbrbProcess().currentView().Data);
+				});
+
 				pFsmShared->processEvent(BlockGenerationSucceeded{});
 			} else {
 				pFsmShared->processEvent(BlockGenerationFailed{});
@@ -612,7 +675,7 @@ namespace catapult { namespace fastfinality {
 					pFsmShared->processEvent(UnexpectedBlockHeight{});
 				} else {
 					const auto& config = pConfigHolder->Config(fastFinalityData.currentBlockHeight());
-					bool syncWithNetwork = !!fastFinalityData.proposedBlock() || (fastFinalityData.round().Round % config.Network.CheckNetworkHeightInterval == 0);
+					bool syncWithNetwork = (fastFinalityData.proposedBlockHash() != Hash256()) || (fastFinalityData.round().Round % config.Network.CheckNetworkHeightInterval == 0);
 					if (syncWithNetwork)
 						fastFinalityData.setIsBlockBroadcastEnabled(false);
 					pFsmShared->processEvent(BlockNotReceived{ syncWithNetwork });
@@ -651,7 +714,7 @@ namespace catapult { namespace fastfinality {
 				success = pPromise->get_future().get();
 			}
 
-			DelayAction(pFsmWeak, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis, [pFsmWeak, success, &state] {
+			DelayAction(pFsmShared, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis, [pFsmWeak, success, &state] {
 				TRY_GET_FSM()
 
 				const auto& maxChainHeight = state.maxChainHeight();
@@ -679,12 +742,32 @@ namespace catapult { namespace fastfinality {
 			int64_t nextRound = currentRound.Round + 1;
 			CATAPULT_LOG(debug) << "incremented round " << nextRound;
 			auto nextRoundStart = currentRound.RoundStart + std::chrono::milliseconds(currentRound.RoundTimeMillis);
+			auto config = pConfigHolder->Config(fastFinalityData.currentBlockHeight()).Network;
+			uint64_t roundTimeMillis = 0;
+			switch (config.BlockTimeUpdateStrategy) {
+				case model::BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient: {
+					[[fallthrough]];
+				}
+				case model::BlockTimeUpdateStrategy::Increase_Coefficient: {
+					uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / chain::CommitteePhaseCount;
+					chain::IncreasePhaseTime(nextPhaseTimeMillis, config);
+					roundTimeMillis = chain::CommitteePhaseCount * nextPhaseTimeMillis;
+					break;
+				}
+				case model::BlockTimeUpdateStrategy::None: {
+					roundTimeMillis = currentRound.RoundTimeMillis;
+					break;
+				}
+				default: {
+					CATAPULT_THROW_INVALID_ARGUMENT_1("invalid block time update strategy value", utils::to_underlying_type(config.BlockTimeUpdateStrategy))
+				}
+			}
 			uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / chain::CommitteePhaseCount;
-			chain::IncreasePhaseTime(nextPhaseTimeMillis, pConfigHolder->Config(fastFinalityData.currentBlockHeight()).Network);
+			chain::IncreasePhaseTime(nextPhaseTimeMillis, config);
 			fastFinalityData.setRound(FastFinalityRound{
 				nextRound,
 				nextRoundStart,
-				chain::CommitteePhaseCount * nextPhaseTimeMillis,
+				roundTimeMillis,
 			});
 		};
 	}
@@ -701,13 +784,32 @@ namespace catapult { namespace fastfinality {
 			state.pluginManager().getCommitteeManager(Block_Version).reset();
 
 			auto nextRoundStart = currentRound.RoundStart + std::chrono::milliseconds(currentRound.RoundTimeMillis);
-			uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / chain::CommitteePhaseCount;
-			chain::DecreasePhaseTime(nextPhaseTimeMillis, state.pluginManager().config(fastFinalityData.currentBlockHeight() + Height(1)));
+			const auto& config = state.pluginManager().config(fastFinalityData.currentBlockHeight() + Height(1));
+			uint64_t roundTimeMillis = 0;
+			switch (config.BlockTimeUpdateStrategy) {
+				case model::BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient: {
+					uint64_t nextPhaseTimeMillis = currentRound.RoundTimeMillis / chain::CommitteePhaseCount;
+					chain::DecreasePhaseTime(nextPhaseTimeMillis, config);
+					roundTimeMillis = chain::CommitteePhaseCount * nextPhaseTimeMillis;
+					break;
+				}
+				case model::BlockTimeUpdateStrategy::Increase_Coefficient: {
+					roundTimeMillis = chain::CommitteePhaseCount * config.MinCommitteePhaseTime.millis();
+					break;
+				}
+				case model::BlockTimeUpdateStrategy::None: {
+					roundTimeMillis = currentRound.RoundTimeMillis;
+					break;
+				}
+				default: {
+					CATAPULT_THROW_INVALID_ARGUMENT_1("invalid block time update strategy value", utils::to_underlying_type(config.BlockTimeUpdateStrategy))
+				}
+			}
 			fastFinalityData.incrementCurrentBlockHeight();
 			fastFinalityData.setRound(FastFinalityRound{
 				0u,
 				nextRoundStart,
-				chain::CommitteePhaseCount * nextPhaseTimeMillis,
+				roundTimeMillis,
 			});
 		};
 	}

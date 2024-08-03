@@ -22,7 +22,7 @@ namespace catapult { namespace fastfinality {
 			dbrb::View bootstrapView;
 			for (uint8_t i = 0u; i < count; ++i) {
 				auto pProcess = std::make_shared<MockDbrbProcess>(fakeDissemination);
-				pProcess->setValidationCallback([](const auto&){ return true; });
+				pProcess->setValidationCallback([](const auto&, const auto&){ return dbrb::MessageValidationResult::Message_Valid; });
 				currentView.Data.insert(pProcess->id());
 				if (i < bootstrapCount)
 					bootstrapView.Data.insert(pProcess->id());
@@ -171,7 +171,7 @@ namespace catapult { namespace fastfinality {
 		pReceiver->processMessage(*pMessage);
 
 		// Assert:
-		ASSERT_EQ(pReceiver->disseminationHistory().size(), 1u);
+		ASSERT_EQ(pReceiver->disseminationHistory().size(), 2u);
 
 		MockDbrbProcess::DbrbProcessPool.clear();
 	}

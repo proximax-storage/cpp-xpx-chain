@@ -31,8 +31,14 @@ namespace catapult { namespace extensions {
 	/// Extracts connection settings from \a config.
 	net::ConnectionSettings GetConnectionSettings(const config::BlockchainConfiguration& config);
 
+	/// Extracts SSL connection settings from \a config.
+	net::ConnectionSettings GetSslConnectionSettings(const config::BlockchainConfiguration& config);
+
 	/// Updates \a settings with values in \a config.
 	void UpdateAsyncTcpServerSettings(net::AsyncTcpServerSettings& settings, const config::BlockchainConfiguration& config);
+
+	/// Updates SSL \a settings with values in \a config.
+	void UpdateAsyncTcpServerSettings(net::AsyncSslTcpServerSettings& settings, const config::BlockchainConfiguration& config);
 
 	/// Gets the maximum number of incoming connections per identity as specified by \a roles.
 	uint32_t GetMaxIncomingConnectionsPerIdentity(ionet::NodeRoles roles);
@@ -68,6 +74,7 @@ namespace catapult { namespace extensions {
 			unsigned short port,
 			ionet::ServiceIdentifier serviceId,
 			const config::BlockchainConfiguration& config,
+			size_t id,
 			TAcceptor acceptor) {
 		auto endpoint = boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port);
 		auto settings = net::AsyncTcpServerSettings([acceptor, port, serviceId](const auto& socketInfo) {
@@ -78,5 +85,25 @@ namespace catapult { namespace extensions {
 
 		UpdateAsyncTcpServerSettings(settings, config);
 		return serviceGroup.pushService(net::CreateAsyncTcpServer, endpoint, settings);
+	}
+
+	/// Boots a tcp server with \a serviceGroup on localhost \a port with connection \a config and \a acceptor.
+	/// Incoming connections are assumed to be associated with \a serviceId.
+	template<typename TAcceptor>
+	std::shared_ptr<net::AsyncTcpServer> BootServer(
+			thread::MultiServicePool::ServiceGroup& serviceGroup,
+			unsigned short port,
+			ionet::ServiceIdentifier serviceId,
+			const config::BlockchainConfiguration& config,
+			TAcceptor acceptor) {
+		auto endpoint = boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port);
+		auto settings = net::AsyncSslTcpServerSettings([acceptor, port, serviceId](const auto& socketInfo) {
+			acceptor(socketInfo, [port, serviceId](const auto& connectResult) {
+				CATAPULT_LOG(info) << "accept result to local node port " << port << ": " << connectResult.Code;
+			});
+		});
+
+		UpdateAsyncTcpServerSettings(settings, config);
+		return serviceGroup.pushService(net::CreateAsyncSslTcpServer, endpoint, settings);
 	}
 }}

@@ -66,12 +66,14 @@ namespace catapult { namespace fastfinality {
 			return m_pBlockProducer;
 		}
 
-		void setProposedBlock(const std::shared_ptr<model::Block>& pBlock) {
-			std::atomic_store(&m_pProposedBlock, pBlock);
+		void setProposedBlockHash(const Hash256& hash) {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			m_proposedBlockHash = hash;
 		}
 
-		auto proposedBlock() const {
-			return std::atomic_load(&m_pProposedBlock);
+		auto proposedBlockHash() const {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			return m_proposedBlockHash;
 		}
 
 		std::future<bool> startWaitForBlock() {
@@ -133,7 +135,7 @@ namespace catapult { namespace fastfinality {
 		Key m_beneficiary;
 		std::shared_ptr<harvesting::UnlockedAccounts> m_pUnlockedAccounts;
 		const crypto::KeyPair* m_pBlockProducer;
-		std::shared_ptr<model::Block> m_pProposedBlock;
+		Hash256 m_proposedBlockHash;
 		std::shared_ptr<std::promise<bool>> m_pBlockPromise;
 		std::shared_ptr<model::Block> m_pBlock;
 		mutable std::mutex m_mutex;

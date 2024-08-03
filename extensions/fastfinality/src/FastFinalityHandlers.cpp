@@ -128,11 +128,6 @@ namespace catapult { namespace fastfinality {
 				const model::BlockElementSupplier& lastBlockElementSupplier,
 				const std::shared_ptr<thread::IoThreadPool>& pValidatorPool) {
 			auto& fastFinalityData = fsm.fastFinalityData();
-			if (!fastFinalityData.isBlockBroadcastEnabled()) {
-				CATAPULT_LOG(warning) << "rejecting block (broadcast is disabled)";
-				return false;
-			}
-
 			auto expectedHeight = fastFinalityData.currentBlockHeight();
 			if (expectedHeight != block.Height) {
 				CATAPULT_LOG(warning) << "rejecting block (height " << block.Height << " does not equal to expected height " << expectedHeight << ")";
@@ -164,14 +159,21 @@ namespace catapult { namespace fastfinality {
 	bool ValidateBlock(
 			FastFinalityFsm& fsm,
 			const ionet::Packet& packet,
+			const Hash256& payloadHash,
 			extensions::ServiceState& state,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
 			const std::shared_ptr<thread::IoThreadPool>& pValidatorPool) {
 		std::lock_guard<std::mutex> guard(fsm.mutex());
 		auto& fastFinalityData = fsm.fastFinalityData();
-		if (fastFinalityData.proposedBlock()) {
-			CATAPULT_LOG(warning) << "rejecting block, there is one already";
-			return false;
+		auto blockHash = fastFinalityData.proposedBlockHash();
+		if (blockHash != Hash256()) {
+			if (blockHash == payloadHash) {
+				CATAPULT_LOG(trace) << "block has already been validated";
+				return true;
+			} else {
+				CATAPULT_LOG(warning) << "rejecting block (differs from validated one)";
+				return false;
+			}
 		}
 
 		auto pBlock = GetBlockFromPacket(state.pluginManager(), packet);
@@ -180,7 +182,7 @@ namespace catapult { namespace fastfinality {
 		
 		auto isBlockValid = ValidateBlock(fsm, *pBlock, state, lastBlockElementSupplier, pValidatorPool);
 		if (isBlockValid)
-			fastFinalityData.setProposedBlock(pBlock);
+			fastFinalityData.setProposedBlockHash(payloadHash);
 
 		return isBlockValid;
 	}
@@ -218,6 +220,7 @@ namespace catapult { namespace fastfinality {
 			const auto& view = pFsmShared->fastFinalityData().unlockedAccounts()->view();
 			const uint8_t harvesterKeysCount = 1 + view.size();	// Extra one for a BootKey
 			auto pResponsePacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>(Key_Size * harvesterKeysCount);
+			pResponsePacket->Type = ionet::PacketType::Pull_Remote_Node_State_Response;
 
 			const auto targetHeight = std::min(lastBlockElementSupplier()->Block.Height, pRequest->Height);
 			const auto pBlockElement = blockElementGetter(targetHeight);

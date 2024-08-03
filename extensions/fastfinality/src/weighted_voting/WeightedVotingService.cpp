@@ -83,7 +83,7 @@ namespace catapult { namespace fastfinality {
 						dbrbShardingEnabled,
 						dbrbShardSize](const std::shared_ptr<thread::IoThreadPool>&) {
 					pTransactionSender->init(&keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local), pUnlockedAccounts);
-					auto pMessageSender = dbrb::CreateMessageSender(config::ToLocalNode(config), pWritersWeak, state.nodes(), dbrbConfig.IsDbrbProcess, pTransactionSender, pDbrbPool, dbrbConfig.ResendMessagesInterval);
+					auto pMessageSender = dbrb::CreateMessageSender(config::ToLocalNode(config), state.nodes(), dbrbConfig.IsDbrbProcess, pDbrbPool, dbrbConfig.ResendMessagesInterval);
 					if (dbrbShardingEnabled) {
 						auto pDbrbProcess = std::make_shared<dbrb::ShardedDbrbProcess>(keyPair, pMessageSender, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher(), dbrbShardSize);
 						return std::make_shared<WeightedVotingFsm>(pWeightedVotingFsmPool, config, pDbrbProcess, state.pluginManager());
@@ -124,27 +124,32 @@ namespace catapult { namespace fastfinality {
 					auto storageView = storage.view();
 					return storageView.loadBlockElement(storageView.chainHeight());
 				};
-				pFsmShared->dbrbProcess().setValidationCallback([pFsmWeak, &pluginManager, &state, lastBlockElementSupplier, pValidatorPool](const std::shared_ptr<ionet::Packet>& pPacket) {
+				pFsmShared->dbrbProcess().setValidationCallback([pFsmWeak, &pluginManager, &state, lastBlockElementSupplier, pValidatorPool](const std::shared_ptr<ionet::Packet>& pPacket, const Hash256&) {
 					auto pFsmShared = pFsmWeak.lock();
 					if (!pFsmShared || pFsmShared->stopped())
-						return false;
+						return dbrb::MessageValidationResult::Message_Broadcast_Stopped;
 
+					bool valid = false;
 					switch (pPacket->Type) {
 						case ionet::PacketType::Push_Proposed_Block: {
-							return ValidateProposedBlock(*pFsmShared, *pPacket, state, lastBlockElementSupplier, pValidatorPool);
+							valid = ValidateProposedBlock(*pFsmShared, *pPacket, state, lastBlockElementSupplier, pValidatorPool);
+							break;
 						}
 						case ionet::PacketType::Push_Confirmed_Block: {
-							return ValidateConfirmedBlock(*pFsmShared, *pPacket, state, lastBlockElementSupplier, pValidatorPool);
+							valid = ValidateConfirmedBlock(*pFsmShared, *pPacket, state, lastBlockElementSupplier, pValidatorPool);
+							break;
 						}
 						case ionet::PacketType::Push_Prevote_Messages: {
-							return ValidatePrevoteMessages(*pFsmShared, *pPacket);
+							valid = ValidatePrevoteMessages(*pFsmShared, *pPacket);
+							break;
 						}
 						case ionet::PacketType::Push_Precommit_Messages: {
-							return ValidatePrecommitMessages(*pFsmShared, *pPacket);
+							valid = ValidatePrecommitMessages(*pFsmShared, *pPacket);
+							break;
 						}
 					}
 
-					return false;
+					return (valid ? dbrb::MessageValidationResult::Message_Valid : dbrb::MessageValidationResult::Message_Invalid);
 				});
 
 				const auto& pConfigHolder = pluginManager.configHolder();
@@ -167,11 +172,9 @@ namespace catapult { namespace fastfinality {
 				handlers::RegisterPullBlocksHandler(pFsmShared->packetHandlers(), state.storage(), CreatePullBlocksHandlerConfiguration(config.Node));
 				pFsmShared->dbrbProcess().registerDbrbPushNodesHandler(config.Immutable.NetworkIdentifier, pFsmShared->packetHandlers());
 				pFsmShared->dbrbProcess().registerDbrbPullNodesHandler(pFsmShared->packetHandlers());
-				pFsmShared->dbrbProcess().registerDbrbRemoveNodeRequestHandler(locator.keyPair(), pFsmShared->packetHandlers());
-				pFsmShared->dbrbProcess().registerDbrbRemoveNodeResponseHandler(pFsmShared->packetHandlers());
 
 				auto pReaders = pServiceGroup->pushService(net::CreatePacketReaders, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, 2u);
-				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, [&acceptor = *pReaders](
+				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, 1, [&acceptor = *pReaders](
 					const auto& socketInfo,
 					const auto& callback) {
 					acceptor.accept(socketInfo, callback);

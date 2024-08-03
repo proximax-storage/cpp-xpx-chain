@@ -32,13 +32,16 @@ generate_nem() {
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # Mac OSX
     sed -i '' "/dataDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
+    sed -i '' "/certificateDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
     sed -i '' "/pluginsDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
   else
     # Unknown.
     sed -i "/dataDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
+    sed -i "/certificateDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
     sed -i "/pluginsDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
   fi
   echo "dataDirectory = $WORK_DIR/data/$1/data" >>$WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
+  echo "certificateDirectory = $WORK_DIR/data/$1/certificate" >>$WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
   echo "pluginsDirectory = $WORK_DIR/bin" >>$WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
 
   if [ ! -d $WORK_DIR/data/$1/data/00000 ]; then

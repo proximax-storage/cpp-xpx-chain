@@ -32,14 +32,13 @@ namespace catapult { namespace dbrb {
 	{}
 
 	void ShardedDbrbProcess::registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers) {
-		auto handler = [pThisWeak = weak_from_this(), &converter = m_converter, &strand = m_strand](const auto& packet, auto& context) {
-			const auto& messagePacket = static_cast<const MessagePacket&>(packet);
-			auto hash = CalculateHash(messagePacket.buffers());
-			if (!crypto::Verify(messagePacket.Sender, hash, messagePacket.Signature))
+		auto handler = [pThisWeak = weak_from_this()](const auto& packet, auto& context) {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
 				return;
 
-			auto pMessage = converter.toMessage(packet);
-			boost::asio::post(strand, [pThisWeak, pMessage]() {
+			auto pMessage = pThis->m_converter.toMessage(packet);
+			boost::asio::post(pThis->m_strand, [pThisWeak, pMessage]() {
 				auto pThis = pThisWeak.lock();
 				if (pThis)
 					pThis->processMessage(*pMessage);
@@ -138,7 +137,7 @@ namespace catapult { namespace dbrb {
 
 	void ShardedDbrbProcess::disseminate(const std::shared_ptr<Message>& pMessage, ViewData recipients) {
 		CATAPULT_LOG(trace) << "[DBRB] disseminating message " << pMessage->Type << " to " << View{ recipients };
-		auto pPacket = pMessage->toNetworkPacket(&m_keyPair);
+		auto pPacket = pMessage->toNetworkPacket();
 		for (auto iter = recipients.begin(); iter != recipients.end(); ++iter) {
 			if (m_id == *iter) {
 				boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pMessage]() {
@@ -219,7 +218,8 @@ namespace catapult { namespace dbrb {
 
 	void ShardedDbrbProcess::onPrepareMessageReceived(const ShardPrepareMessage& message) {
 		CATAPULT_LOG(trace) << "[DBRB] PREPARE: received payload " << message.Payload->Type << " from " << message.Sender;
-		if (!m_validationCallback(message.Payload)) {
+		auto payloadHash = CalculatePayloadHash(message.Payload);
+		if (m_validationCallback(message.Payload, payloadHash) != MessageValidationResult::Message_Valid) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (message invalid)";
 			return;
 		}
@@ -238,7 +238,6 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
-		auto payloadHash = CalculatePayloadHash(message.Payload);
 		auto& data = m_broadcastData[payloadHash];
 		if (data.Payload) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: message already processed";
@@ -282,15 +281,6 @@ namespace catapult { namespace dbrb {
 		data.ChildShardQuorumSize = data.SubTreeView.quorumSize();
 
 		auto signature = sign(ionet::PacketType::Dbrb_Shard_Acknowledged_Message, message.Payload, message.View);
-		std::ostringstream out;
-		out << " view: ";
-		bool empty = true;
-		for (const auto& id : message.View) {
-			if (!empty)
-				out << ", ";
-			out << id;
-			empty = false;
-		}
 		data.AcknowledgeCertificate.emplace(m_id, signature);
 		if (!data.Acknowledged && data.AcknowledgeCertificate.size() >= data.ChildShardQuorumSize) {
 			CATAPULT_LOG(trace) << "[DBRB] PREPARE: Sending Acknowledged message to sender " << message.Sender;
@@ -512,7 +502,7 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	bool ShardedDbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) {
+	bool ShardedDbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) {
 		auto view = View{ m_dbrbViewFetcher.getView(now) };
 		m_dbrbViewFetcher.logAllProcesses();
 		m_dbrbViewFetcher.logView(view.Data);
@@ -532,13 +522,12 @@ namespace catapult { namespace dbrb {
 			CATAPULT_THROW_RUNTIME_ERROR("no DBRB processes")
 
 		auto shardSize = config.DbrbShardSize;
-		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, view, isTemporaryProcess, isBootstrapProcess, shardSize, gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis()), registerSelf]() {
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, view, isTemporaryProcess, isBootstrapProcess, shardSize, gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis())]() {
 			auto pThis = pThisWeak.lock();
 			if (!pThis)
 				return;
 
 			pThis->m_pMessageSender->clearQueue();
-			pThis->m_pMessageSender->clearNodeRemovalData();
 			pThis->m_broadcastData.clear();
 
 			pThis->m_pMessageSender->findNodes(view.Data);
@@ -546,9 +535,9 @@ namespace catapult { namespace dbrb {
 			pThis->m_currentView = view;
 			CATAPULT_LOG(debug) << "[DBRB] Current view (" << view.Data.size() << ") is now set to " << view;
 
-			if (registerSelf) {
+			if (pThis->m_pTransactionSender) {
 				bool isRegistrationRequired = false;
-				if (!isTemporaryProcess && !isBootstrapProcess) {
+				if (!isTemporaryProcess && !isBootstrapProcess && (pThis->m_dbrbViewFetcher.getBanPeriod(pThis->m_id) == BlockDuration(0))) {
 					CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
 					isRegistrationRequired = true;
 				} else if (isTemporaryProcess) {

@@ -27,6 +27,7 @@ namespace catapult { namespace fastfinality {
 	struct GenerateBlock{};
 	struct WaitForBlock{};
 	struct NotRegisteredInDbrbSystem{};
+	struct DbrbProcessBanned{};
 
 	struct UnexpectedBlockHeight{};
 

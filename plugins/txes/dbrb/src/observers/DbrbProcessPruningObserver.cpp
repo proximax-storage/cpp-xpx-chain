@@ -16,7 +16,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DbrbProcessPruning, Notification)(const std::vector<std::unique_ptr<DbrbProcessUpdateListener>>& updateListeners) {
 		return MAKE_OBSERVER(DbrbProcessPruning, Notification, ([&updateListeners](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
-				return;
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DbrbProcessPruning)");
 
 			auto maxTransactionLifeTime = Timestamp(context.Config.Network.MaxTransactionLifetime.millis());
 			auto blockTargetTime = chain::CommitteePhaseCount * context.Config.Network.MinCommitteePhaseTime.millis();
