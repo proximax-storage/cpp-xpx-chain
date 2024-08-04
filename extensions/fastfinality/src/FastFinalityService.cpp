@@ -137,7 +137,8 @@ namespace catapult { namespace fastfinality {
 				pluginManager.getCommitteeManager(4).setLastBlockElementSupplier(lastBlockElementSupplier);
 				pluginManager.getCommitteeManager(5).setLastBlockElementSupplier(lastBlockElementSupplier);
 				pluginManager.getCommitteeManager(6).setLastBlockElementSupplier(lastBlockElementSupplier);
-				pluginManager.storageState().setLastBlockElementSupplier(lastBlockElementSupplier);
+				if (pluginManager.isStorageStateSet())
+					pluginManager.storageState().setLastBlockElementSupplier(lastBlockElementSupplier);
 
 				RegisterPullRemoteNodeStateHandler(pFsmShared, pFsmShared->packetHandlers(), locator.keyPair().publicKey(), blockElementGetter, lastBlockElementSupplier);
 				handlers::RegisterPullBlocksHandler(pFsmShared->packetHandlers(), state.storage(), CreatePullBlocksHandlerConfiguration(config.Node), ionet::PacketType::Pull_Blocks_Response);
