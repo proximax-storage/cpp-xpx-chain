@@ -245,16 +245,24 @@ namespace catapult { namespace dbrb {
 				});
 
 				if (m_clearQueue) {
-					m_buffer.clear();
+					if (!m_buffer.empty()) {
+						CATAPULT_LOG(trace) << "[MESSAGE SENDER] clearing the queue (" << m_buffer.size() << ")";
+						m_buffer.clear();
+					}
+
+					if (!m_failedMessageBuffer.empty()) {
+						CATAPULT_LOG(trace) << "[MESSAGE SENDER] clearing failed messages (" << m_failedMessageBuffer.size() << ")";
+						m_failedMessageBuffer.clear();
+					}
+
 					m_clearQueue = false;
 					continue;
 				}
 
 				std::swap(buffer, m_buffer);
 
-				if (!m_running) {
+				if (!m_running)
 					return;
-				}
 			}
 
 			auto pWriters = m_pWriters.lock();
@@ -269,6 +277,11 @@ namespace catapult { namespace dbrb {
 					ionet::Node node;
 					if (!getNode(recipient, node)) {
 						CATAPULT_LOG(debug) << "[MESSAGE SENDER] skipping sending " << *message.Payload << " to " << recipient << " (not connected)";
+						if (!message.DropOnFailure) {
+							std::lock_guard<std::mutex> lock(m_messageMutex);
+							if (!m_clearQueue)
+								m_failedMessageBuffer.enqueue(message.Payload, false, { recipient });
+						}
 						continue;
 					}
 
@@ -285,7 +298,8 @@ namespace catapult { namespace dbrb {
 
 								if (!message.DropOnFailure) {
 									std::lock_guard<std::mutex> lock(pThis->m_messageMutex);
-									pThis->m_failedMessageBuffer.enqueue(message.Payload, false, { recipient });
+									if (!pThis->m_clearQueue)
+										pThis->m_failedMessageBuffer.enqueue(message.Payload, false, { recipient });
 								}
 							}
 						}

@@ -62,9 +62,6 @@ namespace catapult { namespace fastfinality {
 				view.erase(dbrbProcess.id());
 
 				auto pMessageSender = dbrbProcess.messageSender();
-				pMessageSender->clearQueue();
-				pMessageSender->findNodes(view);
-
 				auto unreachableNodeCount = pMessageSender->getUnreachableNodeCount(view);
 				if (unreachableNodeCount > maxUnreachableNodeCount) {
 					CATAPULT_LOG(warning) << "unreachable node count " << unreachableNodeCount << " exceeds the limit " << maxUnreachableNodeCount;
