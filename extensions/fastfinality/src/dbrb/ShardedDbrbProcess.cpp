@@ -62,12 +62,8 @@ namespace catapult { namespace dbrb {
 		return m_strand;
 	}
 
-	std::shared_ptr<MessageSender> ShardedDbrbProcess::messageSender() {
+	std::shared_ptr<MessageSender> ShardedDbrbProcess::messageSender() const {
 		return m_pMessageSender;
-	}
-
-	const View& ShardedDbrbProcess::currentView() const {
-		return m_currentView;
 	}
 
 	const ProcessId& ShardedDbrbProcess::id() const  {
@@ -95,12 +91,12 @@ namespace catapult { namespace dbrb {
 			}
 
 			if (broadcastView > pThis->m_currentView) {
-				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: " << broadcastView << " is not a subview of the current view " << pThis->m_currentView << ", aborting broadcast";
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: broadcast view is not a subview of the current view, aborting broadcast";
 				return;
 			}
 
 			if (!broadcastView.isMember(pThis->m_id)) {
-				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the current view " << pThis->m_currentView << ", aborting broadcast";
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the current view, aborting broadcast";
 				return;
 			}
 
@@ -136,7 +132,7 @@ namespace catapult { namespace dbrb {
 	// Basic private methods:
 
 	void ShardedDbrbProcess::disseminate(const std::shared_ptr<Message>& pMessage, ViewData recipients) {
-		CATAPULT_LOG(trace) << "[DBRB] disseminating message " << pMessage->Type << " to " << View{ recipients };
+		CATAPULT_LOG(trace) << "[DBRB] disseminating message " << pMessage->Type << " to " << recipients.size() << " recipient(s)";
 		auto pPacket = pMessage->toNetworkPacket();
 		for (auto iter = recipients.begin(); iter != recipients.end(); ++iter) {
 			if (m_id == *iter) {
@@ -158,7 +154,7 @@ namespace catapult { namespace dbrb {
 		disseminate(pMessage, ViewData{ recipient });
 	}
 
-	Signature ShardedDbrbProcess::sign(ionet::PacketType type, const Payload& payload, const DbrbTreeView& view) {
+	Signature ShardedDbrbProcess::sign(ionet::PacketType type, const Payload& payload, const DbrbTreeView& view) const {
 		// Forms a hash based on message type, payload and the broadcast view and signs it.
 		uint32_t packetPayloadSize = 2 * sizeof(uint32_t) + view.size() * ProcessId_Size;
 		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(packetPayloadSize);
@@ -511,10 +507,6 @@ namespace catapult { namespace dbrb {
 		CATAPULT_LOG(debug) << "[DBRB] getting config at height " << height;
 		const auto& config = pConfigHolder->Config(height).Network;
 		auto bootstrapView = View{ config.DbrbBootstrapProcesses };
-		if (bootstrapView.Data.empty()) {
-			CATAPULT_LOG(debug) << "[DBRB] no bootstrap nodes, getting config at height " << height + Height(1);
-			bootstrapView = View{ pConfigHolder->Config(height + Height(1)).Network.DbrbBootstrapProcesses };
-		}
 		auto isBootstrapProcess = bootstrapView.isMember(m_id);
 
 		view.merge(bootstrapView);
@@ -533,7 +525,7 @@ namespace catapult { namespace dbrb {
 			pThis->m_pMessageSender->findNodes(view.Data);
 			pThis->m_shardSize = shardSize;
 			pThis->m_currentView = view;
-			CATAPULT_LOG(debug) << "[DBRB] Current view (" << view.Data.size() << ") is now set to " << view;
+			CATAPULT_LOG(debug) << "[DBRB] Current view size " << view.Data.size();
 
 			if (pThis->m_pTransactionSender) {
 				bool isRegistrationRequired = false;

@@ -167,7 +167,7 @@ namespace catapult { namespace fastfinality {
 				actions.DetectRound = CreateFastFinalityDetectRoundAction(pFsmShared, lastBlockElementSupplier, state);
 				actions.CheckConnections = CreateFastFinalityCheckConnectionsAction(pFsmShared, state);
 				actions.SelectBlockProducer = CreateFastFinalitySelectBlockProducerAction(pFsmShared, state);
-				actions.GenerateBlock = CreateFastFinalityGenerateBlockAction(pFsmShared, state.cache(), pConfigHolder, CreateHarvesterBlockGenerator(state), lastBlockElementSupplier);
+				actions.GenerateBlock = CreateFastFinalityGenerateBlockAction(pFsmShared, state, pConfigHolder, CreateHarvesterBlockGenerator(state), lastBlockElementSupplier);
 				actions.WaitForBlock = CreateFastFinalityWaitForBlockAction(pFsmShared, pConfigHolder);
 				actions.CommitBlock = CreateFastFinalityCommitBlockAction(pFsmShared, blockRangeConsumer, state);
 				actions.IncrementRound = CreateFastFinalityIncrementRoundAction(pFsmShared, pConfigHolder);

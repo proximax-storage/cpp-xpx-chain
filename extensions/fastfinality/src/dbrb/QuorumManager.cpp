@@ -10,7 +10,6 @@
 namespace catapult { namespace dbrb {
 
 	bool QuorumManager::update(const AcknowledgedMessage& message, ionet::PacketType payloadType) {
-		CATAPULT_LOG(trace) << "[DBRB] QUORUM: Received ACKNOWLEDGED message in view " << message.View << ".";
 		auto& set = AcknowledgedPayloads[message.View];
 		const auto& payloadHash = message.PayloadHash;
 		set.emplace(message.Sender, payloadHash);

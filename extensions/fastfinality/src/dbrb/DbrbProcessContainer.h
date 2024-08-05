@@ -34,14 +34,6 @@ namespace catapult { namespace dbrb {
 			return m_shardingEnabled;
 		}
 
-		const auto& currentView() const {
-			if (m_shardingEnabled) {
-				return m_pShardedDbrbProcess->currentView();
-			} else {
-				return m_pDbrbProcess->currentView();
-			}
-		}
-
 		const auto& strand() const {
 			if (m_shardingEnabled) {
 				return m_pShardedDbrbProcess->strand();

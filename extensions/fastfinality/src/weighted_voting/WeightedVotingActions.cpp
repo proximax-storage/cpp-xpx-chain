@@ -556,15 +556,25 @@ namespace catapult { namespace fastfinality {
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid committee phase", phase)
 			}
 		}
+
+		auto GetCurrentView(const std::shared_ptr<WeightedVotingFsm>& pFsmShared, extensions::ServiceState& state) {
+			const auto& committeeData = pFsmShared->committeeData();
+			auto roundStart = utils::FromTimePoint(committeeData.committeeRound().RoundStart);
+			auto view = dbrb::View{ state.pluginManager().dbrbViewFetcher().getView(roundStart) };
+			auto bootstrapView = dbrb::View{ state.config(committeeData.currentBlockHeight()).Network.DbrbBootstrapProcesses };
+			view.merge(bootstrapView);
+
+			return view;
+		}
 	}
 
 	action CreateWeightedVotingProposeBlockAction(
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
-			const cache::CatapultCache& cache,
+			extensions::ServiceState& state,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const harvesting::BlockGenerator& blockGenerator,
 			const model::BlockElementSupplier& lastBlockElementSupplier) {
-		return [pFsmWeak, &cache, pConfigHolder, blockGenerator, lastBlockElementSupplier]() {
+		return [pFsmWeak, &state, pConfigHolder, blockGenerator, lastBlockElementSupplier]() {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
@@ -580,7 +590,7 @@ namespace catapult { namespace fastfinality {
 				return;
 			}
 
-			if (!context.tryCalculateDifficulty(cache.sub<cache::BlockDifficultyCache>(), config.Network)) {
+			if (!context.tryCalculateDifficulty(state.cache().sub<cache::BlockDifficultyCache>(), config.Network)) {
 				CATAPULT_LOG(debug) << "skipping block propose attempt due to error calculating difficulty";
 				pFsmShared->processEvent(BlockGenerationFailed{});
 				return;
@@ -600,7 +610,7 @@ namespace catapult { namespace fastfinality {
 				auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);
 				pPacket->Type = ionet::PacketType::Push_Proposed_Block;
 				std::memcpy(static_cast<void*>(pPacket->Data()), pBlock.get(), pBlock->Size);
-				const auto& recipients = (pFsmShared->dbrbProcess().shardingEnabled() ? pFsmShared->dbrbProcess().currentView().Data : committeeData.committeeBootKeys());
+				auto recipients = (pFsmShared->dbrbProcess().shardingEnabled() ? GetCurrentView(pFsmShared, state).Data : committeeData.committeeBootKeys());
 				pFsmShared->dbrbProcess().broadcast(pPacket, recipients);
 				pFsmShared->processEvent(BlockGenerationSucceeded{});
 			} else {
@@ -697,9 +707,8 @@ namespace catapult { namespace fastfinality {
 
 	namespace {
 		template<typename TPacket, CommitteeMessageType MessageType, CommitteePhase Phase>
-		action CreateAddVoteAction(
-				const std::weak_ptr<WeightedVotingFsm>& pFsmWeak) {
-			return [pFsmWeak]() {
+		action CreateAddVoteAction(const std::weak_ptr<WeightedVotingFsm>& pFsmWeak, extensions::ServiceState& state) {
+			return [pFsmWeak, &state]() {
 				TRY_GET_FSM()
 
 				auto& committeeData = pFsmShared->committeeData();
@@ -731,18 +740,18 @@ namespace catapult { namespace fastfinality {
 				for (const auto& pair : votes)
 					pMessage[index++] = pair.second;
 
-				const auto& recipients = (pFsmShared->dbrbProcess().shardingEnabled() ? pFsmShared->dbrbProcess().currentView().Data : committeeData.committeeBootKeys());
+				auto recipients = (pFsmShared->dbrbProcess().shardingEnabled() ? GetCurrentView(pFsmShared, state).Data : committeeData.committeeBootKeys());
 				pFsmShared->dbrbProcess().broadcast(pPacket, recipients);
 			};
 		}
 	}
 
-	action CreateWeightedVotingAddPrevoteAction(const std::weak_ptr<WeightedVotingFsm>& pFsmWeak) {
-		return CreateAddVoteAction<PushPrevoteMessagesRequest, CommitteeMessageType::Prevote, CommitteePhase::Prevote>(pFsmWeak);
+	action CreateWeightedVotingAddPrevoteAction(const std::weak_ptr<WeightedVotingFsm>& pFsmWeak, extensions::ServiceState& state) {
+		return CreateAddVoteAction<PushPrevoteMessagesRequest, CommitteeMessageType::Prevote, CommitteePhase::Prevote>(pFsmWeak, state);
 	}
 
-	action CreateWeightedVotingAddPrecommitAction(const std::weak_ptr<WeightedVotingFsm>& pFsmWeak) {
-		return CreateAddVoteAction<PushPrecommitMessagesRequest, CommitteeMessageType::Precommit, CommitteePhase::Precommit>(pFsmWeak);
+	action CreateWeightedVotingAddPrecommitAction(const std::weak_ptr<WeightedVotingFsm>& pFsmWeak, extensions::ServiceState& state) {
+		return CreateAddVoteAction<PushPrecommitMessagesRequest, CommitteeMessageType::Precommit, CommitteePhase::Precommit>(pFsmWeak, state);
 	}
 
 	action CreateWeightedVotingUpdateConfirmedBlockAction(
@@ -779,7 +788,7 @@ namespace catapult { namespace fastfinality {
 				auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(blockSize);
 				pPacket->Type = ionet::PacketType::Push_Confirmed_Block;
 				std::memcpy(static_cast<void*>(pPacket->Data()), pBlock.get(), blockSize);
-				pFsmShared->dbrbProcess().broadcast(pPacket, pFsmShared->dbrbProcess().currentView().Data);
+				pFsmShared->dbrbProcess().broadcast(pPacket, GetCurrentView(pFsmShared, state).Data);
 			}
 		};
 	}

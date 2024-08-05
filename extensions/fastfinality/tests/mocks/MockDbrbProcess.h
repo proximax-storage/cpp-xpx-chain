@@ -32,6 +32,8 @@ namespace catapult { namespace mocks {
 
 		void setCurrentView(const dbrb::View& view);
 		void setBootstrapView(const dbrb::View& view);
+		const dbrb::View& currentView() const;
+		const dbrb::View& bootstrapView() const;
 
 		void broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) override;
 		void processMessage(const dbrb::Message& message) override;

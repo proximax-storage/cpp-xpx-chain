@@ -46,16 +46,24 @@ namespace catapult { namespace mocks {
 		m_bootstrapView = view;
 	}
 
+	const dbrb::View& MockDbrbProcess::currentView() const {
+		return m_currentView;
+	}
+
+	const dbrb::View& MockDbrbProcess::bootstrapView() const {
+		return m_bootstrapView;
+	}
+
 	void MockDbrbProcess::broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) {
 		dbrb::View broadcastView{ recipients };
 		if (!(broadcastView <= m_currentView)) {
-			CATAPULT_LOG(warning) << "[DBRB] BROADCAST: " << broadcastView << " is not a subview of the current view " << m_currentView << ", aborting broadcast";
+			CATAPULT_LOG(warning) << "[DBRB] BROADCAST: broadcast view is not a subview of the current view, aborting broadcast";
 			return;
 		}
 
 		CATAPULT_LOG(debug) << "[DBRB] BROADCAST: payload " << payload->Type;
 		if (!broadcastView.isMember(m_id)) {
-			CATAPULT_LOG(warning) << "[DBRB] BROADCAST: not a member of the current view " << broadcastView << ", aborting broadcast.";
+			CATAPULT_LOG(warning) << "[DBRB] BROADCAST: not a member of the current view, aborting broadcast.";
 			return;
 		}
 

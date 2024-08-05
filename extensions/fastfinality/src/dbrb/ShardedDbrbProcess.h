@@ -41,8 +41,7 @@ namespace catapult { namespace dbrb {
 
 	public:
 		boost::asio::io_context::strand& strand();
-		std::shared_ptr<MessageSender> messageSender();
-		const View& currentView() const;
+		std::shared_ptr<MessageSender> messageSender() const;
 		const ProcessId& id() const;
 		size_t shardSize() const;
 
@@ -50,7 +49,7 @@ namespace catapult { namespace dbrb {
 		void disseminate(const std::shared_ptr<Message>& pMessage, ViewData recipients);
 		void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient);
 
-		Signature sign(ionet::PacketType type, const Payload& payload, const DbrbTreeView& view);
+		Signature sign(ionet::PacketType type, const Payload& payload, const DbrbTreeView& view) const;
 		static bool verify(ionet::PacketType type, const ProcessId&, const Payload&, const DbrbTreeView&, const Signature&);
 
 		void onPrepareMessageReceived(const ShardPrepareMessage&);

@@ -199,15 +199,15 @@ namespace catapult { namespace fastfinality {
 				actions.SelectCommittee = CreateWeightedVotingSelectCommitteeAction(pFsmShared, state);
 				actions.ProposeBlock = CreateWeightedVotingProposeBlockAction(
 					pFsmShared,
-					state.cache(),
+					state,
 					pConfigHolder,
 					CreateHarvesterBlockGenerator(state),
 					lastBlockElementSupplier);
 				actions.WaitForProposal = CreateWeightedVotingWaitForProposalAction(pFsmShared);
 				actions.WaitForPrevotes = CreateWeightedVotingWaitForPrevotesAction(pFsmShared);
 				actions.WaitForPrecommits = CreateWeightedVotingWaitForPrecommitsAction(pFsmShared);
-				actions.AddPrevote = CreateWeightedVotingAddPrevoteAction(pFsmShared);
-				actions.AddPrecommit = CreateWeightedVotingAddPrecommitAction(pFsmShared);
+				actions.AddPrevote = CreateWeightedVotingAddPrevoteAction(pFsmShared, state);
+				actions.AddPrecommit = CreateWeightedVotingAddPrecommitAction(pFsmShared, state);
 				actions.UpdateConfirmedBlock = CreateWeightedVotingUpdateConfirmedBlockAction(pFsmShared, state);
 				actions.WaitForConfirmedBlock = CreateWeightedVotingWaitForConfirmedBlockAction(pFsmShared, state);
 				actions.CommitConfirmedBlock = CreateWeightedVotingCommitConfirmedBlockAction(pFsmShared, blockRangeConsumer, state);

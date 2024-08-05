@@ -45,16 +45,14 @@ namespace catapult { namespace dbrb {
 
 	public:
 		boost::asio::io_context::strand& strand();
-		std::shared_ptr<MessageSender> messageSender();
-		const View& currentView();
-		const View& bootstrapView();
-		const ProcessId& id();
+		std::shared_ptr<MessageSender> messageSender() const;
+		const ProcessId& id() const;
 
 	protected:
 		virtual void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients, uint64_t delayMillis);
 		virtual void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient, uint64_t delayMillis);
 
-		Signature sign(const Payload& payload, const View& view);
+		Signature sign(const Payload& payload, const View& view) const;
 		static bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
 
 		void onPrepareMessageReceived(const PrepareMessage&);
