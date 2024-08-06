@@ -387,6 +387,16 @@ namespace catapult { namespace fastfinality {
 			std::strftime(buffer, 40 ,"%F %T", std::localtime(&time));
 			return buffer;
 		}
+
+		auto GetCurrentView(const std::shared_ptr<FastFinalityFsm>& pFsmShared, extensions::ServiceState& state) {
+			const auto& fastFinalityData = pFsmShared->fastFinalityData();
+			auto roundStart = utils::FromTimePoint(fastFinalityData.round().RoundStart);
+			auto view = dbrb::View{ state.pluginManager().dbrbViewFetcher().getView(roundStart) };
+			auto bootstrapView = dbrb::View{ state.config(fastFinalityData.currentBlockHeight()).Network.DbrbBootstrapProcesses };
+			view.merge(bootstrapView);
+
+			return view;
+		}
 	}
 
 	action CreateFastFinalityDetectRoundAction(
@@ -482,7 +492,7 @@ namespace catapult { namespace fastfinality {
 			TRY_GET_FSM()
 
 			const auto& dbrbProcess = pFsmShared->dbrbProcess();
-			auto view = dbrbProcess.currentView();
+			auto view = GetCurrentView(pFsmShared, state);
 			auto maxUnreachableNodeCount = dbrb::View::maxInvalidProcesses(view.Data.size());
 			view.Data.erase(dbrbProcess.id());
 			auto pMessageSender = dbrbProcess.messageSender();
@@ -551,14 +561,6 @@ namespace catapult { namespace fastfinality {
 					CATAPULT_LOG(debug) << "skipping block producing, current time is too far in the round";
 				pFsmShared->processEvent(WaitForBlock{});
 			}
-
-			DelayAction(pFsmShared, pFsmShared->timer(), round.RoundTimeMillis / chain::CommitteePhaseCount, [pFsmWeak] {
-				TRY_GET_FSM()
-
-				auto dbrbProcess = pFsmShared->dbrbProcess();
-				auto pMessageSender = dbrbProcess.messageSender();
-				pMessageSender->findNodes(dbrbProcess.currentView().Data);
-			});
 		};
 	}
 
@@ -588,11 +590,11 @@ namespace catapult { namespace fastfinality {
 
 	action CreateFastFinalityGenerateBlockAction(
 			const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
-			const cache::CatapultCache& cache,
+			extensions::ServiceState& state,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const harvesting::BlockGenerator& blockGenerator,
 			const model::BlockElementSupplier& lastBlockElementSupplier) {
-		return [pFsmWeak, &cache, pConfigHolder, blockGenerator, lastBlockElementSupplier]() {
+		return [pFsmWeak, &state, pConfigHolder, blockGenerator, lastBlockElementSupplier]() {
 			TRY_GET_FSM()
 
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
@@ -608,7 +610,7 @@ namespace catapult { namespace fastfinality {
 				return;
 			}
 
-			if (!context.tryCalculateDifficulty(cache.sub<cache::BlockDifficultyCache>(), config.Network)) {
+			if (!context.tryCalculateDifficulty(state.cache().sub<cache::BlockDifficultyCache>(), config.Network)) {
 				CATAPULT_LOG(debug) << "skipping block propose attempt due to error calculating difficulty";
 				pFsmShared->processEvent(BlockGenerationFailed{});
 				return;
@@ -633,10 +635,11 @@ namespace catapult { namespace fastfinality {
 				pPacket->Type = ionet::PacketType::Push_Block;
 				std::memcpy(static_cast<void*>(pPacket->Data()), pBlock.get(), pBlock->Size);
 
-				DelayAction(pFsmShared, pFsmShared->timer(), config.Network.CommitteeSilenceInterval.millis(), [pFsmWeak, pPacket] {
+				DelayAction(pFsmShared, pFsmShared->timer(), config.Network.CommitteeSilenceInterval.millis(), [pFsmWeak, pPacket, &state] {
 					TRY_GET_FSM()
 
-					pFsmShared->dbrbProcess().broadcast(pPacket, pFsmShared->dbrbProcess().currentView().Data);
+					auto view = GetCurrentView(pFsmShared, state);
+					pFsmShared->dbrbProcess().broadcast(pPacket, view.Data);
 				});
 
 				pFsmShared->processEvent(BlockGenerationSucceeded{});

@@ -66,19 +66,11 @@ namespace catapult { namespace dbrb {
 		return m_strand;
 	}
 
-	std::shared_ptr<MessageSender> DbrbProcess::messageSender() {
+	std::shared_ptr<MessageSender> DbrbProcess::messageSender() const {
 		return m_pMessageSender;
 	}
 
-	const View& DbrbProcess::currentView() {
-		return m_currentView;
-	}
-
-	const View& DbrbProcess::bootstrapView() {
-		return m_bootstrapView;
-	}
-
-	const ProcessId& DbrbProcess::id() {
+	const ProcessId& DbrbProcess::id() const {
 		return m_id;
 	}
 
@@ -99,17 +91,17 @@ namespace catapult { namespace dbrb {
 			}
 
 			if (!(broadcastView <= pThis->m_currentView)) {
-				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: " << broadcastView << " is not a subview of the current view " << pThis->m_currentView << ", aborting broadcast";
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: broadcast view is not a subview of the current view, aborting broadcast";
 				return;
 			}
 
 			if (!(pThis->m_bootstrapView <= broadcastView)) {
-				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: bootstrap view " << pThis->m_bootstrapView << " is not a subview of the broadcast view " << broadcastView << ", aborting broadcast";
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: bootstrap view is not a subview of the broadcast view, aborting broadcast";
 				return;
 			}
 
 			if (!broadcastView.isMember(pThis->m_id)) {
-				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the broadcast view " << broadcastView << ", aborting broadcast";
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the broadcast view, aborting broadcast";
 				return;
 			}
 
@@ -166,7 +158,7 @@ namespace catapult { namespace dbrb {
 	// Basic private methods:
 
 	void DbrbProcess::disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients, uint64_t delayMillis) {
-		CATAPULT_LOG(trace) << "[DBRB] disseminating message " << pMessage->Type << " to " << View{ recipients };
+		CATAPULT_LOG(trace) << "[DBRB] disseminating message " << pMessage->Type << " to " << recipients.size() << " recipient(s)";
 		auto pPacket = pMessage->toNetworkPacket();
 		for (auto iter = recipients.begin(); iter != recipients.end(); ++iter) {
 			if (m_id == *iter) {
@@ -209,7 +201,7 @@ namespace catapult { namespace dbrb {
 		disseminate(pMessage, std::set<ProcessId>{ recipient }, delayMillis);
 	}
 
-	Signature DbrbProcess::sign(const Payload& payload, const View& view) {
+	Signature DbrbProcess::sign(const Payload& payload, const View& view) const {
 		// Forms a hash based on payload and the broadcast view and signs it.
 		uint32_t packetPayloadSize = view.packedSize();
 		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(packetPayloadSize);
@@ -258,7 +250,7 @@ namespace catapult { namespace dbrb {
 		}
 
 		if (message.BootstrapView != m_bootstrapView) {
-			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (invalid bootstrap view)\nExpected bootstrap view: " << m_bootstrapView << "\nActual bootstrap view:   " << message.BootstrapView;
+			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (invalid bootstrap view)";
 			return;
 		}
 
@@ -356,7 +348,7 @@ namespace catapult { namespace dbrb {
 
 	void DbrbProcess::onAcknowledgedQuorumCollected(const AcknowledgedMessage& message, BroadcastData& data) {
 		// Replacing certificate.
-		CATAPULT_LOG(trace) << "[DBRB] ACKNOWLEDGED: Quorum collected in view " << message.View << ". Payload " << data.Payload->Type;
+		CATAPULT_LOG(trace) << "[DBRB] ACKNOWLEDGED: Quorum collected for payload " << data.Payload->Type;
 		data.Certificate.clear();
 		const auto& acknowledgedSet = data.QuorumManager.AcknowledgedPayloads[message.View];
 		for (const auto& [processId, hash] : acknowledgedSet) {
@@ -506,10 +498,6 @@ namespace catapult { namespace dbrb {
 		CATAPULT_LOG(debug) << "[DBRB] getting config at height " << height;
 		const auto& config = pConfigHolder->Config(height).Network;
 		auto bootstrapView = View{ config.DbrbBootstrapProcesses };
-		if (bootstrapView.Data.empty()) {
-			CATAPULT_LOG(debug) << "[DBRB] no bootstrap nodes, getting config at height " << height + Height(1);
-			bootstrapView = View{ pConfigHolder->Config(height + Height(1)).Network.DbrbBootstrapProcesses };
-		}
 		if (bootstrapView.Data.empty())
 			CATAPULT_THROW_RUNTIME_ERROR("Bootstrap view is empty")
 		auto isBootstrapProcess = bootstrapView.isMember(m_id);
@@ -526,7 +514,7 @@ namespace catapult { namespace dbrb {
 			pThis->m_bootstrapView = bootstrapView;
 			auto bootstrapViewCopy = bootstrapView;
 			pThis->m_currentView.merge(bootstrapViewCopy);
-			CATAPULT_LOG(debug) << "[DBRB] Current view (" << pThis->m_currentView.Data.size() << ") is now set to " << pThis->m_currentView;
+			CATAPULT_LOG(debug) << "[DBRB] Current view size " << pThis->m_currentView.Data.size();
 
 			pThis->m_pMessageSender->findNodes(pThis->m_currentView.Data);
 

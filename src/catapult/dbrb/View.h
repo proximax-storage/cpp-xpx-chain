@@ -40,22 +40,5 @@ namespace catapult { namespace dbrb {
 		bool operator>(const View& other) const;
 		bool operator<=(const View& other) const;
 		bool operator>=(const View& other) const;
-
-		/// Insertion operator for outputting \a view to \a out.
-		friend std::ostream& operator<<(std::ostream& out, const View& view) {
-			bool leadingSpace = false;
-
-			out << "[";
-			for (const auto& processId : view.Data) {
-				if (leadingSpace)
-					out << " ";
-
-				out << ProcessIdToString(processId);
-				leadingSpace = true;
-			}
-			out << "]";
-
-			return out;
-		}
 	};
 }}

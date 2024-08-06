@@ -69,7 +69,7 @@ namespace catapult { namespace cache {
 		out << std::endl << "DBRB processes (" << m_processes.size() << "):";
 		for (const auto& [id, expirationTime] : m_processes)
 			LogProcess("DBRB process: ", id, expirationTime, m_banPeriods.at(id), out);
-		CATAPULT_LOG(debug) << out.str();
+		CATAPULT_LOG(trace) << out.str();
     }
 
 	void DbrbViewFetcherImpl::logView(const dbrb::ViewData& view) const {
@@ -83,6 +83,6 @@ namespace catapult { namespace cache {
 				out << std::endl << processId << " is not a member of the view";
 			}
 		}
-		CATAPULT_LOG(debug) << out.str();
+		CATAPULT_LOG(trace) << out.str();
     }
 }}

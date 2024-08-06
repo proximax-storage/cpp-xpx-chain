@@ -49,7 +49,7 @@ namespace catapult { namespace fastfinality {
 			boost::asio::post(pFsmShared->dbrbProcess().strand(), [pFsmWeak, pConfigHolder, lastBlockElementSupplier, pPromise]() {
 				auto pFsmShared = pFsmWeak.lock();
 				const auto& dbrbProcess = pFsmShared->dbrbProcess();
-				if (!pFsmShared || pFsmShared->stopped() || dbrbProcess.currentView().Data.empty()) {
+				if (!pFsmShared || pFsmShared->stopped()) {
 					CATAPULT_LOG(warning) << "aborting node states retrieval";
 					pPromise->set_value({});
 					return;
@@ -62,9 +62,6 @@ namespace catapult { namespace fastfinality {
 				view.erase(dbrbProcess.id());
 
 				auto pMessageSender = dbrbProcess.messageSender();
-				pMessageSender->clearQueue();
-				pMessageSender->findNodes(view);
-
 				auto unreachableNodeCount = pMessageSender->getUnreachableNodeCount(view);
 				if (unreachableNodeCount > maxUnreachableNodeCount) {
 					CATAPULT_LOG(warning) << "unreachable node count " << unreachableNodeCount << " exceeds the limit " << maxUnreachableNodeCount;
