@@ -39,6 +39,9 @@ namespace catapult { namespace net {
 		/// Accepts a connection represented by \a socketInfo and calls \a callback on completion.
 		virtual void accept(const ionet::SslPacketSocketInfo& socketInfo, const ConnectCallback& callback) = 0;
 
+		/// Gets the identities of active connections and connecting peers.
+		virtual utils::KeySet peers() const = 0;
+
 		/// Shuts down all connections.
 		virtual void shutdown() = 0;
 

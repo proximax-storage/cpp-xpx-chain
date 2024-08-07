@@ -33,7 +33,7 @@ namespace catapult { namespace ionet {
 	namespace {
 		// region error mapping
 
-		SocketOperationCode mapReadErrorCodeToSocketOperationCode(const boost::system::error_code& ec) {
+		SocketOperationCode mapReadErrorCodeToSslSocketOperationCode(const boost::system::error_code& ec) {
 			if (!ec)
 				return SocketOperationCode::Success;
 
@@ -46,7 +46,7 @@ namespace catapult { namespace ionet {
 			return isEof ? SocketOperationCode::Closed : SocketOperationCode::Read_Error;
 		}
 
-		SocketOperationCode mapWriteErrorCodeToSocketOperationCode(const boost::system::error_code& ec) {
+		SocketOperationCode mapWriteErrorCodeToSslSocketOperationCode(const boost::system::error_code& ec) {
 			if (!ec)
 				return SocketOperationCode::Success;
 
@@ -210,7 +210,7 @@ namespace catapult { namespace ionet {
 				}
 
 				bool tryComplete(const boost::system::error_code& ec) {
-					auto lastCode = mapWriteErrorCodeToSocketOperationCode(ec);
+					auto lastCode = mapWriteErrorCodeToSslSocketOperationCode(ec);
 					if (SocketOperationCode::Success != lastCode || m_nextBufferIndex >= m_payload.buffers().size()) {
 						m_callback(lastCode);
 						return true;
@@ -314,7 +314,7 @@ namespace catapult { namespace ionet {
 			void readSome(const SslPacketSocket::ReadCallback& callback, bool allowMultiple) {
 				auto pAppendContext = std::make_shared<SharedAppendContext>(m_buffer.prepareAppend());
 				auto readHandler = [this, callback, allowMultiple, pAppendContext](const auto& ec, auto bytesReceived) {
-					auto code = mapReadErrorCodeToSocketOperationCode(ec);
+					auto code = mapReadErrorCodeToSslSocketOperationCode(ec);
 					if (SocketOperationCode::Success != code)
 						return callback(code, nullptr);
 
@@ -461,7 +461,7 @@ namespace catapult { namespace ionet {
 
 		// endregion
 
-		// region StrandedPacketSocket
+		// region StrandedSslPacketSocket
 
 		class SocketIdentifier {
 		public:
@@ -495,20 +495,20 @@ namespace catapult { namespace ionet {
 		};
 
 		// implements SslPacketSocket using an explicit strand and ensures deterministic shutdown by using enable_shared_from_this
-		class StrandedPacketSocket final
+		class StrandedSslPacketSocket final
 				: public SslPacketSocket
-				, public std::enable_shared_from_this<StrandedPacketSocket> {
+				, public std::enable_shared_from_this<StrandedSslPacketSocket> {
 		private:
-			using SocketType = BasicPacketSocket<StrandedPacketSocket>;
+			using SocketType = BasicPacketSocket<StrandedSslPacketSocket>;
 
 		public:
-			StrandedPacketSocket(const std::shared_ptr<SocketGuard>& pSocketGuard, const PacketSocketOptions& options)
+			StrandedSslPacketSocket(const std::shared_ptr<SocketGuard>& pSocketGuard, const PacketSocketOptions& options)
 					: m_strandWrapper(pSocketGuard->strand())
 					, m_socket(pSocketGuard, options, *this)
 					, m_id(s_idCounter.fetch_add(1))
 			{}
 
-			~StrandedPacketSocket() override {
+			~StrandedSslPacketSocket() override {
 				// all async operations posted on the strand must be completed by now because all operations
 				// posted on the strand have been initiated by this object and captured this as a shared_ptr
 				// (executing the destructor means they all must have been destroyed)
@@ -617,12 +617,12 @@ namespace catapult { namespace ionet {
 			static std::atomic<uint64_t> s_idCounter;
 
 		private:
-			thread::StrandOwnerLifetimeExtender<StrandedPacketSocket> m_strandWrapper;
+			thread::StrandOwnerLifetimeExtender<StrandedSslPacketSocket> m_strandWrapper;
 			SocketType m_socket;
 			SocketIdentifier m_id;
 		};
 
-		std::atomic<uint64_t> StrandedPacketSocket::s_idCounter(1);
+		std::atomic<uint64_t> StrandedSslPacketSocket::s_idCounter(1);
 
 		// endregion
 	}
@@ -695,7 +695,7 @@ namespace catapult { namespace ionet {
 				}
 
 				m_host = asioEndpoint.address().to_string();
-				m_pSocket = std::make_shared<StrandedPacketSocket>(
+				m_pSocket = std::make_shared<StrandedSslPacketSocket>(
 						std::make_shared<SocketGuard>(std::move(socket), m_ioContext, m_options.SslOptions.ContextSupplier()),
 						m_options);
 				m_pSocket->setOptions();
@@ -722,7 +722,7 @@ namespace catapult { namespace ionet {
 
 			void handleHandshake(const boost::system::error_code& ec) {
 				if (ec) {
-					CATAPULT_LOG(warning) << "async_handshake returned an error: " << ec.message();
+					CATAPULT_LOG(warning) << "socket " << m_pSocket->id() << ": async_handshake returned an error: " << ec.message();
 					return m_accept(SslPacketSocketInfo());
 				}
 
@@ -737,7 +737,7 @@ namespace catapult { namespace ionet {
 			SslAcceptCallback m_accept;
 			PacketSocketOptions m_options;
 			std::string m_host;
-			std::shared_ptr<StrandedPacketSocket> m_pSocket;
+			std::shared_ptr<StrandedSslPacketSocket> m_pSocket;
 		};
 	}
 
@@ -770,7 +770,7 @@ namespace catapult { namespace ionet {
 					TCallbackWrapper& wrapper)
 					: m_callback(callback)
 					, m_wrapper(wrapper)
-					, m_pSocket(std::make_shared<StrandedPacketSocket>(
+					, m_pSocket(std::make_shared<StrandedSslPacketSocket>(
 							std::make_shared<SocketGuard>(ioContext, options.SslOptions.ContextSupplier()),
 							options))
 					, m_resolver(ioContext)
@@ -794,7 +794,7 @@ namespace catapult { namespace ionet {
 			}
 
 		public:
-			StrandedPacketSocket& impl() {
+			StrandedSslPacketSocket& impl() {
 				return *m_pSocket;
 			}
 
@@ -856,8 +856,12 @@ namespace catapult { namespace ionet {
 				if (!ec && !m_isCancelled)
 					return false;
 
+				std::ostringstream socketId;
+				if (m_pSocket)
+					socketId << "socket " << m_pSocket->id() << ": ";
+
 				CATAPULT_LOG(error)
-						<< "failed when " << operation << " '" << m_host << "': " << ec.message()
+						<< socketId.str() << "failed when " << operation << " '" << m_host << "': " << ec.message()
 						<< " (cancelled? " << m_isCancelled << ")";
 				return true;
 			}
@@ -878,7 +882,7 @@ namespace catapult { namespace ionet {
 			SslConnectCallback m_callback;
 			TCallbackWrapper& m_wrapper;
 
-			std::shared_ptr<StrandedPacketSocket> m_pSocket;
+			std::shared_ptr<StrandedSslPacketSocket> m_pSocket;
 			Resolver m_resolver;
 			std::string m_host;
 			Resolver::query m_query;
