@@ -36,6 +36,9 @@ namespace catapult { namespace dbrb {
 
 		/// Time when corresponding Prepare message was sent or first received.
 		Timestamp Begin;
+
+		/// Payload signature.
+		Signature PayloadSignature;
 	};
 
 	struct DeliverCertificate {

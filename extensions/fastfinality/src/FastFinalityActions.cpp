@@ -122,24 +122,13 @@ namespace catapult { namespace fastfinality {
 
 			} else if (chainSyncData.NetworkHeight > chainSyncData.LocalHeight) {
 
-				std::map<Hash256, std::pair<uint64_t, std::vector<Key>>> hashKeys;
-
 				for (const auto& state : remoteNodeStates) {
 					if (state.Height < chainSyncData.NetworkHeight)
 						break;
 
-					auto& pair = hashKeys[state.BlockHash];
-					pair.first += importanceGetter(state.NodeKey);
-					for (const auto& key : state.HarvesterKeys)
-						pair.first += importanceGetter(key);
-					pair.second.push_back(state.NodeKey);
+					chainSyncData.NodeIdentityKeys.push_back(state.NodeKey);
 				}
 
-				std::map<uint64_t, std::vector<Key>> importanceKeys;
-				for (const auto& pair : hashKeys)
-					importanceKeys[pair.second.first] = pair.second.second;
-
-				chainSyncData.NodeIdentityKeys = std::move(importanceKeys.begin()->second);
 				pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
 
 			} else if (!dbrbConfig.IsDbrbProcess) {
@@ -309,11 +298,9 @@ namespace catapult { namespace fastfinality {
 					blocks = future.get();
 				} catch (std::exception const& error) {
 					CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
-					pMessageSender->removeNode(identityKey);
 					pullBlocksFailure = true;
 				} catch (...) {
 					CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
-					pMessageSender->removeNode(identityKey);
 					pullBlocksFailure = true;
 				}
 

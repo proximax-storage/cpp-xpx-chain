@@ -52,10 +52,9 @@ namespace catapult { namespace fastfinality {
 			}
 
 			void clearQueue() override {}
-			void findNodes(dbrb::ViewData requestedIds) override {}
+			void connectNodes(dbrb::ViewData requestedIds) override {}
 			void addNodes(const std::vector<ionet::Node>& nodes) override {}
 			void sendNodes(const std::vector<ionet::Node>& nodes, const dbrb::ProcessId& recipient) override {}
-			void removeNode(const dbrb::ProcessId& id) override {}
 
 			dbrb::ViewData getUnreachableNodes(dbrb::ViewData& view) const override {
 				for (const auto& id : m_unreachableNodes)
@@ -64,7 +63,7 @@ namespace catapult { namespace fastfinality {
 				return m_unreachableNodes;
 			}
 
-			std::vector<ionet::Node> getKnownNodes(dbrb::ViewData& view) const {
+			std::vector<ionet::Node> getKnownNodes(const dbrb::ViewData& view) const {
 				return {};
 			}
 

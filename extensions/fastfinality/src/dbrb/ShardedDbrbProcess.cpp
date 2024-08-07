@@ -522,7 +522,7 @@ namespace catapult { namespace dbrb {
 			pThis->m_pMessageSender->clearQueue();
 			pThis->m_broadcastData.clear();
 
-			pThis->m_pMessageSender->findNodes(view.Data);
+			pThis->m_pMessageSender->connectNodes(view.Data);
 			pThis->m_shardSize = shardSize;
 			pThis->m_currentView = view;
 			CATAPULT_LOG(debug) << "[DBRB] Current view size " << view.Data.size();

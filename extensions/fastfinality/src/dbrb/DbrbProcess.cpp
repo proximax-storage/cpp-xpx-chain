@@ -111,6 +111,7 @@ namespace catapult { namespace dbrb {
 			data.Payload = payload;
 			data.BroadcastView = broadcastView;
 			data.BootstrapView = pThis->m_bootstrapView;
+			data.PayloadSignature = pThis->sign(payload, broadcastView);
 
 			CATAPULT_LOG(trace) << "[DBRB] BROADCAST: sending payload " << payload->Type;
 			auto pMessage = std::make_shared<PrepareMessage>(pThis->m_id, payload, broadcastView, data.BootstrapView);
@@ -273,23 +274,21 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		if (message.Sender != m_id) {
-			auto& data = m_broadcastData[payloadHash];
-			if (!data.Payload) {
-				data.Begin = utils::NetworkTime();
-				data.Payload = message.Payload;
-				data.BroadcastView = message.View;
-				data.BootstrapView = message.BootstrapView;
+		auto& data = m_broadcastData[payloadHash];
+		if (message.Sender != m_id && !data.Payload) {
+			data.Begin = utils::NetworkTime();
+			data.Payload = message.Payload;
+			data.BroadcastView = message.View;
+			data.BootstrapView = message.BootstrapView;
+			data.PayloadSignature = sign(message.Payload, message.View);
 
-				CATAPULT_LOG(trace) << "[DBRB] PREPARE: sending payload " << data.Payload->Type;
-				auto pMessage = std::make_shared<PrepareMessage>(m_id, data.Payload, data.BroadcastView, data.BootstrapView);
-				disseminate(pMessage, pMessage->View.Data, 0);
-			}
+			CATAPULT_LOG(trace) << "[DBRB] PREPARE: sending payload " << data.Payload->Type;
+			auto pMessage = std::make_shared<PrepareMessage>(m_id, data.Payload, data.BroadcastView, data.BootstrapView);
+			disseminate(pMessage, pMessage->View.Data, 0);
 		}
 
 		CATAPULT_LOG(trace) << "[DBRB] PREPARE: Sending Acknowledged message to " << message.Sender;
-		Signature payloadSignature = sign(message.Payload, message.View);
-		auto pMessage = std::make_shared<AcknowledgedMessage>(m_id, payloadHash, message.View, payloadSignature);
+		auto pMessage = std::make_shared<AcknowledgedMessage>(m_id, payloadHash, message.View, data.PayloadSignature);
 		send(pMessage, message.Sender, 0);
 	}
 
@@ -516,7 +515,7 @@ namespace catapult { namespace dbrb {
 			pThis->m_currentView.merge(bootstrapViewCopy);
 			CATAPULT_LOG(debug) << "[DBRB] Current view size " << pThis->m_currentView.Data.size();
 
-			pThis->m_pMessageSender->findNodes(pThis->m_currentView.Data);
+			pThis->m_pMessageSender->connectNodes(pThis->m_currentView.Data);
 
 			if (pThis->m_pTransactionSender) {
 				bool isRegistrationRequired = false;

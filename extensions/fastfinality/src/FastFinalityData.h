@@ -11,7 +11,7 @@
 #include <atomic>
 #include <map>
 #include <memory>
-#include <mutex>
+#include <shared_mutex>
 #include <set>
 #include <future>
 
@@ -67,17 +67,17 @@ namespace catapult { namespace fastfinality {
 		}
 
 		void setProposedBlockHash(const Hash256& hash) {
-			std::lock_guard<std::mutex> guard(m_mutex);
+			std::unique_lock guard(m_mutex);
 			m_proposedBlockHash = hash;
 		}
 
 		auto proposedBlockHash() const {
-			std::lock_guard<std::mutex> guard(m_mutex);
+			std::shared_lock guard(m_mutex);
 			return m_proposedBlockHash;
 		}
 
 		std::future<bool> startWaitForBlock() {
-			std::lock_guard<std::mutex> guard(m_mutex);
+			std::unique_lock guard(m_mutex);
 			m_pBlockPromise = std::make_shared<std::promise<bool>>();
 			return m_pBlockPromise->get_future();
 		}
@@ -85,7 +85,7 @@ namespace catapult { namespace fastfinality {
 		void setBlock(std::shared_ptr<model::Block> pBlock) {
 			std::atomic_store(&m_pBlock, std::move(pBlock));
 			{
-				std::lock_guard<std::mutex> guard(m_mutex);
+				std::unique_lock guard(m_mutex);
 				if (m_pBlockPromise) {
 					m_pBlockPromise->set_value(!!m_pBlock);
 					m_pBlockPromise = nullptr;
@@ -110,22 +110,22 @@ namespace catapult { namespace fastfinality {
 		}
 
 		void setUnexpectedBlockHeight(bool value) {
-			std::lock_guard<std::mutex> guard(m_mutex);
+			std::unique_lock guard(m_mutex);
 			m_unexpectedBlockHeight = value;
 		}
 
 		bool unexpectedBlockHeight() const {
-			std::lock_guard<std::mutex> guard(m_mutex);
+			std::shared_lock guard(m_mutex);
 			return m_unexpectedBlockHeight;
 		}
 
 		void setIsBlockBroadcastEnabled(bool value) {
-			std::lock_guard<std::mutex> guard(m_mutex);
+			std::unique_lock guard(m_mutex);
 			m_isBlockBroadcastEnabled = value;
 		}
 
 		bool isBlockBroadcastEnabled() const {
-			std::lock_guard<std::mutex> guard(m_mutex);
+			std::shared_lock guard(m_mutex);
 			return m_isBlockBroadcastEnabled;
 		}
 
@@ -138,7 +138,7 @@ namespace catapult { namespace fastfinality {
 		Hash256 m_proposedBlockHash;
 		std::shared_ptr<std::promise<bool>> m_pBlockPromise;
 		std::shared_ptr<model::Block> m_pBlock;
-		mutable std::mutex m_mutex;
+		mutable std::shared_mutex m_mutex;
 		Height m_currentBlockHeight;
 		bool m_unexpectedBlockHeight;
 		bool m_isBlockBroadcastEnabled;
