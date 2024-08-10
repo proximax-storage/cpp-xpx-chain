@@ -269,17 +269,16 @@ namespace catapult { namespace dbrb {
 			if (!pThis)
 				return;
 
+			pThis->m_timerRunning = false;
+
 			if (ec) {
-				if (ec == boost::asio::error::operation_aborted) {
-					pThis->m_timerRunning = false;
+				if (ec == boost::asio::error::operation_aborted)
 					return;
-				}
 
 				CATAPULT_THROW_EXCEPTION(boost::system::system_error(ec));
 			}
 
 			pThis->resendMessages();
-			pThis->m_timerRunning = false;
 		});
 	}
 
