@@ -20,7 +20,10 @@ namespace catapult { namespace net {
 	namespace {
 		using SocketPointer = std::shared_ptr<ionet::SslPacketSocket>;
 
+		enum class ConnectionType { Connected, Accepted };
+
 		struct ReaderWriterState {
+			net::ConnectionType ConnectionType;
 			ionet::Node Node;
 			SocketPointer pSocket;
 			std::shared_ptr<ionet::PacketIo> pBufferedIo;
@@ -33,40 +36,53 @@ namespace catapult { namespace net {
 		// connect: prepareConnect -> insert -> remove
 		class WriterContainer {
 		private:
-			using Writers = utils::ModificationSafeIterableContainer<std::list<ReaderWriterState>>;
+			using ReaderWriterContainer = std::unordered_map<Key, ReaderWriterState, utils::ArrayHasher<Key>>;
 
 		public:
 			size_t size() const {
-				utils::SpinLockGuard guard(m_lock);
-				return m_writers.size();
+				std::shared_lock guard(m_mutex);
+				return m_connectedWriters.size() + m_acceptedWriters.size();
 			}
 
 			size_t numOutgoingConnections() const {
-				utils::SpinLockGuard guard(m_lock);
-				return m_outgoingNodeIdentityKeys.size();
+				std::shared_lock guard(m_mutex);
+				return m_connectedWriters.size() + m_acceptedWriters.size() + m_connectingNodeIdentityKeys.size();
 			}
 
 			utils::KeySet identities() const {
-				utils::SpinLockGuard guard(m_lock);
+				std::shared_lock guard(m_mutex);
 				return m_nodeIdentityKeys;
 			}
 
+			utils::KeySet peers() const {
+				std::shared_lock guard(m_mutex);
+				auto peers = m_nodeIdentityKeys;
+				peers.insert(m_connectingNodeIdentityKeys.cbegin(), m_connectingNodeIdentityKeys.cend());
+				return peers;
+			}
+
 			bool pickOne(ReaderWriterState& state, const Key& identityKey) {
-				utils::SpinLockGuard guard(m_lock);
-				auto* pState = m_writers.nextIf([&identityKey](const ReaderWriterState& state) {
-					return (state.Node.identityKey() == identityKey);
-				});
+				std::shared_lock guard(m_mutex);
+				auto iter = m_connectedWriters.find(identityKey);
+				if (iter != m_connectedWriters.end()) {
+					state = iter->second;
+					return true;
+				}
 
-				if (!pState)
-					return false;
+				iter = m_acceptedWriters.find(identityKey);
+				if (iter != m_acceptedWriters.end()) {
+					state = iter->second;
+					return true;
+				}
 
-				state = *pState;
-				return true;
+				return false;
 			}
 
 			bool prepareConnect(const ionet::Node& node) {
-				utils::SpinLockGuard guard(m_lock);
-				if (!m_outgoingNodeIdentityKeys.insert(node.identityKey()).second) {
+				std::unique_lock guard(m_mutex);
+				const auto& identityKey = node.identityKey();
+				if (!m_connectingNodeIdentityKeys.insert(identityKey).second ||
+					m_connectedNodeIdentityKeys.find(identityKey) != m_connectedNodeIdentityKeys.cend()) {
 					CATAPULT_LOG(debug) << "bypassing connection to already connected peer " << node;
 					return false;
 				}
@@ -74,84 +90,81 @@ namespace catapult { namespace net {
 				return true;
 			}
 
-			bool insert(const ReaderWriterState& state) {
-				utils::SpinLockGuard guard(m_lock);
+			void abortConnect(const ionet::Node& node) {
+				std::unique_lock guard(m_mutex);
+				CATAPULT_LOG(debug) << "aborting connection to: " << node;
+				m_connectingNodeIdentityKeys.erase(node.identityKey());
+			}
 
-				// if the state is for an already connected node, ignore it
-				// 1. required for filtering accepted connections
-				// 2. prepareConnect proactively filters connections
-				// 3. failsafe for mixed connect + accept use cases (not optimized)
-				if (!m_nodeIdentityKeys.emplace(state.Node.identityKey()).second) {
-					CATAPULT_LOG(debug) << "ignoring connection to already connected peer " << state.Node;
-					return false;
+			bool insert(const ReaderWriterState& state) {
+				std::unique_lock guard(m_mutex);
+
+				const auto& identityKey = state.Node.identityKey();
+				switch (state.ConnectionType) {
+					case ConnectionType::Connected: {
+						if (!m_connectedNodeIdentityKeys.emplace(identityKey).second) {
+							CATAPULT_LOG(debug) << "ignoring connection to already connected peer " << state.Node << " " << identityKey;
+							return false;
+						}
+						m_connectingNodeIdentityKeys.erase(identityKey);
+						m_connectedWriters[identityKey] = state;
+						break;
+					}
+					case ConnectionType::Accepted: {
+						if (!m_acceptedNodeIdentityKeys.emplace(identityKey).second) {
+							CATAPULT_LOG(debug) << "not accepting already connected peer " << state.Node << " " << identityKey;
+							return false;
+						}
+						m_acceptedWriters[identityKey] = state;
+						break;
+					}
 				}
 
-				m_writers.push_back(state);
+				m_nodeIdentityKeys.emplace(identityKey);
 				state.pReader->start();
 				return true;
 			}
 
-			void abortConnect(const ionet::Node& node) {
-				utils::SpinLockGuard guard(m_lock);
-				CATAPULT_LOG(debug) << "aborting connection to: " << node;
-				m_outgoingNodeIdentityKeys.erase(node.identityKey());
-			}
-
-			void remove(const SocketPointer& pSocket) {
-				utils::SpinLockGuard guard(m_lock);
-				auto iter = findStateBySocket(pSocket);
-				if (m_writers.end() == iter) {
-					CATAPULT_LOG(warning) << "ignoring request to remove unknown socket";
-					return;
+			void remove(const Key& identityKey, ConnectionType connectionType) {
+				std::unique_lock guard(m_mutex);
+				switch (connectionType) {
+					case ConnectionType::Connected: {
+						m_connectedNodeIdentityKeys.erase(identityKey);
+						if (m_acceptedNodeIdentityKeys.find(identityKey) == m_acceptedNodeIdentityKeys.cend())
+							m_nodeIdentityKeys.erase(identityKey);
+						m_connectedWriters.erase(identityKey);
+						break;
+					}
+					case ConnectionType::Accepted: {
+						CATAPULT_LOG(debug) << "removing accepted connection to " << identityKey;
+						m_acceptedNodeIdentityKeys.erase(identityKey);
+						if (m_connectedNodeIdentityKeys.find(identityKey) == m_connectedNodeIdentityKeys.cend())
+							m_nodeIdentityKeys.erase(identityKey);
+						m_acceptedWriters.erase(identityKey);
+						break;
+					}
 				}
-
-				remove(iter);
-			}
-
-			bool close(const Key& identityKey) {
-				utils::SpinLockGuard guard(m_lock);
-				auto iter = findStateByKey(identityKey);
-				if (m_writers.end() == iter)
-					return false;
-
-				CATAPULT_LOG(debug) << "closing connection to " << identityKey;
-				iter->pSocket->close();
-				remove(iter);
-				return true;
 			}
 
 			void clear() {
-				utils::SpinLockGuard guard(m_lock);
+				CATAPULT_LOG(debug) << "clearing packet readers/writers";
+				std::unique_lock guard(m_mutex);
 				m_nodeIdentityKeys.clear();
-				m_outgoingNodeIdentityKeys.clear();
-				m_writers.clear();
-			}
-
-		private:
-			Writers::iterator findStateBySocket(const SocketPointer& pSocket) {
-				return std::find_if(m_writers.begin(), m_writers.end(), [&pSocket](const auto& state) {
-					return state.pSocket == pSocket;
-				});
-			}
-
-			Writers::iterator findStateByKey(const Key& identityKey) {
-				return std::find_if(m_writers.begin(), m_writers.end(), [&identityKey](const auto& state) {
-					return state.Node.identityKey() == identityKey;
-				});
-			}
-
-			void remove(Writers::iterator iter) {
-				const auto& identityKey = iter->Node.identityKey();
-				m_nodeIdentityKeys.erase(identityKey);
-				m_outgoingNodeIdentityKeys.erase(identityKey);
-				m_writers.erase(iter);
+				m_connectingNodeIdentityKeys.clear();
+				m_connectedNodeIdentityKeys.clear();
+				m_acceptedNodeIdentityKeys.clear();
+				m_connectedWriters.clear();
+				m_acceptedWriters.clear();
 			}
 
 		private:
 			utils::KeySet m_nodeIdentityKeys; // keys of active writers (both connected AND accepted)
-			utils::KeySet m_outgoingNodeIdentityKeys; // keys of connecting or connected writers
-			Writers m_writers;
-			mutable utils::SpinLock m_lock;
+			utils::KeySet m_connectingNodeIdentityKeys;
+			utils::KeySet m_connectedNodeIdentityKeys;
+			utils::KeySet m_acceptedNodeIdentityKeys;
+			ReaderWriterContainer m_connectedWriters;
+			ReaderWriterContainer m_acceptedWriters;
+			mutable std::shared_mutex m_mutex;
 		};
 
 		class ErrorHandlingPacketIo : public ionet::PacketIo {
@@ -216,13 +229,15 @@ namespace catapult { namespace net {
 
 		public:
 			size_t numActiveConnections() const override {
-				// use m_writers.numOutgoingConnections() instead of m_pServerConnector->numActiveConnections() because the latter
-				// does not count pending connections (before socket CONNECT succeeds)
-				return m_writers.numOutgoingConnections() + m_pClientConnector->numActiveConnections();
+				return m_writers.numOutgoingConnections();
 			}
 
 			utils::KeySet identities() const override {
 				return m_writers.identities();
+			}
+
+			utils::KeySet peers() const override {
+				return m_writers.peers();
 			}
 
 		public:
@@ -230,15 +245,15 @@ namespace catapult { namespace net {
 				ReaderWriterState state;
 				if (!m_writers.pickOne(state, identityKey)) {
 					CATAPULT_LOG(debug) << "no packet io available for sending " << payload.header() << " to " << identityKey;
-					callback(ionet::SocketOperationCode::Closed);
+					callback(ionet::SocketOperationCode::Not_Connected);
 					return;
 				}
 
 				// important - capture pSocket by value in order to prevent it from being removed out from under the
 				// error handling packet io, also capture this for the same reason
-				auto errorHandler = [pThis = shared_from_this(), pSocket = state.pSocket, node = state.Node]() {
-					CATAPULT_LOG(warning) << "error handler triggered for " << node;
-					pThis->removeWriter(pSocket);
+				auto errorHandler = [pThis = shared_from_this(), pSocket = state.pSocket, node = state.Node, connectionType = state.ConnectionType]() {
+					CATAPULT_LOG(warning) << "error handler triggered for " << node << " " << node.identityKey();
+					pThis->removeWriter(pSocket, node.identityKey(), connectionType);
 				};
 
 				auto pPacketIo = std::make_shared<ErrorHandlingPacketIo>(state.pBufferedIo, errorHandler);
@@ -256,7 +271,7 @@ namespace catapult { namespace net {
 						auto connectCode,
 						const auto& verifiedSocketInfo) {
 					// abort the connection if it failed or is redundant
-					if (PeerConnectCode::Accepted != connectCode || !pThis->addWriter(node, verifiedSocketInfo)) {
+					if (PeerConnectCode::Accepted != connectCode || !pThis->addWriter(node, verifiedSocketInfo, ConnectionType::Connected)) {
 						pThis->m_writers.abortConnect(node);
 
 						if (PeerConnectCode::Accepted == connectCode)
@@ -274,7 +289,7 @@ namespace catapult { namespace net {
 						const auto& remoteKey) {
 					ionet::SslPacketSocketInfo verifiedSocketInfo(host, remoteKey, pVerifiedSocket);
 					if (PeerConnectCode::Accepted == connectCode) {
-						if (!pThis->addWriter(remoteKey, verifiedSocketInfo)) {
+						if (!pThis->addWriter(remoteKey, verifiedSocketInfo, ConnectionType::Accepted)) {
 							connectCode = PeerConnectCode::Already_Connected;
 						} else {
 							CATAPULT_LOG(debug) << "accepted connection from '" << verifiedSocketInfo.host() << "' as " << remoteKey;
@@ -286,39 +301,40 @@ namespace catapult { namespace net {
 			}
 
 		private:
-			bool addWriter(const Key& key, const ionet::SslPacketSocketInfo& socketInfo) {
+			bool addWriter(const Key& key, const ionet::SslPacketSocketInfo& socketInfo, ConnectionType connectionType) {
 				auto node = ionet::Node(key, ionet::NodeEndpoint(), ionet::NodeMetadata(m_state.networkIdentifier()));
-				return addWriter(node, socketInfo);
+				return addWriter(node, socketInfo, connectionType);
 			}
 
-			bool addWriter(const ionet::Node& node, const ionet::SslPacketSocketInfo& socketInfo) {
+			bool addWriter(const ionet::Node& node, const ionet::SslPacketSocketInfo& socketInfo, ConnectionType connectionType) {
 				ReaderWriterState state;
+				state.ConnectionType = connectionType;
 				state.Node = node;
 				state.pSocket = socketInfo.socket();
 				state.pBufferedIo = state.pSocket->buffered();
 				auto identity = ionet::ReaderIdentity{ node.identityKey(), socketInfo.host() };
-				state.pReader = createReader(state.pSocket, state.pBufferedIo, identity);
+				state.pReader = createReader(state.pSocket, state.pBufferedIo, identity, connectionType);
 				return m_writers.insert(state);
 			}
 
-			void removeWriter(const SocketPointer& pSocket) {
+			void removeWriter(const SocketPointer& pSocket, const Key& identityKey, ConnectionType connectionType) {
 				pSocket->close();
-				m_writers.remove(pSocket);
+				m_writers.remove(identityKey, connectionType);
 			}
 
 			std::shared_ptr<ChainedSocketReader> createReader(
 					const SocketPointer& pSocket,
 					const std::shared_ptr<ionet::PacketIo>& pBufferedIo,
-					const ionet::ReaderIdentity& identity) {
-				const auto& identityKey = identity.PublicKey;
-				return CreateChainedSocketReader(pSocket, pBufferedIo, m_handlers, identity, [pThis = shared_from_this(), identityKey](auto code) {
-					pThis->closeOne(identityKey);
+					const ionet::ReaderIdentity& identity,
+					ConnectionType connectionType) {
+				return CreateChainedSocketReader(pSocket, pBufferedIo, m_handlers, identity, [pThis = shared_from_this(), pSocket, identityKey = identity.PublicKey, connectionType](auto code) {
+					pThis->removeWriter(pSocket, identityKey, connectionType);
 				});
 			}
 
 		public:
 			bool closeOne(const Key& identityKey) override {
-				return m_writers.close(identityKey);
+				CATAPULT_THROW_RUNTIME_ERROR("closeOne() is not implemented")
 			}
 
 			void shutdown() override {

@@ -16,7 +16,6 @@
 #include "catapult/types.h"
 
 namespace catapult {
-	namespace dbrb { class DelayedExecutor; }
 	namespace thread { class IoThreadPool; }
 }
 
@@ -42,21 +41,24 @@ namespace catapult { namespace dbrb {
 		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers);
 		void setValidationCallback(const ValidationCallback& callback);
 		void setDeliverCallback(const DeliverCallback& callback);
+		void setGetDbrbModeCallback(const GetDbrbModeCallback& callback);
 
 	public:
 		boost::asio::io_context::strand& strand();
 		std::shared_ptr<MessageSender> messageSender() const;
 		const ProcessId& id() const;
+		void maybeDeliver();
+		void clearData();
 
 	protected:
-		virtual void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients, uint64_t delayMillis);
-		virtual void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient, uint64_t delayMillis);
+		virtual void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients);
+		virtual void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient);
 
 		Signature sign(const Payload& payload, const View& view) const;
 		static bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
 
 		void onPrepareMessageReceived(const PrepareMessage&);
-		void onAcknowledgedDeclinedMessageReceived(const AcknowledgedDeclinedMessage&);
+		static void onAcknowledgedDeclinedMessageReceived(const AcknowledgedDeclinedMessage&);
 		virtual void onAcknowledgedMessageReceived(const AcknowledgedMessage&);
 		virtual void onCommitMessageReceived(const CommitMessage&);
 		void onDeliverMessageReceived(const DeliverMessage&);
@@ -73,11 +75,11 @@ namespace catapult { namespace dbrb {
 		NetworkPacketConverter m_converter;
 		ValidationCallback m_validationCallback;
 		DeliverCallback m_deliverCallback;
+		GetDbrbModeCallback m_getDbrbModeCallback;
 		std::shared_ptr<MessageSender> m_pMessageSender;
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 		boost::asio::io_context::strand m_strand;
 		std::shared_ptr<TransactionSender> m_pTransactionSender;
 		const dbrb::DbrbViewFetcher& m_dbrbViewFetcher;
-		std::shared_ptr<DelayedExecutor> m_pDelayedExecutor;
 	};
 }}

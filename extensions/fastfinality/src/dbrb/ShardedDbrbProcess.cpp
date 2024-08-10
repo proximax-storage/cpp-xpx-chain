@@ -58,6 +58,10 @@ namespace catapult { namespace dbrb {
 		m_deliverCallback = callback;
 	}
 
+	void ShardedDbrbProcess::setGetDbrbModeCallback(const GetDbrbModeCallback& callback) {
+		m_getDbrbModeCallback = callback;
+	}
+
 	boost::asio::io_context::strand& ShardedDbrbProcess::strand() {
 		return m_strand;
 	}
@@ -72,6 +76,20 @@ namespace catapult { namespace dbrb {
 
 	size_t ShardedDbrbProcess::shardSize() const {
 		return m_shardSize;
+	}
+
+	void ShardedDbrbProcess::maybeDeliver() {
+	}
+
+	void ShardedDbrbProcess::clearData() {
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this()]() {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
+				return;
+
+			CATAPULT_LOG(trace) << "[DBRB] removing broadcast data";
+			pThis->m_broadcastData.clear();
+		});
 	}
 
 	// Basic operations:
@@ -522,7 +540,7 @@ namespace catapult { namespace dbrb {
 			pThis->m_pMessageSender->clearQueue();
 			pThis->m_broadcastData.clear();
 
-			pThis->m_pMessageSender->findNodes(view.Data);
+			pThis->m_pMessageSender->connectNodes(view.Data);
 			pThis->m_shardSize = shardSize;
 			pThis->m_currentView = view;
 			CATAPULT_LOG(debug) << "[DBRB] Current view size " << view.Data.size();

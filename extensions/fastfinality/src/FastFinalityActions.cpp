@@ -87,6 +87,7 @@ namespace catapult { namespace fastfinality {
 			pFsmShared->resetChainSyncData();
 			pFsmShared->resetFastFinalityData();
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
+			fastFinalityData.setIsBlockBroadcastEnabled(false);
 
 			auto dbrbProcess = pFsmShared->dbrbProcess();
 			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, utils::NetworkTime(), localHeight + Height(1));
@@ -122,24 +123,13 @@ namespace catapult { namespace fastfinality {
 
 			} else if (chainSyncData.NetworkHeight > chainSyncData.LocalHeight) {
 
-				std::map<Hash256, std::pair<uint64_t, std::vector<Key>>> hashKeys;
-
 				for (const auto& state : remoteNodeStates) {
 					if (state.Height < chainSyncData.NetworkHeight)
 						break;
 
-					auto& pair = hashKeys[state.BlockHash];
-					pair.first += importanceGetter(state.NodeKey);
-					for (const auto& key : state.HarvesterKeys)
-						pair.first += importanceGetter(key);
-					pair.second.push_back(state.NodeKey);
+					chainSyncData.NodeIdentityKeys.push_back(state.NodeKey);
 				}
 
-				std::map<uint64_t, std::vector<Key>> importanceKeys;
-				for (const auto& pair : hashKeys)
-					importanceKeys[pair.second.first] = pair.second.second;
-
-				chainSyncData.NodeIdentityKeys = std::move(importanceKeys.begin()->second);
 				pFsmShared->processEvent(NetworkHeightGreaterThanLocal{});
 
 			} else if (!dbrbConfig.IsDbrbProcess) {
@@ -309,11 +299,9 @@ namespace catapult { namespace fastfinality {
 					blocks = future.get();
 				} catch (std::exception const& error) {
 					CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
-					pMessageSender->removeNode(identityKey);
 					pullBlocksFailure = true;
 				} catch (...) {
 					CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
-					pMessageSender->removeNode(identityKey);
 					pullBlocksFailure = true;
 				}
 
@@ -658,31 +646,34 @@ namespace catapult { namespace fastfinality {
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 			if (fastFinalityData.block()) {
 				pFsmShared->processEvent(BlockReceived{});
-			} else {
-				auto future = fastFinalityData.startWaitForBlock();
-				auto timeout = fastFinalityData.round().RoundStart + std::chrono::milliseconds(fastFinalityData.round().RoundTimeMillis);
-				try {
-					auto status = future.wait_until(timeout);
-					if (std::future_status::ready == status && future.get()) {
-						pFsmShared->processEvent(BlockReceived{});
-						return;
-					}
-				} catch (std::exception const& error) {
-					CATAPULT_LOG(warning) << "error waiting for block: " << error.what();
-				} catch (...) {
-					CATAPULT_LOG(warning) << "error waiting for block: unknown error";
-				}
+				return;
+			}
 
-				if (fastFinalityData.unexpectedBlockHeight()) {
-					fastFinalityData.setIsBlockBroadcastEnabled(false);
-					pFsmShared->processEvent(UnexpectedBlockHeight{});
-				} else {
-					const auto& config = pConfigHolder->Config(fastFinalityData.currentBlockHeight());
-					bool syncWithNetwork = (fastFinalityData.proposedBlockHash() != Hash256()) || (fastFinalityData.round().Round % config.Network.CheckNetworkHeightInterval == 0);
-					if (syncWithNetwork)
-						fastFinalityData.setIsBlockBroadcastEnabled(false);
-					pFsmShared->processEvent(BlockNotReceived{ syncWithNetwork });
+			auto& dbrbProcess = pFsmShared->dbrbProcess();
+			dbrbProcess.maybeDeliver();
+
+			auto future = fastFinalityData.startWaitForBlock();
+			auto timeout = fastFinalityData.round().RoundStart + std::chrono::milliseconds(fastFinalityData.round().RoundTimeMillis);
+			try {
+				auto status = future.wait_until(timeout);
+				if (std::future_status::ready == status && future.get()) {
+					pFsmShared->processEvent(BlockReceived{});
+					return;
 				}
+			} catch (std::exception const& error) {
+				CATAPULT_LOG(warning) << "error waiting for block: " << error.what();
+			} catch (...) {
+				CATAPULT_LOG(warning) << "error waiting for block: unknown error";
+			}
+
+			dbrbProcess.clearData();
+
+			if (fastFinalityData.unexpectedBlockHeight()) {
+				pFsmShared->processEvent(UnexpectedBlockHeight{});
+			} else {
+				const auto& config = pConfigHolder->Config(fastFinalityData.currentBlockHeight());
+				bool syncWithNetwork = (fastFinalityData.proposedBlockHash() != Hash256()) || (fastFinalityData.round().Round % config.Network.CheckNetworkHeightInterval == 0);
+				pFsmShared->processEvent(BlockNotReceived{ syncWithNetwork });
 			}
 		};
 	}
@@ -694,9 +685,17 @@ namespace catapult { namespace fastfinality {
 		return [pFsmWeak, rangeConsumer, &state]() {
 			TRY_GET_FSM()
 
-			bool success = false;
 			auto& fastFinalityData = pFsmShared->fastFinalityData();
 			auto pBlock = fastFinalityData.block();
+			const auto& committeeManager = state.pluginManager().getCommitteeManager(Block_Version);
+			auto committee = committeeManager.committee();
+
+			if (pBlock->round() != committee.Round || pBlock->Signer != committee.BlockProposer || pBlock->Height != fastFinalityData.currentBlockHeight()) {
+				pFsmShared->processEvent(UnexpectedBlock{});
+				return;
+			}
+
+			bool success;
 			{
 				// Commit block.
 				std::lock_guard<std::mutex> guard(pFsmShared->mutex());
@@ -708,7 +707,7 @@ namespace catapult { namespace fastfinality {
 						CATAPULT_LOG(info) << "successfully committed block " << pBlock->Height << " produced by " << pBlock->Signer;
 					} else {
 						auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
-						CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult)) << "commit of block " << pBlock->Height << " produced by " << pBlock->Signer << " failed due to " << validationResult;
+						CATAPULT_LOG(warning) << "commit of block " << pBlock->Height << " produced by " << pBlock->Signer << " failed due to " << validationResult;
 					}
 
 					pPromise->set_value(std::move(success));
@@ -719,6 +718,8 @@ namespace catapult { namespace fastfinality {
 
 			DelayAction(pFsmShared, pFsmShared->timer(), fastFinalityData.round().RoundTimeMillis, [pFsmWeak, success, &state] {
 				TRY_GET_FSM()
+
+				pFsmShared->dbrbProcess().clearData();
 
 				const auto& maxChainHeight = state.maxChainHeight();
 				if (success && (maxChainHeight > Height(0)) && (pFsmShared->fastFinalityData().block()->Height >= maxChainHeight)) {

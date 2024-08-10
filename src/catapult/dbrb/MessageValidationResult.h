@@ -15,9 +15,7 @@ namespace catapult { namespace dbrb {
 	\
 	ENUM_VALUE(Message_Invalid, 1) \
 	\
-	ENUM_VALUE(Message_Broadcast_Paused, 2) \
-	\
-	ENUM_VALUE(Message_Broadcast_Stopped, 4)
+	ENUM_VALUE(Message_Broadcast_Stopped, 2)
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	enum class MessageValidationResult : uint32_t {

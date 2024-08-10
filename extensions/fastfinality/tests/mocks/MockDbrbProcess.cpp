@@ -12,6 +12,7 @@
 namespace catapult { namespace mocks {
 
 	MockDbrbProcess::MockDbrbProcess(
+		std::vector<std::shared_ptr<MockDbrbProcess>>& dbrbProcessPool,
 		bool fakeDissemination,
 		const ionet::NodeContainer& nodeContainer,
 		const crypto::KeyPair& keyPair,
@@ -30,12 +31,14 @@ namespace catapult { namespace mocks {
 					utils::TimeSpan::FromMilliseconds(500)),
 				pPool,
 				nullptr,
-				dbrbViewFetcher) {
+				dbrbViewFetcher),
+			DbrbProcessPool(dbrbProcessPool) {
 		m_fakeDissemination = fakeDissemination;
 		setDeliverCallback([this](const dbrb::Payload& payload) {
 			const auto payloadHash = dbrb::CalculatePayloadHash(payload);
 		  	this->m_deliveredPayloads.insert(payloadHash);
 		});
+		setGetDbrbModeCallback([]() { return dbrb::DbrbMode::Running; });
 	}
 
 	void MockDbrbProcess::setCurrentView(const dbrb::View& view) {
@@ -75,7 +78,7 @@ namespace catapult { namespace mocks {
 
 		CATAPULT_LOG(debug) << "[DBRB] BROADCAST: " << m_id << " is sending payload " << payload->Type;
 		auto pMessage = std::make_shared<dbrb::PrepareMessage>(m_id, payload, broadcastView, m_bootstrapView);
-		disseminate(pMessage, pMessage->View.Data, 0);
+		disseminate(pMessage, pMessage->View.Data);
 	}
 
 	void MockDbrbProcess::processMessage(const dbrb::Message& message) {
@@ -95,7 +98,7 @@ namespace catapult { namespace mocks {
 		return signature;
 	}
 
-	void MockDbrbProcess::disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients, uint64_t delayMillis) {
+	void MockDbrbProcess::disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients) {
 		auto pPacket = pMessage->toNetworkPacket();
 		m_disseminationHistory.emplace_back(pMessage, recipients);
 
@@ -108,8 +111,8 @@ namespace catapult { namespace mocks {
 		}
 	}
 
-	void MockDbrbProcess::send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient, uint64_t delayMillis) {
-		disseminate(pMessage, std::set<dbrb::ProcessId>{ recipient }, delayMillis);
+	void MockDbrbProcess::send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient) {
+		disseminate(pMessage, std::set<dbrb::ProcessId>{ recipient });
 	}
 
 	void MockDbrbProcess::onAcknowledgedMessageReceived(const dbrb::AcknowledgedMessage& message) {
@@ -151,8 +154,8 @@ namespace catapult { namespace mocks {
 		// Disseminating Commit message.
 		CATAPULT_LOG(debug) << "[DBRB] " << m_id << " is disseminating COMMIT message";
 		auto pMessage = std::make_shared<dbrb::CommitMessage>(m_id, message.PayloadHash, data.Certificate, data.BroadcastView);
-		data.CommitMessageReceived = true;
-		disseminate(pMessage, message.View.Data, 0);
+		data.CommitMessageDisseminated = true;
+		disseminate(pMessage, message.View.Data);
 	}
 
 	void MockDbrbProcess::onCommitMessageReceived(const dbrb::CommitMessage& message) {
@@ -172,18 +175,18 @@ namespace catapult { namespace mocks {
 
 		// Update stored PayloadData and ProcessState, if necessary,
 		// and disseminate Commit message with updated view.
-		if (!data.CommitMessageReceived) {
-			data.CommitMessageReceived = true;
+		if (!data.CommitMessageDisseminated) {
+			data.CommitMessageDisseminated = true;
 
 			CATAPULT_LOG(debug) << "[DBRB] " << m_id << " is disseminating COMMIT message";
 			auto pMessage = std::make_shared<dbrb::CommitMessage>(m_id, message.PayloadHash, message.Certificate, message.View);
-			disseminate(pMessage, message.View.Data, 0);
+			disseminate(pMessage, message.View.Data);
 		}
 
 		// Allow delivery for sender process.
 		CATAPULT_LOG(debug) << "[DBRB] COMMIT: " << m_id << " is sending DELIVER message to " << message.Sender;
 		auto pMessage = std::make_shared<dbrb::DeliverMessage>(m_id, message.PayloadHash, message.View);
-		send(pMessage, message.Sender, 0);
+		send(pMessage, message.Sender);
 	}
 
 	const std::set<Hash256>& MockDbrbProcess::deliveredPayloads() {

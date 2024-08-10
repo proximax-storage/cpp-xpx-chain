@@ -106,7 +106,7 @@ namespace catapult { namespace fastfinality {
 					auto result = blockConsumer(blocks);
 					if (disruptor::CompletionStatus::Aborted == result.CompletionStatus) {
 						auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
-						CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult)) << " block validation failed due to " << validationResult;
+						CATAPULT_LOG(warning) << " block validation failed due to " << validationResult;
 						return false;
 					}
 				}
@@ -217,9 +217,7 @@ namespace catapult { namespace fastfinality {
 
 			TRY_GET_FSM()
 
-			const auto& view = pFsmShared->fastFinalityData().unlockedAccounts()->view();
-			const uint8_t harvesterKeysCount = 1 + view.size();	// Extra one for a BootKey
-			auto pResponsePacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>(Key_Size * harvesterKeysCount);
+			auto pResponsePacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 			pResponsePacket->Type = ionet::PacketType::Pull_Remote_Node_State_Response;
 
 			const auto targetHeight = std::min(lastBlockElementSupplier()->Block.Height, pRequest->Height);
@@ -228,19 +226,7 @@ namespace catapult { namespace fastfinality {
 			pResponsePacket->Height = pBlockElement->Block.Height;
 			pResponsePacket->BlockHash = pBlockElement->EntityHash;
 			pResponsePacket->NodeWorkState = pFsmShared->nodeWorkState();
-			pResponsePacket->HarvesterKeysCount = harvesterKeysCount;
-
-			auto* pResponsePacketData = reinterpret_cast<Key*>(pResponsePacket.get() + 1);
-			pResponsePacketData[0] = bootPublicKey;
-			{
-				auto iter = view.begin();
-				auto index = 1;
-				while (iter != view.end()) {
-					pResponsePacketData[index] = iter->publicKey();
-					++iter;
-					++index;
-				}
-			}
+			pResponsePacket->HarvesterKeysCount = 0;
 
 			context.response(ionet::PacketPayload(pResponsePacket));
 		});

@@ -34,13 +34,12 @@ namespace catapult { namespace dbrb {
 
 	public:
 		// Node discovery
-		virtual void findNodes(std::set<ProcessId> requestedIds) = 0;
+		virtual void connectNodes(std::set<ProcessId> requestedIds) = 0;
 		virtual void addNodes(const std::vector<ionet::Node>& nodes) = 0;
 		virtual void sendNodes(const std::vector<ionet::Node>& nodes, const ProcessId& recipient) = 0;
-		virtual void removeNode(const ProcessId& id) = 0;
 		virtual ViewData getUnreachableNodes(ViewData& view) const = 0;
 		virtual size_t getUnreachableNodeCount(const dbrb::ViewData& view) const = 0;
-		virtual std::vector<ionet::Node> getKnownNodes(ViewData& view) const = 0;
+		virtual std::vector<ionet::Node> getKnownNodes(const ViewData& view) const = 0;
 
 	public:
 		void setWriters(std::weak_ptr<net::PacketReadersWriters> pWriters) {

@@ -39,6 +39,7 @@ namespace catapult { namespace fastfinality {
 	};
 	struct BlockReceived{};
 
+	struct UnexpectedBlock{};
 	struct CommitBlockFailed{};
 	struct CommitBlockSucceeded{};
 

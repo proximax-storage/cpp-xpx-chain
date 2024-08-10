@@ -300,11 +300,9 @@ namespace catapult { namespace fastfinality {
 					blocks = future.get();
 				} catch (std::exception const& error) {
 					CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
-					pMessageSender->removeNode(identityKey);
 					pullBlocksFailure = true;
 				} catch (...) {
 					CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
-					pMessageSender->removeNode(identityKey);
 					pullBlocksFailure = true;
 				}
 

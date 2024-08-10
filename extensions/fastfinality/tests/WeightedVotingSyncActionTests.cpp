@@ -10,7 +10,6 @@
 #include "tests/test/core/mocks/MockCommitteeManager.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/test/net/mocks/MockPacketWriters.h"
 #include "tests/test/core/mocks/MockDbrbViewFetcher.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 
@@ -40,9 +39,6 @@ namespace catapult { namespace fastfinality {
 
 		class MockDbrbProcess : public dbrb::DbrbProcess {
 		public:
-			using DisseminationHistory = std::vector<std::pair<const std::shared_ptr<dbrb::Message>&, std::set<dbrb::ProcessId>>>;
-
-		public:
 			explicit MockDbrbProcess()
 				: DbrbProcess(
 					crypto::KeyPair::FromPrivate({}),
@@ -58,8 +54,8 @@ namespace catapult { namespace fastfinality {
 			void processMessage(const dbrb::Message& message) override {}
 
 		protected:
-			void disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients, uint64_t delayMillis) override {}
-			void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient, uint64_t delayMillis) override {}
+			void disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients) override {}
+			void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient) override {}
 
 			void onAcknowledgedMessageReceived(const dbrb::AcknowledgedMessage& message) override {}
 			void onCommitMessageReceived(const dbrb::CommitMessage& message) override {}
@@ -69,8 +65,8 @@ namespace catapult { namespace fastfinality {
 		public:
 			WeightedVotingSyncActionTestRunner(
 					std::vector<fastfinality::RemoteNodeState> states,
-					std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder,
-					std::shared_ptr<model::BlockElement> pLastBlockElement,
+					const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+					const std::shared_ptr<model::BlockElement>& pLastBlockElement,
 					std::map<Key, uint64_t> importances,
 					uint8_t expectedAction)
 				: m_pPool(test::CreateStartedIoThreadPool())

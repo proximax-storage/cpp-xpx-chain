@@ -62,19 +62,29 @@ namespace catapult { namespace fastfinality {
 
 	public:
 		void start() {
-			processEvent(StartLocalChainCheck{});
+			m_timer.expires_after(std::chrono::seconds(5));
+			m_timer.async_wait([pFsmWeak = weak_from_this()](const boost::system::error_code& ec) {
+				if (ec) {
+					if (ec == boost::asio::error::operation_aborted)
+						return;
+
+					CATAPULT_THROW_EXCEPTION(boost::system::system_error(ec));
+				}
+
+				TRY_GET_FSM()
+
+				pFsmShared->processEvent(StartLocalChainCheck{});
+			});
 		}
 
 		template<typename TEvent>
 		void processEvent(const TEvent& event) {
 			auto func = __PRETTY_FUNCTION__;
-			boost::asio::post(m_strand, [pThisWeak = weak_from_this(), event, func] {
-				auto pThis = pThisWeak.lock();
-				if (!pThis)
-					return;
+			boost::asio::post(m_strand, [pFsmWeak = weak_from_this(), event, func] {
+				TRY_GET_FSM()
 
 				CATAPULT_LOG(debug) << func;
-				pThis->m_sm.process_event(event);
+				pFsmShared->m_sm.process_event(event);
 			});
 		}
 
