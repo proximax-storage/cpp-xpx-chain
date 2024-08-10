@@ -110,16 +110,20 @@ namespace catapult { namespace fastfinality {
 
 					switch (pPacket->Type) {
 						case ionet::PacketType::Push_Block: {
-							if (pFsmShared->fastFinalityData().isBlockBroadcastEnabled()) {
-								bool valid = ValidateBlock(*pFsmShared, *pPacket, payloadHash, state, lastBlockElementSupplier, pValidatorPool);
-								return (valid ? dbrb::MessageValidationResult::Message_Valid : dbrb::MessageValidationResult::Message_Invalid);
-							} else {
-								return dbrb::MessageValidationResult::Message_Broadcast_Paused;
-							}
+							bool valid = ValidateBlock(*pFsmShared, *pPacket, payloadHash, state, lastBlockElementSupplier, pValidatorPool);
+							return (valid ? dbrb::MessageValidationResult::Message_Valid : dbrb::MessageValidationResult::Message_Invalid);
 						}
 					}
 
 					return dbrb::MessageValidationResult::Message_Invalid;
+				});
+
+				pFsmShared->dbrbProcess().setGetDbrbModeCallback([pFsmWeak]() {
+					auto pFsmShared = pFsmWeak.lock();
+					if (!pFsmShared || pFsmShared->stopped())
+						return dbrb::DbrbMode::Paused;
+
+					return pFsmShared->fastFinalityData().isBlockBroadcastEnabled() ? dbrb::DbrbMode::Running : dbrb::DbrbMode::Paused;
 				});
 
 				const auto& pConfigHolder = pluginManager.configHolder();

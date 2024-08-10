@@ -156,6 +156,7 @@ namespace catapult { namespace fastfinality {
 				pProcess->updateView(pConfigHolder, Timestamp(), Height(1));
 				pProcess->setValidationCallback([](const auto&, const auto&) { return dbrb::MessageValidationResult::Message_Valid; });
 				pProcess->setDeliverCallback(deliverCallback);
+				pProcess->setGetDbrbModeCallback([]() { return dbrb::DbrbMode::Running; });
 				pMessageSender->addProcess(pProcess);
 				processes.emplace(keyPair.publicKey(), std::move(pProcess));
 			}

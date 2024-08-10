@@ -23,6 +23,7 @@ namespace catapult { namespace mocks {
 
 	public:
 		explicit MockDbrbProcess(
+				std::vector<std::shared_ptr<MockDbrbProcess>>& dbrbProcessPool,
 				bool fakeDissemination = false,
 				const ionet::NodeContainer& nodeContainer = {},
 				const crypto::KeyPair& keyPair = crypto::KeyPair::FromPrivate(test::GenerateRandomPrivateKey()),
@@ -39,8 +40,8 @@ namespace catapult { namespace mocks {
 		void processMessage(const dbrb::Message& message) override;
 		Signature sign(const dbrb::Payload& payload, const dbrb::View& view);
 
-		void disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients, uint64_t delayMillis) override;
-		void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient, uint64_t delayMillis) override;
+		void disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients) override;
+		void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient) override;
 
 		void onAcknowledgedMessageReceived(const dbrb::AcknowledgedMessage& message) override;
 		void onAcknowledgedQuorumCollected(const dbrb::AcknowledgedMessage& message, dbrb::BroadcastData& data);
@@ -52,7 +53,7 @@ namespace catapult { namespace mocks {
 		dbrb::QuorumManager& getQuorumManager(const Hash256& payloadHash);
 
 	public:
-		inline static std::vector<std::shared_ptr<MockDbrbProcess>> DbrbProcessPool;
+		std::vector<std::shared_ptr<MockDbrbProcess>>& DbrbProcessPool;
 
 	private:
 		/// Set of payload hashes delivered by this process.

@@ -71,6 +71,7 @@ namespace catapult { namespace fastfinality {
 				sml::state<BlockWaiting> + sml::event<BlockReceived> = sml::state<Commit>,
 
 				sml::state<Commit> + sml::on_entry<sml::_> / ACTION(CommitBlock),
+				sml::state<Commit> + sml::event<UnexpectedBlock> = sml::state<LocalChainCheck>,
 				sml::state<Commit> + sml::event<CommitBlockFailed> / ACTION(IncrementRound) = sml::state<ConnectionChecking>,
 				sml::state<Commit> + sml::event<CommitBlockSucceeded> / ACTION(ResetRound) = sml::state<ConnectionChecking>,
 				sml::state<Commit> + sml::event<Hold> = sml::state<OnHold>

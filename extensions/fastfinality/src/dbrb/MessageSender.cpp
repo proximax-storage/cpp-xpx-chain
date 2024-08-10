@@ -45,7 +45,20 @@ namespace catapult { namespace dbrb {
 				return true;
 			}
 
-			const std::vector<std::pair<ProcessId, Message>> messages() const {
+			void remove_if(const predicate<const Message&>& pred) {
+				std::vector<std::pair<ProcessId, Message>> messages;
+				messages.reserve(m_messages.size());
+				m_recipients.clear();
+				for (const auto& pair : m_messages) {
+					if (!pred(pair.second)) {
+						m_recipients.emplace(pair.first);
+						messages.emplace_back(pair);
+					}
+				}
+				std::swap(messages, m_messages);
+			}
+
+			const std::vector<std::pair<ProcessId, Message>>& messages() const {
 				return m_messages;
 			}
 
@@ -97,6 +110,14 @@ namespace catapult { namespace dbrb {
 				m_size = 0;
 			}
 
+			void remove_if(const predicate<const Message&>& pred) {
+				for (auto& group : m_buffer) {
+					auto originalSize = group.messages().size();
+					group.remove_if(pred);
+					m_size -= originalSize - group.messages().size();
+				}
+			}
+
 		private:
 			std::vector<MessageGroup> m_buffer;
 			size_t m_size;
@@ -119,6 +140,7 @@ namespace catapult { namespace dbrb {
 		private:
 			void sendMessages();
 			void resendMessages();
+			void removePersistentMessages();
 
 		public:
 			// Node discovery
@@ -132,6 +154,7 @@ namespace catapult { namespace dbrb {
 		private:
 			void requestNodes(const std::set<ProcessId>& requestedIds);
 			void broadcast(const Payload& payload);
+			void startResendMessagesTimer();
 
 		private:
 			// Message sending
@@ -140,11 +163,11 @@ namespace catapult { namespace dbrb {
 			std::mutex m_messageMutex;
 			std::condition_variable m_condVar;
 			volatile std::atomic_bool m_running;
-			volatile bool m_clearQueue;
 			std::thread m_sendMessagesThread;
 			std::shared_ptr<thread::IoThreadPool> m_pPool;
 			boost::asio::system_timer m_timer;
 			std::chrono::milliseconds m_resendMessagesInterval;
+			std::atomic_bool m_timerRunning;
 
 			// Node discovery
 			ionet::Node m_thisNode;
@@ -171,8 +194,8 @@ namespace catapult { namespace dbrb {
 			std::shared_ptr<thread::IoThreadPool> pPool,
 			const utils::TimeSpan& resendMessagesInterval)
 		: m_running(true)
-		, m_clearQueue(false)
 		, m_sendMessagesThread(&DefaultMessageSender::sendMessages, this)
+		, m_timerRunning(false)
 		, m_thisNode(std::move(thisNode))
 		, m_nodeContainer(nodeContainer)
 		, m_broadcastThisNode(broadcastThisNode)
@@ -191,26 +214,30 @@ namespace catapult { namespace dbrb {
 	void DefaultMessageSender::enqueue(const Payload& payload, bool dropOnFailure, const std::set<ProcessId>& recipients) {
 		{
 			std::unique_lock guard(m_messageMutex);
-			m_clearQueue = false;
 			m_buffer.enqueue(payload, dropOnFailure, recipients);
 		}
 		m_condVar.notify_one();
 	}
 
-	void DefaultMessageSender::clearQueue() {
-		std::unique_lock guard(m_messageMutex);
-		m_timer.cancel();
-		m_clearQueue = true;
-
-		if (!m_buffer.empty()) {
-			CATAPULT_LOG(trace) << "[MESSAGE SENDER] clearing the queue (" << m_buffer.size() << ")";
-			m_buffer.clear();
-		}
+	void DefaultMessageSender::removePersistentMessages() {
+		auto originalSize = m_buffer.size();
+		m_buffer.remove_if([](const Message& message) {
+			return !message.DropOnFailure;
+		});
+		auto currentSize = m_buffer.size();
+		if (originalSize > currentSize)
+			CATAPULT_LOG(trace) << "[MESSAGE SENDER] removed " << (originalSize - currentSize) << " message(s)";
 
 		if (!m_failedMessageBuffer.empty()) {
 			CATAPULT_LOG(trace) << "[MESSAGE SENDER] clearing failed messages (" << m_failedMessageBuffer.size() << ")";
 			m_failedMessageBuffer.clear();
 		}
+	}
+
+	void DefaultMessageSender::clearQueue() {
+		m_timer.cancel();
+		std::unique_lock guard(m_messageMutex);
+		removePersistentMessages();
 	}
 
 	void DefaultMessageSender::resendMessages() {
@@ -231,6 +258,31 @@ namespace catapult { namespace dbrb {
 		m_condVar.notify_one();
 	}
 
+	void DefaultMessageSender::startResendMessagesTimer() {
+		if (m_timerRunning)
+			return;
+
+		m_timerRunning = true;
+		m_timer.expires_after(m_resendMessagesInterval);
+		m_timer.async_wait([pThisWeak = weak_from_this()](const boost::system::error_code& ec) {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
+				return;
+
+			if (ec) {
+				if (ec == boost::asio::error::operation_aborted) {
+					pThis->m_timerRunning = false;
+					return;
+				}
+
+				CATAPULT_THROW_EXCEPTION(boost::system::system_error(ec));
+			}
+
+			pThis->resendMessages();
+			pThis->m_timerRunning = false;
+		});
+	}
+
 	void DefaultMessageSender::sendMessages() {
 		while (m_running) {
 			MessageBuffer buffer;
@@ -238,21 +290,6 @@ namespace catapult { namespace dbrb {
 				std::unique_lock lock(m_messageMutex);
 				if (m_buffer.empty() && m_running)
 					m_condVar.wait(lock, [this] { return !m_buffer.empty() || !m_running; });
-
-				if (m_clearQueue) {
-					if (!m_buffer.empty()) {
-						CATAPULT_LOG(trace) << "[MESSAGE SENDER] clearing the queue (" << m_buffer.size() << ")";
-						m_buffer.clear();
-					}
-
-					if (!m_failedMessageBuffer.empty()) {
-						CATAPULT_LOG(trace) << "[MESSAGE SENDER] clearing failed messages (" << m_failedMessageBuffer.size() << ")";
-						m_failedMessageBuffer.clear();
-					}
-
-					m_clearQueue = false;
-					continue;
-				}
 
 				std::swap(buffer, m_buffer);
 			}
@@ -265,66 +302,23 @@ namespace catapult { namespace dbrb {
 				return;
 
 			for (const auto& messageGroup : buffer.groups()) {
-				std::vector<thread::future<bool>> completionStatusFutures;
 				for (const auto& pair : messageGroup.messages()) {
 					const auto& recipient = pair.first;
 					const auto& message = pair.second;
 					CATAPULT_LOG(trace) << "[MESSAGE SENDER] sending " << *message.Payload << " to " << recipient;
-					auto pPromise = std::make_shared<thread::promise<bool>>();
-					completionStatusFutures.push_back(pPromise->get_future());
-					pWriters->write(recipient, ionet::PacketPayload(message.Payload), [pThisWeak = weak_from_this(), message, pPromise, recipient](ionet::SocketOperationCode code) {
+					pWriters->write(recipient, ionet::PacketPayload(message.Payload), [pThisWeak = weak_from_this(), message, recipient](ionet::SocketOperationCode code) {
 						if (code != ionet::SocketOperationCode::Success) {
 							CATAPULT_LOG(warning) << "[MESSAGE SENDER] sending " << *message.Payload << " to " << recipient << " completed with " << code;
 							auto pThis = pThisWeak.lock();
 							if (pThis && !message.DropOnFailure) {
-								std::unique_lock lock(pThis->m_messageMutex);
-								if (!pThis->m_clearQueue)
+								{
+									std::unique_lock lock(pThis->m_messageMutex);
 									pThis->m_failedMessageBuffer.enqueue(message.Payload, false, { recipient });
+								}
+								pThis->startResendMessagesTimer();
 							}
 						}
-						pPromise->set_value(true);
 					});
-				}
-
-				if (!completionStatusFutures.empty()) {
-					thread::when_all(std::move(completionStatusFutures)).then([](auto&& completedFutures) {
-						return thread::get_all_ignore_exceptional(completedFutures.get());
-					}).get();
-				}
-			}
-
-			{
-				std::unique_lock guard(m_messageMutex);
-				if (m_clearQueue) {
-					if (!m_buffer.empty()) {
-						CATAPULT_LOG(trace) << "[MESSAGE SENDER] clearing the queue (" << m_buffer.size() << ")";
-						m_buffer.clear();
-					}
-
-					if (!m_failedMessageBuffer.empty()) {
-						CATAPULT_LOG(trace) << "[MESSAGE SENDER] clearing failed messages (" << m_failedMessageBuffer.size() << ")";
-						m_failedMessageBuffer.clear();
-					}
-
-					m_clearQueue = false;
-				} else {
-					if (!m_failedMessageBuffer.empty()) {
-						m_timer.expires_after(m_resendMessagesInterval);
-						m_timer.async_wait([pThisWeak = weak_from_this()](const boost::system::error_code& ec) {
-							auto pThis = pThisWeak.lock();
-							if (!pThis)
-								return;
-
-							if (ec) {
-								if (ec == boost::asio::error::operation_aborted)
-									return;
-
-								CATAPULT_THROW_EXCEPTION(boost::system::system_error(ec));
-							}
-
-							pThis->resendMessages();
-						});
-					}
 				}
 			}
 		}

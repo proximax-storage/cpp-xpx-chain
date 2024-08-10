@@ -58,6 +58,22 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
+		void maybeDeliver() {
+			if (m_shardingEnabled) {
+				m_pShardedDbrbProcess->maybeDeliver();
+			} else {
+				m_pDbrbProcess->maybeDeliver();
+			}
+		}
+
+		void clearData() {
+			if (m_shardingEnabled) {
+				m_pShardedDbrbProcess->clearData();
+			} else {
+				m_pDbrbProcess->clearData();
+			}
+		}
+
 		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers) {
 			if (m_shardingEnabled) {
 				m_pShardedDbrbProcess->registerPacketHandlers(packetHandlers);
@@ -79,6 +95,14 @@ namespace catapult { namespace dbrb {
 				m_pShardedDbrbProcess->setDeliverCallback(callback);
 			} else {
 				m_pDbrbProcess->setDeliverCallback(callback);
+			}
+		}
+
+		void setGetDbrbModeCallback(const GetDbrbModeCallback& callback) {
+			if (m_shardingEnabled) {
+				m_pShardedDbrbProcess->setGetDbrbModeCallback(callback);
+			} else {
+				m_pDbrbProcess->setGetDbrbModeCallback(callback);
 			}
 		}
 

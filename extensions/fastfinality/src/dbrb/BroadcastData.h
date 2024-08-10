@@ -31,14 +31,32 @@ namespace catapult { namespace dbrb {
 		/// Quorum manager.
 		dbrb::QuorumManager QuorumManager;
 
-		/// Whether any commit message was received.
-		bool CommitMessageReceived = false;
-
 		/// Time when corresponding Prepare message was sent or first received.
 		Timestamp Begin;
 
 		/// Payload signature.
 		Signature PayloadSignature;
+
+		/// Whether the payload has been validated.
+		bool PayloadValidated = false;
+
+		/// Whether the quorum of acknowledged messages collected.
+		bool AcknowledgedQuorumCollected = false;
+
+		/// Whether any commit message was received.
+		bool CommitMessageDisseminated = false;
+
+		/// Whether the quorum of deliver messages collected.
+		bool DeliverQuorumCollected = false;
+
+		/// Whether the confirm deliver message has been disseminated for this payload.
+		bool ConfirmDeliverMessageDisseminated = false;
+
+		/// Whether the quorum of confirm deliver messages collected.
+		bool ConfirmDeliverQuorumCollected = false;
+
+		/// Whether the payload has been delivered.
+		bool Delivered = false;
 	};
 
 	struct DeliverCertificate {
