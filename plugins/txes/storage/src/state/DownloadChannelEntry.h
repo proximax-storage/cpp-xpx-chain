@@ -11,6 +11,7 @@
 #include "catapult/utils/ArraySet.h"
 #include "catapult/utils/IntegerMath.h"
 #include <map>
+#include <optional>
 
 namespace catapult { namespace state {
 

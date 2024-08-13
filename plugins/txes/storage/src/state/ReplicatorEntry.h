@@ -10,6 +10,7 @@
 #include "CommonEntities.h"
 #include "catapult/state/StorageState.h"
 #include "catapult/utils/ArraySet.h"
+#include <optional>
 
 namespace catapult { namespace state {
 

@@ -23,6 +23,7 @@
 #include "traits/Traits.h"
 #include <array>
 #include <iostream>
+#include <cstdint>
 #include <vector>
 #include <unordered_map>
 
