@@ -144,7 +144,9 @@ namespace catapult { namespace dbrb {
 
 		public:
 			// Node discovery
-			void connectNodes(std::set<ProcessId> requestedIds) override;
+			void connectNodes(const std::set<ProcessId>& requestedIds) override;
+			void closeAllConnections() override;
+			void closeConnections(const std::set<ProcessId>& requestedIds) override;
 			void addNodes(const std::vector<ionet::Node>& nodes) override;
 			void sendNodes(const std::vector<ionet::Node>& nodes, const ProcessId& recipient) override;
 			ViewData getUnreachableNodes(ViewData& view) const override;
@@ -215,6 +217,7 @@ namespace catapult { namespace dbrb {
 		{
 			std::unique_lock guard(m_messageMutex);
 			m_buffer.enqueue(payload, dropOnFailure, recipients);
+			CATAPULT_LOG(trace) << "[MESSAGE SENDER] enqueued " << *payload << ", " << recipients.size() << " recipient(s), buffer size " << m_buffer.size();
 		}
 		m_condVar.notify_one();
 	}
@@ -293,13 +296,18 @@ namespace catapult { namespace dbrb {
 				std::swap(buffer, m_buffer);
 			}
 
-			if (!m_running)
+			if (!m_running) {
+				CATAPULT_LOG(trace) << "[MESSAGE SENDER] stopped, " << buffer.size() << " remaining message(s)";
 				return;
+			}
 
 			auto pWriters = m_pWriters.lock();
-			if (!pWriters)
+			if (!pWriters) {
+				CATAPULT_LOG(trace) << "[MESSAGE SENDER] no packet writers, " << buffer.size() << " remaining message(s)";
 				return;
+			}
 
+			CATAPULT_LOG(trace) << "[MESSAGE SENDER] sending " << buffer.size() << " message(s)";
 			for (const auto& messageGroup : buffer.groups()) {
 				for (const auto& pair : messageGroup.messages()) {
 					const auto& recipient = pair.first;
@@ -323,7 +331,7 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	void DefaultMessageSender::connectNodes(std::set<ProcessId> requestedIds) {
+	void DefaultMessageSender::connectNodes(const std::set<ProcessId>& requestedIds) {
 		std::vector<ionet::Node> nodes;
 		std::set<ProcessId> ids;
 
@@ -363,6 +371,26 @@ namespace catapult { namespace dbrb {
 		requestNodes(ids);
 	}
 
+	void DefaultMessageSender::closeAllConnections() {
+		auto pWriters = m_pWriters.lock();
+		if (!pWriters)
+			return;
+
+		pWriters->closeActiveConnections();
+	}
+
+	void DefaultMessageSender::closeConnections(const std::set<ProcessId>& requestedIds) {
+		if (requestedIds.empty())
+			return;
+
+		auto pWriters = m_pWriters.lock();
+		if (!pWriters)
+			return;
+
+		for (const auto& id : requestedIds)
+			pWriters->closeOne(id);
+	}
+
 	void DefaultMessageSender::requestNodes(const std::set<ProcessId>& requestedIds) {
 		if (requestedIds.empty())
 			return;
@@ -383,7 +411,7 @@ namespace catapult { namespace dbrb {
 		if (!pWriters)
 			return;
 
-		for (auto& node : nodes) {
+		for (const auto& node : nodes) {
 			const auto& id = node.identityKey();
 			if (id == m_thisNode.identityKey())
 				continue;
@@ -407,14 +435,15 @@ namespace catapult { namespace dbrb {
 			}
 
 			CATAPULT_LOG(debug) << "[MESSAGE SENDER] Connecting to " << dbrbNode << " " << id;
-			pWriters->connect(dbrbNode, [pThisWeak = weak_from_this(), dbrbNode, node](const auto& result) {
-				CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[MESSAGE SENDER] connection attempt to " << dbrbNode << " " << dbrbNode.identityKey() << " completed with " << result.Code;
+			pWriters->connect(dbrbNode, [pThisWeak = weak_from_this(), dbrbNode](const auto& result) {
+				const auto& identityKey = dbrbNode.identityKey();
+				CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[MESSAGE SENDER] connection attempt to " << dbrbNode << " " << identityKey << " completed with " << result.Code;
 				auto pThis = pThisWeak.lock();
 				if (pThis && result.Code == net::PeerConnectCode::Accepted) {
-					CATAPULT_LOG(debug) << "[MESSAGE SENDER] Connected to node " << dbrbNode << " " << dbrbNode.identityKey();
+					CATAPULT_LOG(debug) << "[MESSAGE SENDER] Connected to node " << dbrbNode << " " << identityKey;
 					if (pThis->m_broadcastThisNode) {
 						CATAPULT_LOG(debug) << "[MESSAGE SENDER] sharing this node " << pThis->m_thisNode << " [dbrb port " << pThis->m_thisNode.endpoint().DbrbPort << "] " << pThis->m_thisNode.identityKey();
-						pThis->sendNodes({ pThis->m_thisNode }, node.identityKey());
+						pThis->sendNodes({ pThis->m_thisNode }, identityKey);
 					} else {
 						pThis->m_condVar.notify_one();
 					}

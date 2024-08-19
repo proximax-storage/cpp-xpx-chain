@@ -52,7 +52,9 @@ namespace catapult { namespace fastfinality {
 			}
 
 			void clearQueue() override {}
-			void connectNodes(dbrb::ViewData requestedIds) override {}
+			void connectNodes(const dbrb::ViewData& requestedIds) override {}
+			void closeAllConnections() override {}
+			void closeConnections(const dbrb::ViewData& requestedIds) override {}
 			void addNodes(const std::vector<ionet::Node>& nodes) override {}
 			void sendNodes(const std::vector<ionet::Node>& nodes, const dbrb::ProcessId& recipient) override {}
 
