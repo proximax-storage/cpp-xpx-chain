@@ -261,7 +261,9 @@ namespace catapult { namespace test {
 		// Act: "server" - starts two chained async write operations
 		//      "client" - reads a payload from the socket
 		auto pPool = CreateStartedIoThreadPool();
+		std::shared_ptr<ionet::PacketSocket> pSocket;
 		SpawnPacketServerWork(pPool->ioContext(), [&](const auto& pServerSocket) {
+			pSocket = pServerSocket;
 			auto pIo = transform(pServerSocket);
 			pIo->write(ionet::PacketPayload(payload1.pPacket), [pIo, &payload1, &payload2](auto writeCode1) {
 				payload1.Code = writeCode1;
@@ -292,7 +294,9 @@ namespace catapult { namespace test {
 		// Act: "server" - starts two concurrent async write operations
 		//      "client" - reads a payload from the socket
 		auto pPool = CreateStartedIoThreadPool();
+		std::shared_ptr<ionet::PacketSocket> pSocket;
 		SpawnPacketServerWork(pPool->ioContext(), [&](const auto& pServerSocket) {
+			pSocket = pServerSocket;
 			auto pIo = transform(pServerSocket);
 			pIo->write(ionet::PacketPayload(payload1.pPacket), [&payload1](auto writeCode) {
 				payload1.Code = writeCode;
@@ -356,7 +360,9 @@ namespace catapult { namespace test {
 		// Act: "server" - starts two chained async read operations
 		//      "client" - writes the payloads to the socket
 		auto pPool = CreateStartedIoThreadPool();
+		std::shared_ptr<ionet::PacketSocket> pSocket;
 		SpawnPacketServerWork(pPool->ioContext(), [&](const auto& pServerSocket) {
+			pSocket = pServerSocket;
 			auto pIo = transform(pServerSocket);
 			pIo->read([pIo, &payload1, &payload2](auto result1, const auto* pPacket1) {
 				payload1.update(result1, pPacket1);
@@ -385,7 +391,9 @@ namespace catapult { namespace test {
 		// Act: "server" - starts two concurrent async read operations
 		//      "client" - writes the payloads to the socket
 		auto pPool = CreateStartedIoThreadPool();
+		std::shared_ptr<ionet::PacketSocket> pSocket;
 		SpawnPacketServerWork(pPool->ioContext(), [&](const auto& pServerSocket) {
+			pSocket = pServerSocket;
 			auto pIo = transform(pServerSocket);
 			pIo->read([&payload1](auto result, const auto* pPacket) {
 				payload1.update(result, pPacket);

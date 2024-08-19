@@ -556,7 +556,7 @@ namespace catapult { namespace ionet {
 			}
 
 			std::shared_ptr<PacketIo> buffered() override {
-				return CreateBufferedPacketIo(shared_from_this(), strand());
+				return CreateBufferedPacketIo(weak_from_this(), strand());
 			}
 
 		public:

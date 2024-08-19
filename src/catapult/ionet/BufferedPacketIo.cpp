@@ -21,41 +21,47 @@
 #include "BufferedPacketIo.h"
 #include "PacketIo.h"
 #include <deque>
+#include <utility>
 
 namespace catapult { namespace ionet {
 
 	namespace {
 		class WriteRequest {
 		public:
-			explicit WriteRequest(PacketIo& io, const PacketPayload& payload)
-					: m_io(io)
-					, m_payload(payload)
+			explicit WriteRequest(std::weak_ptr<PacketIo> pIo, PacketPayload payload)
+				: m_pIo(std::move(pIo))
+				, m_payload(std::move(payload))
 			{}
 
 		public:
 			template<typename TCallback>
 			void invoke(TCallback callback) {
-				m_io.write(m_payload, callback);
+				auto pIo = m_pIo.lock();
+				if (pIo)
+					pIo->write(m_payload, callback);
 			}
 
 		private:
-			PacketIo& m_io;
+			std::weak_ptr<PacketIo> m_pIo;
 			PacketPayload m_payload;
 		};
 
 		class ReadRequest {
 		public:
-			explicit ReadRequest(PacketIo& io) : m_io(io)
+			explicit ReadRequest(std::weak_ptr<PacketIo> pIo)
+				: m_pIo(std::move(pIo))
 			{}
 
 		public:
 			template<typename TCallback>
 			void invoke(TCallback callback) {
-				m_io.read(callback);
+				auto pIo = m_pIo.lock();
+				if (pIo)
+					pIo->read(callback);
 			}
 
 		private:
-			PacketIo& m_io;
+			std::weak_ptr<PacketIo> m_pIo;
 		};
 
 		// simple queue implementation
@@ -144,7 +150,7 @@ namespace catapult { namespace ionet {
 				: public PacketIo
 				, public std::enable_shared_from_this<BufferedPacketIo> {
 		public:
-			BufferedPacketIo(const std::shared_ptr<PacketIo>& pIo, boost::asio::io_context::strand& strand)
+			BufferedPacketIo(const std::weak_ptr<PacketIo>& pIo, boost::asio::io_context::strand& strand)
 					: m_pIo(pIo)
 					, m_strand(strand)
 					, m_pWriteOperation(std::make_unique<QueuedWriteOperation>(m_strand))
@@ -153,28 +159,28 @@ namespace catapult { namespace ionet {
 
 		public:
 			void write(const PacketPayload& payload, const WriteCallback& callback) override {
-				auto request = WriteRequest(*m_pIo, payload);
+				auto request = WriteRequest(m_pIo, payload);
 				m_pWriteOperation->push(request, [pThis = shared_from_this(), callback](auto code) {
 					callback(code);
 				});
 			}
 
 			void read(const ReadCallback& callback) override {
-				auto request = ReadRequest(*m_pIo);
+				auto request = ReadRequest(m_pIo);
 				m_pReadOperation->push(request, [pThis = shared_from_this(), callback](auto code, const auto* pPacket) {
 					callback(code, pPacket);
 				});
 			}
 
 		private:
-			std::shared_ptr<PacketIo> m_pIo;
+			std::weak_ptr<PacketIo> m_pIo;
 			boost::asio::io_context::strand& m_strand;
 			std::unique_ptr<QueuedWriteOperation> m_pWriteOperation;
 			std::unique_ptr<QueuedReadOperation> m_pReadOperation;
 		};
 	}
 
-	std::shared_ptr<PacketIo> CreateBufferedPacketIo(const std::shared_ptr<PacketIo>& pIo, boost::asio::io_context::strand& strand) {
+	std::shared_ptr<PacketIo> CreateBufferedPacketIo(const std::weak_ptr<PacketIo>& pIo, boost::asio::io_context::strand& strand) {
 		return std::make_shared<BufferedPacketIo>(pIo, strand);
 	}
 }}
