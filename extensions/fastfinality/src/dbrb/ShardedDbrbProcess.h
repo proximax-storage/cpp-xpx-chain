@@ -33,6 +33,7 @@ namespace catapult { namespace dbrb {
 		void broadcast(const Payload& payload, ViewData recipients);
 		void processMessage(const Message& message);
 		bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height);
+		void registerDbrbProcess(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height);
 
 	public:
 		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers);

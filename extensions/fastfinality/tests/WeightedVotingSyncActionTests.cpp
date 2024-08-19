@@ -49,6 +49,7 @@ namespace catapult { namespace fastfinality {
 			{}
 
 			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) override { return true; }
+			void registerDbrbProcess(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) override {}
 
 			void broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) override {}
 			void processMessage(const dbrb::Message& message) override {}

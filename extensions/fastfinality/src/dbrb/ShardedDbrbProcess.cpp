@@ -544,31 +544,52 @@ namespace catapult { namespace dbrb {
 			pThis->m_shardSize = shardSize;
 			pThis->m_currentView = view;
 			CATAPULT_LOG(debug) << "[DBRB] Current view size " << view.Data.size();
-
-			if (pThis->m_pTransactionSender) {
-				bool isRegistrationRequired = false;
-				if (!isTemporaryProcess && !isBootstrapProcess && (pThis->m_dbrbViewFetcher.getBanPeriod(pThis->m_id) == BlockDuration(0))) {
-					CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
-					isRegistrationRequired = true;
-				} else if (isTemporaryProcess) {
-					auto expirationTime = pThis->m_dbrbViewFetcher.getExpirationTime(pThis->m_id);
-					LogTime("[DBRB] process expires at ", expirationTime);
-					if (expirationTime < gracePeriod)
-						CATAPULT_THROW_RUNTIME_ERROR_1("invalid expiration time", pThis->m_id)
-
-					auto gracePeriodStart = expirationTime - gracePeriod;
-					LogTime("[DBRB] process grace period starts at ", gracePeriodStart);
-					if (now >= gracePeriodStart) {
-						CATAPULT_LOG(debug) << "[DBRB] node registration in the DBRB system soon expires";
-						isRegistrationRequired = true;
-					}
-				}
-
-				if (isRegistrationRequired)
-					pThis->m_pTransactionSender->sendAddDbrbProcessTransaction();
-			}
 		});
 
 		return isTemporaryProcess || isBootstrapProcess;
+	}
+
+	void ShardedDbrbProcess::registerDbrbProcess(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) {
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, height]() {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
+				return;
+
+			if (!pThis->m_pTransactionSender) {
+				CATAPULT_LOG(debug) << "[DBRB] skipping node registration because transaction sender is not set";
+				return;
+			}
+
+			auto banPeriod = pThis->m_dbrbViewFetcher.getBanPeriod(pThis->m_id);
+			if (banPeriod != BlockDuration(0)) {
+				CATAPULT_LOG(debug) << "[DBRB] skipping node registration because DBRB process banned (for " << banPeriod << " blocks)";
+				return;
+			}
+
+			const auto& config = pConfigHolder->Config(height).Network;
+			auto gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis());
+			auto isBootstrapProcess = View{ config.DbrbBootstrapProcesses }.isMember(pThis->m_id);
+			auto isTemporaryProcess = !isBootstrapProcess && pThis->m_currentView.isMember(pThis->m_id);
+			bool isRegistrationRequired = false;
+			if (!isTemporaryProcess && !isBootstrapProcess) {
+				CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
+				isRegistrationRequired = true;
+			} else if (isTemporaryProcess) {
+				auto expirationTime = pThis->m_dbrbViewFetcher.getExpirationTime(pThis->m_id);
+				LogTime("[DBRB] process expires at ", expirationTime);
+				if (expirationTime < gracePeriod)
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid expiration time", pThis->m_id)
+
+				auto gracePeriodStart = expirationTime - gracePeriod;
+				LogTime("[DBRB] process grace period starts at ", gracePeriodStart);
+				if (now >= gracePeriodStart) {
+					CATAPULT_LOG(debug) << "[DBRB] node registration in the DBRB system soon expires";
+					isRegistrationRequired = true;
+				}
+			}
+
+			if (isRegistrationRequired)
+				pThis->m_pTransactionSender->sendAddDbrbProcessTransaction();
+		});
 	}
 }}
