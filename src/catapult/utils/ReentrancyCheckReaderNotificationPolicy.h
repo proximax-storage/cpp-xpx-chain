@@ -19,10 +19,11 @@
 **/
 
 #pragma once
-#include "SpinLock.h"
 #include "catapult/exceptions.h"
 #include <thread>
 #include <unordered_set>
+#include <mutex>
+#include <shared_mutex>
 
 namespace catapult { namespace utils {
 
@@ -56,13 +57,13 @@ namespace catapult { namespace utils {
 		template<typename TAction>
 		void executeSynchronized(TAction action) {
 			auto id = std::this_thread::get_id();
-			SpinLockGuard lock(m_mutex);
+			std::unique_lock lock(m_mutex);
 
 			action(id);
 		}
 
 	private:
-		SpinLock m_mutex;
+		std::shared_mutex m_mutex;
 		std::unordered_set<std::thread::id> m_threadIds;
 	};
 }}

@@ -21,6 +21,8 @@
 #include "FileLock.h"
 #include "catapult/utils/Logging.h"
 #include <fcntl.h>
+#include <thread>
+#include <mutex>
 
 #ifdef _MSC_VER
 #include <windows.h>
@@ -102,16 +104,16 @@ namespace catapult { namespace io {
 	}
 
 	bool FileLock::try_lock() {
-		if (!m_spinLock.try_lock())
+		if (!m_mutex.try_lock())
 			return false;
 
 		bool isLockAcquired = (Invalid_Descriptor == m_fd) && TryOpenLock(m_lockFilePath, m_fd);
-		m_spinLock.unlock();
+		m_mutex.unlock();
 		return isLockAcquired;
 	}
 
 	void FileLock::unlock() noexcept {
-		utils::SpinLockGuard guard(m_spinLock);
+		std::unique_lock lock(m_mutex);
 		DestroyLock(m_lockFilePath, m_fd);
 	}
 }}
