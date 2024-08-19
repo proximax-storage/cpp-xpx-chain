@@ -220,8 +220,10 @@ namespace catapult { namespace fastfinality {
 			auto pResponsePacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
 			pResponsePacket->Type = ionet::PacketType::Pull_Remote_Node_State_Response;
 
-			const auto targetHeight = std::min(lastBlockElementSupplier()->Block.Height, pRequest->Height);
-			const auto pBlockElement = blockElementGetter(targetHeight);
+			auto pLastBlockElement = lastBlockElementSupplier();
+			auto localHeight = pLastBlockElement->Block.Height;
+			auto targetHeight = std::min(localHeight, pRequest->Height);
+			auto pBlockElement = (localHeight == targetHeight) ? pLastBlockElement : blockElementGetter(targetHeight);
 
 			pResponsePacket->Height = pBlockElement->Block.Height;
 			pResponsePacket->BlockHash = pBlockElement->EntityHash;
