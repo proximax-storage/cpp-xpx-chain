@@ -305,7 +305,7 @@ namespace catapult { namespace storage {
         }
 
         void addDrive(const Key& driveKey) {
-			CATAPULT_LOG(debug) << "add drive" << driveKey;
+			CATAPULT_LOG(debug) << "add drive " << driveKey;
 
 			if ( m_alreadyAddedDrives.find(driveKey) != m_alreadyAddedDrives.end() )
 			{
