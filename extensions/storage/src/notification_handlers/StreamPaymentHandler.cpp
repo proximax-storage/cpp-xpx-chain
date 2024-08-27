@@ -16,7 +16,7 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey)) {
+			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey, context.Cache)) {
 				// This case includes the situation when the drive does not already exist
 				return;
 			}
@@ -33,8 +33,8 @@ namespace catapult { namespace notification_handlers {
 				return;
 			}
 
-			pReplicatorService->streamPaymentPublished(notification.DriveKey, notification.StreamId);
-			pReplicatorService->maybeRestart();
+			pReplicatorService->streamPaymentPublished(notification.DriveKey, notification.StreamId, context.Cache);
+			pReplicatorService->maybeRestart(context.Cache);
 		});
 	}
 }}

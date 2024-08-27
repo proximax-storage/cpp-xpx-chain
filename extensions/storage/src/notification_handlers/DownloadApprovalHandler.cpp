@@ -11,7 +11,7 @@ namespace catapult { namespace notification_handlers {
     using Notification = model::DownloadApprovalNotification<1>;
 
     DECLARE_HANDLER(DownloadApproval, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-        return MAKE_HANDLER(DownloadApproval, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+        return MAKE_HANDLER(DownloadApproval, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
             auto pReplicatorService = pReplicatorServiceWeak.lock();
             if (!pReplicatorService)
                 return;
@@ -21,8 +21,8 @@ namespace catapult { namespace notification_handlers {
 			// Channel can already be removed from the cache,
 			// so it is not possible to check whether the Replicator has been assigned to the Channel
 			if (channelAddedHeight) {
-				pReplicatorService->downloadApprovalPublished(notification.ApprovalTrigger, notification.DownloadChannelId);
-				pReplicatorService->maybeRestart();
+				pReplicatorService->downloadApprovalPublished(notification.ApprovalTrigger, notification.DownloadChannelId, context.Cache);
+				pReplicatorService->maybeRestart(context.Cache);
 			}
         });
     }

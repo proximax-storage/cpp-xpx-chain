@@ -151,8 +151,6 @@ namespace catapult { namespace local {
 				CATAPULT_LOG(debug) << "initializing system cache";
 				m_cacheHolder.cache() = m_pluginManager.createCache();
 				pConfigHolder->SetCache(&m_cacheHolder.cache());
-				if (m_pluginManager.isStorageStateSet())
-					m_pluginManager.storageState().setCache(&m_cacheHolder.cache());
 
 				/// Finally we can build and run the plugin initializers to manipulate the config.
 

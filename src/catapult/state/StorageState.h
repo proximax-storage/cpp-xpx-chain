@@ -9,6 +9,7 @@
 #include "catapult/types.h"
 #include "catapult/utils/ArraySet.h"
 #include "catapult/utils/NonCopyable.h"
+#include "catapult/notification_handlers/HandlerContext.h"
 #include <vector>
 #include <optional>
 
@@ -82,10 +83,6 @@ namespace catapult { namespace state {
 		virtual ~StorageState() = default;
 
 	public:
-		void setCache(cache::CatapultCache* pCache) {
-			m_pCache = pCache;
-		}
-
 		void setLastBlockElementSupplier(const model::BlockElementSupplier& lastBlockElementSupplier) {
 			if (!!m_lastBlockElementSupplier)
 				CATAPULT_THROW_RUNTIME_ERROR("last block element supplier already set");
@@ -103,35 +100,35 @@ namespace catapult { namespace state {
 	public:
 		virtual Height getChainHeight() = 0;
 
-		virtual bool isReplicatorRegistered(const Key& key) = 0;
+		virtual bool isReplicatorRegistered(const Key& key, const cache::ReadOnlyCatapultCache& cache) = 0;
 
-		virtual bool driveExists(const Key& driveKey) = 0;
-		virtual Drive getDrive(const Key& driveKey) = 0;
-		virtual bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) = 0;
-		virtual bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) = 0;
-		virtual std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey) = 0;
-		virtual std::set<Hash256> getReplicatorChannelIds(const Key& replicatorKey) = 0;
-		virtual std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) = 0;
-		virtual std::vector<Key> getDriveReplicators(const Key& driveKey) = 0;
-		virtual std::vector<Hash256> getDriveChannels(const Key& driveKey) = 0;
-		virtual std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) = 0;
-		virtual ModificationShard getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) = 0;
-		virtual std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) = 0;
+		virtual bool driveExists(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual Drive getDrive(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual std::set<Hash256> getReplicatorChannelIds(const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual std::vector<Drive> getReplicatorDrives(const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual std::vector<Key> getDriveReplicators(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual std::vector<Hash256> getDriveChannels(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual ModificationShard getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) = 0;
 //		virtual SizeMap getCumulativeUploadSizesBytes(const Key& driveKey, const Key& replicatorKey) = 0;
 
-        virtual std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) = 0;
+        virtual std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) = 0;
 
-		virtual std::vector<CompletedModification> getCompletedModifications(const Key& driveKey) = 0;
+		virtual std::vector<CompletedModification> getCompletedModifications(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) = 0;
 
-		virtual uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) = 0;
+		virtual uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) = 0;
 
-		virtual bool downloadChannelExists(const Hash256& id) = 0;
-		virtual std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) = 0;
+		virtual bool downloadChannelExists(const Hash256& id, const cache::ReadOnlyCatapultCache& cache) = 0;
+		virtual std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id, const cache::ReadOnlyCatapultCache& cache) = 0;
 
-		virtual std::optional<DriveVerification> getActiveVerification(const Key& driveKey, const Timestamp& blockTimestamp) = 0;
+		virtual std::optional<DriveVerification> getActiveVerification(const Key& driveKey, const Timestamp& blockTimestamp, const cache::ReadOnlyCatapultCache& cache) = 0;
 
 	protected:
-		cache::CatapultCache* m_pCache;
+//		cache::CatapultCache* m_pCache;
 		model::BlockElementSupplier m_lastBlockElementSupplier;
 	};
 }}

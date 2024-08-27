@@ -11,7 +11,7 @@ namespace catapult { namespace notification_handlers {
 	using Notification = model::DriveClosureNotification<1>;
 
 	DECLARE_HANDLER(DriveClosure, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(DriveClosure, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+		return MAKE_HANDLER(DriveClosure, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
@@ -25,8 +25,8 @@ namespace catapult { namespace notification_handlers {
 
 			// We could be assigned to the Drive in the same block, so in any case we try to explore new Drives.
 			// It can be optimized if the cache stores all former Drives of the Replicator
-			pReplicatorService->exploreNewReplicatorDrives();
-			pReplicatorService->maybeRestart();
+			pReplicatorService->exploreNewReplicatorDrives(context.Cache);
+			pReplicatorService->maybeRestart(context.Cache);
 		});
 	}
 }}

@@ -20,13 +20,15 @@ namespace catapult { namespace storage {
                     TransactionSender&& transactionSender,
                     state::StorageState& storageState,
                     TransactionStatusHandler& transactionStatusHandler,
-                    const crypto::KeyPair& keyPair)
+                    const crypto::KeyPair& keyPair,
+					const cache::ReadOnlyCatapultCache& cache)
 				: m_work(boost::asio::make_work_guard(m_context))
 				, m_thread(std::thread([this] { m_context.run(); }))
 				, m_transactionSender(std::move(transactionSender))
 				, m_storageState(storageState)
 				, m_transactionStatusHandler(transactionStatusHandler)
-				, m_keyPair(keyPair) {}
+				, m_keyPair(keyPair)
+				, m_cache(cache) {}
 
         public:
             void modifyApprovalTransactionIsReady(
@@ -147,7 +149,7 @@ namespace catapult { namespace storage {
 				  if (!pReplicator)
 				  	return;
 
-				  if (!m_storageState.driveExists(info.m_driveKey)) {
+				  if (!m_storageState.driveExists(info.m_driveKey, m_cache)) {
 				  	CATAPULT_LOG(warning) << "received modification opinion for a non existing drive";
 				  	return;
 				  }
@@ -187,7 +189,7 @@ namespace catapult { namespace storage {
 				  	return;
 				  }
 
-				  const auto pDriveEntry = m_storageState.getDrive(info.m_driveKey);
+				  const auto pDriveEntry = m_storageState.getDrive(info.m_driveKey, m_cache);
 				  const auto& replicators = pDriveEntry.Replicators;
 				  auto it = replicators.find(opinion.m_replicatorKey);
 				  if (it == replicators.end()) {
@@ -200,9 +202,9 @@ namespace catapult { namespace storage {
 				  	return;
 				  }
 
-				  auto expectedSumBytes = m_storageState.getDownloadWorkBytes(opinion.m_replicatorKey, info.m_driveKey);
+				  auto expectedSumBytes = m_storageState.getDownloadWorkBytes(opinion.m_replicatorKey, info.m_driveKey, m_cache);
 
-				  auto donatorShardExtended = m_storageState.getDonatorShardExtended(info.m_driveKey, opinion.m_replicatorKey);
+				  auto donatorShardExtended = m_storageState.getDonatorShardExtended(info.m_driveKey, opinion.m_replicatorKey, m_cache);
 
 				  uint64_t actualSumBytes = 0;
 
@@ -275,7 +277,7 @@ namespace catapult { namespace storage {
 					if (!pReplicator)
 						return;
 
-					if (!m_storageState.downloadChannelExists(info.m_downloadChannelId)) {
+					if (!m_storageState.downloadChannelExists(info.m_downloadChannelId, m_cache)) {
 						CATAPULT_LOG(error) << "download channel opinion received id does not exist "
 											<< Hash256(info.m_downloadChannelId);
 						return;
@@ -314,7 +316,7 @@ namespace catapult { namespace storage {
 					}
 
 					if (!m_storageState.isReplicatorAssignedToChannel(
-								opinion.m_replicatorKey, info.m_downloadChannelId)) {
+								opinion.m_replicatorKey, info.m_downloadChannelId, m_cache)) {
 						CATAPULT_LOG(warning) << "received download opinion from wrong replicator";
 						return;
 					}
@@ -345,6 +347,7 @@ namespace catapult { namespace storage {
             state::StorageState& m_storageState;
             TransactionStatusHandler& m_transactionStatusHandler;
             const crypto::KeyPair& m_keyPair;
+			const cache::ReadOnlyCatapultCache& m_cache;
         };
     }
 
@@ -352,7 +355,8 @@ namespace catapult { namespace storage {
             TransactionSender&& transactionSender,
             state::StorageState& storageState,
             TransactionStatusHandler& operations,
-			const catapult::crypto::KeyPair& keyPair) {
-    	return std::make_unique<DefaultReplicatorEventHandler>(std::move(transactionSender), storageState, operations, keyPair);
+			const catapult::crypto::KeyPair& keyPair,
+			const cache::ReadOnlyCatapultCache& cache) {
+    	return std::make_unique<DefaultReplicatorEventHandler>(std::move(transactionSender), storageState, operations, keyPair, cache);
     }
 }}

@@ -12,8 +12,8 @@
 namespace catapult { namespace state {
 
     namespace {
-        Drive GetDrive(const Key& driveKey, const cache::BcDriveCacheView& driveCacheView) {
-            auto driveIter = driveCacheView.find(driveKey);
+        Drive GetDrive(const Key& driveKey, const cache::BcDriveCacheTypes::CacheReadOnlyType& driveCache) {
+            auto driveIter = driveCache.find(driveKey);
             auto driveEntry = driveIter.get();
 
             std::vector<DataModification> dataModifications;
@@ -41,8 +41,11 @@ namespace catapult { namespace state {
             };
         }
 
-		std::optional<DriveVerification> GetActiveVerification(const Key& driveKey, const cache::BcDriveCacheView& driveCacheView, const Timestamp& blockTimestamp) {
-			auto driveIter = driveCacheView.find(driveKey);
+		std::optional<DriveVerification> GetActiveVerification(
+				const Key& driveKey,
+				const cache::BcDriveCacheTypes::CacheReadOnlyType& driveCache,
+				const Timestamp& blockTimestamp) {
+			auto driveIter = driveCache.find(driveKey);
 			const auto& driveEntry = driveIter.get();
 
 			if (driveEntry.verification()) {
@@ -61,26 +64,26 @@ namespace catapult { namespace state {
     }
 
     Height StorageStateImpl::getChainHeight() {
-    	return m_pCache->height();
+    	return Height();	// TODO: Temporary stub.
     }
 
-    bool StorageStateImpl::isReplicatorRegistered(const Key& key) {
-		auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-		return pReplicatorCacheView->contains(key);
+    bool StorageStateImpl::isReplicatorRegistered(const Key& key, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& replicatorCache = cache.sub<cache::ReplicatorCache>();
+		return replicatorCache.contains(key);
     }
 
-    bool StorageStateImpl::driveExists(const Key& driveKey) {
-        auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-        return pDriveCacheView->contains(driveKey);
+    bool StorageStateImpl::driveExists(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& driveCache = cache.sub<cache::BcDriveCache>();
+        return driveCache.contains(driveKey);
     }
 
-    Drive StorageStateImpl::getDrive(const Key& driveKey) {
-        return GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
+    Drive StorageStateImpl::getDrive(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) {
+        return GetDrive(driveKey, cache.sub<cache::BcDriveCache>());
     }
 
-    bool StorageStateImpl::isReplicatorAssignedToDrive(const Key& replicatorKey, const Key& driveKey) {
-		auto m_pReplicatorCache = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-		auto replicatorIter = m_pReplicatorCache->find(replicatorKey);
+    bool StorageStateImpl::isReplicatorAssignedToDrive(const Key& replicatorKey, const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& replicatorCache = cache.sub<cache::ReplicatorCache>();
+		auto replicatorIter = replicatorCache.find(replicatorKey);
 		const auto* replicatorEntry = replicatorIter.tryGet();
 		if (!replicatorEntry) {
 			return false;
@@ -89,9 +92,9 @@ namespace catapult { namespace state {
 		return drives.find(driveKey) != drives.end();
     }
 
-    bool StorageStateImpl::isReplicatorAssignedToChannel(const Key& replicatorKey, const Hash256& channelId) {
-    	auto m_pReplicatorCache = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-    	auto replicatorIter = m_pReplicatorCache->find(replicatorKey);
+    bool StorageStateImpl::isReplicatorAssignedToChannel(const Key& replicatorKey, const Hash256& channelId, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& replicatorCache = cache.sub<cache::ReplicatorCache>();
+		auto replicatorIter = replicatorCache.find(replicatorKey);
     	const auto* replicatorEntry = replicatorIter.tryGet();
     	if (!replicatorEntry) {
     		return false;
@@ -100,12 +103,10 @@ namespace catapult { namespace state {
     	return downloadChannels.find(channelId) != downloadChannels.end();
     }
 
-    std::vector<Key> StorageStateImpl::getReplicatorDriveKeys(const Key& replicatorKey) {
-    	auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-
-    	auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
-    	const auto& replicatorEntry = replicatorIter.get();
+    std::vector<Key> StorageStateImpl::getReplicatorDriveKeys(const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& replicatorCache = cache.sub<cache::ReplicatorCache>();
+		auto replicatorIter = replicatorCache.find(replicatorKey);
+		const auto& replicatorEntry = replicatorIter.get();
 
     	std::vector<Key> drives;
     	drives.reserve(replicatorEntry.drives().size());
@@ -115,45 +116,45 @@ namespace catapult { namespace state {
     	return drives;
 	}
 
-    std::vector<Drive> StorageStateImpl::getReplicatorDrives(const Key& replicatorKey) {
-        auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-        auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
+    std::vector<Drive> StorageStateImpl::getReplicatorDrives(const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& replicatorCache = cache.sub<cache::ReplicatorCache>();
+		const auto& driveCache = cache.sub<cache::BcDriveCache>();
 
-        auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
+        auto replicatorIter = replicatorCache.find(replicatorKey);
 		const auto& replicatorEntry = replicatorIter.get();
 
         std::vector<Drive> drives;
         drives.reserve(replicatorEntry.drives().size());
         for (const auto& pair: replicatorEntry.drives())
-            drives.emplace_back(GetDrive(pair.first, *pDriveCacheView));
+            drives.emplace_back(GetDrive(pair.first, driveCache));
 
         return drives;
     }
 
-    std::vector<Hash256> StorageStateImpl::getDriveChannels(const Key& driveKey) {
-    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-    	auto driveIter = pDriveCacheView->find(driveKey);
+    std::vector<Hash256> StorageStateImpl::getDriveChannels(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& driveCache = cache.sub<cache::BcDriveCache>();
+		auto driveIter = driveCache.find(driveKey);
     	const auto& driveEntry = driveIter.get();
 
     	std::vector<Hash256> downloadChannels(driveEntry.downloadShards().begin(), driveEntry.downloadShards().end());
 		return downloadChannels;
 	}
-	std::set<Hash256> StorageStateImpl::getReplicatorChannelIds(const Key& replicatorKey) {
-    	auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-    	auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
+	std::set<Hash256> StorageStateImpl::getReplicatorChannelIds(const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& replicatorCache = cache.sub<cache::ReplicatorCache>();
+		auto replicatorIter = replicatorCache.find(replicatorKey);
 		const auto& replicatorEntry = replicatorIter.get();
 
 		return replicatorEntry.downloadChannels();
 	}
 
-	std::vector<Key> StorageStateImpl::getDriveReplicators(const Key& driveKey) {
-        auto drive = GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
+	std::vector<Key> StorageStateImpl::getDriveReplicators(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) {
+        auto drive = GetDrive(driveKey, cache.sub<cache::BcDriveCache>());
         return {drive.Replicators.begin(), drive.Replicators.end()};
     }
 
-    std::vector<Key> StorageStateImpl::getDonatorShard(const Key& driveKey, const Key& replicatorKey) {
-    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-    	auto driveIter = pDriveCacheView->find(driveKey);
+    std::vector<Key> StorageStateImpl::getDonatorShard(const Key& driveKey, const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& driveCache = cache.sub<cache::BcDriveCache>();
+		auto driveIter = driveCache.find(driveKey);
     	const auto& driveEntry = driveIter.get();
     	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
     	std::vector<Key> keys;
@@ -163,18 +164,18 @@ namespace catapult { namespace state {
 		return keys;
 	}
 
-	ModificationShard StorageStateImpl::getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) {
-    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-    	auto driveIter = pDriveCacheView->find(driveKey);
+	ModificationShard StorageStateImpl::getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& driveCache = cache.sub<cache::BcDriveCache>();
+    	auto driveIter = driveCache.find(driveKey);
     	const auto& driveEntry = driveIter.get();
     	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
 
     	return {shard.ActualShardMembers, shard.FormerShardMembers, shard.OwnerUpload };
     }
 
-	std::vector<Key> StorageStateImpl::getRecipientShard(const Key& driveKey, const Key& replicatorKey) {
-		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-		auto driveIter = pDriveCacheView->find(driveKey);
+	std::vector<Key> StorageStateImpl::getRecipientShard(const Key& driveKey, const Key& replicatorKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& driveCache = cache.sub<cache::BcDriveCache>();
+		auto driveIter = driveCache.find(driveKey);
 		const auto& driveEntry = driveIter.get();
 
 		std::vector<Key> donatorShard;
@@ -190,9 +191,9 @@ namespace catapult { namespace state {
 		return donatorShard;
 	}
 
-	std::unique_ptr<ApprovedDataModification> StorageStateImpl::getLastApprovedDataModification(const Key& driveKey) {
-        auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-        auto driveIter = pDriveCacheView->find(driveKey);
+	std::unique_ptr<ApprovedDataModification> StorageStateImpl::getLastApprovedDataModification(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& driveCache = cache.sub<cache::BcDriveCache>();
+        auto driveIter = driveCache.find(driveKey);
 		const auto& driveEntry = driveIter.get();
 
         auto completedModificationsIter = driveEntry.completedDataModifications().rbegin();
@@ -226,9 +227,9 @@ namespace catapult { namespace state {
 		    driveEntry.usedSizeBytes()});
     }
 
-    std::vector<CompletedModification> StorageStateImpl::getCompletedModifications(const Key& driveKey) {
-    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-    	auto driveIter = pDriveCacheView->find(driveKey);
+    std::vector<CompletedModification> StorageStateImpl::getCompletedModifications(const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& driveCache = cache.sub<cache::BcDriveCache>();
+    	auto driveIter = driveCache.find(driveKey);
     	const auto& driveEntry = driveIter.get();
 
 		std::vector<CompletedModification> completedModifications;
@@ -247,22 +248,22 @@ namespace catapult { namespace state {
 		return completedModifications;
     }
 
-    uint64_t StorageStateImpl::getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) {
-        auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-        auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
+    uint64_t StorageStateImpl::getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& replicatorCache = cache.sub<cache::ReplicatorCache>();
+		auto replicatorIter = replicatorCache.find(replicatorKey);
         const auto& replicatorEntry = replicatorIter.get();
 
         return replicatorEntry.drives().find(driveKey)->second.LastCompletedCumulativeDownloadWorkBytes;
     }
 
-    bool StorageStateImpl::downloadChannelExists(const Hash256& id) {
-        auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
-        return pDownloadChannelCacheView->contains(id);
+    bool StorageStateImpl::downloadChannelExists(const Hash256& id, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& downloadChannelCache = cache.sub<cache::DownloadChannelCache>();
+		return downloadChannelCache.contains(id);
     }
 
-	std::unique_ptr<DownloadChannel> StorageStateImpl::getDownloadChannel(const Key& replicatorKey, const Hash256& id) {
-        auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
-        auto channelIter = pDownloadChannelCacheView->find(id);
+	std::unique_ptr<DownloadChannel> StorageStateImpl::getDownloadChannel(const Key& replicatorKey, const Hash256& id, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& downloadChannelCache = cache.sub<cache::DownloadChannelCache>();
+		auto channelIter = downloadChannelCache.find(id);
         const auto& channelEntry = channelIter.get();
 
         const auto& replicators = channelEntry.shardReplicators();
@@ -282,8 +283,8 @@ namespace catapult { namespace state {
 		});
     }
 
-	std::optional<DriveVerification> StorageStateImpl::getActiveVerification(const Key& driveKey, const Timestamp& blockTimestamp) {
-		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-		return GetActiveVerification(driveKey, *pDriveCacheView, blockTimestamp);
+	std::optional<DriveVerification> StorageStateImpl::getActiveVerification(const Key& driveKey, const Timestamp& blockTimestamp, const cache::ReadOnlyCatapultCache& cache) {
+		const auto& driveCache = cache.sub<cache::BcDriveCache>();
+		return GetActiveVerification(driveKey, driveCache, blockTimestamp);
 	}
 }}

@@ -8,6 +8,7 @@
 #include <memory>
 #include <catapult/crypto/KeyPair.h>
 #include <catapult/thread/IoThreadPool.h>
+#include <catapult/cache/ReadOnlyCatapultCache.h>
 
 namespace catapult {
 	namespace storage {
@@ -35,5 +36,6 @@ namespace catapult { namespace storage {
 		TransactionSender&& transactionSender,
 		state::StorageState& storageState,
 		TransactionStatusHandler& m_transactionStatusHandler,
-		const crypto::KeyPair& keyPair);
+		const crypto::KeyPair& keyPair,
+		const cache::ReadOnlyCatapultCache& cache);
 }}

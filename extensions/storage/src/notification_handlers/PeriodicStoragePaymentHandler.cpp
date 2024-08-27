@@ -20,9 +20,9 @@ namespace catapult { namespace notification_handlers {
 
 			Hash256 eventHash = utils::getStoragePaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
 
-			pReplicatorService->updateReplicatorDrives(eventHash);
-			pReplicatorService->updateReplicatorDownloadChannels();
-			pReplicatorService->maybeRestart();
+			pReplicatorService->updateReplicatorDrives(eventHash, context.Cache);
+			pReplicatorService->updateReplicatorDownloadChannels(context.Cache);
+			pReplicatorService->maybeRestart(context.Cache);
 		});
 	}
 }}

@@ -11,16 +11,16 @@ namespace catapult { namespace notification_handlers {
 	using Notification = model::PrepareDriveNotification<1>;
 
 	DECLARE_HANDLER(PrepareDrive, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
-		return MAKE_HANDLER(PrepareDrive, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext&) {
+		return MAKE_HANDLER(PrepareDrive, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
 			if (!pReplicatorService)
 				return;
 
-			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey))
+			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey, context.Cache))
 				return;
 
-			pReplicatorService->addDrive(notification.DriveKey);
-			pReplicatorService->maybeRestart();
+			pReplicatorService->addDrive(notification.DriveKey, context.Cache);
+			pReplicatorService->maybeRestart(context.Cache);
 		});
 	}
 }}

@@ -16,7 +16,7 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey)) {
+			if (!pReplicatorService->isAssignedToDrive(notification.DriveKey, context.Cache)) {
 				// This case includes the situation when the drive does not already exist
 				return;
 			}
@@ -34,7 +34,7 @@ namespace catapult { namespace notification_handlers {
 			}
 
 			pReplicatorService->removeDriveModification(notification.DriveKey, notification.DataModificationId);
-			pReplicatorService->maybeRestart();
+			pReplicatorService->maybeRestart(context.Cache);
 		});
 	}
 }}

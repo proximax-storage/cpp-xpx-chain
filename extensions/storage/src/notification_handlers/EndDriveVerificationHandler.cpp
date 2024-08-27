@@ -16,22 +16,22 @@ namespace catapult { namespace notification_handlers {
 			if (!pReplicatorService)
 				return;
 
-			if (!pReplicatorService->driveExists(notification.DriveKey)) {
-				pReplicatorService->updateReplicatorDownloadChannels();
-				pReplicatorService->maybeRestart();
+			if (!pReplicatorService->driveExists(notification.DriveKey, context.Cache)) {
+				pReplicatorService->updateReplicatorDownloadChannels(context.Cache);
+				pReplicatorService->maybeRestart(context.Cache);
 				return;
 			}
 
 			auto driveAddedHeight = pReplicatorService->driveAddedAt(notification.DriveKey);
-			bool assignedToDrive = pReplicatorService->isAssignedToDrive(notification.DriveKey);
+			bool assignedToDrive = pReplicatorService->isAssignedToDrive(notification.DriveKey, context.Cache);
 
 			if (assignedToDrive && driveAddedHeight) {
 				if(driveAddedHeight < context.Height) {
 					// Drive Replicators Can be Changed with this transaction
-					pReplicatorService->updateDriveReplicators(notification.DriveKey);
-					pReplicatorService->updateShardDonator(notification.DriveKey);
-					pReplicatorService->updateShardRecipient(notification.DriveKey);
-					pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
+					pReplicatorService->updateDriveReplicators(notification.DriveKey, context.Cache);
+					pReplicatorService->updateShardDonator(notification.DriveKey, context.Cache);
+					pReplicatorService->updateShardRecipient(notification.DriveKey, context.Cache);
+					pReplicatorService->updateDriveDownloadChannels(notification.DriveKey, context.Cache);
 
 					bool found = false;
 					auto pKeyBegin = reinterpret_cast<const Key* const>(notification.PublicKeysPtr);
@@ -51,16 +51,16 @@ namespace catapult { namespace notification_handlers {
 			}
 			else if (assignedToDrive) {
 				// We were added to Drive with the transaction
-				pReplicatorService->addDrive(notification.DriveKey);
-				pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
+				pReplicatorService->addDrive(notification.DriveKey, context.Cache);
+				pReplicatorService->updateDriveDownloadChannels(notification.DriveKey, context.Cache);
 			}
 			else if (driveAddedHeight) {
 				// We were deleted from the Drive with the transaction
 				pReplicatorService->removeDrive(notification.DriveKey);
-				pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
+				pReplicatorService->updateDriveDownloadChannels(notification.DriveKey, context.Cache);
 				// In order to increase efficiency maybe it is needed to removed all channels and not update
 			}
-			pReplicatorService->maybeRestart();
+			pReplicatorService->maybeRestart(context.Cache);
 		});
 	}
 }}
