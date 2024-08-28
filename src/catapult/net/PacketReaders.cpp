@@ -33,7 +33,6 @@ namespace catapult { namespace net {
 		struct ReaderState {
 		public:
 			Key PublicKey;
-			std::shared_ptr<ionet::PacketIo> pBufferedIo;
 			std::weak_ptr<ChainedSocketReader> pReader;
 		};
 
@@ -63,7 +62,6 @@ namespace catapult { namespace net {
 			bool insert(const Key& identityKey, const PacketSocketPointer& pSocket, const ChainedSocketReaderFactory& readerFactory) {
 				ReaderState state;
 				state.PublicKey = identityKey;
-				state.pBufferedIo = pSocket->buffered();
 
 				std::unique_lock lock(m_mutex);
 
