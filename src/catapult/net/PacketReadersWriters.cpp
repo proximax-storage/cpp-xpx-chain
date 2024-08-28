@@ -28,7 +28,7 @@ namespace catapult { namespace net {
 			ionet::Node Node;
 			WeakSocketPointer pSocketWeak;
 			std::shared_ptr<ionet::PacketIo> pBufferedIo;
-			std::shared_ptr<ChainedSocketReader> pReader;
+			std::weak_ptr<ChainedSocketReader> pReader;
 		};
 
 		// expected sequences
@@ -38,6 +38,7 @@ namespace catapult { namespace net {
 		class WriterContainer {
 		private:
 			using ReaderWriterContainer = std::unordered_map<Key, ReaderWriterState, utils::ArrayHasher<Key>>;
+			using ChainedSocketReaderFactory = std::function<std::shared_ptr<ChainedSocketReader> (const SocketPointer&, const std::shared_ptr<ionet::PacketIo>&)>;
 
 		public:
 			size_t size() const {
@@ -97,32 +98,42 @@ namespace catapult { namespace net {
 				m_connectingNodeIdentityKeys.erase(node.identityKey());
 			}
 
-			bool insert(const ReaderWriterState& state) {
+			bool insert(net::ConnectionType connectionType, ionet::Node node, const SocketPointer& pSocket, const ChainedSocketReaderFactory& readerFactory) {
 				std::unique_lock guard(m_mutex);
 
-				const auto& identityKey = state.Node.identityKey();
-				switch (state.ConnectionType) {
+				const auto& identityKey = node.identityKey();
+				ReaderWriterState* pState = nullptr;
+				switch (connectionType) {
 					case ConnectionType::Connected: {
 						if (!m_connectedNodeIdentityKeys.emplace(identityKey).second) {
-							CATAPULT_LOG(debug) << "ignoring connection to already connected peer " << state.Node << " " << identityKey;
+							CATAPULT_LOG(debug) << "ignoring connection to already connected peer " << node << " " << identityKey;
 							return false;
 						}
 						m_connectingNodeIdentityKeys.erase(identityKey);
-						m_connectedWriters[identityKey] = state;
+						pState = &m_connectedWriters[identityKey];
 						break;
 					}
 					case ConnectionType::Accepted: {
 						if (!m_acceptedNodeIdentityKeys.emplace(identityKey).second) {
-							CATAPULT_LOG(debug) << "not accepting already connected peer " << state.Node << " " << identityKey;
+							CATAPULT_LOG(debug) << "not accepting already connected peer " << node << " " << identityKey;
 							return false;
 						}
-						m_acceptedWriters[identityKey] = state;
+						pState = &m_acceptedWriters[identityKey];
 						break;
 					}
 				}
 
 				m_nodeIdentityKeys.emplace(identityKey);
-				state.pReader->start();
+
+				pState->ConnectionType = connectionType;
+				pState->Node = node;
+				pState->pSocketWeak = pSocket;
+				pState->pBufferedIo = pSocket->buffered();
+				// the reader takes ownership of the socket
+				auto pReader = readerFactory(pSocket, pState->pBufferedIo);
+				pReader->start();
+				pState->pReader = pReader;
+
 				return true;
 			}
 
@@ -320,15 +331,11 @@ namespace catapult { namespace net {
 			}
 
 			bool addWriter(const ionet::Node& node, const ionet::SslPacketSocketInfo& socketInfo, ConnectionType connectionType) {
-				ReaderWriterState state;
-				state.ConnectionType = connectionType;
-				state.Node = node;
 				const auto& pSocket = socketInfo.socket();
-				state.pSocketWeak = pSocket;
-				state.pBufferedIo = pSocket->buffered();
 				auto identity = ionet::ReaderIdentity{ node.identityKey(), socketInfo.host() };
-				state.pReader = createReader(pSocket, state.pBufferedIo, identity, connectionType);
-				return m_writers.insert(state);
+				return m_writers.insert(connectionType, node, pSocket, [this, identity, connectionType](const auto& pSocket, const auto& pBufferedIo) {
+					return this->createReader(pSocket, pBufferedIo, identity, connectionType);
+				});
 			}
 
 			void removeWriter(const WeakSocketPointer& pSocketWeak, const Key& identityKey, ConnectionType connectionType) {
