@@ -56,23 +56,6 @@ namespace catapult { namespace ionet {
 
 		// endregion
 
-		// region AutoConsume
-
-		class AutoConsume {
-		public:
-			explicit AutoConsume(PacketExtractor& packetExtractor) : m_packetExtractor(packetExtractor)
-			{}
-
-			~AutoConsume() {
-				m_packetExtractor.consume();
-			}
-
-		private:
-			PacketExtractor& m_packetExtractor;
-		};
-
-		// endregion
-
 		// region SocketGuard
 
 		class SocketGuard final : public std::enable_shared_from_this<SocketGuard> {
@@ -252,20 +235,11 @@ namespace catapult { namespace ionet {
 					: m_socket(socket)
 					, m_wrapper(wrapper)
 					, m_buffer(buffer)
-					, m_isReadActive(false)
 			{}
 
 		public:
-			bool isReadActive() const {
-				return m_isReadActive;
-			}
-
 			void read(const SslPacketSocket::ReadCallback& callback, bool allowMultiple) {
-				m_isReadActive = true;
-				readInternal([callback, &isReadActive = m_isReadActive](auto code, const auto* pPacket) {
-					callback(code, pPacket);
-					isReadActive = false;
-				}, allowMultiple);
+				readInternal(callback, allowMultiple);
 			}
 
 		private:
@@ -276,6 +250,19 @@ namespace catapult { namespace ionet {
 
 			public:
 				AppendContext Context;
+			};
+
+			class AutoConsume {
+			public:
+				explicit AutoConsume(PacketExtractor& packetExtractor) : m_packetExtractor(packetExtractor)
+				{}
+
+				~AutoConsume() {
+					m_packetExtractor.consume();
+				}
+
+			private:
+				PacketExtractor& m_packetExtractor;
 			};
 
 		private:
@@ -352,7 +339,6 @@ namespace catapult { namespace ionet {
 			SslSocket& m_socket;
 			TSocketCallbackWrapper& m_wrapper;
 			WorkingBuffer& m_buffer;
-			bool m_isReadActive;
 		};
 
 		// endregion
@@ -396,30 +382,6 @@ namespace catapult { namespace ionet {
 				stats.IsOpen = m_socket.lowest_layer().is_open();
 				stats.NumUnprocessedBytes = m_buffer.size();
 				callback(stats);
-			}
-
-			void waitForData(const SslPacketSocket::WaitForDataCallback& callback) {
-				if (0 != m_buffer.size()) {
-					callback();
-					return;
-				}
-
-				m_socket.lowest_layer().async_wait(NetworkSocket::wait_read, m_wrapper.wrap([this, callback](const auto&) {
-					if (!m_socket.lowest_layer().is_open() || this->isReadActive())
-						return;
-
-					// try to (non-blocking) read a single byte from the stream
-					// this will skip any and all protocol-level data (e.g. ssl handshake)
-					uint8_t peekByte;
-					boost::system::error_code ignoredEc;
-					auto numBytesRead = m_socket.read_some(boost::asio::buffer(&peekByte, 1), ignoredEc);
-
-					// if a byte was successfully read, trigger the callback
-					if (1 == numBytesRead) {
-						m_buffer.append(peekByte);
-						callback();
-					}
-				}));
 			}
 
 			void close() {
@@ -539,10 +501,6 @@ namespace catapult { namespace ionet {
 				post([callback](auto& socket) { socket.stats(callback); });
 			}
 
-			void waitForData(const WaitForDataCallback& callback) override {
-				post([callback](auto& socket) { socket.waitForData(callback); });
-			}
-
 			void close() override {
 				postCloseOnce("close", [](auto& socket) {
 					socket.close();
@@ -629,8 +587,7 @@ namespace catapult { namespace ionet {
 
 	// region SslPacketSocketInfo
 
-	SslPacketSocketInfo::SslPacketSocketInfo()
-	{}
+	SslPacketSocketInfo::SslPacketSocketInfo() = default;
 
 	SslPacketSocketInfo::SslPacketSocketInfo(const std::string& host, const Key& publicKey, const std::shared_ptr<SslPacketSocket>& pPacketSocket)
 			: m_host(host)
