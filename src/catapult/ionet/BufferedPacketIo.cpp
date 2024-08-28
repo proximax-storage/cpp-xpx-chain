@@ -21,54 +21,41 @@
 #include "BufferedPacketIo.h"
 #include "PacketIo.h"
 #include <deque>
-#include <utility>
 
 namespace catapult { namespace ionet {
 
 	namespace {
 		class WriteRequest {
 		public:
-			explicit WriteRequest(std::weak_ptr<PacketIo> pIo, PacketPayload payload)
-				: m_pIo(std::move(pIo))
-				, m_payload(std::move(payload))
+			explicit WriteRequest(PacketPayload payload)
+				: m_payload(std::move(payload))
 			{}
 
 		public:
 			template<typename TCallback>
-			void invoke(TCallback callback) {
-				auto pIo = m_pIo.lock();
-				if (pIo)
-					pIo->write(m_payload, callback);
+			void invoke(const std::shared_ptr<PacketIo>& pIo, TCallback callback) {
+				pIo->write(m_payload, callback);
 			}
 
 		private:
-			std::weak_ptr<PacketIo> m_pIo;
 			PacketPayload m_payload;
 		};
 
 		class ReadRequest {
 		public:
-			explicit ReadRequest(std::weak_ptr<PacketIo> pIo)
-				: m_pIo(std::move(pIo))
-			{}
-
-		public:
 			template<typename TCallback>
-			void invoke(TCallback callback) {
-				auto pIo = m_pIo.lock();
-				if (pIo)
-					pIo->read(callback);
+			void invoke(const std::shared_ptr<PacketIo>& pIo, TCallback callback) {
+				pIo->read(callback);
 			}
-
-		private:
-			std::weak_ptr<PacketIo> m_pIo;
 		};
 
 		// simple queue implementation
 		template<typename TRequest, typename TCallback, typename TCallbackWrapper>
 		class RequestQueue {
 		public:
-			explicit RequestQueue(TCallbackWrapper& wrapper) : m_wrapper(wrapper)
+			explicit RequestQueue(const std::weak_ptr<PacketIo>& pIo, TCallbackWrapper& wrapper)
+				: m_pIo(pIo)
+				, m_wrapper(wrapper)
 			{}
 
 		public:
@@ -86,10 +73,17 @@ namespace catapult { namespace ionet {
 
 		private:
 			void next() {
+				auto pIo = m_pIo.lock();
+				if (!pIo) {
+					CATAPULT_LOG(trace) << "no packet io, clearing queue";
+					m_requests.clear();
+					return;
+				}
+
 				// note that it's very important to not call pop_front here - the request should only be popped
 				// after the callback is invoked (and the operation is complete)
 				auto& request = m_requests.front();
-				request.first.invoke(m_wrapper.wrap(WrappedWithRequests<TCallback>(request.second, *this)));
+				request.first.invoke(pIo, m_wrapper.wrap(WrappedWithRequests<TCallback>(request.second, *this)));
 			}
 
 			template<typename THandler>
@@ -101,8 +95,11 @@ namespace catapult { namespace ionet {
 
 				template<typename... TArgs>
 				void operator()(TArgs ...args) {
-					// pop the current request (the operation has completed)
-					m_queue.m_requests.pop_front();
+					// the queue may be empty because of the packet io destroyed
+					if (!m_queue.m_requests.empty()) {
+						// pop the current request (the operation has completed)
+						m_queue.m_requests.pop_front();
+					}
 
 					// execute the user handler
 					m_handler(std::forward<TArgs>(args)...);
@@ -118,6 +115,7 @@ namespace catapult { namespace ionet {
 			};
 
 		private:
+			std::weak_ptr<PacketIo> m_pIo;
 			TCallbackWrapper& m_wrapper;
 			std::deque<std::pair<TRequest, TCallback>> m_requests;
 		};
@@ -126,9 +124,9 @@ namespace catapult { namespace ionet {
 		template<typename TRequest, typename TCallback>
 		class QueuedOperation {
 		public:
-			explicit QueuedOperation(boost::asio::io_context::strand& strand)
+			explicit QueuedOperation(const std::weak_ptr<PacketIo>& pIo, boost::asio::io_context::strand& strand)
 					: m_strand(strand)
-					, m_requests(m_strand)
+					, m_requests(pIo, m_strand)
 			{}
 
 		public:
@@ -151,30 +149,26 @@ namespace catapult { namespace ionet {
 				, public std::enable_shared_from_this<BufferedPacketIo> {
 		public:
 			BufferedPacketIo(const std::weak_ptr<PacketIo>& pIo, boost::asio::io_context::strand& strand)
-					: m_pIo(pIo)
-					, m_strand(strand)
-					, m_pWriteOperation(std::make_unique<QueuedWriteOperation>(m_strand))
-					, m_pReadOperation(std::make_unique<QueuedReadOperation>(m_strand))
+					: m_pWriteOperation(std::make_unique<QueuedWriteOperation>(pIo, strand))
+					, m_pReadOperation(std::make_unique<QueuedReadOperation>(pIo, strand))
 			{}
 
 		public:
 			void write(const PacketPayload& payload, const WriteCallback& callback) override {
-				auto request = WriteRequest(m_pIo, payload);
+				auto request = WriteRequest(payload);
 				m_pWriteOperation->push(request, [pThis = shared_from_this(), callback](auto code) {
 					callback(code);
 				});
 			}
 
 			void read(const ReadCallback& callback) override {
-				auto request = ReadRequest(m_pIo);
+				auto request = ReadRequest();
 				m_pReadOperation->push(request, [pThis = shared_from_this(), callback](auto code, const auto* pPacket) {
 					callback(code, pPacket);
 				});
 			}
 
 		private:
-			std::weak_ptr<PacketIo> m_pIo;
-			boost::asio::io_context::strand& m_strand;
 			std::unique_ptr<QueuedWriteOperation> m_pWriteOperation;
 			std::unique_ptr<QueuedReadOperation> m_pReadOperation;
 		};
