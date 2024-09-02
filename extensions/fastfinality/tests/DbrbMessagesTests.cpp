@@ -4,8 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "fastfinality/src/weighted_voting/WeightedVotingFsm.h"
 #include "catapult/crypto/KeyPair.h"
+#include "catapult/dbrb/Messages.h"
+#include "fastfinality/src/FastFinalityChainPackets.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace fastfinality {
