@@ -212,8 +212,7 @@ namespace catapult { namespace ionet {
 				if (pContext->tryComplete(lastEc))
 					return;
 
-				auto buffer = pContext->nextDataBuffer();
-				boost::asio::async_write(m_socket, buffer, m_wrapper.wrap([this, pContext](const auto& ec, auto) {
+				boost::asio::async_write(m_socket, pContext->nextDataBuffer(), m_wrapper.wrap([this, pContext](const auto& ec, auto) {
 					this->writeNext(ec, pContext);
 				}));
 			}
