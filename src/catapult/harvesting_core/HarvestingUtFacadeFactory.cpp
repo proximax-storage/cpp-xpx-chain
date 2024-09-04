@@ -113,9 +113,10 @@ namespace catapult { namespace harvesting {
 			auto catapultState = state::CatapultState();
 			const auto& config = m_executionConfig.ConfigSupplier(height());
 			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), config.Network.ImportanceGrouping);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
 			auto observerState = config.Immutable.ShouldEnableVerifiableReceipts
-					? observers::ObserverState(*m_pCacheDelta, catapultState, m_blockStatementBuilder)
-					: observers::ObserverState(*m_pCacheDelta, catapultState);
+					? observers::ObserverState(*m_pCacheDelta, catapultState, m_blockStatementBuilder, notifications)
+					: observers::ObserverState(*m_pCacheDelta, catapultState, notifications);
 
 			// 2. prepare contexts
 			auto readOnlyCache = m_pCacheDelta->toReadOnly();

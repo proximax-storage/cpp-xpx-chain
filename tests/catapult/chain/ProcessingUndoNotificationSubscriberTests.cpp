@@ -47,7 +47,8 @@ namespace catapult { namespace chain {
 					: m_config(config::BlockchainConfiguration::Uninitialized())
 					, m_cache({})
 					, m_cacheDelta(m_cache.createDelta())
-					, m_observerContext({ m_cacheDelta, m_state }, m_config, Height(123), Timestamp(0), executeMode, CreateResolverContext())
+					, m_observerState(m_cacheDelta, m_state, m_notifications)
+					, m_observerContext(m_observerState, m_config, Height(123), Timestamp(0), executeMode, CreateResolverContext())
 					, m_sub(m_observer, m_observerContext) {
 				CATAPULT_LOG(debug) << "preparing test context with execute mode " << executeMode;
 			}
@@ -99,6 +100,8 @@ namespace catapult { namespace chain {
 			cache::CatapultCacheDelta m_cacheDelta;
 			state::CatapultState m_state;
 
+			std::vector<std::unique_ptr<model::Notification>> m_notifications;
+			observers::ObserverState m_observerState;
 			observers::ObserverContext m_observerContext;
 
 			ProcessingUndoNotificationSubscriber m_sub;

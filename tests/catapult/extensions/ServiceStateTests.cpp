@@ -20,6 +20,7 @@
 
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
+#include "catapult/notification_handlers/DemuxHandlerBuilder.h"
 #include "catapult/thread/MultiServicePool.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
@@ -57,6 +58,8 @@ namespace catapult { namespace extensions {
 		mocks::MockStateChangeSubscriber stateChangeSubscriber;
 		mocks::MockNodeSubscriber nodeSubscriber;
 		mocks::MockBlockChangeSubscriber postBlockCommitSubscriber;
+		notification_handlers::DemuxHandlerBuilder notificationSubscriberBuilder;
+		auto pNotificationSubscriber = notificationSubscriberBuilder.build();
 
 		std::vector<utils::DiagnosticCounter> counters;
 		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
@@ -76,6 +79,7 @@ namespace catapult { namespace extensions {
 				stateChangeSubscriber,
 				nodeSubscriber,
 				postBlockCommitSubscriber,
+				*pNotificationSubscriber,
 				counters,
 				pluginManager,
 				pool);

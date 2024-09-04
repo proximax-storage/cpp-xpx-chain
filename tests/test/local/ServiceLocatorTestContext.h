@@ -26,6 +26,7 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NodeContainer.h"
+#include "catapult/notification_handlers/DemuxHandlerBuilder.h"
 #include "catapult/plugins/PluginLoader.h"
 #include "catapult/thread/MultiServicePool.h"
 #include "catapult/utils/NetworkTime.h"
@@ -77,6 +78,7 @@ namespace catapult { namespace test {
 				, m_catapultCache(std::move(cache))
 				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>(), std::make_unique<mocks::MockMemoryBlockStorage>())
 				, m_pUtCache(CreateUtCacheProxy())
+				, m_pNotificationSubscriber(notification_handlers::DemuxHandlerBuilder().build())
 				, m_pluginManager(pConfigHolder, plugins::StorageConfiguration())
 				, m_pool("service locator test context", 2)
 				, m_state(
@@ -91,6 +93,7 @@ namespace catapult { namespace test {
 						m_stateChangeSubscriber,
 						m_nodeSubscriber,
 						m_postBlockCommitSubscriber,
+						*m_pNotificationSubscriber,
 						m_counters,
 						m_pluginManager,
 						m_pool)
@@ -172,6 +175,7 @@ namespace catapult { namespace test {
 		mocks::MockStateChangeSubscriber m_stateChangeSubscriber;
 		mocks::MockNodeSubscriber m_nodeSubscriber;
 		mocks::MockBlockChangeSubscriber m_postBlockCommitSubscriber;
+		notification_handlers::AggregateNotificationHandlerPointer m_pNotificationSubscriber;
 
 		std::vector<utils::DiagnosticCounter> m_counters;
 		std::vector<plugins::PluginModule> m_modules;

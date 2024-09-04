@@ -157,7 +157,8 @@ namespace catapult { namespace harvesting {
 			void execute(const model::TransactionInfo& transactionInfo) {
 				auto cacheDelta = m_cache.createDelta();
 				auto catapultState = state::CatapultState();
-				auto observerState = observers::ObserverState(cacheDelta, catapultState);
+				std::vector<std::unique_ptr<model::Notification>> notifications;
+				auto observerState = observers::ObserverState(cacheDelta, catapultState, notifications);
 
 				// 4. prepare resolvers
 				auto readOnlyCache = cacheDelta.toReadOnly();

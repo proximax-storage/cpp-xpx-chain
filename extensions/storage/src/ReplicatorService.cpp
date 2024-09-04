@@ -90,8 +90,7 @@ namespace catapult { namespace storage {
 				m_keyPair,
 				config.Immutable,
 				storageConfig,
-				m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local),
-				m_storageState);
+				m_serviceState.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local));
 
             m_pReplicatorEventHandler = CreateReplicatorEventHandler(
 				std::move(transactionSender),

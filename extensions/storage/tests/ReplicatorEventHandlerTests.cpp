@@ -22,8 +22,7 @@ namespace catapult { namespace storage {
 			crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"),
 			config::ImmutableConfiguration::Uninitialized(),
 			StorageConfiguration::Uninitialized(),
-			[](auto&&){},
-			storageState);
+			[](auto&&){});
 
         // Act:
         auto testee = storage::CreateReplicatorEventHandler(
