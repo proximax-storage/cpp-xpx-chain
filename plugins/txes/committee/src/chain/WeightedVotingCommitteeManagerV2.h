@@ -19,7 +19,7 @@ namespace catapult { namespace chain {
 		explicit WeightedVotingCommitteeManagerV2(std::shared_ptr<cache::CommitteeAccountCollector> pAccountCollector);
 
 	public:
-		const Committee& selectCommittee(const model::NetworkConfiguration& config) override;
+		void selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) override;
 		Key getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const override;
 
 		void reset() override;
@@ -39,7 +39,10 @@ namespace catapult { namespace chain {
 		cache::AccountMap accounts();
 
 	protected:
-		std::multimap<int64_t, Key, std::greater<>> getCandidates(const model::NetworkConfiguration& networkConfig, const config::CommitteeConfiguration& config);
+		std::multimap<int64_t, Key, std::greater<>> getCandidates(
+			const model::NetworkConfiguration& networkConfig,
+			const config::CommitteeConfiguration& config,
+			const BlockchainVersion& blockchainVersion);
 		void decreaseActivities(const config::CommitteeConfiguration& config);
 		void logHarvesters() const;
 
@@ -47,6 +50,14 @@ namespace catapult { namespace chain {
 		static int64_t calculateWeight(const state::AccountData& accountData, const config::CommitteeConfiguration& config);
 		static void logAccountData(const cache::AccountMap& accounts, const config::CommitteeConfiguration& config);
 		static void decreaseActivity(const Key& key, cache::AccountMap& accounts, const config::CommitteeConfiguration& config);
+
+		void setFilter(predicate<const Key&, const config::CommitteeConfiguration&> filter) {
+			m_filter = std::move(filter);
+		}
+
+		void setIneligibleHarvesterHandler(consumer<const Key&> ineligibleHarvesterHandler) {
+			m_ineligibleHarvesterHandler = std::move(ineligibleHarvesterHandler);
+		}
 
 	protected:
 		class Hasher {
@@ -102,5 +113,7 @@ namespace catapult { namespace chain {
 		Timestamp m_timestamp;
 		uint64_t m_phaseTime;
 		mutable std::mutex m_mutex;
+		predicate<const Key&, const config::CommitteeConfiguration&> m_filter;
+		consumer<const Key&> m_ineligibleHarvesterHandler;
 	};
 }}

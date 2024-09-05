@@ -18,11 +18,11 @@ namespace catapult { namespace fastfinality {
 	struct FastFinalityTransitionTable {
 		auto operator()() const {
 			auto syncWithNetwork = [](const auto& event) {
-				return event.IsBroadcastStarted;
+				return event.SyncWithNetwork;
 			};
 
 			auto startNextRound = [](const auto& event) {
-				return !event.IsBroadcastStarted;
+				return !event.SyncWithNetwork;
 			};
 
 #define ACTION(NAME) [] (FastFinalityActions& actions) { actions.NAME(); }
@@ -34,14 +34,13 @@ namespace catapult { namespace fastfinality {
 
 				sml::state<LocalChainCheck> + sml::on_entry<sml::_> / ACTION(CheckLocalChain),
 				sml::state<LocalChainCheck> + sml::event<NetworkHeightDetectionFailure> = sml::state<LocalChainCheck>,
-				sml::state<LocalChainCheck> + sml::event<NetworkHeightLessThanLocal> = sml::state<InvalidLocalChain>,
+				sml::state<LocalChainCheck> + sml::event<NetworkHeightLessThanLocal> = sml::state<LocalChainCheck>,
 				sml::state<LocalChainCheck> + sml::event<NetworkHeightGreaterThanLocal> = sml::state<BlocksDownloading>,
 				sml::state<LocalChainCheck> + sml::event<NetworkHeightEqualToLocal> = sml::state<RoundDetection>,
 				sml::state<LocalChainCheck> + sml::event<NotRegisteredInDbrbSystem> = sml::state<LocalChainCheck>,
+				sml::state<LocalChainCheck> + sml::event<DbrbProcessBanned> = sml::state<LocalChainCheck>,
 				sml::state<LocalChainCheck> + sml::event<StartLocalChainCheck> = sml::state<LocalChainCheck>,
 				sml::state<LocalChainCheck> + sml::event<Hold> = sml::state<OnHold>,
-
-				sml::state<InvalidLocalChain> / ACTION(ResetLocalChain) = sml::X,
 
 				sml::state<BlocksDownloading> + sml::on_entry<sml::_> / ACTION(DownloadBlocks),
 				sml::state<BlocksDownloading> + sml::event<DownloadBlocksFailed> = sml::state<LocalChainCheck>,
@@ -49,7 +48,7 @@ namespace catapult { namespace fastfinality {
 				sml::state<BlocksDownloading> + sml::event<Hold> = sml::state<OnHold>,
 
 				sml::state<RoundDetection> + sml::on_entry<sml::_> / ACTION(DetectRound),
-				sml::state<RoundDetection> + sml::event<RoundDetectionSucceeded> = sml::state<ConnectionChecking>,
+				sml::state<RoundDetection> + sml::event<RoundDetectionCompleted> = sml::state<ConnectionChecking>,
 
 				sml::state<ConnectionChecking> + sml::on_entry<sml::_> / ACTION(CheckConnections),
 				sml::state<ConnectionChecking> + sml::event<ConnectionNumberSufficient> = sml::state<BlockProducerSelection>,
@@ -59,6 +58,7 @@ namespace catapult { namespace fastfinality {
 				sml::state<BlockProducerSelection> + sml::event<GenerateBlock> = sml::state<BlockGeneration>,
 				sml::state<BlockProducerSelection> + sml::event<WaitForBlock> = sml::state<BlockWaiting>,
 				sml::state<BlockProducerSelection> + sml::event<NotRegisteredInDbrbSystem> = sml::state<LocalChainCheck>,
+				sml::state<BlockProducerSelection> + sml::event<DbrbProcessBanned> = sml::state<LocalChainCheck>,
 
 				sml::state<BlockGeneration> + sml::on_entry<sml::_> / ACTION(GenerateBlock),
 				sml::state<BlockGeneration> + sml::event<BlockGenerationFailed> = sml::state<BlockWaiting>,
@@ -71,6 +71,7 @@ namespace catapult { namespace fastfinality {
 				sml::state<BlockWaiting> + sml::event<BlockReceived> = sml::state<Commit>,
 
 				sml::state<Commit> + sml::on_entry<sml::_> / ACTION(CommitBlock),
+				sml::state<Commit> + sml::event<UnexpectedBlock> = sml::state<LocalChainCheck>,
 				sml::state<Commit> + sml::event<CommitBlockFailed> / ACTION(IncrementRound) = sml::state<ConnectionChecking>,
 				sml::state<Commit> + sml::event<CommitBlockSucceeded> / ACTION(ResetRound) = sml::state<ConnectionChecking>,
 				sml::state<Commit> + sml::event<Hold> = sml::state<OnHold>

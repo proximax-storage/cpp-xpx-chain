@@ -23,13 +23,11 @@ namespace catapult { namespace fastfinality {
 			};
 
 			auto originalMessage = createMessage(nodes);
-			auto keyPair = crypto::KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98534");
-			auto pPacket = originalMessage.toNetworkPacket(&keyPair);
+			auto pPacket = originalMessage.toNetworkPacket();
 			auto pUnpackedMessage = dbrb::NetworkPacketConverter().toMessage(*pPacket);
 			const auto& unpackedMessage = reinterpret_cast<const TMessage&>(*pUnpackedMessage);
 			EXPECT_EQ(originalMessage.Sender, unpackedMessage.Sender);
 			EXPECT_EQ(originalMessage.Type, unpackedMessage.Type);
-			EXPECT_EQ(originalMessage.Signature, unpackedMessage.Signature);
 
 			callback(originalMessage, unpackedMessage);
 		}
@@ -40,13 +38,28 @@ namespace catapult { namespace fastfinality {
 				dbrb::View view;
 				for (const auto& node : nodes)
 					view.Data.emplace(node);
+				dbrb::View bootstrapView;
+				for (auto i = 0u; i < nodes.size() / 2; ++i)
+					bootstrapView.Data.emplace(nodes[i]);
 				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
-				return dbrb::PrepareMessage(nodes[0], payload, view);
+				return dbrb::PrepareMessage(nodes[0], payload, view, bootstrapView);
 			},
 			[](const dbrb::PrepareMessage& originalMessage, const dbrb::PrepareMessage& unpackedMessage) {
 				EXPECT_EQ(originalMessage.View, unpackedMessage.View);
+				EXPECT_EQ(originalMessage.BootstrapView, unpackedMessage.BootstrapView);
 				EXPECT_EQ(originalMessage.Payload->Size, unpackedMessage.Payload->Size);
 				EXPECT_EQ_MEMORY(originalMessage.Payload.get(), unpackedMessage.Payload.get(), originalMessage.Payload->Size);
+			});
+	}
+
+	TEST(TEST_CLASS, ValidateAcknowledgedDeclinedMessageSerialization) {
+		RunMessageSerializationTest<dbrb::AcknowledgedDeclinedMessage>([](const auto& nodes) {
+				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
+				auto payloadHash = dbrb::CalculatePayloadHash(payload);
+				return dbrb::AcknowledgedDeclinedMessage(nodes[0], payloadHash);
+			},
+			[](const dbrb::AcknowledgedDeclinedMessage& originalMessage, const dbrb::AcknowledgedDeclinedMessage& unpackedMessage) {
+				EXPECT_EQ(originalMessage.PayloadHash, unpackedMessage.PayloadHash);
 			});
 	}
 

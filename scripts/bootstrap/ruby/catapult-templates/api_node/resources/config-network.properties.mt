@@ -37,11 +37,11 @@ committeeApproval = 1
 committeePhaseTime = 5s
 minCommitteePhaseTime = 3750ms
 maxCommitteePhaseTime = 1m
-committeeSilenceInterval = 100ms
+committeeSilenceInterval = 500ms
 committeeRequestInterval = 500ms
-committeeChainHeightRequestInterval = 30s
+committeeChainHeightRequestInterval = 3s
 committeeTimeAdjustment = 1.1
-committeeEndSyncApproval = 0.45
+committeeEndSyncApproval = 0.0
 committeeBaseTotalImportance = 100
 committeeNotRunningContribution = 0.5
 
@@ -56,6 +56,8 @@ dbrbShardSize = 6
 
 enableDbrbFastFinality = true
 checkNetworkHeightInterval = 10
+
+blockTimeUpdateStrategy = increase-coefficient
 
 [bootstrap.harvesters]
 
@@ -99,6 +101,11 @@ activityScaleFactor = 1000000000
 weightScaleFactor = 1000000000000000000
 
 enableEqualWeights = true
+enableBlockchainVersionValidation = true
+enableHarvesterRotation = true
+enableBlockProducerValidation = true
+
+harvesterBanPeriod = 1h
 
 [plugin:catapult.plugins.config]
 

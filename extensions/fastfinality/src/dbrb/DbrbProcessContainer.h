@@ -34,14 +34,6 @@ namespace catapult { namespace dbrb {
 			return m_shardingEnabled;
 		}
 
-		const auto& currentView() const {
-			if (m_shardingEnabled) {
-				return m_pShardedDbrbProcess->currentView();
-			} else {
-				return m_pDbrbProcess->currentView();
-			}
-		}
-
 		const auto& strand() const {
 			if (m_shardingEnabled) {
 				return m_pShardedDbrbProcess->strand();
@@ -63,6 +55,22 @@ namespace catapult { namespace dbrb {
 				return m_pShardedDbrbProcess->id();
 			} else {
 				return m_pDbrbProcess->id();
+			}
+		}
+
+		void maybeDeliver() {
+			if (m_shardingEnabled) {
+				m_pShardedDbrbProcess->maybeDeliver();
+			} else {
+				m_pDbrbProcess->maybeDeliver();
+			}
+		}
+
+		void clearData() {
+			if (m_shardingEnabled) {
+				m_pShardedDbrbProcess->clearData();
+			} else {
+				m_pDbrbProcess->clearData();
 			}
 		}
 
@@ -90,11 +98,27 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) {
+		void setGetDbrbModeCallback(const GetDbrbModeCallback& callback) {
 			if (m_shardingEnabled) {
-				return m_pShardedDbrbProcess->updateView(pConfigHolder, now, height, registerSelf);
+				m_pShardedDbrbProcess->setGetDbrbModeCallback(callback);
 			} else {
-				return m_pDbrbProcess->updateView(pConfigHolder, now, height, registerSelf);
+				m_pDbrbProcess->setGetDbrbModeCallback(callback);
+			}
+		}
+
+		bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) {
+			if (m_shardingEnabled) {
+				return m_pShardedDbrbProcess->updateView(pConfigHolder, now, height);
+			} else {
+				return m_pDbrbProcess->updateView(pConfigHolder, now, height);
+			}
+		}
+
+		void registerDbrbProcess(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) {
+			if (m_shardingEnabled) {
+				m_pShardedDbrbProcess->registerDbrbProcess(pConfigHolder, now, height);
+			} else {
+				m_pDbrbProcess->registerDbrbProcess(pConfigHolder, now, height);
 			}
 		}
 
@@ -106,27 +130,19 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
-		void registerDbrbPushNodesHandler(model::NetworkIdentifier networkIdentifier, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, ionet::ServerPacketHandlers& packetHandlers) {
+		void registerDbrbPushNodesHandler(model::NetworkIdentifier networkIdentifier, ionet::ServerPacketHandlers& packetHandlers) {
 			if (m_shardingEnabled) {
-				dbrb::RegisterPushNodesHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), networkIdentifier, pConfigHolder, packetHandlers);
+				dbrb::RegisterPushNodesHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), networkIdentifier, packetHandlers);
 			} else {
-				dbrb::RegisterPushNodesHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), networkIdentifier, pConfigHolder, packetHandlers);
+				dbrb::RegisterPushNodesHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), networkIdentifier, packetHandlers);
 			}
 		}
 
-		void registerDbrbRemoveNodeRequestHandler(const crypto::KeyPair& keyPair, ionet::ServerPacketHandlers& packetHandlers) {
+		void registerDbrbPullNodesHandler(ionet::ServerPacketHandlers& packetHandlers) {
 			if (m_shardingEnabled) {
-				dbrb::RegisterRemoveNodeRequestHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), keyPair, packetHandlers);
+				dbrb::RegisterPullNodesHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), packetHandlers);
 			} else {
-				dbrb::RegisterRemoveNodeRequestHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), keyPair, packetHandlers);
-			}
-		}
-
-		void registerDbrbRemoveNodeResponseHandler(ionet::ServerPacketHandlers& packetHandlers) {
-			if (m_shardingEnabled) {
-				dbrb::RegisterRemoveNodeResponseHandler(std::weak_ptr<dbrb::ShardedDbrbProcess>(m_pShardedDbrbProcess), packetHandlers);
-			} else {
-				dbrb::RegisterRemoveNodeResponseHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), packetHandlers);
+				dbrb::RegisterPullNodesHandler(std::weak_ptr<dbrb::DbrbProcess>(m_pDbrbProcess), packetHandlers);
 			}
 		}
 

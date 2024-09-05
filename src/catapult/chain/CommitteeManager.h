@@ -46,7 +46,7 @@ namespace catapult { namespace chain {
 
 	public:
 		/// Selects new committee and increments round.
-		virtual const Committee& selectCommittee(const model::NetworkConfiguration& config) = 0;
+		virtual void selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) = 0;
 
 		/// Selects new committee and increments round.
 		virtual Key getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const = 0;
@@ -57,6 +57,11 @@ namespace catapult { namespace chain {
 		/// Returns the committee selected by the last call of selectCommittee()
 		/// or empty committee after reset().
 		virtual Committee committee() const = 0;
+
+		/// Returns mapping of DBRB process identifiers (boot keys) to ban periods.
+		virtual std::map<dbrb::ProcessId, BlockDuration> babPeriods() const {
+			return {};
+		}
 
 		/// Sets last block element \a supplier.
 		void setLastBlockElementSupplier(const model::BlockElementSupplier& supplier);

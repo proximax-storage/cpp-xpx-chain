@@ -21,6 +21,9 @@ namespace catapult { namespace model {
 	/// Remove DBRB process by network transaction.
 	DEFINE_TRANSACTION_TYPE(Dbrb, RemoveDbrbProcessByNetwork, 0x3);
 
+	/// Add or update DBRB process transaction.
+	DEFINE_TRANSACTION_TYPE(Dbrb, AddOrUpdateDbrbProcess, 0x4);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 	}}
 #endif

@@ -6,12 +6,14 @@
 
 #include "WeightedVotingFsm.h"
 #include "fastfinality/src/utils/FastFinalityUtils.h"
+#include "catapult/api/ChainPackets.h"
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/harvesting_core/UnlockedAccounts.h"
+#include "catapult/ionet/PacketEntityUtils.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/StackLogger.h"
 #include "catapult/validators/AggregateEntityValidator.h"
@@ -82,11 +84,9 @@ namespace catapult { namespace fastfinality {
 			pFsmShared->resetCommitteeData();
 
 			auto localHeight = lastBlockElementSupplier()->Block.Height;
-			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::NetworkTime(), localHeight, false);
+			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::NetworkTime(), localHeight);
 
 			std::vector<RemoteNodeState> remoteNodeStates = retriever();
-
-			pFsmShared->dbrbProcess().messageSender()->broadcastThisNode();
 
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
@@ -168,7 +168,6 @@ namespace catapult { namespace fastfinality {
 					if (isInDbrbSystem) {
 						pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 					} else {
-						pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::NetworkTime(), localHeight, true);
 						DelayAction(pFsmWeak, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 							TRY_GET_FSM()
 
@@ -270,40 +269,56 @@ namespace catapult { namespace fastfinality {
 			pMessageSender->clearQueue();
 			for (const auto& identityKey : chainSyncData.NodeIdentityKeys) {
 				std::vector<std::shared_ptr<model::Block>> blocks;
-				{
-					auto packetIoPair = pMessageSender->getNodePacketIoPair(identityKey);
-					if (!packetIoPair) {
-						CATAPULT_LOG(debug) << "no packet IO to get blocks from " << identityKey;
-						continue;
+				auto pPromise = std::make_shared<std::promise<std::vector<std::shared_ptr<model::Block>>>>();
+				pFsmShared->packetHandlers().registerRemovableHandler(ionet::PacketType::Pull_Blocks_Response, [pPromise, identityKey, &transactionRegistry = state.pluginManager().transactionRegistry()](
+						const auto& packet, auto& context) {
+					auto blockRange = ionet::ExtractEntitiesFromPacket<model::Block>(packet, [&transactionRegistry](const model::Block& block) {
+						return IsSizeValid(block, transactionRegistry);
+					});
+					if (!blockRange.empty() || sizeof(ionet::PacketHeader) == packet.Size) {
+						pPromise->set_value(model::EntityRange<model::Block>::ExtractEntitiesFromRange(std::move(blockRange)));
+					} else {
+						std::ostringstream message;
+						message << identityKey << " returned malformed packet for blocks from request";
+						pPromise->set_exception(std::make_exception_ptr(catapult_runtime_error(message.str().data())));
 					}
+				});
 
-					auto pRemoteChainApi = api::CreateRemoteChainApi(
-						*packetIoPair.io(),
-						identityKey,
-						state.pluginManager().transactionRegistry());
-
-					try {
-						auto blockRange = pRemoteChainApi->blocksFrom(startHeight, blocksFromOptions).get();
-						blocks = model::EntityRange<model::Block>::ExtractEntitiesFromRange(std::move(blockRange));
-						pMessageSender->pushNodePacketIoPair(identityKey, packetIoPair);
-					} catch (std::exception const& error) {
-						CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
-						pMessageSender->removeNode(identityKey);
-						continue;
-					} catch (...) {
-						CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
-						pMessageSender->removeNode(identityKey);
-						continue;
+				bool pullBlocksFailure = false;
+				try {
+					auto pPacket = ionet::CreateSharedPacket<api::PullBlocksRequest>();
+					pPacket->Height = startHeight;
+					pPacket->NumBlocks = blocksFromOptions.NumBlocks;
+					pPacket->NumResponseBytes = blocksFromOptions.NumBytes;
+					pMessageSender->enqueue(pPacket, true, { identityKey });
+					auto future = pPromise->get_future();
+					auto status = future.wait_for(std::chrono::seconds(60));
+					if (std::future_status::ready != status) {
+						CATAPULT_LOG(warning) << "pull blocks request timed out";
+						pullBlocksFailure = true;
 					}
+					blocks = future.get();
+				} catch (std::exception const& error) {
+					CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
+					pullBlocksFailure = true;
+				} catch (...) {
+					CATAPULT_LOG(warning) << "error downloading blocks: unknown error";
+					pullBlocksFailure = true;
 				}
+
+				pFsmShared->packetHandlers().removeHandler(ionet::PacketType::Pull_Blocks_Response);
+
+				if (pullBlocksFailure)
+					continue;
 
 				bool success = false;
 				for (const auto& pBlock : blocks) {
 					const auto& config = state.config(pBlock->Height).Network;
+					auto blockchainVersion = state.pluginManager().configHolder()->Version(pBlock->Height);
 					auto& committeeManager = state.pluginManager().getCommitteeManager(pBlock->EntityVersion());
 					committeeManager.reset();
 					while (committeeManager.committee().Round < pBlock->round())
-						committeeManager.selectCommittee(config);
+						committeeManager.selectCommittee(config, blockchainVersion);
 					CATAPULT_LOG(debug) << "block " << pBlock->Height << ": selected committee for round " << pBlock->round();
 					committeeManager.logCommittee();
 
@@ -374,7 +389,9 @@ namespace catapult { namespace fastfinality {
 
 			auto pLastBlockElement = lastBlockElementSupplier();
 			const auto& block = pLastBlockElement->Block;
-			const auto& config = state.pluginManager().config(block.Height + Height(1));
+			auto currentHeight = block.Height + Height(1);
+			const auto& config = state.pluginManager().config(currentHeight);
+			auto blockchainVersion = state.pluginManager().configHolder()->Version(currentHeight);
 
 			auto roundStart = block.Timestamp + Timestamp(chain::CommitteePhaseCount * block.committeePhaseTime());
 			auto currentTime = timeSupplier();
@@ -384,7 +401,7 @@ namespace catapult { namespace fastfinality {
 			auto phaseTimeMillis = block.committeePhaseTime() ? block.committeePhaseTime() : config.CommitteePhaseTime.millis();
 			chain::DecreasePhaseTime(phaseTimeMillis, config);
 			auto nextRoundStart = roundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
-			committeeManager.selectCommittee(config);
+			committeeManager.selectCommittee(config, blockchainVersion);
 
 			auto committeeSilenceInterval = Timestamp(config.CommitteeSilenceInterval.millis());
 			while (nextRoundStart <= timeSupplier() + committeeSilenceInterval) {
@@ -392,7 +409,7 @@ namespace catapult { namespace fastfinality {
 				chain::IncreasePhaseTime(phaseTimeMillis, config);
 				nextRoundStart = nextRoundStart + Timestamp(chain::CommitteePhaseCount * phaseTimeMillis);
 
-				committeeManager.selectCommittee(config);
+				committeeManager.selectCommittee(config, blockchainVersion);
 			}
 
 			CommitteePhase startPhase;
@@ -412,7 +429,7 @@ namespace catapult { namespace fastfinality {
 			CATAPULT_LOG(debug) << "detected stage: start phase " << round.StartPhase << ", start time " << GetTimeString(round.RoundStart) << ", phase time " << phaseTimeMillis << "ms, round " << round.Round;
 			auto& committeeData = pFsmShared->committeeData();
 			committeeData.setCommitteeRound(round);
-			committeeData.setCurrentBlockHeight(block.Height + Height(1));
+			committeeData.setCurrentBlockHeight(currentHeight);
 
 			DelayAction(pFsmWeak, pFsmShared->timer(), 0u, [pFsmWeak] {
 				TRY_GET_FSM()
@@ -433,7 +450,7 @@ namespace catapult { namespace fastfinality {
 			committeeData.setUnexpectedConfirmedBlockHeight(false);
 			auto round = committeeData.committeeRound();
 			auto pConfigHolder = state.pluginManager().configHolder();
-			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight(), true);
+			bool isInDbrbSystem = pFsmShared->dbrbProcess().updateView(pConfigHolder, utils::FromTimePoint(round.RoundStart), committeeData.currentBlockHeight());
 			if (!isInDbrbSystem) {
 				pFsmShared->processEvent(NotRegisteredInDbrbSystem{});
 				return;
@@ -448,8 +465,9 @@ namespace catapult { namespace fastfinality {
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid committee round", committee.Round, round.Round)
 
 			const auto& config = pConfigHolder->Config(committeeData.currentBlockHeight()).Network;
+			auto blockchainVersion = pConfigHolder->Version(committeeData.currentBlockHeight());
 			while (committeeManager.committee().Round < round.Round)
-				committeeManager.selectCommittee(config);
+				committeeManager.selectCommittee(config, blockchainVersion);
 			CATAPULT_LOG(debug) << "block " << committeeData.currentBlockHeight() << ": selected committee for round " << round.Round;
 			committeeManager.logCommittee();
 			committeeData.setIsBlockBroadcastEnabled(true);
@@ -536,15 +554,25 @@ namespace catapult { namespace fastfinality {
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid committee phase", phase)
 			}
 		}
+
+		auto GetCurrentView(const std::shared_ptr<WeightedVotingFsm>& pFsmShared, extensions::ServiceState& state) {
+			const auto& committeeData = pFsmShared->committeeData();
+			auto roundStart = utils::FromTimePoint(committeeData.committeeRound().RoundStart);
+			auto view = dbrb::View{ state.pluginManager().dbrbViewFetcher().getView(roundStart) };
+			auto bootstrapView = dbrb::View{ state.config(committeeData.currentBlockHeight()).Network.DbrbBootstrapProcesses };
+			view.merge(bootstrapView);
+
+			return view;
+		}
 	}
 
 	action CreateWeightedVotingProposeBlockAction(
 			const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
-			const cache::CatapultCache& cache,
+			extensions::ServiceState& state,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const harvesting::BlockGenerator& blockGenerator,
 			const model::BlockElementSupplier& lastBlockElementSupplier) {
-		return [pFsmWeak, &cache, pConfigHolder, blockGenerator, lastBlockElementSupplier]() {
+		return [pFsmWeak, &state, pConfigHolder, blockGenerator, lastBlockElementSupplier]() {
 			TRY_GET_FSM()
 
 			auto& committeeData = pFsmShared->committeeData();
@@ -553,7 +581,14 @@ namespace catapult { namespace fastfinality {
 			auto pParentBlockElement = lastBlockElementSupplier();
 			NextBlockContext context(*pParentBlockElement, utils::FromTimePoint(committeeRound.RoundStart));
 			const auto& config = pConfigHolder->Config(context.Height);
-			if (!context.tryCalculateDifficulty(cache.sub<cache::BlockDifficultyCache>(), config.Network)) {
+
+			if (!config.Network.EnableWeightedVoting) {
+				CATAPULT_LOG(warning) << "skipping block propose attempt due to weighted voting is disabled";
+				pFsmShared->processEvent(BlockGenerationFailed{});
+				return;
+			}
+
+			if (!context.tryCalculateDifficulty(state.cache().sub<cache::BlockDifficultyCache>(), config.Network)) {
 				CATAPULT_LOG(debug) << "skipping block propose attempt due to error calculating difficulty";
 				pFsmShared->processEvent(BlockGenerationFailed{});
 				return;
@@ -573,7 +608,7 @@ namespace catapult { namespace fastfinality {
 				auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(pBlock->Size);
 				pPacket->Type = ionet::PacketType::Push_Proposed_Block;
 				std::memcpy(static_cast<void*>(pPacket->Data()), pBlock.get(), pBlock->Size);
-				const auto& recipients = (pFsmShared->dbrbProcess().shardingEnabled() ? pFsmShared->dbrbProcess().currentView().Data : committeeData.committeeBootKeys());
+				auto recipients = (pFsmShared->dbrbProcess().shardingEnabled() ? GetCurrentView(pFsmShared, state).Data : committeeData.committeeBootKeys());
 				pFsmShared->dbrbProcess().broadcast(pPacket, recipients);
 				pFsmShared->processEvent(BlockGenerationSucceeded{});
 			} else {
@@ -670,9 +705,8 @@ namespace catapult { namespace fastfinality {
 
 	namespace {
 		template<typename TPacket, CommitteeMessageType MessageType, CommitteePhase Phase>
-		action CreateAddVoteAction(
-				const std::weak_ptr<WeightedVotingFsm>& pFsmWeak) {
-			return [pFsmWeak]() {
+		action CreateAddVoteAction(const std::weak_ptr<WeightedVotingFsm>& pFsmWeak, extensions::ServiceState& state) {
+			return [pFsmWeak, &state]() {
 				TRY_GET_FSM()
 
 				auto& committeeData = pFsmShared->committeeData();
@@ -704,18 +738,18 @@ namespace catapult { namespace fastfinality {
 				for (const auto& pair : votes)
 					pMessage[index++] = pair.second;
 
-				const auto& recipients = (pFsmShared->dbrbProcess().shardingEnabled() ? pFsmShared->dbrbProcess().currentView().Data : committeeData.committeeBootKeys());
+				auto recipients = (pFsmShared->dbrbProcess().shardingEnabled() ? GetCurrentView(pFsmShared, state).Data : committeeData.committeeBootKeys());
 				pFsmShared->dbrbProcess().broadcast(pPacket, recipients);
 			};
 		}
 	}
 
-	action CreateWeightedVotingAddPrevoteAction(const std::weak_ptr<WeightedVotingFsm>& pFsmWeak) {
-		return CreateAddVoteAction<PushPrevoteMessagesRequest, CommitteeMessageType::Prevote, CommitteePhase::Prevote>(pFsmWeak);
+	action CreateWeightedVotingAddPrevoteAction(const std::weak_ptr<WeightedVotingFsm>& pFsmWeak, extensions::ServiceState& state) {
+		return CreateAddVoteAction<PushPrevoteMessagesRequest, CommitteeMessageType::Prevote, CommitteePhase::Prevote>(pFsmWeak, state);
 	}
 
-	action CreateWeightedVotingAddPrecommitAction(const std::weak_ptr<WeightedVotingFsm>& pFsmWeak) {
-		return CreateAddVoteAction<PushPrecommitMessagesRequest, CommitteeMessageType::Precommit, CommitteePhase::Precommit>(pFsmWeak);
+	action CreateWeightedVotingAddPrecommitAction(const std::weak_ptr<WeightedVotingFsm>& pFsmWeak, extensions::ServiceState& state) {
+		return CreateAddVoteAction<PushPrecommitMessagesRequest, CommitteeMessageType::Precommit, CommitteePhase::Precommit>(pFsmWeak, state);
 	}
 
 	action CreateWeightedVotingUpdateConfirmedBlockAction(
@@ -752,7 +786,7 @@ namespace catapult { namespace fastfinality {
 				auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(blockSize);
 				pPacket->Type = ionet::PacketType::Push_Confirmed_Block;
 				std::memcpy(static_cast<void*>(pPacket->Data()), pBlock.get(), blockSize);
-				pFsmShared->dbrbProcess().broadcast(pPacket, pFsmShared->dbrbProcess().currentView().Data);
+				pFsmShared->dbrbProcess().broadcast(pPacket, GetCurrentView(pFsmShared, state).Data);
 			}
 		};
 	}

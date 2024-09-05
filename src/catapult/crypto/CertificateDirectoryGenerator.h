@@ -1,6 +1,7 @@
 /**
-*** Copyright (c) 2016-present,
-*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
+*** Copyright (c) 2016-2019, Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp.
+*** Copyright (c) 2020-present, Jaguar0625, gimre, BloodyRookie.
+*** All rights reserved.
 ***
 *** This file is part of Catapult.
 ***
@@ -18,20 +19,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/utils/SpinLock.h"
-#include "tests/test/nodeps/BasicLockTests.h"
+#pragma once
+#include "catapult/crypto/KeyPair.h"
+#include <string>
 
-namespace catapult { namespace utils {
+namespace catapult { namespace crypto {
 
-	namespace {
-		struct LockPolicy {
-			using LockType = SpinLock;
-
-			static auto ExclusiveLock(LockType& lock) {
-				return std::make_unique<std::lock_guard<LockType>>(lock);
-			}
-		};
-	}
-
-	DEFINE_BASIC_LOCK_TESTS(SpinLockTests,)
+	/// Generate certificates for \a scenarioId using \a nodeKeyPair inside \a certificateDirectory.
+	void GenerateCertificateDirectory(const crypto::KeyPair& nodeKeyPair, const std::string& certificateDirectory);
 }}

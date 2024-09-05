@@ -229,7 +229,7 @@ namespace catapult { namespace handlers {
 	DEFINE_HEIGHT_REQUEST_HANDLER_TESTS(BlockHashesHandlerTraits, BlockHashesHandler)
 
 	namespace {
-		void AssertCanRetrieveHashes(uint32_t maxRequestedHashes, Height requestHeight, const std::vector<Height>& expectedHeights) {
+		void AssertCanRetrieveHashes(uint32_t maxRequestedHashes, const Height& requestHeight, const std::vector<Height>& expectedHeights) {
 			// Arrange: 12 blocks, on remote side allow at most 7 hashes
 			ionet::ServerPacketHandlers handlers;
 			auto pStorage = CreateStorage(12);

@@ -6,17 +6,18 @@
 
 #include "MessageSender.h"
 #include "DbrbChainPackets.h"
-#include "TransactionSender.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/dbrb/Messages.h"
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/NodeContainer.h"
-#include "catapult/net/PacketWriters.h"
+#include "catapult/net/PacketReadersWriters.h"
 #include "catapult/thread/Future.h"
 #include "catapult/thread/FutureUtils.h"
+#include "catapult/thread/IoThreadPool.h"
 #include "catapult/utils/NetworkTime.h"
 #include <condition_variable>
+#include <shared_mutex>
 #include <thread>
+#include <boost/asio/system_timer.hpp>
 
 namespace catapult { namespace dbrb {
 
@@ -28,341 +29,430 @@ namespace catapult { namespace dbrb {
 				return utils::LogLevel::Warning;
 		}
 
+		struct Message {
+			dbrb::Payload Payload;
+			bool DropOnFailure;
+		};
+
+		class MessageGroup {
+		public:
+			bool add(const ProcessId& recipient, const Message& message) {
+				if (!m_recipients.emplace(recipient).second)
+					return false;
+
+				m_messages.emplace_back(recipient, message);
+
+				return true;
+			}
+
+			void remove_if(const predicate<const Message&>& pred) {
+				std::vector<std::pair<ProcessId, Message>> messages;
+				messages.reserve(m_messages.size());
+				m_recipients.clear();
+				for (const auto& pair : m_messages) {
+					if (!pred(pair.second)) {
+						m_recipients.emplace(pair.first);
+						messages.emplace_back(pair);
+					}
+				}
+				std::swap(messages, m_messages);
+			}
+
+			const std::vector<std::pair<ProcessId, Message>>& messages() const {
+				return m_messages;
+			}
+
+		private:
+			std::set<ProcessId> m_recipients;
+			std::vector<std::pair<ProcessId, Message>> m_messages;
+		};
+
+		class MessageBuffer {
+		public:
+			MessageBuffer() : m_size(0) {}
+
+		public:
+			void enqueue(const Payload& payload, bool dropOnFailure, const std::set<ProcessId>& recipients) {
+				Message message{ payload, dropOnFailure };
+				for (const auto& recipient : recipients) {
+					bool groupNotFound = true;
+					for (auto& messageGroup : m_buffer) {
+						if (messageGroup.add(recipient, message)) {
+							groupNotFound = false;
+							break;
+						}
+					}
+
+					if (groupNotFound) {
+						MessageGroup group;
+						group.add(recipient, message);
+						m_buffer.emplace_back(group);
+					}
+
+					m_size++;
+				}
+			}
+
+			const std::vector<MessageGroup>& groups() const {
+				return m_buffer;
+			}
+
+			size_t size() const {
+				return m_size;
+			}
+
+			bool empty() const {
+				return !m_size;
+			}
+
+			void clear() {
+				m_buffer.clear();
+				m_size = 0;
+			}
+
+			void remove_if(const predicate<const Message&>& pred) {
+				for (auto& group : m_buffer) {
+					auto originalSize = group.messages().size();
+					group.remove_if(pred);
+					m_size -= originalSize - group.messages().size();
+				}
+			}
+
+		private:
+			std::vector<MessageGroup> m_buffer;
+			size_t m_size;
+		};
+
 		class DefaultMessageSender : public MessageSender, public std::enable_shared_from_this<DefaultMessageSender> {
 		public:
 			explicit DefaultMessageSender(
 				ionet::Node thisNode,
-				std::weak_ptr<net::PacketWriters> pWriters,
 				const ionet::NodeContainer& nodeContainer,
 				bool broadcastThisNode,
-				std::shared_ptr<TransactionSender> pTransactionSender,
-				const dbrb::DbrbViewFetcher& dbrbViewFetcher);
+				std::shared_ptr<thread::IoThreadPool> pPool,
+				const utils::TimeSpan& resendMessagesInterval);
 			~DefaultMessageSender() override;
 
 			// Message sending
-			void enqueue(const Payload& payload, const std::set<ProcessId>& recipients) override;
+			void enqueue(const Payload& payload, bool dropOnFailure, const std::set<ProcessId>& recipients) override;
 			void clearQueue() override;
-			ionet::NodePacketIoPair getNodePacketIoPair(const ProcessId& id) override;
-			void pushNodePacketIoPair(const ProcessId& id, const ionet::NodePacketIoPair& nodePacketIoPair) override;
 
 		private:
-			void workerThreadFunc();
+			void sendMessages();
+			void resendMessages();
+			void removePersistentMessages();
 
 		public:
 			// Node discovery
-			void requestNodes(const std::set<ProcessId>& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override;
-			void addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override;
-			void removeNode(const ProcessId& id) override;
-			void broadcastNodes(const Payload& payload) override;
-			void broadcastThisNode() override;
-			void clearBroadcastData() override;
-			bool isNodeAdded(const ProcessId& id) override;
-			void addRemoveNodeResponse(const ProcessId& idToRemove, const ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature) override;
+			void connectNodes(const std::set<ProcessId>& requestedIds) override;
+			void closeAllConnections() override;
+			void closeConnections(const std::set<ProcessId>& requestedIds) override;
+			void addNodes(const std::vector<ionet::Node>& nodes) override;
+			void sendNodes(const std::vector<ionet::Node>& nodes, const ProcessId& recipient) override;
 			ViewData getUnreachableNodes(ViewData& view) const override;
 			size_t getUnreachableNodeCount(const dbrb::ViewData& view) const override;
+			std::vector<ionet::Node> getKnownNodes(const ViewData& view) const override;
 
 		private:
-			void broadcastNodes(const std::vector<ionet::Node>& nodes);
-
-		public:
-			void clearNodeRemovalData() override;
+			void requestNodes(const std::set<ProcessId>& requestedIds);
+			void broadcast(const Payload& payload);
+			void startResendMessagesTimer();
 
 		private:
-			std::weak_ptr<net::PacketWriters> m_pWriters;
-			NodePacketIoPairMap m_packetIoPairs;
-
 			// Message sending
-			BufferType m_buffer;
+			MessageBuffer m_buffer;
+			MessageBuffer m_failedMessageBuffer;
 			std::mutex m_messageMutex;
 			std::condition_variable m_condVar;
-			volatile bool m_running;
-			volatile bool m_clearQueue;
-			std::thread m_workerThread;
+			volatile std::atomic_bool m_running;
+			std::thread m_sendMessagesThread;
+			std::shared_ptr<thread::IoThreadPool> m_pPool;
+			boost::asio::system_timer m_timer;
+			std::chrono::milliseconds m_resendMessagesInterval;
+			std::atomic_bool m_timerRunning;
 
 			// Node discovery
 			ionet::Node m_thisNode;
 			bool m_broadcastThisNode;
 			const ionet::NodeContainer& m_nodeContainer;
-			std::map<ProcessId, ionet::Node> m_nodes;
-			std::unordered_set<ProcessId, utils::ArrayHasher<ProcessId>> m_connectionInProgress;
-			std::map<ProcessId, std::unordered_set<Hash256, utils::ArrayHasher<Hash256>>> m_broadcastedPackets;
-			mutable std::mutex m_nodeMutex;
-
-			// Node removing
-			struct NodeRemovalData {
-				catapult::Timestamp Timestamp;
-				ViewData View;
-				std::map<ProcessId, Signature> Votes;
-			};
-			std::map<ProcessId, NodeRemovalData> m_nodesToRemove;
-			std::shared_ptr<TransactionSender> m_pTransactionSender;
-			const dbrb::DbrbViewFetcher& m_dbrbViewFetcher;
-			mutable std::mutex m_removeNodeMutex;
+			std::unordered_map<ProcessId, ionet::Node, utils::ArrayHasher<ProcessId>> m_nodes;
+			mutable std::shared_mutex m_nodeMutex;
 		};
 	}
 
 	std::shared_ptr<MessageSender> CreateMessageSender(
 			ionet::Node thisNode,
-			std::weak_ptr<net::PacketWriters> pWriters,
 			const ionet::NodeContainer& nodeContainer,
 			bool broadcastThisNode,
-			std::shared_ptr<TransactionSender> pTransactionSender,
-			const dbrb::DbrbViewFetcher& dbrbViewFetcher) {
-		return std::make_shared<DefaultMessageSender>(std::move(thisNode), std::move(pWriters), nodeContainer, broadcastThisNode, std::move(pTransactionSender), dbrbViewFetcher);
+			const std::shared_ptr<thread::IoThreadPool>& pPool,
+			const utils::TimeSpan& resendMessagesInterval) {
+		return std::make_shared<DefaultMessageSender>(std::move(thisNode), nodeContainer, broadcastThisNode, pPool, resendMessagesInterval);
 	}
 
 	DefaultMessageSender::DefaultMessageSender(
 			ionet::Node thisNode,
-			std::weak_ptr<net::PacketWriters> pWriters,
 			const ionet::NodeContainer& nodeContainer,
 			bool broadcastThisNode,
-			std::shared_ptr<TransactionSender> pTransactionSender,
-			const dbrb::DbrbViewFetcher& dbrbViewFetcher)
-		: m_pWriters(std::move(pWriters))
-		, m_running(true)
-		, m_clearQueue(false)
-		, m_workerThread(&DefaultMessageSender::workerThreadFunc, this)
+			std::shared_ptr<thread::IoThreadPool> pPool,
+			const utils::TimeSpan& resendMessagesInterval)
+		: m_running(true)
+		, m_sendMessagesThread(&DefaultMessageSender::sendMessages, this)
+		, m_timerRunning(false)
 		, m_thisNode(std::move(thisNode))
 		, m_nodeContainer(nodeContainer)
 		, m_broadcastThisNode(broadcastThisNode)
-		, m_pTransactionSender(std::move(pTransactionSender))
-		, m_dbrbViewFetcher(dbrbViewFetcher)
+		, m_pPool(std::move(pPool))
+		, m_timer(m_pPool->ioContext())
+		, m_resendMessagesInterval(resendMessagesInterval.millis())
 	{}
 
 	DefaultMessageSender::~DefaultMessageSender() {
+		m_running = false;
+		m_timer.cancel();
+		m_condVar.notify_one();
+		m_sendMessagesThread.join();
+	}
+
+	void DefaultMessageSender::enqueue(const Payload& payload, bool dropOnFailure, const std::set<ProcessId>& recipients) {
 		{
-			std::lock_guard<std::mutex> guard(m_messageMutex);
-			m_running = false;
+			std::unique_lock guard(m_messageMutex);
+			m_buffer.enqueue(payload, dropOnFailure, recipients);
+			CATAPULT_LOG(trace) << "[MESSAGE SENDER] enqueued " << *payload << ", " << recipients.size() << " recipient(s), buffer size " << m_buffer.size();
 		}
 		m_condVar.notify_one();
-		m_workerThread.join();
 	}
 
-	ionet::NodePacketIoPair DefaultMessageSender::getNodePacketIoPair(const ProcessId& id) {
-		std::lock_guard<std::mutex> guard(m_messageMutex);
-		auto iter = m_packetIoPairs.find(id);
-		if (iter != m_packetIoPairs.end()) {
-			auto nodePacketIoPair = iter->second;
-			m_packetIoPairs.erase(iter);
+	void DefaultMessageSender::removePersistentMessages() {
+		auto originalSize = m_buffer.size();
+		m_buffer.remove_if([](const Message& message) {
+			return !message.DropOnFailure;
+		});
+		auto currentSize = m_buffer.size();
+		if (originalSize > currentSize)
+			CATAPULT_LOG(trace) << "[MESSAGE SENDER] removed " << (originalSize - currentSize) << " message(s)";
 
-			return nodePacketIoPair;
+		if (!m_failedMessageBuffer.empty()) {
+			CATAPULT_LOG(trace) << "[MESSAGE SENDER] clearing failed messages (" << m_failedMessageBuffer.size() << ")";
+			m_failedMessageBuffer.clear();
 		}
-
-		auto pWriters = m_pWriters.lock();
-		if (!pWriters)
-			return {};
-
-		return pWriters->pickOne(id);
-	}
-
-	void DefaultMessageSender::pushNodePacketIoPair(const ProcessId& id, const ionet::NodePacketIoPair& nodePacketIoPair) {
-		std::lock_guard<std::mutex> guard(m_messageMutex);
-		m_packetIoPairs.emplace(id, nodePacketIoPair);
-	}
-
-	void DefaultMessageSender::enqueue(const Payload& payload, const std::set<ProcessId>& recipients) {
-		{
-			std::lock_guard<std::mutex> guard(m_messageMutex);
-			m_clearQueue = false;
-			m_buffer.emplace_back(payload, recipients);
-		}
-		m_condVar.notify_one();
 	}
 
 	void DefaultMessageSender::clearQueue() {
-		std::lock_guard<std::mutex> guard(m_messageMutex);
-		m_clearQueue = true;
-		if (!m_buffer.empty()) {
-			CATAPULT_LOG(debug) << "[MESSAGE SENDER] clearing the queue (" << m_buffer.size() << ")";
-			m_buffer.clear();
-		}
+		m_timer.cancel();
+		std::unique_lock guard(m_messageMutex);
+		removePersistentMessages();
 	}
 
-	void DefaultMessageSender::workerThreadFunc() {
-		BufferType buffer;
-		while (m_running) {
-			{
-				std::unique_lock<std::mutex> lock(m_messageMutex);
-				m_condVar.wait(lock, [this] {
-					return !m_buffer.empty() || !m_running;
-				});
+	void DefaultMessageSender::resendMessages() {
+		{
+			std::unique_lock guard(m_messageMutex);
+			if (m_failedMessageBuffer.empty())
+				return;
 
-				if (m_clearQueue) {
-					m_buffer.clear();
-					m_clearQueue = false;
-					continue;
-				}
+			CATAPULT_LOG(trace) << "[MESSAGE SENDER] resending " << m_failedMessageBuffer.size() << " message(s)";
+
+			for (const auto& messageGroup : m_failedMessageBuffer.groups()) {
+				for (const auto& [recipient, message] : messageGroup.messages())
+					m_buffer.enqueue(message.Payload, message.DropOnFailure, { recipient });
+			}
+
+			m_failedMessageBuffer.clear();
+		}
+		m_condVar.notify_one();
+	}
+
+	void DefaultMessageSender::startResendMessagesTimer() {
+		if (m_timerRunning)
+			return;
+
+		m_timerRunning = true;
+		m_timer.expires_after(m_resendMessagesInterval);
+		m_timer.async_wait([pThisWeak = weak_from_this()](const boost::system::error_code& ec) {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
+				return;
+
+			pThis->m_timerRunning = false;
+
+			if (ec) {
+				if (ec == boost::asio::error::operation_aborted)
+					return;
+
+				CATAPULT_THROW_EXCEPTION(boost::system::system_error(ec));
+			}
+
+			pThis->resendMessages();
+		});
+	}
+
+	void DefaultMessageSender::sendMessages() {
+		while (m_running) {
+			MessageBuffer buffer;
+			{
+				std::unique_lock lock(m_messageMutex);
+				if (m_buffer.empty() && m_running)
+					m_condVar.wait(lock, [this] { return !m_buffer.empty() || !m_running; });
 
 				std::swap(buffer, m_buffer);
+			}
 
-				if (!m_running) {
-					return;
-				}
+			if (!m_running) {
+				CATAPULT_LOG(trace) << "[MESSAGE SENDER] stopped, " << buffer.size() << " remaining message(s)";
+				return;
 			}
 
 			auto pWriters = m_pWriters.lock();
-			if (!pWriters)
+			if (!pWriters) {
+				CATAPULT_LOG(trace) << "[MESSAGE SENDER] no packet writers, " << buffer.size() << " remaining message(s)";
 				return;
-
-			net::PeerConnectResult peerConnectResult;
-			for (const auto& pair : buffer) {
-				const auto& pPacket = pair.first;
-				const auto& recipients = pair.second;
-				std::vector<thread::future<bool>> completionStatusFutures;
-				for (const auto& recipient : recipients) {
-					auto nodePacketIoPair = getNodePacketIoPair(recipient);
-					if (nodePacketIoPair) {
-						CATAPULT_LOG(trace) << "[MESSAGE SENDER] sending " << *pPacket << " to " << nodePacketIoPair.node() << " " << nodePacketIoPair.node().identityKey();
-						auto pPromise = std::make_shared<thread::promise<bool>>();
-						completionStatusFutures.push_back(pPromise->get_future());
-						auto pPacketIoPair = std::make_shared<ionet::NodePacketIoPair>(nodePacketIoPair);
-						nodePacketIoPair.io()->write(ionet::PacketPayload(pPacket), [pThisWeak = weak_from_this(), pPacket, pPromise, recipient, pPacketIoPair](ionet::SocketOperationCode code) {
-							auto pThis = pThisWeak.lock();
-							if (code != ionet::SocketOperationCode::Success) {
-								CATAPULT_LOG(warning) << "[MESSAGE SENDER] sending " << *pPacket << " to " << pPacketIoPair->node() << " " << pPacketIoPair->node().identityKey() << " completed with " << code;
-								if (pThis) {
-									CATAPULT_LOG(debug) << "[MESSAGE SENDER] removing node " << recipient;
-									pThis->removeNode(recipient);
-								}
-							} else {
-								if (pThis)
-									pThis->pushNodePacketIoPair(recipient, *pPacketIoPair);
-							}
-							pPromise->set_value(true);
-						});
-					} else {
-						CATAPULT_LOG(trace) << "[MESSAGE SENDER] NOT FOUND packet io to send " << *pPacket << " to " << recipient;
-					}
-				}
-
-				if (!completionStatusFutures.empty()) {
-					thread::when_all(std::move(completionStatusFutures)).then([](auto&& completedFutures) {
-						return thread::get_all_ignore_exceptional(completedFutures.get());
-					}).get();
-				}
 			}
 
-			buffer.clear();
-
-			{
-				std::lock_guard<std::mutex> guard(m_messageMutex);
-				if (m_clearQueue) {
-					if (!m_buffer.empty()) {
-						CATAPULT_LOG(trace) << "[MESSAGE SENDER] clearing the queue (" << m_buffer.size() << ")";
-						m_buffer.clear();
-					}
-					m_clearQueue = false;
+			CATAPULT_LOG(trace) << "[MESSAGE SENDER] sending " << buffer.size() << " message(s)";
+			for (const auto& messageGroup : buffer.groups()) {
+				for (const auto& pair : messageGroup.messages()) {
+					const auto& recipient = pair.first;
+					const auto& message = pair.second;
+					CATAPULT_LOG(trace) << "[MESSAGE SENDER] sending " << *message.Payload << " to " << recipient;
+					pWriters->write(recipient, ionet::PacketPayload(message.Payload), [pThisWeak = weak_from_this(), message, recipient](ionet::SocketOperationCode code) {
+						if (code != ionet::SocketOperationCode::Success) {
+							CATAPULT_LOG(warning) << "[MESSAGE SENDER] sending " << *message.Payload << " to " << recipient << " completed with " << code;
+							auto pThis = pThisWeak.lock();
+							if (pThis && !message.DropOnFailure) {
+								{
+									std::unique_lock lock(pThis->m_messageMutex);
+									pThis->m_failedMessageBuffer.enqueue(message.Payload, false, { recipient });
+								}
+								pThis->startResendMessagesTimer();
+							}
+						}
+					});
 				}
 			}
 		}
 	}
 
-	void DefaultMessageSender::requestNodes(const std::set<ProcessId>& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+	void DefaultMessageSender::connectNodes(const std::set<ProcessId>& requestedIds) {
 		std::vector<ionet::Node> nodes;
 		std::set<ProcessId> ids;
 
 		{
-			std::lock_guard<std::mutex> guard(m_nodeMutex);
+			auto pWriters = m_pWriters.lock();
+			if (!pWriters)
+				return;
+
+			auto peers = pWriters->peers();
 			for (const auto& id : requestedIds) {
-				if (m_nodes.find(id) == m_nodes.end())
+				if (peers.find(id) == peers.cend())
 					ids.emplace(id);
 			}
 		}
 
 		ids.erase(m_thisNode.identityKey());
 
-		CATAPULT_LOG(debug) << "[MESSAGE SENDER] requesting " << ids.size() << " nodes";
+		if (ids.empty())
+			return;
+
+		CATAPULT_LOG(trace) << "[MESSAGE SENDER] looking for " << ids.size() << " nodes";
+
+		nodes = m_nodeContainer.view().getNodes(ids);
+		nodes.erase(std::remove_if(nodes.begin(), nodes.end(), [](const auto& node) { return node.endpoint().Host.empty(); }), nodes.end());
+		CATAPULT_LOG(trace) << "[MESSAGE SENDER] got " << nodes.size() << " discovered nodes";
+		if (!nodes.empty())
+			addNodes(nodes);
+
+		for (const auto& node : nodes)
+			ids.erase(node.identityKey());
 
 		if (ids.empty())
 			return;
 
-		nodes = m_nodeContainer.view().getNodes(ids);
-		nodes.erase(std::remove_if(nodes.begin(), nodes.end(), [](const auto& node) { return node.endpoint().Host.empty(); }), nodes.end());
-		CATAPULT_LOG(debug) << "[MESSAGE SENDER] got " << nodes.size() << " discovered nodes";
-		if (!nodes.empty()) {
-			addNodes(nodes, pConfigHolder);
-			broadcastNodes(nodes);
-		}
+		CATAPULT_LOG(debug) << "[MESSAGE SENDER] requesting " << ids.size() << " nodes";
+
+		requestNodes(ids);
 	}
 
-	void DefaultMessageSender::addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+	void DefaultMessageSender::closeAllConnections() {
 		auto pWriters = m_pWriters.lock();
 		if (!pWriters)
 			return;
 
-		for (auto& node : nodes) {
+		pWriters->closeActiveConnections();
+	}
+
+	void DefaultMessageSender::closeConnections(const std::set<ProcessId>& requestedIds) {
+		if (requestedIds.empty())
+			return;
+
+		auto pWriters = m_pWriters.lock();
+		if (!pWriters)
+			return;
+
+		for (const auto& id : requestedIds)
+			pWriters->closeOne(id);
+	}
+
+	void DefaultMessageSender::requestNodes(const std::set<ProcessId>& requestedIds) {
+		if (requestedIds.empty())
+			return;
+
+		auto pPacket = ionet::CreateSharedPacket<DbrbPullNodesPacket>(requestedIds.size() * ProcessId_Size);
+		pPacket->NodeCount = utils::checked_cast<size_t, uint16_t>(requestedIds.size());
+		auto* pBuffer = reinterpret_cast<uint8_t*>(pPacket.get() + 1);
+		for (const auto& id : requestedIds) {
+			memcpy(pBuffer, id.data(), ProcessId_Size);
+			pBuffer += ProcessId_Size;
+		}
+
+		broadcast(pPacket);
+	}
+
+	void DefaultMessageSender::addNodes(const std::vector<ionet::Node>& nodes) {
+		auto pWriters = m_pWriters.lock();
+		if (!pWriters)
+			return;
+
+		for (const auto& node : nodes) {
 			const auto& id = node.identityKey();
 			if (id == m_thisNode.identityKey())
 				continue;
 
 			const auto& endpoint = node.endpoint();
-			auto dbrbNode = ionet::Node(node.identityKey(), ionet::NodeEndpoint{ endpoint.Host, endpoint.DbrbPort }, node.metadata());
-			auto identities = pWriters->identities();
-			if ((identities.find(id) != identities.cend())) {
-				CATAPULT_LOG(trace) << "[MESSAGE SENDER] Already connected to " << dbrbNode << " " << id;
-				std::lock_guard<std::mutex> guard(m_nodeMutex);
-				m_nodes[id] = node;
+			if (!endpoint.DbrbPort) {
+				CATAPULT_LOG(trace) << "[MESSAGE SENDER] no DBRB port " << node << " " << id;
 				continue;
 			}
 
 			{
-				std::lock_guard<std::mutex> guard(m_nodeMutex);
-				if (m_connectionInProgress.find(id) == m_connectionInProgress.cend()) {
-					m_connectionInProgress.emplace(id);
-				} else {
-					continue;
-				}
+				std::unique_lock guard(m_nodeMutex);
+				m_nodes[id] = node;
+			}
+
+			auto dbrbNode = ionet::Node(node.identityKey(), ionet::NodeEndpoint{ endpoint.Host, endpoint.DbrbPort }, node.metadata());
+			auto peers = pWriters->peers();
+			if ((peers.find(id) != peers.cend())) {
+				CATAPULT_LOG(trace) << "[MESSAGE SENDER] Already connected or connecting to " << dbrbNode << " " << id;
+				continue;
 			}
 
 			CATAPULT_LOG(debug) << "[MESSAGE SENDER] Connecting to " << dbrbNode << " " << id;
-			pWriters->connect(dbrbNode, [pThisWeak = weak_from_this(), dbrbNode, node, pConfigHolder](const auto& result) {
-				CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[MESSAGE SENDER] connection attempt to " << dbrbNode << " " << dbrbNode.identityKey() << " completed with " << result.Code;
+			pWriters->connect(dbrbNode, [pThisWeak = weak_from_this(), dbrbNode](const auto& result) {
+				const auto& identityKey = dbrbNode.identityKey();
+				CATAPULT_LOG_LEVEL(MapToLogLevel(result.Code)) << "[MESSAGE SENDER] connection attempt to " << dbrbNode << " " << identityKey << " completed with " << result.Code;
 				auto pThis = pThisWeak.lock();
-				if (pThis) {
-					if (result.Code == net::PeerConnectCode::Accepted || result.Code == net::PeerConnectCode::Already_Connected) {
-						{
-							std::lock_guard<std::mutex> guard(pThis->m_nodeMutex);
-							pThis->m_nodes[node.identityKey()] = node;
-						}
-						CATAPULT_LOG(debug) << "[MESSAGE SENDER] Added node " << dbrbNode << " " << dbrbNode.identityKey();
-						pThis->broadcastThisNode();
+				if (pThis && result.Code == net::PeerConnectCode::Accepted) {
+					CATAPULT_LOG(debug) << "[MESSAGE SENDER] Connected to node " << dbrbNode << " " << identityKey;
+					if (pThis->m_broadcastThisNode) {
+						CATAPULT_LOG(debug) << "[MESSAGE SENDER] sharing this node " << pThis->m_thisNode << " [dbrb port " << pThis->m_thisNode.endpoint().DbrbPort << "] " << pThis->m_thisNode.identityKey();
+						pThis->sendNodes({ pThis->m_thisNode }, identityKey);
 					} else {
-						// TODO: uncomment and retest
-//						std::lock_guard<std::mutex> guard(pThis->m_removeNodeMutex);
-//						auto timestamp = utils::NetworkTime();
-//						auto view = View{ pThis->m_dbrbViewFetcher.getView(timestamp) };
-//						auto nodeIter = pThis->m_nodesToRemove.find(node.identityKey());
-//						if (nodeIter == pThis->m_nodesToRemove.cend() && view.isMember(node.identityKey())) {
-//							view.Data.erase(node.identityKey());
-//							auto bootstrapView = View{ pConfigHolder->Config().Network.DbrbBootstrapProcesses };
-//							view.merge(bootstrapView);
-//
-//							if (!pThis->m_pTransactionSender->isRemoveDbrbProcessByNetworkTransactionSent(node.identityKey()) && view.isMember(pThis->m_thisNode.identityKey())) {
-//								pThis->m_nodesToRemove.emplace(node.identityKey(), NodeRemovalData{ timestamp, view.Data, std::map<ProcessId, Signature>{} });
-//								auto pRequest = ionet::CreateSharedPacket<DbrbRemoveNodeRequestPacket>();
-//								pRequest->Timestamp = timestamp;
-//								pRequest->ProcessId = node.identityKey();
-//								view.Data.erase(pThis->m_thisNode.identityKey());
-//								pThis->enqueue(pRequest, view.Data);
-//							}
-//						}
-					}
-
-					{
-						std::lock_guard<std::mutex> guard(pThis->m_nodeMutex);
-						pThis->m_connectionInProgress.erase(node.identityKey());
+						pThis->m_condVar.notify_one();
 					}
 				}
 			});
 		}
 	}
 
-	void DefaultMessageSender::broadcastThisNode() {
-		if (m_broadcastThisNode)
-			broadcastNodes({ m_thisNode });
-	}
-
-	void DefaultMessageSender::broadcastNodes(const std::vector<ionet::Node>& nodes) {
+	void DefaultMessageSender::sendNodes(const std::vector<ionet::Node>& nodes, const ProcessId& recipient) {
 		if (nodes.empty())
 			return;
 
@@ -383,77 +473,29 @@ namespace catapult { namespace dbrb {
 			pBuffer += pNetworkNode->Size;
 		}
 
-		broadcastNodes(pPacket);
+		enqueue(pPacket, true, { recipient });
 	}
 
-
-	void DefaultMessageSender::broadcastNodes(const Payload& payload) {
-		auto hash = CalculatePayloadHash(payload);
-
-		std::set<ProcessId> ids;
-		{
-			std::lock_guard<std::mutex> guard(m_nodeMutex);
-			for (const auto& pair : m_nodes) {
-				auto& hashes = m_broadcastedPackets[pair.second.identityKey()];
-				if (hashes.find(hash) == hashes.cend()) {
-					hashes.emplace(hash);
-					ids.emplace(pair.second.identityKey());
-				}
-			}
-		}
-
-		if (!ids.empty())
-			enqueue(payload, ids);
-	}
-
-	void DefaultMessageSender::removeNode(const ProcessId& id) {
-		std::lock_guard<std::mutex> guard(m_nodeMutex);
-
-		auto nodeIter = m_nodes.find(id);
-		if (nodeIter != m_nodes.end())
-			m_nodes.erase(nodeIter);
-
-		auto packetIter = m_broadcastedPackets.find(id);
-		if (packetIter != m_broadcastedPackets.end())
-			m_broadcastedPackets.erase(packetIter);
-	}
-
-	void DefaultMessageSender::clearBroadcastData() {
-		std::lock_guard<std::mutex> guard(m_nodeMutex);
-		m_broadcastedPackets.clear();
-	}
-
-	void DefaultMessageSender::clearNodeRemovalData() {
-		std::lock_guard<std::mutex> guard(m_removeNodeMutex);
-		m_nodesToRemove.clear();
-	}
-
-	bool DefaultMessageSender::isNodeAdded(const ProcessId& id) {
-		std::lock_guard<std::mutex> guard(m_nodeMutex);
-		return (m_nodes.find(id) != m_nodes.cend() || m_connectionInProgress.find(id) != m_connectionInProgress.cend());
-	}
-
-	void DefaultMessageSender::addRemoveNodeResponse(const ProcessId& idToRemove, const ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature) {
-		std::lock_guard<std::mutex> guard(m_removeNodeMutex);
-		auto iter = m_nodesToRemove.find(idToRemove);
-		if (iter == m_nodesToRemove.cend() || iter->second.Timestamp != timestamp || iter->second.View.find(respondentId) == iter->second.View.cend())
+	void DefaultMessageSender::broadcast(const Payload& payload) {
+		auto pWriters = m_pWriters.lock();
+		if (!pWriters)
 			return;
 
-		auto& votes = iter->second.Votes;
-		votes.emplace(respondentId, signature);
-
-		// Add own vote.
-		if (votes.size() + 1 != (View{ iter->second.View }.quorumSize()))
-			return;
-
-		m_pTransactionSender->sendRemoveDbrbProcessByNetworkTransaction(idToRemove, timestamp, votes);
+		auto connectedNodes = pWriters->identities();
+		std::set<ProcessId> recipients(connectedNodes.cbegin(), connectedNodes.cend());
+		if (!recipients.empty())
+			enqueue(payload, true, recipients);
 	}
 
 	ViewData DefaultMessageSender::getUnreachableNodes(ViewData& view) const {
-		std::lock_guard<std::mutex> guard(m_nodeMutex);
+		auto pWriters = m_pWriters.lock();
+		if (!pWriters)
+			return {};
+
 		ViewData unreachableNodes;
+		auto connectedNodes = pWriters->identities();
 		for (auto iter = view.cbegin(); iter != view.cend();) {
-			if (m_nodes.find(*iter) == m_nodes.cend()) {
+			if (connectedNodes.find(*iter) == connectedNodes.cend()) {
 				unreachableNodes.emplace(*iter);
 				iter = view.erase(iter);
 			} else {
@@ -465,13 +507,32 @@ namespace catapult { namespace dbrb {
 	}
 
 	size_t DefaultMessageSender::getUnreachableNodeCount(const dbrb::ViewData& view) const {
-		std::lock_guard<std::mutex> guard(m_nodeMutex);
+		auto pWriters = m_pWriters.lock();
+		if (!pWriters)
+			return {};
+
 		size_t count = 0;
+		auto connectedNodes = pWriters->identities();
 		for (auto iter = view.cbegin(); iter != view.cend(); ++iter) {
-			if (m_nodes.find(*iter) == m_nodes.cend())
+			if (connectedNodes.find(*iter) == connectedNodes.cend())
 				count++;
 		}
 
 		return count;
+	}
+
+	std::vector<ionet::Node> DefaultMessageSender::getKnownNodes(const ViewData& view) const {
+		std::shared_lock guard(m_nodeMutex);
+		std::vector<ionet::Node> nodes;
+		for (const auto& id : view) {
+			auto iter = m_nodes.find(id);
+			if (iter != m_nodes.cend()) {
+				nodes.push_back(iter->second);
+			} if (id == m_thisNode.identityKey()) {
+				nodes.push_back(m_thisNode);
+			}
+		}
+
+		return nodes;
 	}
 }}

@@ -15,9 +15,16 @@ namespace catapult { namespace chain {
 		/// Creates a weighted voting committee manager around \a pAccountCollector.
 		explicit WeightedVotingCommitteeManagerV3(std::shared_ptr<cache::CommitteeAccountCollector> pAccountCollector);
 
+		void reset() override;
 		void logCommittee() const override;
 
 	public:
-		const Committee& selectCommittee(const model::NetworkConfiguration& config) override;
+		void selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) override;
+		std::map<dbrb::ProcessId, BlockDuration> babPeriods() const override;
+
+	private:
+		utils::KeySet m_failedBlockProposers;
+		utils::KeySet m_ineligibleHarvesters;
+		std::map<dbrb::ProcessId, BlockDuration> m_banPeriods;
 	};
 }}

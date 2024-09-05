@@ -143,11 +143,9 @@ namespace catapult { namespace consumers {
 		test::AssertAborted(result, validators::ValidationResult::Failure);
 		EXPECT_TRUE(input.empty());
 
-		// - the new transactions handler was called once (with zero entities)
+		// - the new transactions handler was not called
 		const auto& params = context.NewTransactionsSink.params();
-		ASSERT_EQ(1u, params.size());
-		const auto& actualInfos = params[0].AddedTransactionInfos;
-		EXPECT_TRUE(actualInfos.empty());
+		ASSERT_EQ(0u, params.size());
 	}
 
 	TEST(TEST_CLASS, OnlyNonSkippedElementsAreForwardedWhenSomeAreSkipped) {

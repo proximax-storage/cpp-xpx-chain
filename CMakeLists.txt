@@ -40,6 +40,21 @@ endif()
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
+### setup openssl
+message("--- locating openssl dependencies ---")
+
+find_package(OpenSSL 3.0.2 REQUIRED)
+message("OpenSSL   ver: ${OPENSSL_VERSION}")
+message("OpenSSL  root: ${OPENSSL_ROOT_DIR}")
+message("OpenSSL   inc: ${OPENSSL_INCLUDE_DIR}")
+message("OpenSSL  libs: ${OPENSSL_LIBRARIES}")
+
+# used to add openssl dependencies to a target
+function(catapult_add_openssl_dependencies TARGET_NAME)
+	include_directories(${OPENSSL_INCLUDE_DIR})
+	target_link_libraries(${TARGET_NAME} OpenSSL::SSL)
+endfunction()
+
 ### setup rocksdb
 message("--- locating rocksdb dependencies ---")
 if (WIN32)

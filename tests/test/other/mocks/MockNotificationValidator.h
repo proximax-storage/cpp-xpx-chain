@@ -19,9 +19,6 @@
 **/
 
 #pragma once
-#include <utility>
-
-#include "catapult/utils/SpinLock.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "tests/test/nodeps/AtomicVector.h"
 

@@ -45,7 +45,7 @@ namespace catapult { namespace observers {
 			state::LiquidityProviderEntry entry(UnresolvedMosaicId {test::Random()});
 
 			entry.setAdditionallyMinted(Amount {test::Random() / 4});
-			entry.setBeta(500); // 5% fee
+			entry.setBeta(test::RandomInRange<uint32_t>(0u, 500u)); // Up to 5% fee
 			return {entry, test::GenerateRandomValue<Amount>(), Amount {test::Random() / 4}};
 		}
 
@@ -120,7 +120,7 @@ namespace catapult { namespace observers {
 	}
 
 	TEST(TEST_CLASS, DebitMosaicObserver_Success) {
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 10000; i++) {
 			CacheValues values(CreateInitialLInfo());
 
 			Amount toTransfer =

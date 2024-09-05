@@ -10,7 +10,6 @@
 #include "tests/test/core/mocks/MockCommitteeManager.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/test/net/mocks/MockPacketWriters.h"
 #include "tests/test/core/mocks/MockDbrbViewFetcher.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 
@@ -40,19 +39,17 @@ namespace catapult { namespace fastfinality {
 
 		class MockDbrbProcess : public dbrb::DbrbProcess {
 		public:
-			using DisseminationHistory = std::vector<std::pair<const std::shared_ptr<dbrb::Message>&, std::set<dbrb::ProcessId>>>;
-
-		public:
 			explicit MockDbrbProcess()
 				: DbrbProcess(
 					crypto::KeyPair::FromPrivate({}),
-					dbrb::CreateMessageSender({}, std::make_shared<mocks::MockPacketWriters>(), {}, false, nullptr, mocks::MockDbrbViewFetcher()),
+					dbrb::CreateMessageSender({}, {}, false, test::CreateStartedIoThreadPool(1), utils::TimeSpan::FromMilliseconds(500)),
 					test::CreateStartedIoThreadPool(1),
 					nullptr,
 					mocks::MockDbrbViewFetcher())
 			{}
 
-			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) override { return true; }
+			bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) override { return true; }
+			void registerDbrbProcess(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) override {}
 
 			void broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) override {}
 			void processMessage(const dbrb::Message& message) override {}
@@ -69,8 +66,8 @@ namespace catapult { namespace fastfinality {
 		public:
 			WeightedVotingSyncActionTestRunner(
 					std::vector<fastfinality::RemoteNodeState> states,
-					std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder,
-					std::shared_ptr<model::BlockElement> pLastBlockElement,
+					const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+					const std::shared_ptr<model::BlockElement>& pLastBlockElement,
 					std::map<Key, uint64_t> importances,
 					uint8_t expectedAction)
 				: m_pPool(test::CreateStartedIoThreadPool())

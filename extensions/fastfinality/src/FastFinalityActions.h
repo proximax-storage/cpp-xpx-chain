@@ -61,7 +61,7 @@ namespace catapult { namespace fastfinality {
 
 	action CreateFastFinalityGenerateBlockAction(
 		const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
-		const cache::CatapultCache& cache,
+		extensions::ServiceState& state,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const harvesting::BlockGenerator& blockGenerator,
 		const model::BlockElementSupplier& lastBlockElementSupplier);

@@ -49,7 +49,7 @@ namespace catapult { namespace observers {
 
 			pCommitteeManager->reset();
 			while (pCommitteeManager->committee().Round < notification.Round)
-				pCommitteeManager->selectCommittee(networkConfig);
+				pCommitteeManager->selectCommittee(networkConfig, BlockchainVersion(0));
 			CATAPULT_LOG(debug) << "block " << context.Height << ": selected committee for round " << notification.Round;
 			pCommitteeManager->logCommittee();
 
@@ -114,7 +114,6 @@ namespace catapult { namespace observers {
 			auto committee = pCommitteeManager->committee();
 			if (committee.Round != notification.Round) {
 				CATAPULT_LOG(error) << "invalid committee round " << committee.Round << " (expected " << notification.Round << ")";
-				CATAPULT_THROW_RUNTIME_ERROR_2("invalid committee round", committee.Round, notification.Round)
 				if (exitOnInvalidCommitteeRound)
 					return;
 			}
@@ -156,10 +155,12 @@ namespace catapult { namespace observers {
 
 				auto iter = committeeCache.find(key);
 				auto& entry = iter.get();
-				if (networkConfig.BootstrapHarvesters.empty()) {
-					entry.setVersion(3);
-				} else {
+				if (pluginConfig.EnableBlockchainVersionValidation) {
+					entry.setVersion(5);
+				} else if (!networkConfig.BootstrapHarvesters.empty()) {
 					entry.setVersion(4);
+				} else {
+					entry.setVersion(3);
 				}
 				entry.setEffectiveBalance(effectiveBalance);
 				entry.setCanHarvest(canHarvest);
@@ -200,6 +201,61 @@ namespace catapult { namespace observers {
 			const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
 		return MAKE_OBSERVER(UpdateHarvestersV3, model::BlockCommitteeNotification<3>, ([pCommitteeManager, pAccountCollector](const auto& notification, auto& context) {
 			UpdateHarvestersV2(notification, context, pCommitteeManager, pAccountCollector, false);
+		}));
+	}
+
+	DECLARE_OBSERVER(UpdateHarvestersV4, model::BlockCommitteeNotification<4>)(
+			const std::shared_ptr<chain::WeightedVotingCommitteeManagerV3>& pCommitteeManager,
+			const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector) {
+		return MAKE_OBSERVER(UpdateHarvestersV4, model::BlockCommitteeNotification<4>, ([pCommitteeManager, pAccountCollector](const auto& notification, auto& context) {
+			auto& committeeCache = context.Cache.template sub<cache::CommitteeCache>();
+			const auto& networkConfig = context.Config.Network;
+			auto maxRollbackBlocks = networkConfig.MaxRollbackBlocks;
+			if (NotifyMode::Commit == context.Mode && context.Height.unwrap() > maxRollbackBlocks) {
+				auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
+				auto disabledAccounts = pAccountCollector->disabledAccounts();
+				auto disabledAccountsIter = disabledAccounts.find(pruneHeight);
+				if (disabledAccounts.end() != disabledAccountsIter) {
+					for (const auto& key : disabledAccountsIter->second)
+						committeeCache.remove(key);
+				}
+			}
+
+			if (!networkConfig.EnableWeightedVoting && !networkConfig.EnableDbrbFastFinality)
+				return;
+
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (UpdateHarvesters)");
+
+			if (Height(1) == context.Height)
+				return;
+
+			auto committee = pCommitteeManager->committee();
+			CATAPULT_LOG(debug) << "block " << context.Height << ": committee round " << notification.Round;
+			auto accounts = pCommitteeManager->accounts();
+			auto blockProposerIter = committeeCache.find(committee.BlockProposer);
+			auto& entry = blockProposerIter.get();
+			entry.setLastSigningBlockHeight(context.Height);
+			entry.setFeeInterest(notification.FeeInterest);
+			entry.setFeeInterestDenominator(notification.FeeInterestDenominator);
+
+			auto readOnlyCache = context.Cache.toReadOnly();
+			cache::ImportanceView importanceView(readOnlyCache.template sub<cache::AccountStateCache>());
+			const auto& pluginConfig = networkConfig.template GetPluginConfiguration<config::CommitteeConfiguration>();
+			for (auto& [key, data] : accounts) {
+				auto iter = committeeCache.find(key);
+				auto& entry = iter.get();
+				entry.setVersion(6);
+				entry.setBanPeriod(data.BanPeriod);
+				entry.decrementBanPeriod();
+				auto effectiveBalance = importanceView.getAccountImportanceOrDefault(key, context.Height);
+				entry.setEffectiveBalance(effectiveBalance);
+				entry.setCanHarvest((effectiveBalance.unwrap() >= networkConfig.MinHarvesterBalance.unwrap()));
+				if (!entry.feeInterestDenominator()) {
+					entry.setFeeInterest(pluginConfig.MinGreedFeeInterest);
+					entry.setFeeInterestDenominator(pluginConfig.MinGreedFeeInterestDenominator);
+				}
+			}
 		}));
 	}
 }}

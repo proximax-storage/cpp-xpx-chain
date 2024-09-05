@@ -51,12 +51,41 @@ namespace catapult { namespace state {
 			+ sizeof(uint32_t) // fee interest denominator
 			+ Key_Size; // boot key
 
+		constexpr auto Entry_Size_v5 = sizeof(VersionType) // version
+			+ Key_Size // key
+			+ Key_Size // owner
+			+ sizeof(uint64_t) // disabled height
+			+ sizeof(uint64_t) // last signing block height
+			+ sizeof(uint64_t) // effective balance
+			+ 1 // can harvest
+			+ sizeof(int64_t) // activity
+			+ sizeof(uint32_t) // fee interest
+			+ sizeof(uint32_t) // fee interest denominator
+			+ Key_Size // boot key
+			+ sizeof(uint64_t); // blockchain version
+
+		constexpr auto Entry_Size_v6 = sizeof(VersionType) // version
+			+ Key_Size // key
+			+ Key_Size // owner
+			+ sizeof(uint64_t) // disabled height
+			+ sizeof(uint64_t) // last signing block height
+			+ sizeof(uint64_t) // effective balance
+			+ 1 // can harvest
+			+ sizeof(int64_t) // activity
+			+ sizeof(uint32_t) // fee interest
+			+ sizeof(uint32_t) // fee interest denominator
+			+ Key_Size // boot key
+			+ sizeof(uint64_t) // blockchain version
+			+ sizeof(uint64_t); // ban period
+
 		auto GetSize(VersionType version) {
 			switch (version) {
 				case 1: return Entry_Size_v1;
 				case 2: return Entry_Size_v2;
 				case 3: return Entry_Size_v3;
 				case 4: return Entry_Size_v4;
+				case 5: return Entry_Size_v5;
+				case 6: return Entry_Size_v6;
 				default: return size_t(0u);
 			}
 		}
@@ -110,6 +139,16 @@ namespace catapult { namespace state {
 			if (version > 3) {
 				EXPECT_EQ_MEMORY(entry.bootKey().data(), pData, Key_Size);
 				pData += Key_Size;
+			}
+
+			if (version > 4) {
+				EXPECT_EQ(entry.blockchainVersion().unwrap(), *reinterpret_cast<const int64_t*>(pData));
+				pData += sizeof(int64_t);
+			}
+
+			if (version > 5) {
+				EXPECT_EQ(entry.banPeriod().unwrap(), *reinterpret_cast<const int64_t*>(pData));
+				pData += sizeof(int64_t);
 			}
 
 			EXPECT_EQ(pExpectedEnd, pData);
@@ -168,6 +207,14 @@ namespace catapult { namespace state {
 		AssertCanSaveSingleEntry(4);
 	}
 
+	TEST(TEST_CLASS, CanSaveSingleEntry_v5) {
+		AssertCanSaveSingleEntry(5);
+	}
+
+	TEST(TEST_CLASS, CanSaveSingleEntry_v6) {
+		AssertCanSaveSingleEntry(6);
+	}
+
 	TEST(TEST_CLASS, CanSaveMultipleEntries_v1) {
 		AssertCanSaveMultipleEntries(1);
 	}
@@ -182,6 +229,14 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSaveMultipleEntries_v4) {
 		AssertCanSaveMultipleEntries(4);
+	}
+
+	TEST(TEST_CLASS, CanSaveMultipleEntries_v5) {
+		AssertCanSaveMultipleEntries(5);
+	}
+
+	TEST(TEST_CLASS, CanSaveMultipleEntries_v6) {
+		AssertCanSaveMultipleEntries(6);
 	}
 
 	// endregion
@@ -230,6 +285,18 @@ namespace catapult { namespace state {
 				pData += Key_Size;
 			}
 
+			if (version > 4) {
+				auto blockchainVersion = entry.blockchainVersion().unwrap();
+				memcpy(pData, &blockchainVersion, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+			}
+
+			if (version > 5) {
+				auto banPeriod = entry.banPeriod().unwrap();
+				memcpy(pData, &banPeriod, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+			}
+
 			return buffer;
 		}
 
@@ -238,6 +305,12 @@ namespace catapult { namespace state {
 			TestContext context;
 			auto originalEntry = test::CreateCommitteeEntry();
 			originalEntry.setVersion(version);
+			originalEntry.setActivityObsolete(0.0);
+			originalEntry.setGreedObsolete(0.0);
+			if (version > 4)
+				originalEntry.setBlockchainVersion(BlockchainVersion(test::Random()));
+			if (version > 5)
+				originalEntry.setBanPeriod(BlockDuration(test::Random()));
 			auto buffer = CreateEntryBuffer(originalEntry, version);
 
 			// Act:
@@ -246,8 +319,6 @@ namespace catapult { namespace state {
 			test::RunLoadValueTest<CommitteeEntryPatriciaTreeSerializer>(buffer, result);
 
 			// Assert:
-			originalEntry.setActivityObsolete(0.0);
-			originalEntry.setGreedObsolete(0.0);
 			test::AssertEqualCommitteeEntry(originalEntry, result);
 		}
 	}
@@ -266,6 +337,14 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanLoadSingleEntry_v4) {
 		AssertCanLoadSingleEntry(4);
+	}
+
+	TEST(TEST_CLASS, CanLoadSingleEntry_v5) {
+		AssertCanLoadSingleEntry(5);
+	}
+
+	TEST(TEST_CLASS, CanLoadSingleEntry_v6) {
+		AssertCanLoadSingleEntry(6);
 	}
 
 	// endregion

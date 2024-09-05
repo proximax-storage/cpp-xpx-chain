@@ -15,7 +15,9 @@
 #include "catapult/net/PacketWriters.h"
 #include "catapult/types.h"
 
-namespace catapult { namespace thread { class IoThreadPool; }}
+namespace catapult {
+	namespace thread { class IoThreadPool; }
+}
 
 namespace catapult { namespace dbrb {
 
@@ -33,41 +35,48 @@ namespace catapult { namespace dbrb {
 		/// Broadcast arbitrary \c payload into the system.
 		virtual void broadcast(const Payload&, std::set<ProcessId> recipients);
 		virtual void processMessage(const Message& message);
-		virtual bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf);
+		virtual bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height);
+		virtual void registerDbrbProcess(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height);
 
 	public:
 		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers);
 		void setValidationCallback(const ValidationCallback& callback);
 		void setDeliverCallback(const DeliverCallback& callback);
+		void setGetDbrbModeCallback(const GetDbrbModeCallback& callback);
 
 	public:
 		boost::asio::io_context::strand& strand();
-		std::shared_ptr<MessageSender> messageSender();
-		const View& currentView();
-		const ProcessId& id();
+		std::shared_ptr<MessageSender> messageSender() const;
+		const ProcessId& id() const;
+		void maybeDeliver();
+		void clearData();
 
 	protected:
 		virtual void disseminate(const std::shared_ptr<Message>& pMessage, std::set<ProcessId> recipients);
 		virtual void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient);
 
-		Signature sign(const Payload& payload, const View& view);
+		Signature sign(const Payload& payload, const View& view) const;
 		static bool verify(const ProcessId&, const Payload&, const View&, const Signature&);
 
 		void onPrepareMessageReceived(const PrepareMessage&);
+		static void onAcknowledgedDeclinedMessageReceived(const AcknowledgedDeclinedMessage&);
 		virtual void onAcknowledgedMessageReceived(const AcknowledgedMessage&);
 		virtual void onCommitMessageReceived(const CommitMessage&);
 		void onDeliverMessageReceived(const DeliverMessage&);
+		void onConfirmDeliverMessageReceived(const ConfirmDeliverMessage&);
 
-		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&);
+		void onAcknowledgedQuorumCollected(const AcknowledgedMessage&, BroadcastData&);
 
 	protected:
 		const crypto::KeyPair& m_keyPair;
 		ProcessId m_id;
 		View m_currentView;
+		View m_bootstrapView;
 		std::map<Hash256, BroadcastData> m_broadcastData;
 		NetworkPacketConverter m_converter;
 		ValidationCallback m_validationCallback;
 		DeliverCallback m_deliverCallback;
+		GetDbrbModeCallback m_getDbrbModeCallback;
 		std::shared_ptr<MessageSender> m_pMessageSender;
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 		boost::asio::io_context::strand m_strand;

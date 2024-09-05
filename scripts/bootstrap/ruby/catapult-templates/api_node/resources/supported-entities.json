@@ -3,7 +3,7 @@
 		{
 			"name": "Block",
 			"type": "33091",
-			"supportedVersions": [3, 4, 5, 6]
+			"supportedVersions": [3, 4, 5, 6, 7]
 		},
 		{
 			"name": "Nemesis_Block",
@@ -113,7 +113,7 @@
 		{
 			"name": "Aggregate_Complete",
 			"type": "16705",
-			"supportedVersions": [2, 3]
+			"supportedVersions": [2, 3, 4]
 		},
 		{
 			"name": "Aggregate_Bonded",
@@ -373,6 +373,11 @@
 		{
 			"name": "addDbrbProcess",
 			"type": "16748",
+			"supportedVersions": []
+		},
+		{
+			"name": "addOrUpdateDbrbProcess",
+			"type": "17516",
 			"supportedVersions": [2]
 		},
 		{

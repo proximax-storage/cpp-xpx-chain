@@ -21,7 +21,7 @@
 namespace catapult { namespace fastfinality {
 
 	namespace {
-		constexpr VersionType Block_Version = 6;
+		constexpr VersionType Block_Version = 7;
 
 		std::shared_ptr<model::Block> GetBlockFromPacket(const plugins::PluginManager& pluginManager, const ionet::Packet& packet) {
 			const auto& registry = pluginManager.transactionRegistry();
@@ -106,7 +106,7 @@ namespace catapult { namespace fastfinality {
 					auto result = blockConsumer(blocks);
 					if (disruptor::CompletionStatus::Aborted == result.CompletionStatus) {
 						auto validationResult = static_cast<validators::ValidationResult>(result.CompletionCode);
-						CATAPULT_LOG_LEVEL(MapToLogLevel(validationResult)) << " block validation failed due to " << validationResult;
+						CATAPULT_LOG(warning) << " block validation failed due to " << validationResult;
 						return false;
 					}
 				}
@@ -128,11 +128,6 @@ namespace catapult { namespace fastfinality {
 				const model::BlockElementSupplier& lastBlockElementSupplier,
 				const std::shared_ptr<thread::IoThreadPool>& pValidatorPool) {
 			auto& fastFinalityData = fsm.fastFinalityData();
-			if (!fastFinalityData.isBlockBroadcastEnabled()) {
-				CATAPULT_LOG(warning) << "rejecting block (broadcast is disabled)";
-				return false;
-			}
-
 			auto expectedHeight = fastFinalityData.currentBlockHeight();
 			if (expectedHeight != block.Height) {
 				CATAPULT_LOG(warning) << "rejecting block (height " << block.Height << " does not equal to expected height " << expectedHeight << ")";
@@ -164,13 +159,21 @@ namespace catapult { namespace fastfinality {
 	bool ValidateBlock(
 			FastFinalityFsm& fsm,
 			const ionet::Packet& packet,
+			const Hash256& payloadHash,
 			extensions::ServiceState& state,
 			const model::BlockElementSupplier& lastBlockElementSupplier,
 			const std::shared_ptr<thread::IoThreadPool>& pValidatorPool) {
+		std::lock_guard<std::mutex> guard(fsm.mutex());
 		auto& fastFinalityData = fsm.fastFinalityData();
-		if (fastFinalityData.proposedBlock()) {
-			CATAPULT_LOG(warning) << "rejecting proposed block, there is one already";
-			return false;
+		auto blockHash = fastFinalityData.proposedBlockHash();
+		if (blockHash != Hash256()) {
+			if (blockHash == payloadHash) {
+				CATAPULT_LOG(trace) << "block has already been validated";
+				return true;
+			} else {
+				CATAPULT_LOG(warning) << "rejecting block (differs from validated one)";
+				return false;
+			}
 		}
 
 		auto pBlock = GetBlockFromPacket(state.pluginManager(), packet);
@@ -179,7 +182,7 @@ namespace catapult { namespace fastfinality {
 		
 		auto isBlockValid = ValidateBlock(fsm, *pBlock, state, lastBlockElementSupplier, pValidatorPool);
 		if (isBlockValid)
-			fastFinalityData.setProposedBlock(pBlock);
+			fastFinalityData.setProposedBlockHash(payloadHash);
 
 		return isBlockValid;
 	}
@@ -214,29 +217,18 @@ namespace catapult { namespace fastfinality {
 
 			TRY_GET_FSM()
 
-			const auto& view = pFsmShared->fastFinalityData().unlockedAccounts()->view();
-			const uint8_t harvesterKeysCount = 1 + view.size();	// Extra one for a BootKey
-			auto pResponsePacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>(Key_Size * harvesterKeysCount);
+			auto pResponsePacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
+			pResponsePacket->Type = ionet::PacketType::Pull_Remote_Node_State_Response;
 
-			const auto targetHeight = std::min(lastBlockElementSupplier()->Block.Height, pRequest->Height);
-			const auto pBlockElement = blockElementGetter(targetHeight);
+			auto pLastBlockElement = lastBlockElementSupplier();
+			auto localHeight = pLastBlockElement->Block.Height;
+			auto targetHeight = std::min(localHeight, pRequest->Height);
+			auto pBlockElement = (localHeight == targetHeight) ? pLastBlockElement : blockElementGetter(targetHeight);
 
 			pResponsePacket->Height = pBlockElement->Block.Height;
 			pResponsePacket->BlockHash = pBlockElement->EntityHash;
 			pResponsePacket->NodeWorkState = pFsmShared->nodeWorkState();
-			pResponsePacket->HarvesterKeysCount = harvesterKeysCount;
-
-			auto* pResponsePacketData = reinterpret_cast<Key*>(pResponsePacket.get() + 1);
-			pResponsePacketData[0] = bootPublicKey;
-			{
-				auto iter = view.begin();
-				auto index = 1;
-				while (iter != view.end()) {
-					pResponsePacketData[index] = iter->publicKey();
-					++iter;
-					++index;
-				}
-			}
+			pResponsePacket->HarvesterKeysCount = 0;
 
 			context.response(ionet::PacketPayload(pResponsePacket));
 		});

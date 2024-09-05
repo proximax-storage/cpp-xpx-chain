@@ -19,7 +19,7 @@ namespace catapult { namespace fastfinality {
 	struct DownloadBlocksFailed{};
 	struct DownloadBlocksSucceeded{};
 
-	struct RoundDetectionSucceeded{};
+	struct RoundDetectionCompleted{};
 
 	struct ConnectionNumberSufficient{};
 	struct ConnectionNumberInsufficient{};
@@ -27,6 +27,7 @@ namespace catapult { namespace fastfinality {
 	struct GenerateBlock{};
 	struct WaitForBlock{};
 	struct NotRegisteredInDbrbSystem{};
+	struct DbrbProcessBanned{};
 
 	struct UnexpectedBlockHeight{};
 
@@ -34,10 +35,11 @@ namespace catapult { namespace fastfinality {
 	struct BlockGenerationSucceeded{};
 
 	struct BlockNotReceived{
-		bool IsBroadcastStarted = false;
+		bool SyncWithNetwork = false;
 	};
 	struct BlockReceived{};
 
+	struct UnexpectedBlock{};
 	struct CommitBlockFailed{};
 	struct CommitBlockSucceeded{};
 

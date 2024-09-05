@@ -24,6 +24,9 @@ namespace catapult { namespace config {
 		/// The period before pruning DBRB processes after expiration.
 		utils::TimeSpan DbrbProcessLifetimeAfterExpiration;
 
+		/// Whether banning of DBRB processes is enabled.
+		bool EnableDbrbProcessBanning;
+
 	private:
 		DbrbConfiguration() = default;
 

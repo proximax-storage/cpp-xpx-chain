@@ -14,11 +14,14 @@ namespace catapult { namespace state {
 		io::Write32(output, entry.version());
 		io::Write(output, entry.processId());
 		io::Write(output, entry.expirationTime());
+
+		if (entry.version() > 1)
+			io::Write(output, entry.banPeriod());
 	}
 
 	DbrbProcessEntry DbrbProcessEntrySerializer::Load(io::InputStream& input) {
 		VersionType version = io::Read32(input);
-		if (version > 1)
+		if (version > 2)
 			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of DbrbProcessEntry", version);
 
 		dbrb::ProcessId processId;
@@ -27,6 +30,10 @@ namespace catapult { namespace state {
 		Timestamp expirationTime;
 		io::Read(input, expirationTime);
 
-		return state::DbrbProcessEntry(processId, expirationTime, version);
+		BlockDuration banPeriod(0);
+		if (version > 1)
+			io::Read(input, banPeriod);
+
+		return state::DbrbProcessEntry(processId, expirationTime, version, banPeriod);
 	}
 }}

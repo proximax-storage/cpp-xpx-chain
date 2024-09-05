@@ -35,7 +35,7 @@ namespace catapult { namespace fastfinality {
 			~MockMessageSender() override = default;
 
 		public:
-			void enqueue(const dbrb::Payload& payload, const dbrb::ViewData& recipients) override {
+			void enqueue(const dbrb::Payload& payload, bool dropOnFailure, const dbrb::ViewData& recipients) override {
 				auto pMessage = m_converter.toMessage(*payload);
 				boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pMessage, recipients]() {
 					auto pThis = pThisWeak.lock();
@@ -52,27 +52,21 @@ namespace catapult { namespace fastfinality {
 			}
 
 			void clearQueue() override {}
-			ionet::NodePacketIoPair getNodePacketIoPair(const dbrb::ProcessId& id) override {
-				return {};
-			}
-			void pushNodePacketIoPair(const dbrb::ProcessId& id, const ionet::NodePacketIoPair& nodePacketIoPair) override {}
-			void requestNodes(const dbrb::ViewData& requestedIds, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override {}
-			void addNodes(const std::vector<ionet::Node>& nodes, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) override {}
-			void removeNode(const dbrb::ProcessId& id) override {}
-			void broadcastNodes(const dbrb::Payload& payload) override {}
-			void broadcastThisNode() override {}
-			void clearBroadcastData() override {}
-			bool isNodeAdded(const dbrb::ProcessId& id) override {
-				return false;
-			}
-			void addRemoveNodeResponse(const dbrb::ProcessId& idToRemove, const dbrb::ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature) override {}
-			void clearNodeRemovalData() override {}
+			void connectNodes(const dbrb::ViewData& requestedIds) override {}
+			void closeAllConnections() override {}
+			void closeConnections(const dbrb::ViewData& requestedIds) override {}
+			void addNodes(const std::vector<ionet::Node>& nodes) override {}
+			void sendNodes(const std::vector<ionet::Node>& nodes, const dbrb::ProcessId& recipient) override {}
 
 			dbrb::ViewData getUnreachableNodes(dbrb::ViewData& view) const override {
 				for (const auto& id : m_unreachableNodes)
 					view.erase(id);
 
 				return m_unreachableNodes;
+			}
+
+			std::vector<ionet::Node> getKnownNodes(const dbrb::ViewData& view) const {
+				return {};
 			}
 
 			size_t getUnreachableNodeCount(const dbrb::ViewData& view) const override {
@@ -111,6 +105,10 @@ namespace catapult { namespace fastfinality {
 			
 			Timestamp getExpirationTime(const dbrb::ProcessId& processId) const override {
 				return Timestamp();
+			}
+
+			BlockDuration getBanPeriod(const dbrb::ProcessId& processId) const override {
+				return BlockDuration();
 			}
 			
 			void logAllProcesses() const override {}
@@ -157,9 +155,10 @@ namespace catapult { namespace fastfinality {
 			for (auto & keyPair : keyPairs) {
 				reachableNodes.emplace(keyPair.publicKey());
 				auto pProcess = std::make_shared<dbrb::ShardedDbrbProcess>(keyPair, pMessageSender, pPool, nullptr, dbrbViewFetcher, shardSize);
-				pProcess->updateView(pConfigHolder, Timestamp(), Height(1), false);
-				pProcess->setValidationCallback([](const auto&) { return true; });
+				pProcess->updateView(pConfigHolder, Timestamp(), Height(1));
+				pProcess->setValidationCallback([](const auto&, const auto&) { return dbrb::MessageValidationResult::Message_Valid; });
 				pProcess->setDeliverCallback(deliverCallback);
+				pProcess->setGetDbrbModeCallback([]() { return dbrb::DbrbMode::Running; });
 				pMessageSender->addProcess(pProcess);
 				processes.emplace(keyPair.publicKey(), std::move(pProcess));
 			}

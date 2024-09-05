@@ -58,7 +58,7 @@ namespace catapult { namespace dbrb {
 		Hash256 m_removeDbrbProcessTransactionHash;
 		std::shared_ptr<std::promise<bool>> m_pRemoveDbrbProcessTxConfirmedPromise;
 		bool m_disableAddDbrbProcessTransaction = false;
-		std::mutex m_mutex;
+		std::shared_mutex m_mutex;
 		std::map<ProcessId, std::pair<Hash256, Timestamp>> m_removalsByNetwork;
     };
 }}

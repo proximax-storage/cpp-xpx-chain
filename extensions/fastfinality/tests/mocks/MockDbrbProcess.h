@@ -23,8 +23,8 @@ namespace catapult { namespace mocks {
 
 	public:
 		explicit MockDbrbProcess(
+				std::vector<std::shared_ptr<MockDbrbProcess>>& dbrbProcessPool,
 				bool fakeDissemination = false,
-				std::weak_ptr<net::PacketWriters> pWriters = std::weak_ptr<mocks::MockPacketWriters>(),
 				const ionet::NodeContainer& nodeContainer = {},
 				const crypto::KeyPair& keyPair = crypto::KeyPair::FromPrivate(test::GenerateRandomPrivateKey()),
 				const std::shared_ptr<thread::IoThreadPool>& pPool = test::CreateStartedIoThreadPool(1),
@@ -32,6 +32,9 @@ namespace catapult { namespace mocks {
 				const dbrb::DbrbConfiguration& dbrbConfig = dbrb::DbrbConfiguration::Uninitialized());
 
 		void setCurrentView(const dbrb::View& view);
+		void setBootstrapView(const dbrb::View& view);
+		const dbrb::View& currentView() const;
+		const dbrb::View& bootstrapView() const;
 
 		void broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) override;
 		void processMessage(const dbrb::Message& message) override;
@@ -41,17 +44,16 @@ namespace catapult { namespace mocks {
 		void send(const std::shared_ptr<dbrb::Message>& pMessage, const dbrb::ProcessId& recipient) override;
 
 		void onAcknowledgedMessageReceived(const dbrb::AcknowledgedMessage& message) override;
-		void onAcknowledgedQuorumCollected(const dbrb::AcknowledgedMessage& message);
+		void onAcknowledgedQuorumCollected(const dbrb::AcknowledgedMessage& message, dbrb::BroadcastData& data);
 		void onCommitMessageReceived(const dbrb::CommitMessage& message) override;
 
 		const std::set<Hash256>& deliveredPayloads();
-		const dbrb::ProcessId& id();
 		std::map<Hash256, dbrb::BroadcastData>& broadcastData();
 		const DisseminationHistory& disseminationHistory();
 		dbrb::QuorumManager& getQuorumManager(const Hash256& payloadHash);
 
 	public:
-		inline static std::vector<std::shared_ptr<MockDbrbProcess>> DbrbProcessPool;
+		std::vector<std::shared_ptr<MockDbrbProcess>>& DbrbProcessPool;
 
 	private:
 		/// Set of payload hashes delivered by this process.

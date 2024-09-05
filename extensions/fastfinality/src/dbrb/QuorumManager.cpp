@@ -10,7 +10,6 @@
 namespace catapult { namespace dbrb {
 
 	bool QuorumManager::update(const AcknowledgedMessage& message, ionet::PacketType payloadType) {
-		CATAPULT_LOG(trace) << "[DBRB] QUORUM: Received ACKNOWLEDGED message in view " << message.View << ".";
 		auto& set = AcknowledgedPayloads[message.View];
 		const auto& payloadHash = message.PayloadHash;
 		set.emplace(message.Sender, payloadHash);
@@ -19,17 +18,31 @@ namespace catapult { namespace dbrb {
 			return pair.second == payloadHash;
 		});
 
-		const auto triggered = (acknowledgedCount == message.View.quorumSize());
-		CATAPULT_LOG(debug) << "[DBRB] QUORUM: ACKNOWLEDGE " << payloadType << " quorum status is " << acknowledgedCount << "/" << message.View.quorumSize() << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
+		auto quorumSize = message.View.quorumSize();
+		const auto triggered = (acknowledgedCount == quorumSize);
+		CATAPULT_LOG(debug) << "[DBRB] QUORUM: ACKNOWLEDGE " << payloadType << " quorum status is " << acknowledgedCount << "/" << quorumSize << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
 
 		return triggered;
 	}
 
 	bool QuorumManager::update(const DeliverMessage& message, ionet::PacketType payloadType) {
-		auto& set = DeliveredProcesses[message.View];
+		auto& set = DeliverQuorumCollectedProcesses[message.View];
 		if (set.emplace(message.Sender).second) {
-			bool triggered = set.size() == message.View.quorumSize();
-			CATAPULT_LOG(debug) << "[DBRB] QUORUM: DELIVER " << payloadType << " quorum status is " << set.size() << "/" << message.View.quorumSize() << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
+			auto quorumSize = message.View.quorumSize();
+			bool triggered = set.size() == quorumSize;
+			CATAPULT_LOG(debug) << "[DBRB] QUORUM: DELIVER " << payloadType << " quorum status is " << set.size() << "/" << quorumSize << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
+			return triggered;
+		} else {
+			return false;
+		}
+	}
+
+	bool QuorumManager::update(const ConfirmDeliverMessage& message, const View& bootstrapView, ionet::PacketType payloadType) {
+		auto& set = ConfirmedDeliverProcesses[message.View];
+		if (set.emplace(message.Sender).second) {
+			auto quorumSize = bootstrapView.quorumSize();
+			bool triggered = set.size() == quorumSize;
+			CATAPULT_LOG(debug) << "[DBRB] QUORUM: CONFIRM DELIVER " << payloadType << " quorum status is " << set.size() << "/" << quorumSize << (triggered ? " (TRIGGERED)." : " (NOT triggered).");
 			return triggered;
 		} else {
 			return false;

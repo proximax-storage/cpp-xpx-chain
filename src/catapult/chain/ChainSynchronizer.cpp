@@ -51,12 +51,12 @@ namespace catapult { namespace chain {
 			}
 
 			size_t numBytes() {
-				utils::SpinLockGuard guard(m_spinLock);
+				std::shared_lock lock(m_mutex);
 				return m_numBytes;
 			}
 
 			bool shouldStartSync() {
-				utils::SpinLockGuard guard(m_spinLock);
+				std::unique_lock lock(m_mutex);
 				if (m_numBytes >= m_maxSize || m_hasPendingSync || m_dirty)
 					return false;
 
@@ -65,12 +65,12 @@ namespace catapult { namespace chain {
 			}
 
 			Height maxHeight() {
-				utils::SpinLockGuard guard(m_spinLock);
+				std::shared_lock lock(m_mutex);
 				return m_elements.empty() ? Height(0) : m_elements.back().EndHeight;
 			}
 
 			bool add(model::AnnotatedBlockRange&& range) {
-				utils::SpinLockGuard guard(m_spinLock);
+				std::unique_lock lock(m_mutex);
 				if (m_dirty)
 					return false;
 
@@ -94,7 +94,7 @@ namespace catapult { namespace chain {
 			}
 
 			void remove(disruptor::DisruptorElementId id, disruptor::CompletionStatus status) {
-				utils::SpinLockGuard guard(m_spinLock);
+				std::unique_lock lock(m_mutex);
 				const auto& info = m_elements.front();
 				if (info.Id != id)
 					CATAPULT_THROW_INVALID_ARGUMENT_1("unexpected element id", id);
@@ -105,7 +105,7 @@ namespace catapult { namespace chain {
 			}
 
 			void clearPendingSync() {
-				utils::SpinLockGuard guard(m_spinLock);
+				std::unique_lock lock(m_mutex);
 				m_hasPendingSync = false;
 
 				if (m_dirty)
@@ -118,7 +118,7 @@ namespace catapult { namespace chain {
 			}
 
 		private:
-			utils::SpinLock m_spinLock;
+			std::shared_mutex m_mutex;
 			CompletionAwareBlockRangeConsumerFunc m_blockRangeConsumer;
 			std::queue<ElementInfo> m_elements;
 			size_t m_maxSize;

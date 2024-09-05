@@ -23,6 +23,7 @@
 #include "MemoryCounters.h"
 #include "NemesisBlockNotifier.h"
 #include "NodeUtils.h"
+#include "catapult/crypto/CertificateDirectoryGenerator.h"
 #include "catapult/extensions/ConfigurationUtils.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateFileStorage.h"
@@ -36,7 +37,7 @@
 #include "catapult/local/HostUtils.h"
 #include "catapult/utils/StackLogger.h"
 #include "catapult/extensions/NemesisBlockLoader.h"
-#include "plugins/txes/config/src/cache/NetworkConfigCache.h"
+#include <filesystem>
 
 namespace catapult { namespace local {
 
@@ -135,6 +136,9 @@ namespace catapult { namespace local {
 
 				const auto& config = pConfigHolder->Config(Height(0));
 				m_pBootstrapper->validateConfig(config);
+
+				/// Generate certificates
+				crypto::GenerateCertificateDirectory(m_serviceLocator.keyPair(), config.User.CertificateDirectory);
 
 				/// Load non system plugins
 				CATAPULT_LOG(debug) << "registering addon plugins";

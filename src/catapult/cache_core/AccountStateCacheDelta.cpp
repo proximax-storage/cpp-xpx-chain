@@ -46,7 +46,7 @@ namespace catapult { namespace cache {
 			std::unique_ptr<AccountStateCacheDeltaMixins::KeyLookupAdapter>&& pKeyLookupAdapter)
 			: AccountStateCacheDeltaMixins::Size(*accountStateSets.pPrimary)
 			, AccountStateCacheDeltaMixins::ContainsAddress(*accountStateSets.pPrimary)
-			, AccountStateCacheDeltaMixins::ContainsKey(*accountStateSets.pKeyLookupMap)
+			, AccountStateCacheDeltaMixins::ContainsKey(*accountStateSets.pKeyLookupMap, *accountStateSets.pPrimary)
 			, AccountStateCacheDeltaMixins::ConstAccessorAddress(*accountStateSets.pPrimary)
 			, AccountStateCacheDeltaMixins::ConstAccessorKey(*pKeyLookupAdapter)
 			, AccountStateCacheDeltaMixins::MutableAccessorAddress(*accountStateSets.pPrimary)
@@ -236,7 +236,7 @@ namespace catapult { namespace cache {
 		return highValueAddresses;
 	}
 
-	const model::AddressSet& BasicAccountStateCacheDelta::updatedAddresses() const{
+	const model::AddressSet& BasicAccountStateCacheDelta::updatedAddresses() const {
 		return m_addressesToUpdate;
 	}
 }}

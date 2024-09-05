@@ -64,13 +64,14 @@ namespace catapult { namespace fastfinality {
 
 	action CreateWeightedVotingProposeBlockAction(
 		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
-		const cache::CatapultCache& cache,
+		extensions::ServiceState& state,
 		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 		const harvesting::BlockGenerator& blockGenerator,
 		const model::BlockElementSupplier& lastBlockElementSupplier);
 
 	action CreateWeightedVotingAddPrevoteAction(
-		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak);
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
+		extensions::ServiceState& state);
 
 	action CreateWeightedVotingWaitForProposalAction(
 		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak);
@@ -79,7 +80,8 @@ namespace catapult { namespace fastfinality {
 		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak);
 
 	action CreateWeightedVotingAddPrecommitAction(
-		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak);
+		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak,
+		extensions::ServiceState& state);
 
 	action CreateWeightedVotingWaitForPrecommitsAction(
 		const std::weak_ptr<WeightedVotingFsm>& pFsmWeak);

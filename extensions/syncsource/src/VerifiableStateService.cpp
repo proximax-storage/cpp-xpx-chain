@@ -37,7 +37,7 @@ namespace catapult { namespace syncsource {
 
 			void registerServices(extensions::ServiceLocator&, extensions::ServiceState& state) override {
 				// add handlers
-				handlers::RegisterSubCacheMerkleRootsHandler(state);
+				handlers::RegisterSubCacheMerkleRootsHandler(state.packetHandlers(), state.storage(), state.pluginManager().immutableConfig().ShouldEnableVerifiableState);
 			}
 		};
 	}

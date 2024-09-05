@@ -9,10 +9,12 @@
 #include "src/cache/DbrbViewCacheSubCachePlugin.h"
 #include "src/cache/DbrbViewFetcherImpl.h"
 #include "src/model/AddDbrbProcessTransaction.h"
+#include "src/model/AddOrUpdateDbrbProcessTransaction.h"
 #include "src/model/RemoveDbrbProcessTransaction.h"
 #include "src/model/RemoveDbrbProcessByNetworkTransaction.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/AddDbrbProcessTransactionPlugin.h"
+#include "src/plugins/AddOrUpdateDbrbProcessTransactionPlugin.h"
 #include "src/plugins/RemoveDbrbProcessTransactionPlugin.h"
 #include "src/plugins/RemoveDbrbProcessByNetworkTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -26,6 +28,7 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.addTransactionSupport(CreateAddDbrbProcessTransactionPlugin());
+		manager.addTransactionSupport(CreateAddOrUpdateDbrbProcessTransactionPlugin());
 		manager.addTransactionSupport(CreateRemoveDbrbProcessTransactionPlugin());
 		manager.addTransactionSupport(CreateRemoveDbrbProcessByNetworkTransactionPlugin());
 
@@ -50,6 +53,8 @@ namespace catapult { namespace plugins {
 			pTransactionFeeCalculator->addLimitedFeeTransaction(model::AddDbrbProcessTransaction::Entity_Type, version);
 		for (auto version = 1u; version <= model::RemoveDbrbProcessByNetworkTransaction::Current_Version; ++version)
 			pTransactionFeeCalculator->addLimitedFeeTransaction(model::RemoveDbrbProcessByNetworkTransaction::Entity_Type, version);
+		for (auto version = 1u; version <= model::AddOrUpdateDbrbProcessTransaction::Current_Version; ++version)
+			pTransactionFeeCalculator->addLimitedFeeTransaction(model::AddOrUpdateDbrbProcessTransaction::Entity_Type, version);
 
 		manager.addStatefulValidatorHook([&dbrbViewFetcher = *pDbrbViewFetcher](auto& builder) {
 		  	builder
@@ -58,10 +63,11 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateNodeBootKeyValidator());
 		});
 
-		manager.addObserverHook([&dbrbProcessUpdateListeners = manager.dbrbProcessUpdateListeners()](auto& builder) {
+		manager.addObserverHook([&manager](auto& builder) {
 			builder
 				.add(observers::CreateAddDbrbProcessObserver())
-				.add(observers::CreateDbrbProcessPruningObserver(dbrbProcessUpdateListeners))
+				.add(observers::CreateDbrbProcessPruningObserver(manager.dbrbProcessUpdateListeners()))
+				.add(observers::CreateDbrbProcessUpdateObserver(manager))
 				.add(observers::CreateRemoveDbrbProcessObserver());
 		});
 	}
