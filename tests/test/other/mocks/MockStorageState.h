@@ -19,78 +19,124 @@ namespace catapult { namespace mocks {
 
     public:
 
-        bool isReplicatorRegistered(const Key& key) override {
+        bool isReplicatorRegistered(
+				const Key& key,
+				const cache::ReadOnlyCatapultCache& cache) override {
             return false;
         }
 
-        state::Drive getDrive(const Key& driveKey) override {
+        state::Drive getDrive(
+				const Key& driveKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
             return state::Drive();
         }
 
-        bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) override {
+        bool isReplicatorAssignedToDrive(
+				const Key& key,
+				const Key& driveKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
             return false;
         }
-		bool driveExists(const Key& driveKey) override {
+		bool driveExists(
+				const Key& driveKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
 			return false;
 		}
-		bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) override {
+		bool isReplicatorAssignedToChannel(
+				const Key& key,
+				const Hash256& channelId,
+				const cache::ReadOnlyCatapultCache& cache) override {
 			return false;
 		}
-		std::set<Hash256> getReplicatorChannelIds(const Key& replicatorKey) override {
+		std::set<Hash256> getReplicatorChannelIds(
+				const Key& replicatorKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
 			return std::set<Hash256>();
 		}
 
-		std::vector<Hash256> getDriveChannels(const Key& driveKey) override {
+		std::vector<Hash256> getDriveChannels(
+				const Key& driveKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
 			return std::vector<Hash256>();
 		}
-		std::vector<state::Drive> getReplicatorDrives(const Key& replicatorKey) override {
+		std::vector<state::Drive> getReplicatorDrives(
+				const Key& replicatorKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
             return std::vector<state::Drive>();
         }
 
-        std::vector<Key> getDriveReplicators(const Key& driveKey) override {
+        std::vector<Key> getDriveReplicators(
+				const Key& driveKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
             return std::vector<Key>();
         }
 
-		std::unique_ptr<state::ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) override {
+		std::unique_ptr<state::ApprovedDataModification> getLastApprovedDataModification(
+				const Key& driveKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
             return nullptr;
         }
 
-		std::vector<state::CompletedModification> getCompletedModifications(const Key& driveKey) override {
+		std::vector<state::CompletedModification> getCompletedModifications(
+				const Key& driveKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
 			return std::vector<state::CompletedModification>();
 		}
 
-		uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) override {
+		uint64_t getDownloadWorkBytes(
+				const Key& replicatorKey,
+				const Key& driveKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
             return 0;
         }
 
-        bool downloadChannelExists(const Hash256& id) override {
+        bool downloadChannelExists(
+				const Hash256& id,
+				const cache::ReadOnlyCatapultCache& cache) override {
             return false;
         }
 
-		std::unique_ptr<state::DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) override {
+		std::unique_ptr<state::DownloadChannel> getDownloadChannel(
+				const Key& replicatorKey,
+				const Hash256& id,
+				const cache::ReadOnlyCatapultCache& cache) override {
             return nullptr;
         }
 
-		virtual std::optional<state::DriveVerification> getActiveVerification(const Key& driveKey, const catapult::Timestamp& time) override {
+		virtual std::optional<state::DriveVerification> getActiveVerification(
+				const Key& driveKey,
+				const catapult::Timestamp& time,
+				const cache::ReadOnlyCatapultCache& cache) override {
             return {};
         }
 
-		std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) override {
+		std::vector<Key> getDonatorShard(
+				const Key& driveKey,
+				const Key& replicatorKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
 			return std::vector<Key>();
 		}
 
-		std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) override {
+		std::vector<Key> getRecipientShard(
+				const Key& driveKey,
+				const Key& replicatorKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
 			return std::vector<Key>();
 		}
 
 		Height getChainHeight() override {
 			return catapult::Height();
 		}
-		std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey) override {
+		std::vector<Key> getReplicatorDriveKeys(
+				const Key& replicatorKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
 			return std::vector<Key>();
 		}
 
-		state::ModificationShard getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) override {
+		state::ModificationShard getDonatorShardExtended(
+				const Key& driveKey,
+				const Key& replicatorKey,
+				const cache::ReadOnlyCatapultCache& cache) override {
 			return state::ModificationShard();
 		}
 	};

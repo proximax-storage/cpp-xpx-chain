@@ -8,6 +8,7 @@
 #include "src/TransactionSender.h"
 #include "src/TransactionStatusHandler.h"
 #include "tests/TestHarness.h"
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/other/mocks/MockStorageState.h"
 
 namespace catapult { namespace storage {
@@ -18,6 +19,9 @@ namespace catapult { namespace storage {
         // Arrange:
 		TransactionStatusHandler transactionStatusHandler;
         mocks::MockStorageState storageState;
+		cache::CatapultCache cache = test::CreateEmptyCatapultCache();
+		const auto& readOnlyCache = cache.createView().toReadOnly();
+
         auto transactionSender = TransactionSender(
 			crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"),
 			config::ImmutableConfiguration::Uninitialized(),
@@ -30,7 +34,8 @@ namespace catapult { namespace storage {
 			std::move(transactionSender),
 			storageState,
 			transactionStatusHandler,
-			crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"));
+			crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"),
+			readOnlyCache);
 
         // Assert:
         EXPECT_NE(nullptr, testee);
