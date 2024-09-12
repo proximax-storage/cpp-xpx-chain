@@ -37,4 +37,14 @@ namespace catapult { namespace state {
 	MetadataValue& MetadataEntry::value() {
 		return m_value;
 	}
+
+	bool MetadataEntry::isImmutable() const
+	{
+		return m_immutable;
+	}
+
+	void MetadataEntry::setImmutable(bool isImmutable)
+	{
+		m_immutable = isImmutable;
+	}
 }}

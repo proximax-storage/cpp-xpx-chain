@@ -1,5 +1,5 @@
 /**
-*** Copyright (c) 2016-2019, Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp.
+*** Copyright (c) 2016-2024, Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp.
 *** Copyright (c) 2020-present, Jaguar0625, gimre, BloodyRookie.
 *** All rights reserved.
 ***
@@ -26,9 +26,9 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MetadataValueNotification<1>;
+	using Notification = model::MetadataValueNotification<2>;
 
-	DEFINE_STATEFUL_VALIDATOR(MetadataValue, ([](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(ImmutableMetadataValue, ([](const Notification& notification, const ValidatorContext& context) {
 		auto& cache = context.Cache.sub<cache::MetadataCache>();
 
 		auto metadataKey = state::ResolveMetadataKey(notification.PartialMetadataKey, notification.MetadataTarget, context.Resolvers);
@@ -40,6 +40,9 @@ namespace catapult { namespace validators {
 		}
 
 		const auto& metadataValue = metadataIter.get().value();
+		if (metadataIter.get().isImmutable() && !metadataValue.empty())
+			return Failure_Metadata_v2_Value_Is_Immutable;
+
 		return validateCommonData(notification.ValueSize, notification.ValueSizeDelta, metadataValue, notification.ValuePtr);
 	}))
 }}

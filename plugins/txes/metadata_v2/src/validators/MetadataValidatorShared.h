@@ -21,7 +21,9 @@
 
 #pragma once
 #include "Results.h"
+#include "src/state/MetadataEntry.h"
 #include "src/model/MetadataNotifications.h"
+#include "catapult/validators/ValidationResult.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {
@@ -30,15 +32,5 @@ namespace catapult { namespace validators {
 	/// - values have a minimum value size of one
 	/// - magnitude of value size delta is less than value size
 	/// - values have a maximum value size of \a maxValueSize
-	DECLARE_STATEFUL_VALIDATOR(MetadataSizes, model::MetadataSizesNotification<1>)();
-
-	/// Validator that applies to metadata value notifications and validates that:
-	/// - previous value size matches current state
-	/// - value trunction is reversible
-	DECLARE_STATEFUL_VALIDATOR(MetadataValue, model::MetadataValueNotification<1>)();
-
-	/// Validator that applies to immutable metadata value notifications and validates that:
-	/// - previous value size matches current state
-	/// - value trunction is reversible
-	DECLARE_STATEFUL_VALIDATOR(ImmutableMetadataValue, model::MetadataValueNotification<2>)();
+	ValidationResult validateCommonData(uint16_t valueSize, int16_t valueSizeDelta, const state::MetadataValue& metadataValue, const uint8_t* valuePtr);
 }}

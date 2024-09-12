@@ -41,6 +41,21 @@
 			"supportedVersions": [1]
 		},
 		{
+			"name": "Account_Immutable_Metadata_v2",
+			"type": "17471",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Mosaic_Immutable_Metadata_v2",
+			"type": "17727",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Namespace_Immutable_Metadata_v2",
+			"type": "17983",
+			"supportedVersions": [1]
+		},
+		{
 			"name": "BlockChain_Upgrade",
 			"type": "16728",
 			"supportedVersions": [1]

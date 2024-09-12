@@ -28,4 +28,8 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by metadata value notifications and:
 	/// - updates metadata value as appropriate
 	DECLARE_OBSERVER(MetadataValue, model::MetadataValueNotification<1>)();
+
+	/// Observes changes triggered by immutable metadata value notifications and:
+	/// - updates metadata value as appropriate
+	DECLARE_OBSERVER(ImmutableMetadataValue, model::MetadataValueNotification<2>)();
 }}

@@ -36,6 +36,9 @@ namespace catapult { namespace model {
 	/// Metadata value was received.
 	DEFINE_METADATA_NOTIFICATION(Value, 0x0002, All);
 
+	/// Immutable metadata value was received.
+	DEFINE_METADATA_NOTIFICATION(Value_v2, 0x0003, All);
+
 #undef DEFINE_METADATA_NOTIFICATION
 
 	// endregion
@@ -112,6 +115,33 @@ namespace catapult { namespace model {
 
 		/// Const pointer to the metadata value.
 		const uint8_t* ValuePtr;
+	};
+
+	// endregion
+
+	template<>
+	struct MetadataValueNotification<2> : public MetadataValueNotification<1> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Metadata_v2_Value_v2_Notification;
+
+	public:
+		/// Creates a notification around \a partialMetadataKey, \a metadataTarget, \a valueSizeDelta, \a valueSize and \a pValue.
+		MetadataValueNotification(
+				const UnresolvedPartialMetadataKey& partialMetadataKey,
+				const model::MetadataTarget& metadataTarget,
+				int16_t valueSizeDelta,
+				uint16_t valueSize,
+				const uint8_t* pValue,
+				bool isValueImmutable)
+			: MetadataValueNotification<1>(partialMetadataKey, metadataTarget, valueSizeDelta, valueSize, pValue)
+			, IsValueImmutable(isValueImmutable)
+		{}
+
+	public:
+
+		/// State of immutability.
+		bool IsValueImmutable;
 	};
 
 	// endregion

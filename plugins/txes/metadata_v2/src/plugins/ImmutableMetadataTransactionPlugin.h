@@ -20,37 +20,23 @@
 **/
 
 #pragma once
-#include "MetadataKey.h"
-#include "MetadataValue.h"
 #include "catapult/plugins.h"
+#include <memory>
+#include <catapult/config_holder/BlockchainConfigurationHolder.h>
 
-namespace catapult { namespace state {
+namespace catapult { namespace model { class TransactionPlugin; } }
 
-	/// Metadata entry.
-	class MetadataEntry {
-	public:
-		/// Creates an entry around \a key.
-		explicit MetadataEntry(const MetadataKey& key);
+namespace catapult { namespace plugins {
 
-	public:
-		/// Gets the metadata key.
-		const MetadataKey& key() const;
+	/// Creates an account immutable metadata transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<model::TransactionPlugin> CreateAccountImmutableMetadataTransactionPlugin(const std::shared_ptr<config::BlockchainConfigurationHolder>&);
 
-		/// Gets the (const) metadata value.
-		const MetadataValue& value() const;
+	/// Creates a mosaic immutable metadata transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<model::TransactionPlugin> CreateMosaicImmutableMetadataTransactionPlugin(const std::shared_ptr<config::BlockchainConfigurationHolder>&);
 
-		/// Gets the metadata value.
-		MetadataValue& value();
-
-		/// Gets the flag state
-		bool isImmutable() const;
-
-		/// Sets the flag state
-		void setImmutable(bool isImmutable);
-
-	private:
-		MetadataKey m_key;
-		MetadataValue m_value;
-		bool m_immutable;
-	};
+	/// Creates a namespace immutable metadata transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<model::TransactionPlugin> CreateNamespaceImmutableMetadataTransactionPlugin(const std::shared_ptr<config::BlockchainConfigurationHolder>&);
 }}
