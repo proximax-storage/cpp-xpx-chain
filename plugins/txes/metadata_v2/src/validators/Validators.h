@@ -37,8 +37,8 @@ namespace catapult { namespace validators {
 	/// - value trunction is reversible
 	DECLARE_STATEFUL_VALIDATOR(MetadataValue, model::MetadataValueNotification<1>)();
 
-	/// Validator that applies to immutable metadata value notifications and validates that:
+	/// Validator that applies to extended metadata value notifications and validates that:
 	/// - previous value size matches current state
 	/// - value trunction is reversible
-	DECLARE_STATEFUL_VALIDATOR(ImmutableMetadataValue, model::MetadataValueNotification<2>)();
+	DECLARE_STATEFUL_VALIDATOR(ExtendedMetadataValue, model::MetadataValueNotification<2>)();
 }}

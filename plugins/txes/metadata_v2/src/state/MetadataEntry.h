@@ -30,9 +30,15 @@ namespace catapult { namespace state {
 	class MetadataEntry {
 	public:
 		/// Creates an entry around \a key.
-		explicit MetadataEntry(const MetadataKey& key);
+		explicit MetadataEntry(const MetadataKey& key, VersionType version = 1);
 
 	public:
+		/// Gets the metadata version.
+		VersionType version() const;
+
+		/// Sets the version.
+		void setVersion(VersionType version);
+
 		/// Gets the metadata key.
 		const MetadataKey& key() const;
 
@@ -42,15 +48,16 @@ namespace catapult { namespace state {
 		/// Gets the metadata value.
 		MetadataValue& value();
 
-		/// Gets the flag state
+		/// Gets the flag state.
 		bool isImmutable() const;
 
-		/// Sets the flag state
+		/// Sets the flag state.
 		void setImmutable(bool isImmutable);
 
 	private:
 		MetadataKey m_key;
 		MetadataValue m_value;
 		bool m_immutable;
+		VersionType m_version;
 	};
 }}

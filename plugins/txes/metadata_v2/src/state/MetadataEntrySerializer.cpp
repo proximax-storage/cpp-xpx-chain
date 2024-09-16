@@ -30,7 +30,7 @@ namespace catapult { namespace state {
 
 	void MetadataEntrySerializer::Save(const MetadataEntry& entry, io::OutputStream& output) {
 		// write version
-		io::Write32(output, 2);
+		io::Write32(output, entry.version());
 
 		const auto& key = entry.key();
 		output.write(key.sourceAddress());
@@ -43,7 +43,8 @@ namespace catapult { namespace state {
 		io::Write16(output, static_cast<uint16_t>(value.size()));
 		output.write(value);
 
-		io::Write8(output, entry.isImmutable());
+		if (entry.version() >= 2)
+			io::Write8(output, entry.isImmutable());
 	}
 
 	// endregion
