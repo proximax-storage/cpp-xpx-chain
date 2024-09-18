@@ -12,6 +12,7 @@
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/thread/MultiServicePool.h"
+#include "catapult/state/ContractState.h"
 #include <executor/Executor.h>
 #include <executor/DefaultExecutorBuilder.h>
 #include <storage/RPCStorageBuilder.h>
@@ -179,7 +180,8 @@ namespace catapult::contract {
 			std::vector<sirius::contract::ServicePayment> servicePayments;
 			for (const auto& payment : manualCall.Payments) {
 				servicePayments.push_back(
-						{ payment.PaymentUnresolvedMosaicId.unwrap(), payment.PaymentAmount.unwrap() });
+					{ payment.PaymentUnresolvedMosaicId.unwrap(), payment.PaymentAmount.unwrap() }
+				);
 			}
 
 			sirius::contract::ManualCallRequest manualCallRequest(
@@ -470,10 +472,19 @@ namespace catapult::contract {
 			Amount executionPayment,
 			Amount downloadPayment,
 			const Key& caller,
+			std::vector<catapult::model::UnresolvedMosaic> servicePayments,
 			Height height) {
 		if (!m_pImpl) {
 			return;
 		}
+
+		std::vector<catapult::state::Payment> payments;
+		for (const auto& payment : servicePayments) {
+			payments.push_back(
+				{ payment.MosaicId, payment.Amount }
+			);
+		}
+
 		m_pImpl->addManualCall(
 				contractKey,
 				state::ManualCallInfo { callId,
@@ -483,7 +494,8 @@ namespace catapult::contract {
 										executionPayment,
 										downloadPayment,
 										caller,
-										height });
+										height,
+										payments });
 	}
 
 	void ExecutorService::successfulBatchExecutionPublished(

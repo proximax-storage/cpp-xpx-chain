@@ -8,6 +8,7 @@
 #include "ExecutorConfiguration.h"
 #include "TransactionStatusHandler.h"
 #include "catapult/types.h"
+#include "catapult/model/Mosaic.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ServiceRegistrar.h"
 #include "catapult/ionet/Node.h"
@@ -54,6 +55,7 @@ namespace catapult { namespace contract {
 				Amount executionPayment,
 				Amount downloadPayment,
 				const Key& caller,
+				std::vector<catapult::model::UnresolvedMosaic> servicePayments,
 				Height height);
 
 		void successfulBatchExecutionPublished(

@@ -35,6 +35,7 @@ namespace catapult { namespace notification_handlers {
 												notification.ExecutionCallPayment,
 												notification.DownloadCallPayment,
 												notification.Caller,
+												notification.ServicePayments,
 												context.Height);
 			}
 			catch (...) {
