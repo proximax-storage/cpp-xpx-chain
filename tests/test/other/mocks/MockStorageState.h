@@ -5,7 +5,6 @@
 **/
 
 #pragma once
-
 #include "catapult/state/StorageState.h"
 
 namespace catapult { namespace mocks {
@@ -19,80 +18,17 @@ namespace catapult { namespace mocks {
 
     public:
 
-        bool isReplicatorRegistered(const Key& key) override {
+        bool isReplicatorRegistered() override {
             return false;
         }
 
-        state::Drive getDrive(const Key& driveKey) override {
-            return state::Drive();
-        }
-
-        bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) override {
-            return false;
-        }
-		bool driveExists(const Key& driveKey) override {
-			return false;
-		}
-		bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) override {
-			return false;
-		}
-		std::set<Hash256> getReplicatorChannelIds(const Key& replicatorKey) override {
-			return std::set<Hash256>();
-		}
-
-		std::vector<Hash256> getDriveChannels(const Key& driveKey) override {
-			return std::vector<Hash256>();
-		}
-		std::vector<state::Drive> getReplicatorDrives(const Key& replicatorKey) override {
-            return std::vector<state::Drive>();
-        }
-
-        std::vector<Key> getDriveReplicators(const Key& driveKey) override {
-            return std::vector<Key>();
-        }
-
-		std::unique_ptr<state::ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) override {
+        std::shared_ptr<state::Drive> getDrive(const Key& driveKey, const Timestamp& timestamp) override {
             return nullptr;
         }
 
-		std::vector<state::CompletedModification> getCompletedModifications(const Key& driveKey) override {
-			return std::vector<state::CompletedModification>();
-		}
-
-		uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) override {
-            return 0;
-        }
-
-        bool downloadChannelExists(const Hash256& id) override {
-            return false;
-        }
-
-		std::unique_ptr<state::DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) override {
-            return nullptr;
-        }
-
-		virtual std::optional<state::DriveVerification> getActiveVerification(const Key& driveKey, const catapult::Timestamp& time) override {
+		std::vector<std::shared_ptr<state::Drive>> getDrives(const Timestamp& timestamp) override {
             return {};
         }
-
-		std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) override {
-			return std::vector<Key>();
-		}
-
-		std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) override {
-			return std::vector<Key>();
-		}
-
-		Height getChainHeight() override {
-			return catapult::Height();
-		}
-		std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey) override {
-			return std::vector<Key>();
-		}
-
-		state::ModificationShard getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) override {
-			return state::ModificationShard();
-		}
 	};
 
 #pragma pack(pop)

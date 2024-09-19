@@ -4,16 +4,15 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <boost/dynamic_bitset.hpp>
 #include "Observers.h"
-#include "src/utils/StorageUtils.h"
+#include <boost/dynamic_bitset.hpp>
 
 namespace catapult { namespace observers {
 
 	using Notification = model::EndDriveVerificationNotification<1>;
 
-	DECLARE_OBSERVER(EndDriveVerification, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider) {
-		return MAKE_OBSERVER(EndDriveVerification, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(EndDriveVerification, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider, const std::shared_ptr<state::StorageState>& pStorageState) {
+		return MAKE_OBSERVER(EndDriveVerification, Notification, ([&liquidityProvider, pStorageState](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (EndDriveVerification)");
 
@@ -109,6 +108,13 @@ namespace catapult { namespace observers {
 
 		  	// Populate the drive AFTER storage deposit slashing is made
 			utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
+
+			utils::KeySet replicators;
+			for(int i = 0; i < notification.KeyCount; i++)
+				replicators.emplace(notification.PublicKeysPtr[i]);
+			auto& downloadChannelCache = context.Cache.template sub<cache::DownloadChannelCache>();
+			auto pDrive = utils::GetDrive(notification.DriveKey, pStorageState->replicatorKey(), context.Timestamp, driveCache, replicatorCache, downloadChannelCache);
+			context.Notifications.push_back(std::make_unique<model::EndDriveVerificationServiceNotification<1>>(std::move(pDrive), notification.VerificationTrigger, std::move(replicators)));
     	}))
 	}
 }}

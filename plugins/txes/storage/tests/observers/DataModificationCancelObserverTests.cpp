@@ -16,7 +16,7 @@ namespace catapult { namespace observers {
 
 	const std::unique_ptr<observers::LiquidityProviderExchangeObserver>  Liquidity_Provider = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
 
-    DEFINE_COMMON_OBSERVER_TESTS(DataModificationCancel, Liquidity_Provider)
+    DEFINE_COMMON_OBSERVER_TESTS(DataModificationCancel, Liquidity_Provider, nullptr)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -56,7 +56,7 @@ namespace catapult { namespace observers {
                 values.Drive_Key,
                 values.Active_Data_Modification.begin()->Owner,
                 values.Active_Data_Modification.begin()->Id);
-            auto pObserver = CreateDataModificationCancelObserver(Liquidity_Provider);
+            auto pObserver = CreateDataModificationCancelObserver(Liquidity_Provider, nullptr);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 
             // Populate cache.

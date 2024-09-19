@@ -222,7 +222,7 @@ namespace catapult { namespace model {
 				const Key& owner,
 				const uint64_t& actualUploadSize,
 				const Hash256& streamStructureCdi)
-				: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
+				: Notification(Notification_Type, sizeof(StreamFinishNotification<1>))
 				, StreamId(streamId)
 				, DriveKey(drive)
 				, Owner(owner)
@@ -482,7 +482,7 @@ namespace catapult { namespace model {
 				const Hash256& dataModificationId,
 				const uint8_t publicKeysCount,
 				const Key* publicKeysPtr)
-				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				: Notification(Notification_Type, sizeof(DataModificationApprovalDownloadWorkNotification<1>))
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
 				, PublicKeysCount(publicKeysCount)
@@ -523,7 +523,7 @@ namespace catapult { namespace model {
 				const Key* publicKeysPtr,
 				const uint8_t* presentOpinionsPtr,
 				const uint64_t* opinionsPtr)
-				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				: Notification(Notification_Type, sizeof(DataModificationApprovalUploadWorkNotification<1>))
 				, DriveKey(driveKey)
 				, ModificationId(modificationId)
 				, JudgingKeysCount(judgingKeysCount)
@@ -577,7 +577,7 @@ namespace catapult { namespace model {
 				const Hash256& dataModificationId,
 				const uint64_t metaFilesSizeBytes,
 				const uint64_t usedDriveSizeBytes)
-				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				: Notification(Notification_Type, sizeof(DataModificationApprovalRefundNotification<1>))
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
 				, MetaFilesSizeBytes(metaFilesSizeBytes)

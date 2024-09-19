@@ -8,6 +8,7 @@
 #include "catapult/types.h"
 #include "catapult/exceptions.h"
 #include "catapult/model/Mosaic.h"
+#include "catapult/state/StorageState.h"
 #include "catapult/utils/ArraySet.h"
 #include "catapult/utils/IntegerMath.h"
 #include "CommonEntities.h"
@@ -15,15 +16,6 @@
 #include <optional>
 
 namespace catapult { namespace state {
-
-	/// Data modification state.
-	enum class DataModificationApprovalState : uint8_t {
-		/// Data modification has been approved.
-		Approved,
-
-		/// Data modification has been cancelled.
-		Cancelled
-	};
 
 	enum class OwnerManagement: uint8_t {
 		ALLOWED,

@@ -5,18 +5,17 @@
 **/
 
 #include "Observers.h"
-#include "src/state/StorageStateImpl.h"
-#include <boost/multiprecision/cpp_int.hpp>
-#include <catapult/utils/StorageUtils.h>
+#include "catapult/utils/StorageUtils.h"
 #include "src/utils/Queue.h"
+#include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult { namespace observers {
 
 	using Notification = model::BlockNotification<1>;
 	using BigUint = boost::multiprecision::uint256_t;
 
-	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, Notification)() {
-		return MAKE_OBSERVER(PeriodicDownloadChannelPayment, Notification, ([](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(PeriodicDownloadChannelPayment, Notification)(const std::shared_ptr<state::StorageState>& pStorageState) {
+		return MAKE_OBSERVER(PeriodicDownloadChannelPayment, Notification, ([pStorageState](const Notification& notification, ObserverContext& context) {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			if (!pluginConfig.Enabled || context.Height < Height(2))
 				return;
@@ -39,6 +38,8 @@ namespace catapult { namespace observers {
 			auto eventHash = utils::getDownloadPaymentEventHash(notification.Timestamp, context.Config.Immutable.GenerationHash);
 
 			auto maxIterations = queueAdapter.size();
+			std::vector<std::shared_ptr<state::DownloadChannel>> downloadChannels;
+			downloadChannels.reserve(maxIterations);
 			for (int i = 0; i < maxIterations; i++) {
 				auto downloadIt = downloadCache.find(queueAdapter.front().array());
 				auto& downloadEntry = downloadIt.get();
@@ -66,7 +67,14 @@ namespace catapult { namespace observers {
 				else {
 					downloadEntry.setFinishPublished(true);
 				}
+
+				auto pChannel = utils::GetDownloadChannel(pStorageState->replicatorKey(), downloadEntry);
+				if (pChannel)
+					downloadChannels.push_back(std::move(pChannel));
 			}
+
+			if (!downloadChannels.empty())
+				context.Notifications.push_back(std::make_unique<model::DownloadRewardServiceNotification<1>>(std::move(downloadChannels)));
         }))
 	};
 }}

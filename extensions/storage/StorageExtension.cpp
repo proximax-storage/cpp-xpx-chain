@@ -18,38 +18,31 @@ namespace catapult { namespace storage {
 			auto storageConfig = StorageConfiguration::LoadFromPath(bootstrapper.resourcesPath());
 			auto replicatorsFile = boost::filesystem::path(bootstrapper.resourcesPath()) / "replicators.json";
 			auto bootstrapReplicators = config::LoadPeersFromPath(replicatorsFile.generic_string(), bootstrapper.config().Immutable.NetworkIdentifier);
-			auto pReplicatorService = std::make_shared<ReplicatorService>(
-				std::move(storageConfig),
-				std::move(bootstrapReplicators));
+			auto pReplicatorService = std::make_shared<ReplicatorService>(std::move(storageConfig), std::move(bootstrapReplicators));
 
 			notification_handlers::DemuxHandlerBuilder builder;
-			builder
-				.add(notification_handlers::CreateDataModificationApprovalHandler(pReplicatorService))
-				.add(notification_handlers::CreateDataModificationCancelHandler(pReplicatorService))
-				.add(notification_handlers::CreateDataModificationHandler(pReplicatorService))
-				.add(notification_handlers::CreateDataModificationSingleApprovalHandler(pReplicatorService))
-				.add(notification_handlers::CreateDownloadApprovalHandler(pReplicatorService))
-				.add(notification_handlers::CreateDownloadHandler(pReplicatorService))
-				.add(notification_handlers::CreateDownloadPaymentHandler(pReplicatorService))
-				.add(notification_handlers::CreateDriveClosureHandler(pReplicatorService))
-				.add(notification_handlers::CreateEndDriveVerificationHandler(pReplicatorService))
-				.add(notification_handlers::CreateFinishDownloadHandler(pReplicatorService))
-				.add(notification_handlers::CreatePeriodicStoragePaymentHandler(pReplicatorService))
-				.add(notification_handlers::CreatePeriodicDownloadPaymentHandler(pReplicatorService))
-				.add(notification_handlers::CreatePrepareDriveHandler(pReplicatorService))
-				.add(notification_handlers::CreateReplicatorOffboardingHandler(pReplicatorService))
-				.add(notification_handlers::CreateReplicatorOnboardingV1Handler(pReplicatorService))
-				.add(notification_handlers::CreateReplicatorOnboardingV2Handler(pReplicatorService))
-				.add(notification_handlers::CreateVerificationHandler(pReplicatorService))
-				.add(notification_handlers::CreateStreamStartHandler(pReplicatorService))
-				.add(notification_handlers::CreateStreamFinishHandler(pReplicatorService))
-				.add(notification_handlers::CreateStreamPaymentHandler(pReplicatorService));
-
-			bootstrapper.subscriptionManager().addPostBlockCommitSubscriber(
-				CreateBlockStorageSubscription(bootstrapper, builder.build()));
+			builder.add(notification_handlers::CreateHealthCheckHandler(pReplicatorService));
+			auto& subscriptionManager = bootstrapper.subscriptionManager();
+			subscriptionManager.addPostBlockCommitSubscriber(CreateBlockStorageSubscription(bootstrapper, builder.build()));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateDataModificationApprovalServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateDataModificationCancelServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateDataModificationServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateDataModificationSingleApprovalServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateDownloadApprovalServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateDownloadPaymentServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateDownloadRewardServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateDownloadServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateDrivesUpdateServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateEndDriveVerificationServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreatePrepareDriveServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateReplicatorOnboardingServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateStartDriveVerificationServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateStreamFinishServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateStreamPaymentServiceHandler(pReplicatorService));
+			subscriptionManager.addNotificationSubscriber(notification_handlers::CreateStreamStartServiceHandler(pReplicatorService));
 
 			bootstrapper.extensionManager().addServiceRegistrar(CreateReplicatorServiceRegistrar(pReplicatorService));
-			bootstrapper.subscriptionManager().addTransactionStatusSubscriber(CreateStorageTransactionStatusSubscriber(pReplicatorService));
+			subscriptionManager.addTransactionStatusSubscriber(CreateStorageTransactionStatusSubscriber(pReplicatorService));
 		}
 	}
 }}

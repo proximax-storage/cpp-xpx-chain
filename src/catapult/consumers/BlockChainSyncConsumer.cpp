@@ -305,11 +305,11 @@ namespace catapult { namespace consumers {
 						syncState.detachRemovedTransactionInfos());
 				m_handlers.TransactionsChange(TransactionsChangeInfo{ peerTransactionHashes, revertedTransactionInfos });
 
-				// 5. notify observers about committed blocks
-				m_handlers.PostBlockCommit(elements);
-
-				// 5. notify observers about committed blocks
+				// 5. dispatch post block commit notifications
 				m_handlers.PostBlockCommitNotifications(elements.back(), syncState.postBlockCommitNotifications());
+
+				// 6. notify observers about committed blocks
+				m_handlers.PostBlockCommit(elements);
 			}
 
 		private:
