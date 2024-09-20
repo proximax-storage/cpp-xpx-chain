@@ -26,7 +26,6 @@ namespace catapult { namespace observers {
 			std::mt19937 rng(seed);
 			utils::AssignReplicatorsToQueuedDrives(pStorageState->replicatorKey(), { notification.PublicKey }, context, rng);
 
-			CATAPULT_LOG(warning) << "======================================================> replicator on-boarding observer: on-boarded replicator " << notification.PublicKey;
 			context.Notifications.push_back(std::make_unique<model::ReplicatorOnboardingServiceNotification<1>>(notification.PublicKey));
 		}
 	}
