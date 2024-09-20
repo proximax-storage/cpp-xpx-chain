@@ -50,7 +50,6 @@ namespace catapult { namespace storage {
                 if (storageState.isReplicatorRegistered()) {
 					m_pReplicatorService->post([](const auto& pReplicatorService) {
 						CATAPULT_LOG(debug) << "starting replicator service";
-						CATAPULT_LOG(warning) << "======================================================> starting replicator service";
 						pReplicatorService->markRegistered();
 						pReplicatorService->start();
 					});
@@ -631,7 +630,6 @@ namespace catapult { namespace storage {
 	}
 
     void ReplicatorService::start() {
-		CATAPULT_LOG(warning) << "======================================================> replicator starting";
         if (m_pImpl)
 			CATAPULT_THROW_RUNTIME_ERROR("replicator service already started");
 
