@@ -35,8 +35,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		const auto& value = metadataEntry.value();
 		bson_stream::document builder;
 		auto doc = builder
-				<< "metadataEntry" << bson_stream::open_document
-					<< "version" << 1
+					<< "metadataEntry" << bson_stream::open_document
+				    << "version" << static_cast<int32_t>(metadataEntry.version())
 					<< "compositeHash" << ToBinary(key.uniqueKey())
 					<< "sourceAddress" << ToBinary(key.sourceAddress())
 					<< "targetKey" << ToBinary(key.targetKey())
@@ -44,6 +44,9 @@ namespace catapult { namespace mongo { namespace plugins {
 					<< "targetId" << static_cast<int64_t>(key.targetId())
 					<< "metadataType" << utils::to_underlying_type(metadataEntry.key().metadataType())
 					<< "valueSize" << static_cast<int32_t>(value.size());
+
+		if (metadataEntry.version() > 1)
+			builder << "isImmutable" << metadataEntry.isImmutable();
 
 		if (!value.empty())
 			builder << "value" << ToBinary(value.data(), value.size());
