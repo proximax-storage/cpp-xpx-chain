@@ -74,7 +74,7 @@ namespace catapult { namespace state {
 		input.read(valueBuffer);
 		entry.value().update(valueBuffer);
 
-		if (version == 2) {
+		if (version >= 2) {
 			bool isImmutable = static_cast<bool>(io::Read8(input));
 			entry.setImmutable(isImmutable);
 		}
