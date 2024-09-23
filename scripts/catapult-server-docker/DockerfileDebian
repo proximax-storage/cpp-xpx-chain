@@ -13,19 +13,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libczmq-dev \
   libsasl2-dev \
   libssl-dev \
-  libboost-dev \
-  libboost-atomic-dev \
-  libboost-date-time-dev \
-  libboost-regex-dev \
-  libboost-system-dev \
-  libboost-timer-dev \
-  libboost-chrono-dev \
-  libboost-log-dev \
-  libboost-thread-dev \
-  libboost-filesystem-dev \
-  libboost-program-options-dev \
-  libboost-stacktrace-dev \
-  libboost-random-dev \
   libmongoc-1.0-0 \
   libmongoc-dev \
   libzstd-dev \
@@ -35,6 +22,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 WORKDIR /usr/local/src
 
+# boost
+RUN curl -OL https://archives.boost.io/release/1.86.0/source/boost_1_86_0.tar.gz \
+  && tar xzf boost_1_86_0.tar.gz && cd boost_1_86_0 \
+  && ./bootstrap.sh && ./b2 toolset=gcc install --prefix=/usr/local -j$(nproc)
+
 # Install mongo-cxx
 RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.7/mongo-cxx-driver-r3.6.7.tar.gz && \
   tar -xzf mongo-cxx-driver-r3.6.7.tar.gz && \
@@ -43,8 +35,8 @@ RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.
   make -j$(nproc) && \
   make install
 
-# Clean Downloads
-RUN rm mongo-cxx-driver-r3.6.7.tar.gz
+# Remove downloads
+RUN rm mongo-cxx-driver-r3.6.7.tar.gz && rm boost_1_86_0.tar.gz
 
 # Copy local directory to image
 COPY . /catapult
