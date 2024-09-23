@@ -59,7 +59,8 @@ namespace catapult { namespace plugins {
 
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateMetadataValueValidator())
+				.add(validators::CreateMetadataValueV1Validator())
+				.add(validators::CreateMetadataValueV2Validator())
 				.add(validators::CreateExtendedMetadataValueValidator())
 				.add(validators::CreateMetadataSizesValidator());
 		});
