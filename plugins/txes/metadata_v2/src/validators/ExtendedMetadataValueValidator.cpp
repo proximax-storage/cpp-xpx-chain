@@ -17,14 +17,9 @@ namespace catapult { namespace validators {
 
 		auto metadataKey = state::ResolveMetadataKey(notification.PartialMetadataKey, notification.MetadataTarget, context.Resolvers);
 		auto metadataIter = cache.find(metadataKey.uniqueKey());
-		if (!metadataIter.tryGet()) {
-			return notification.ValueSizeDelta == notification.ValueSize
-					? ValidationResult::Success
-					: Failure_Metadata_v2_Value_Size_Delta_Mismatch;
-		}
 
-		const auto& metadataValue = metadataIter.get().value();
-		if (metadataIter.get().isImmutable() && !metadataValue.empty())
-			return Failure_Metadata_v2_Value_Is_Immutable;
+		return metadataIter.tryGet() && metadataIter.get().isImmutable()
+					   ? Failure_Metadata_v2_Value_Is_Immutable
+					   : ValidationResult::Success;
 	}))
 }}
