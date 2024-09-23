@@ -40,7 +40,7 @@ namespace catapult { namespace observers {
 			auto& driveOwnerState = driveOwnerIter.get();
 
 			// The value will be used after removing drive entry. That's why the copy is needed
-			const auto& replicators = driveEntry.replicators();
+			const auto replicators = driveEntry.replicators();
 
 			// Removing replicators from tree before must be performed before refunding
 			auto replicatorKeyExtractor = [&storageMosaicId, &accountStateCache](const Key& key) {
