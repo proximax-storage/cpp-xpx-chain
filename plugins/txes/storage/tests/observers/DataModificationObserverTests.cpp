@@ -7,6 +7,7 @@
 #include "catapult/model/StorageNotifications.h"
 #include "src/observers/Observers.h"
 #include "tests/test/StorageTestUtils.h"
+#include "tests/test/other/mocks/MockStorageState.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -16,7 +17,7 @@ namespace catapult { namespace observers {
 
 	const std::unique_ptr<observers::LiquidityProviderExchangeObserver>  Liquidity_Provider = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
 
-	DEFINE_COMMON_OBSERVER_TESTS(DataModification, Liquidity_Provider)
+	DEFINE_COMMON_OBSERVER_TESTS(DataModification, Liquidity_Provider, nullptr)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -66,6 +67,7 @@ namespace catapult { namespace observers {
 
 			entry.replicators() = values.Replicators;
 			entry.offboardingReplicators() = values.Offboarding_Replicators;
+			entry.dataModificationShards()[Replicator_Key_1] = {};
 
             return entry;
         }
@@ -95,7 +97,9 @@ namespace catapult { namespace observers {
                 values.Active_Data_Modification.begin()->Owner, 
                 values.Active_Data_Modification.begin()->DownloadDataCdi, 
                 values.Active_Data_Modification.begin()->ExpectedUploadSizeMegabytes);
-            auto pObserver = CreateDataModificationObserver(Liquidity_Provider);
+			auto pStorageState = std::make_shared<mocks::MockStorageState>();
+			pStorageState->setReplicatorKey(Replicator_Key_1);
+            auto pObserver = CreateDataModificationObserver(Liquidity_Provider, pStorageState);
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 			auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountCache = context.cache().sub<cache::AccountStateCache>();
@@ -104,7 +108,9 @@ namespace catapult { namespace observers {
             bcDriveCache.insert(CreateInitialEntry(values));
 			accountCache.addAccount(values.Drive_Key, Current_Height);
 			for (const auto& replicatorKey : values.Replicators) {
-				replicatorCache.insert(test::CreateReplicatorEntry(replicatorKey));
+				auto replicatorEntry = test::CreateReplicatorEntry(replicatorKey);
+				replicatorEntry.drives()[values.Drive_Key] = {};
+				replicatorCache.insert(replicatorEntry);
 				accountCache.addAccount(replicatorKey, Current_Height);
 			}
 

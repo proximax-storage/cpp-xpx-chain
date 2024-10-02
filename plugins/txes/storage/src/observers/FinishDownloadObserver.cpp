@@ -9,20 +9,28 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(FinishDownload, model::FinishDownloadNotification<1>, [](const model::FinishDownloadNotification<1>& notification, ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
+	using Notification = model::FinishDownloadNotification<1>;
 
-        auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
-        auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
-        auto& downloadChannelEntry = downloadChannelIter.get();
+	DECLARE_OBSERVER(FinishDownload, Notification)(const std::shared_ptr<state::StorageState>& pStorageState) {
+		return MAKE_OBSERVER(FinishDownload, Notification, ([pStorageState](const Notification& notification, ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (FinishDownload)");
 
-		downloadChannelEntry.setFinishPublished(true);
+			auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
+			auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
+			auto& downloadChannelEntry = downloadChannelIter.get();
 
-		auto& queueCache = context.Cache.template sub<cache::QueueCache>();
-		utils::QueueAdapter<cache::DownloadChannelCache> downloadQueueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadChannelCache);
-		downloadQueueAdapter.remove(downloadChannelEntry.entryKey());
+			downloadChannelEntry.setFinishPublished(true);
 
-		downloadChannelEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
-	});
+			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+			utils::QueueAdapter<cache::DownloadChannelCache> downloadQueueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadChannelCache);
+			downloadQueueAdapter.remove(downloadChannelEntry.entryKey());
+
+			downloadChannelEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
+
+			auto pChannel = utils::GetDownloadChannel(pStorageState->replicatorKey(), downloadChannelEntry);
+			if (pChannel)
+				context.Notifications.push_back(std::make_unique<model::DownloadRewardServiceNotification<1>>(std::vector<std::shared_ptr<state::DownloadChannel>>{ std::move(pChannel) }));
+		}))
+	}
 }}

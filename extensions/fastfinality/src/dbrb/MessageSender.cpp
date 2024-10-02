@@ -11,7 +11,6 @@
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/net/PacketReadersWriters.h"
 #include "catapult/thread/Future.h"
-#include "catapult/thread/FutureUtils.h"
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/utils/NetworkTime.h"
 #include <condition_variable>

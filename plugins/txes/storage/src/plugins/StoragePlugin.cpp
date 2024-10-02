@@ -191,7 +191,7 @@ namespace catapult { namespace plugins {
 		const auto& liquidityProviderValidator = manager.liquidityProviderExchangeValidator();
 		const auto& liquidityProviderObserver = manager.liquidityProviderExchangeObserver();
 
-		manager.addDbrbProcessUpdateListener(std::make_unique<observers::StorageDbrbProcessUpdateListener>(liquidityProviderObserver));
+		manager.addDbrbProcessUpdateListener(std::make_unique<observers::StorageDbrbProcessUpdateListener>(liquidityProviderObserver, pStorageState));
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
@@ -232,33 +232,33 @@ namespace catapult { namespace plugins {
 
 		const auto& storageUpdatesListeners = manager.storageUpdatesListeners();
 
-		manager.addObserverHook([&state = *pStorageState, &liquidityProviderObserver, &storageUpdatesListeners](auto& builder) {
+		manager.addObserverHook([pStorageState, &liquidityProviderObserver, &storageUpdatesListeners](auto& builder) {
 			builder
-				.add(observers::CreatePrepareDriveObserver())
-				.add(observers::CreateDownloadChannelObserver())
-				.add(observers::CreateDataModificationObserver(liquidityProviderObserver))
-				.add(observers::CreateDataModificationApprovalObserver())
-				.add(observers::CreateDataModificationApprovalDownloadWorkObserver(liquidityProviderObserver))
-				.add(observers::CreateDataModificationApprovalUploadWorkObserver(liquidityProviderObserver))
-				.add(observers::CreateDataModificationApprovalRefundObserver(liquidityProviderObserver))
-				.add(observers::CreateDataModificationCancelObserver(liquidityProviderObserver))
-				.add(observers::CreateDriveClosureObserver(liquidityProviderObserver, storageUpdatesListeners))
-				.add(observers::CreateReplicatorOnboardingV1Observer())
-				.add(observers::CreateReplicatorOnboardingV2Observer())
+				.add(observers::CreatePrepareDriveObserver(pStorageState))
+				.add(observers::CreateDownloadChannelObserver(pStorageState))
+				.add(observers::CreateDataModificationObserver(liquidityProviderObserver, pStorageState))
+				.add(observers::CreateDataModificationApprovalObserver(pStorageState))
+				.add(observers::CreateDataModificationApprovalDownloadWorkObserver(liquidityProviderObserver, pStorageState))
+				.add(observers::CreateDataModificationApprovalUploadWorkObserver(liquidityProviderObserver, pStorageState))
+				.add(observers::CreateDataModificationApprovalRefundObserver(liquidityProviderObserver, pStorageState))
+				.add(observers::CreateDataModificationCancelObserver(liquidityProviderObserver, pStorageState))
+				.add(observers::CreateDriveClosureObserver(liquidityProviderObserver, storageUpdatesListeners, pStorageState))
+				.add(observers::CreateReplicatorOnboardingV1Observer(pStorageState))
+				.add(observers::CreateReplicatorOnboardingV2Observer(pStorageState))
 				.add(observers::CreateReplicatorOffboardingObserver())
-				.add(observers::CreateDownloadPaymentObserver())
-				.add(observers::CreateDataModificationSingleApprovalObserver())
-				.add(observers::CreateDownloadApprovalObserver())
-				.add(observers::CreateFinishDownloadObserver())
-				.add(observers::CreateDownloadApprovalPaymentObserver(liquidityProviderObserver))
-				.add(observers::CreateDownloadChannelRefundObserver(liquidityProviderObserver))
-				.add(observers::CreateStreamStartObserver(liquidityProviderObserver))
-				.add(observers::CreateStreamFinishObserver())
-				.add(observers::CreateStreamPaymentObserver())
-				.add(observers::CreateStartDriveVerificationObserver(state))
-				.add(observers::CreateEndDriveVerificationObserver(liquidityProviderObserver))
-				.add(observers::CreatePeriodicStoragePaymentObserver(liquidityProviderObserver, storageUpdatesListeners))
-				.add(observers::CreatePeriodicDownloadChannelPaymentObserver())
+				.add(observers::CreateDownloadPaymentObserver(pStorageState))
+				.add(observers::CreateDataModificationSingleApprovalObserver(pStorageState))
+				.add(observers::CreateDownloadApprovalObserver(pStorageState))
+				.add(observers::CreateFinishDownloadObserver(pStorageState))
+				.add(observers::CreateDownloadApprovalPaymentObserver(liquidityProviderObserver, pStorageState))
+				.add(observers::CreateDownloadChannelRefundObserver(liquidityProviderObserver, pStorageState))
+				.add(observers::CreateStreamStartObserver(liquidityProviderObserver, pStorageState))
+				.add(observers::CreateStreamFinishObserver(pStorageState))
+				.add(observers::CreateStreamPaymentObserver(pStorageState))
+				.add(observers::CreateStartDriveVerificationObserver(pStorageState))
+				.add(observers::CreateEndDriveVerificationObserver(liquidityProviderObserver, pStorageState))
+				.add(observers::CreatePeriodicStoragePaymentObserver(liquidityProviderObserver, storageUpdatesListeners, pStorageState))
+				.add(observers::CreatePeriodicDownloadChannelPaymentObserver(pStorageState))
 				.add(observers::CreateOwnerManagementProhibitionObserver())
 				.add(observers::CreateReplicatorNodeBootKeyObserver())
 				.add(observers::CreateReplicatorsCleanupObserver(liquidityProviderObserver));

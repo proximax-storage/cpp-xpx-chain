@@ -129,7 +129,8 @@ namespace catapult { namespace sync {
 			void executeBlock(const model::BlockElement& blockElement) {
 				auto& state = testState().state();
 				auto delta = state.cache().createDelta();
-				auto observerState = observers::ObserverState(delta, state.state());
+				std::vector<std::unique_ptr<model::Notification>> notifications;
+				auto observerState = observers::ObserverState(delta, state.state(), notifications);
 
 				observers::NotificationObserverAdapter rootObserver(
 						state.pluginManager().createObserver(),

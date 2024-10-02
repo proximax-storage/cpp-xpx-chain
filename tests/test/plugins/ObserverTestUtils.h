@@ -32,16 +32,6 @@ namespace catapult { namespace test {
 		return observers::ObserverContext(state, config, height, Timestamp(0), mode, CreateResolverContextXor());
 	}
 
-	/// Creates an observer context around \a cache and \a state at \a height with specified \a mode.
-	inline observers::ObserverContext CreateObserverContext(
-			cache::CatapultCacheDelta& cache,
-			state::CatapultState& state,
-			const config::BlockchainConfiguration& config,
-			Height height,
-			observers::NotifyMode mode) {
-		return observers::ObserverContext({ cache, state }, config, height, Timestamp(0), mode, CreateResolverContextXor());
-	}
-
 	// endregion
 
 	// region ObserveNotification

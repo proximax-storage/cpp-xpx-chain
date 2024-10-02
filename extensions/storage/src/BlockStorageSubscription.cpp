@@ -21,41 +21,31 @@ namespace catapult { namespace storage {
 		public:
 			explicit BlockStorageSubscription(extensions::ProcessBootstrapper& bootstrapper, HandlerPointer pHandler)
 				: m_pluginManager(bootstrapper.pluginManager())
-				, m_cacheHolder(bootstrapper.cacheHolder())
 				, m_pConfigHolder(bootstrapper.configHolder())
 				, m_pHandler(std::move(pHandler))
 			{}
 
 		public:
 			void notifyBlock(const model::BlockElement& blockElement) override {
-				// We load extensions before plugins, so we can't init publisher in constructor
-				if (!m_pNotificationPublisher) {
+				// Publisher can't be initialized in constructor because extensions are loaded before plugins
+				if (!m_pNotificationPublisher)
 					m_pNotificationPublisher = m_pluginManager.createNotificationPublisher();
-				}
-				const auto& config = m_pConfigHolder->Config(blockElement.Block.Height);
-				auto cacheView = m_cacheHolder.cache().createView();
-				auto readCache = cacheView.toReadOnly();
 
 				auto handlerContext = notification_handlers::HandlerContext(
-					config,
+					m_pConfigHolder->Config(blockElement.Block.Height),
 					blockElement.Block.Height,
-					blockElement.Block.Timestamp,
-					m_pluginManager.createResolverContext(readCache),
-					readCache
-				);
+					blockElement.Block.Timestamp);
 				notification_handlers::HandlerNotificationSubscriber handleSubscriber(*m_pHandler, handlerContext);
-				for (const auto& entity : ExtractEntityInfos(blockElement)) {
+				for (const auto& entity : ExtractEntityInfos(blockElement))
 					m_pNotificationPublisher->publish(entity, handleSubscriber);
-				}
 			}
 
 			void notifyDropBlocksAfter(Height height) override {
-				// TODO: Do we need to support revert of blocks?
+				// Block rollbacks are not supported
 			}
 
 		private:
 			plugins::PluginManager& m_pluginManager;
-			extensions::CacheHolder& m_cacheHolder;
 			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 			HandlerPointer m_pHandler;
 			std::unique_ptr<model::NotificationPublisher> m_pNotificationPublisher;

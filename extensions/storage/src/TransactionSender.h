@@ -19,14 +19,12 @@ namespace catapult { namespace storage {
 				const crypto::KeyPair& keyPair,
 				const config::ImmutableConfiguration& immutableConfig,
 				StorageConfiguration storageConfig,
-				handlers::TransactionRangeHandler transactionRangeHandler,
-				state::StorageState& storageState)
+				handlers::TransactionRangeHandler transactionRangeHandler)
 			: m_keyPair(keyPair)
 			, m_networkIdentifier(immutableConfig.NetworkIdentifier)
 			, m_generationHash(immutableConfig.GenerationHash)
 			, m_storageConfig(std::move(storageConfig))
 			, m_transactionRangeHandler(std::move(transactionRangeHandler))
-			, m_storageState(storageState)
 		{}
 
     public:
@@ -44,6 +42,5 @@ namespace catapult { namespace storage {
         GenerationHash m_generationHash;
         StorageConfiguration m_storageConfig;
         handlers::TransactionRangeHandler m_transactionRangeHandler;
-		state::StorageState& m_storageState;
     };
 }}

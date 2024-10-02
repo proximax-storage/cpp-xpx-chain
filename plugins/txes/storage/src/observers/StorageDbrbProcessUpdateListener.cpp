@@ -20,6 +20,7 @@ namespace catapult { namespace observers {
 
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
 		auto& bootKeyReplicatorCache = context.Cache.sub<cache::BootKeyReplicatorCache>();
 
 		if (!bootKeyReplicatorCache.contains(processId))
@@ -33,6 +34,7 @@ namespace catapult { namespace observers {
 
 		auto replicatorIter = replicatorCache.find(replicatorKey);
 		const auto& replicatorEntry = replicatorIter.get();
+		std::vector<std::shared_ptr<state::Drive>> updatedDrives;
 		for (const auto& [ driveKey, _ ] : replicatorEntry.drives()) {
 			auto eventHash = getReplicatorRemovalEventHash(context.Timestamp, context.Config.Immutable.GenerationHash, driveKey, replicatorKey);
 			std::seed_seq seed(eventHash.begin(), eventHash.end());
@@ -41,9 +43,20 @@ namespace catapult { namespace observers {
 			utils::RefundDepositsOnOffboarding(driveKey, { replicatorKey }, context, m_pLiquidityProvider);
 			utils::OffboardReplicatorsFromDrive(driveKey, { replicatorKey }, context, rng);
 			utils::PopulateDriveWithReplicators(driveKey, context, rng);
+
+			auto driveIter = driveCache.find(driveKey);
+			auto& driveEntry = driveIter.get();
+
+			const auto& replicators = driveEntry.replicators();
+			if (replicators.find(m_pStorageState->replicatorKey()) != replicators.end()) {
+				auto pDrive = utils::GetDrive(driveKey, m_pStorageState->replicatorKey(), context.Timestamp, driveCache, replicatorCache, downloadChannelCache);
+				updatedDrives.push_back(std::move(pDrive));
+			}
 		}
 
 		replicatorCache.remove(replicatorKey);
 		bootKeyReplicatorCache.remove(processId);
+
+		context.Notifications.push_back(std::make_unique<model::DrivesUpdateServiceNotification<1>>(std::move(updatedDrives), std::vector<Key>{}, context.Timestamp));
 	}
 }}

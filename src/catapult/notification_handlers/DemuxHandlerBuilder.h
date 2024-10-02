@@ -16,7 +16,7 @@ namespace catapult { namespace notification_handlers {
 	/// A demultiplexing handler builder.
 	template<typename... TArgs>
 	class DemuxHandlerBuilderT {
-	private:
+	public:
 		template<typename TNotification>
 		using NotificationHandlerPointerT = std::unique_ptr<const NotificationHandlerTT<TNotification, TArgs...>>;
 		using AggregateHandlerPointer = std::unique_ptr<const AggregateNotificationHandlerT<model::Notification, TArgs...>>;

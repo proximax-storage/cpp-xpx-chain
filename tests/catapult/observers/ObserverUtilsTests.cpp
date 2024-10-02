@@ -37,7 +37,9 @@ namespace catapult { namespace observers {
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
 			auto config = config::BlockchainConfiguration::Uninitialized();
-			ObserverContext context({ cacheDelta, state }, config, height, Timestamp(0), mode, model::ResolverContext());
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			ObserverState observerState(cacheDelta, state, notifications);
+			ObserverContext context(observerState, config, height, Timestamp(0), mode, model::ResolverContext());
 
 			// Act:
 			auto result = ShouldPrune(context, pruneInterval);
@@ -240,7 +242,9 @@ namespace catapult { namespace observers {
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
 			auto config = CreateBlockchainConfiguration();
-			ObserverContext context({ cacheDelta, state }, config, height, Timestamp(0), mode, model::ResolverContext());
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			ObserverState observerState(cacheDelta, state, notifications);
+			ObserverContext context(observerState, config, height, Timestamp(0), mode, model::ResolverContext());
 
 			// Act:
 			NotifyBlock(observer, context);
@@ -259,7 +263,9 @@ namespace catapult { namespace observers {
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
 			auto config = CreateBlockchainConfiguration();
-			ObserverContext context({ cacheDelta, state }, config, height, Timestamp(0), mode, model::ResolverContext());
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			ObserverState observerState(cacheDelta, state, notifications);
+			ObserverContext context(observerState, config, height, Timestamp(0), mode, model::ResolverContext());
 
 			// Act:
 			NotifyBlock(observer, context);
@@ -278,7 +284,9 @@ namespace catapult { namespace observers {
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
 			auto config = CreateBlockchainConfiguration();
-			ObserverContext context({ cacheDelta, state }, config, height, Timestamp(0), mode, model::ResolverContext());
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			ObserverState observerState(cacheDelta, state, notifications);
+			ObserverContext context(observerState, config, height, Timestamp(0), mode, model::ResolverContext());
 
 			// Act:
 			NotifyBlock(observer, context, timestamp);
@@ -430,7 +438,9 @@ namespace catapult { namespace observers {
 			state::CatapultState state;
 			model::BlockStatementBuilder statementBuilder;
 			auto config = config::BlockchainConfiguration::Uninitialized();
-			ObserverContext context({ cacheDelta, state, statementBuilder }, config, height, Timestamp(0), mode, model::ResolverContext());
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			ObserverState observerState(cacheDelta, state, statementBuilder, notifications);
+			ObserverContext context(observerState, config, height, Timestamp(0), mode, model::ResolverContext());
 
 			// Act:
 			NotifyBlock(observer, context);

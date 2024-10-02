@@ -44,7 +44,8 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, CanCreateObserverState) {
 		// Act:
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
-			ObserverState observerState(cacheDelta, state);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			ObserverState observerState(cacheDelta, state, notifications);
 
 			// Assert:
 			EXPECT_EQ(&cacheDelta, &observerState.Cache);
@@ -57,7 +58,8 @@ namespace catapult { namespace observers {
 		// Act:
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
 			model::BlockStatementBuilder blockStatementBuilder;
-			ObserverState observerState(cacheDelta, state, blockStatementBuilder);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			ObserverState observerState(cacheDelta, state, blockStatementBuilder, notifications);
 
 			// Assert:
 			EXPECT_EQ(&cacheDelta, &observerState.Cache);
@@ -111,7 +113,9 @@ namespace catapult { namespace observers {
 		// Act:
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
 			auto config = config::BlockchainConfiguration::Uninitialized();
-			ObserverContext context(ObserverState(cacheDelta, state), config, Default_Height, Timestamp(0), NotifyMode::Commit, CreateResolverContext());
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			ObserverState observerState(cacheDelta, state, notifications);
+			ObserverContext context(observerState, config, Default_Height, Timestamp(0), NotifyMode::Commit, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());
 
 			// Assert:
@@ -123,7 +127,8 @@ namespace catapult { namespace observers {
 		// Act:
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
 			model::BlockStatementBuilder blockStatementBuilder;
-			auto observerState = ObserverState(cacheDelta, state, blockStatementBuilder);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			auto observerState = ObserverState(cacheDelta, state, blockStatementBuilder, notifications);
 			auto config = config::BlockchainConfiguration::Uninitialized();
 			ObserverContext context(observerState, config, Default_Height, Timestamp(0), NotifyMode::Commit, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());
@@ -142,7 +147,9 @@ namespace catapult { namespace observers {
 		// Act:
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
 			auto config = config::BlockchainConfiguration::Uninitialized();
-			ObserverContext context(ObserverState(cacheDelta, state), config, Default_Height, Timestamp(0), NotifyMode::Rollback, CreateResolverContext());
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			auto observerState = ObserverState(cacheDelta, state, notifications);
+			ObserverContext context(observerState, config, Default_Height, Timestamp(0), NotifyMode::Rollback, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());
 
 			// Assert:
@@ -154,7 +161,8 @@ namespace catapult { namespace observers {
 		// Act: (this test is added for completeness because receipts are never generated during rollback)
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
 			model::BlockStatementBuilder blockStatementBuilder;
-			auto observerState = ObserverState(cacheDelta, state, blockStatementBuilder);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			auto observerState = ObserverState(cacheDelta, state, blockStatementBuilder, notifications);
 			auto config = config::BlockchainConfiguration::Uninitialized();
 			ObserverContext context(observerState, config, Default_Height, Timestamp(0), NotifyMode::Rollback, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());

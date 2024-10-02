@@ -34,19 +34,25 @@ namespace catapult { namespace observers {
 
 	// region ObserverState
 
-	ObserverState::ObserverState(cache::CatapultCacheDelta& cache, state::CatapultState& state)
+	ObserverState::ObserverState(
+		cache::CatapultCacheDelta& cache,
+		state::CatapultState& state,
+		std::vector<std::unique_ptr<model::Notification>>& notifications)
 			: Cache(cache)
 			, State(state)
 			, pBlockStatementBuilder(nullptr)
+			, Notifications(notifications)
 	{}
 
 	ObserverState::ObserverState(
-			cache::CatapultCacheDelta& cache,
-			state::CatapultState& state,
-			model::BlockStatementBuilder& blockStatementBuilder)
+		cache::CatapultCacheDelta& cache,
+		state::CatapultState& state,
+		model::BlockStatementBuilder& blockStatementBuilder,
+		std::vector<std::unique_ptr<model::Notification>>& notifications)
 			: Cache(cache)
 			, State(state)
 			, pBlockStatementBuilder(&blockStatementBuilder)
+			, Notifications(notifications)
 	{}
 
 	// endregion
@@ -66,7 +72,7 @@ namespace catapult { namespace observers {
 	}
 
 	ObserverContext::ObserverContext(
-			const ObserverState& state,
+			ObserverState& state,
 			const config::BlockchainConfiguration& config,
 			catapult::Height height,
 			const catapult::Timestamp& timestamp,
@@ -80,6 +86,7 @@ namespace catapult { namespace observers {
 			, Mode(mode)
 			, Resolvers(BindConditional(resolvers, state.pBlockStatementBuilder))
 			, m_statementBuilder(CreateObserverStatementBuilder(state.pBlockStatementBuilder))
+			, Notifications(state.Notifications)
 	{}
 
 	ObserverStatementBuilder& ObserverContext::StatementBuilder() {

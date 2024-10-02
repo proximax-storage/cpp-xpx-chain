@@ -166,7 +166,9 @@ namespace catapult { namespace chain {
 			// note that the "real" state is currently only required by block observers, so a dummy state can be used
 			auto& cache = applyState.UnconfirmedCatapultCache;
 			state::CatapultState dummyState;
-			auto observerContext = ObserverContext({ cache, dummyState }, config, effectiveHeight, currentTime, observers::NotifyMode::Commit, resolverContext);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			observers::ObserverState observerState{ cache, dummyState, notifications };
+			auto observerContext = ObserverContext(observerState, config, effectiveHeight, currentTime, observers::NotifyMode::Commit, resolverContext);
 			for (const auto& utInfo : utInfos) {
 				const auto& entity = *utInfo.pEntity;
 				const auto& entityHash = utInfo.EntityHash;
