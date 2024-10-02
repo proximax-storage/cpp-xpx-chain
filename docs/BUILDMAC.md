@@ -99,7 +99,7 @@ cd mongo-cxx-driver.git
 git checkout r3.7.0
 
 mkdir _build && cd _build
-cmake -DCMAKE_CXX_STANDARD=17 -DLIBBSON_DIR=/usr/local -DLIBMONGOC_DIR=/usr/local \
+cmake  -DPYTHON_EXECUTABLE=$(which python3) -DCMAKE_CXX_STANDARD=17 -DLIBBSON_DIR=/usr/local -DLIBMONGOC_DIR=/usr/local \
     -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
 make -j 10
 sudo make install
@@ -109,34 +109,12 @@ sudo rm -R mongo-cxx-driver.git
 
 ### ZMQ
 
-libzmq
+libzmq (v4.3.2 or higher)
+cppzmq (v4.4.1 or higher)
 
 ```sh
-git clone git://github.com/zeromq/libzmq.git libzmq.git
-cd libzmq.git
-git checkout v4.3.2
-
-mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
-make
-sudo make install
-cd ../..
-sudo rm -R libzmq.git
-```
-
-cppzmq
-
-```sh
-git clone https://github.com/zeromq/cppzmq.git cppzmq.git
-cd cppzmq.git
-git checkout v4.4.1
-
-mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DCPPZMQ_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
-make
-sudo make install
-cd ../..
-sudo rm -R cppzmq.git
+brew install zeromq
+brew install cppzmq
 ```
 
 ### Rocks
