@@ -50,7 +50,6 @@ namespace catapult { namespace ionet {
 		};
 
 		using StatsCallback = consumer<const Stats&>;
-		using WaitForDataCallback = action;
 
 	public:
 		~SslPacketSocket() override = default;
@@ -58,9 +57,6 @@ namespace catapult { namespace ionet {
 	public:
 		/// Retrieves statistics about this socket and passes them to \a callback.
 		virtual void stats(const StatsCallback& callback) = 0;
-
-		/// Calls \a callback when data is available for reading.
-		virtual void waitForData(const WaitForDataCallback& callback) = 0;
 
 		/// Closes the socket.
 		virtual void close() = 0;

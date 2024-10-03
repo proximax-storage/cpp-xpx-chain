@@ -19,8 +19,8 @@
 **/
 
 #pragma once
-
 #include "src/state/LiquidityProviderEntry.h"
+#include <optional>
 
 namespace catapult::utils {
 

@@ -21,6 +21,7 @@
 #include "ConsumerDispatcher.h"
 #include "ConsumerEntry.h"
 #include "catapult/thread/ThreadInfo.h"
+#include <thread>
 
 namespace catapult { namespace disruptor {
 
@@ -165,7 +166,7 @@ namespace catapult { namespace disruptor {
 		}
 
 		// need to atomically check spare capacity AND add element
-		utils::SpinLockGuard guard(m_addSpinLock);
+		std::unique_lock lock(m_addMutex);
 		if (!canProcessNextElement()) {
 			if (m_shouldThrowIfFull)
 				CATAPULT_THROW_RUNTIME_ERROR("consumer is too far behind");

@@ -7,6 +7,7 @@
 #include "tests/test/StorageTestUtils.h"
 #include "catapult/model/StorageNotifications.h"
 #include "src/observers/Observers.h"
+#include "tests/test/other/mocks/MockStorageState.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -14,7 +15,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS DataModificationSingleApprovalObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(DataModificationSingleApproval,)
+    DEFINE_COMMON_OBSERVER_TESTS(DataModificationSingleApproval, nullptr)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -32,15 +33,16 @@ namespace catapult { namespace observers {
 			entry.setOwner(driveOwnerKey);
 			entry.setUsedSizeBytes(Used_Drive_Size);
             entry.completedDataModifications().emplace_back(state::CompletedDataModification {
-					{
-                		test::GenerateRandomByteArray<Hash256>(), driveOwnerKey,
-                		test::GenerateRandomByteArray<Hash256>(), test::Random()
-					},
-					state::DataModificationApprovalState::Approved, 0U});
+				{
+					test::GenerateRandomByteArray<Hash256>(), driveOwnerKey,
+					test::GenerateRandomByteArray<Hash256>(), test::Random()
+				},
+				state::DataModificationApprovalState::Approved, 0U});
 			entry.confirmedUsedSizes().emplace(
-					replicatorKey,
-					test::RandomInRange<uint64_t>(0, Used_Drive_Size-1)
+				replicatorKey,
+				test::RandomInRange<uint64_t>(0, Used_Drive_Size-1)
  			);
+			entry.dataModificationShards()[replicatorKey] = {};
 
             return entry;
         }
@@ -48,12 +50,12 @@ namespace catapult { namespace observers {
 		state::ReplicatorEntry CreateInitialReplicatorEntry(const state::BcDriveEntry& driveEntry) {
 			state::ReplicatorEntry entry(*driveEntry.replicators().begin());
 			entry.drives().emplace(
-					driveEntry.key(),
-					state::DriveInfo {
-						test::GenerateRandomByteArray<Hash256>(),
-						static_cast<bool>(test::RandomByte() % 2),
-						test::Random()
-					}
+				driveEntry.key(),
+				state::DriveInfo {
+					test::GenerateRandomByteArray<Hash256>(),
+					static_cast<bool>(test::RandomByte() % 2),
+					test::Random()
+				}
  			);
 			return entry;
 		}
@@ -98,7 +100,9 @@ namespace catapult { namespace observers {
 				Public_Keys_Count,
 				pPublicKeys.get(),
 				pOpinions.get());
-            auto pObserver = CreateDataModificationSingleApprovalObserver();
+			auto pStorageState = std::make_shared<mocks::MockStorageState>();
+			pStorageState->setReplicatorKey(values.InitialReplicatorEntry.key());
+            auto pObserver = CreateDataModificationSingleApprovalObserver(pStorageState);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 			auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 
@@ -126,8 +130,8 @@ namespace catapult { namespace observers {
 		values.InitialReplicatorEntry = CreateInitialReplicatorEntry(values.InitialBcDriveEntry);
         values.ExpectedBcDriveEntry = CreateExpectedBcDriveEntry(values.InitialBcDriveEntry);
 		values.ExpectedReplicatorEntry = CreateExpectedReplicatorEntry(
-				values.InitialReplicatorEntry,
-				values.InitialBcDriveEntry.completedDataModifications().rbegin()->Id
+			values.InitialReplicatorEntry,
+			values.InitialBcDriveEntry.completedDataModifications().rbegin()->Id
 		);
 
         // Assert
@@ -141,12 +145,11 @@ namespace catapult { namespace observers {
 		values.ExpectedReplicatorEntry = CreateInitialReplicatorEntry(values.ExpectedBcDriveEntry);
 		values.InitialBcDriveEntry = CreateExpectedBcDriveEntry(values.ExpectedBcDriveEntry);
 		values.InitialReplicatorEntry = CreateExpectedReplicatorEntry(
-				values.ExpectedReplicatorEntry,
-				values.ExpectedBcDriveEntry.completedDataModifications().end()->Id
+			values.ExpectedReplicatorEntry,
+			values.ExpectedBcDriveEntry.completedDataModifications().end()->Id
 		);
 
         // Assert
         EXPECT_THROW(RunTest(NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
     }
-
 }}

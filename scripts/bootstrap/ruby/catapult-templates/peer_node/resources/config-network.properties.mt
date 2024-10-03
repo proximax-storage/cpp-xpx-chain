@@ -213,7 +213,7 @@ maxValueSize = 1024
 
 [plugin:catapult.plugins.liquidityprovider]
 enabled = true
-managerPublicKeys = FA04036C14B76B01FAC19F6522C487509691FC5566B7CD95BC0B2207A3F3D162
+managerPublicKeys = E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21
 maxWindowSize = 10
 percentsDigitsAfterDot = 2
 

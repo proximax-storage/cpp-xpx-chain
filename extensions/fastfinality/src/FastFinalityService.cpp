@@ -49,8 +49,8 @@ namespace catapult { namespace fastfinality {
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
 				const auto& config = state.config();
 				const auto& nextConfig = state.config(state.storage().view().chainHeight() + Height(1)).Network;
-				if (!nextConfig.EnableDbrbFastFinality) {
-					CATAPULT_LOG(warning) << "DBRB fast finality is not enabled";
+				if (!nextConfig.EnableDbrbFastFinality && !nextConfig.EnableWeightedVoting) {
+					CATAPULT_LOG(warning) << "fast finality is not enabled";
 					return;
 				}
 
@@ -75,12 +75,13 @@ namespace catapult { namespace fastfinality {
 						dbrbShardSize](const std::shared_ptr<thread::IoThreadPool>&) {
 					pTransactionSender->init(&keyPair, config.Immutable, dbrbConfig, state.hooks().transactionRangeConsumerFactory()(disruptor::InputSource::Local), pUnlockedAccounts);
 					auto pMessageSender = dbrb::CreateMessageSender(config::ToLocalNode(config), state.nodes(), dbrbConfig.IsDbrbProcess, pDbrbPool, dbrbConfig.ResendMessagesInterval);
+					const auto& pluginManager = state.pluginManager();
 					if (dbrbShardingEnabled) {
-						auto pDbrbProcess = std::make_shared<dbrb::ShardedDbrbProcess>(keyPair, pMessageSender, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher(), dbrbShardSize);
-						return std::make_shared<FastFinalityFsm>(pFastFinalityFsmPool, config, pDbrbProcess, state.pluginManager());
+						auto pDbrbProcess = std::make_shared<dbrb::ShardedDbrbProcess>(keyPair, pMessageSender, pDbrbPool, pTransactionSender, pluginManager.dbrbViewFetcher(), dbrbShardSize);
+						return std::make_shared<FastFinalityFsm>(pFastFinalityFsmPool, config, pDbrbProcess, pluginManager);
 					} else {
-						auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(keyPair, pMessageSender, pDbrbPool, pTransactionSender, state.pluginManager().dbrbViewFetcher());
-						return std::make_shared<FastFinalityFsm>(pFastFinalityFsmPool, config, pDbrbProcess, state.pluginManager());
+						auto pDbrbProcess = std::make_shared<dbrb::DbrbProcess>(keyPair, pMessageSender, pDbrbPool, pTransactionSender, pluginManager.dbrbViewFetcher());
+						return std::make_shared<FastFinalityFsm>(pFastFinalityFsmPool, config, pDbrbProcess, pluginManager);
 					}
 				});
 

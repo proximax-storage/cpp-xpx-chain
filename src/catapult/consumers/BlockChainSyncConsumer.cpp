@@ -80,13 +80,17 @@ namespace catapult { namespace consumers {
 				return m_stateCopy;
 			}
 
+			const std::vector<std::unique_ptr<model::Notification>>& postBlockCommitNotifications() const {
+				return m_postBlockCommitNotifications;
+			}
+
 		public:
 			TransactionInfos detachRemovedTransactionInfos() {
 				return std::move(m_removedTransactionInfos);
 			}
 
 			observers::ObserverState observerState() {
-				return observers::ObserverState(*m_pCacheDelta, m_stateCopy);
+				return observers::ObserverState(*m_pCacheDelta, m_stateCopy, m_postBlockCommitNotifications);
 			}
 
 			void update(
@@ -113,6 +117,7 @@ namespace catapult { namespace consumers {
 			std::shared_ptr<const model::BlockElement> m_pCommonBlockElement;
 			model::ChainScore m_scoreDelta;
 			TransactionInfos m_removedTransactionInfos;
+			std::vector<std::unique_ptr<model::Notification>> m_postBlockCommitNotifications;
 		};
 
 		class BlockChainSyncConsumer {
@@ -288,7 +293,7 @@ namespace catapult { namespace consumers {
 				// - both blocks and state have been written out to disk and can be fully restored
 				// - broker process is not yet able to consume changes (all changes are consumable after step 3)
 
-				// 3. commit changes to the in-memory cache and primary block chain storage
+				// 3. commit changes to the in-memory cache and primary blockchain storage
 				syncState.commit(newHeight);
 				storageModifier.commit();
 				m_handlers.CommitStep(CommitOperationStep::All_Updated);
@@ -300,7 +305,10 @@ namespace catapult { namespace consumers {
 						syncState.detachRemovedTransactionInfos());
 				m_handlers.TransactionsChange(TransactionsChangeInfo{ peerTransactionHashes, revertedTransactionInfos });
 
-				// 5. notify observers about commited blocks
+				// 5. dispatch post block commit notifications
+				m_handlers.PostBlockCommitNotifications(elements.back(), syncState.postBlockCommitNotifications());
+
+				// 6. notify observers about committed blocks
 				m_handlers.PostBlockCommit(elements);
 			}
 

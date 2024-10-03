@@ -166,10 +166,18 @@ namespace catapult { namespace chain {
 			// note that the "real" state is currently only required by block observers, so a dummy state can be used
 			auto& cache = applyState.UnconfirmedCatapultCache;
 			state::CatapultState dummyState;
-			auto observerContext = ObserverContext({ cache, dummyState }, config, effectiveHeight, currentTime, observers::NotifyMode::Commit, resolverContext);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			observers::ObserverState observerState{ cache, dummyState, notifications };
+			auto observerContext = ObserverContext(observerState, config, effectiveHeight, currentTime, observers::NotifyMode::Commit, resolverContext);
 			for (const auto& utInfo : utInfos) {
 				const auto& entity = *utInfo.pEntity;
 				const auto& entityHash = utInfo.EntityHash;
+
+				if (entity.Deadline <= currentTime) {
+					CATAPULT_LOG(warning) << "dropping transaction " << entityHash << " " << entity.Type << " due to expiration";
+					applyState.FailureTransactions.emplace_back(FailureInfo{ entity, entityHash, effectiveHeight, Failure_Chain_Transaction_Expired });
+					continue;
+				}
 
 				if (!filter(utInfo))
 					continue;
@@ -184,7 +192,7 @@ namespace catapult { namespace chain {
 					// don't log reverted transactions that could have been included by harvester with lower min fee multiplier
 					if (TransactionSource::New == transactionSource) {
 						CATAPULT_LOG(debug)
-								<< "dropping transaction " << entityHash << " with max fee " << entity.MaxFee
+								<< "dropping transaction " << entityHash << " " << entity.Type << " with max fee " << entity.MaxFee
 								<< " because min fee is " << minTransactionFee;
 					}
 
@@ -192,7 +200,7 @@ namespace catapult { namespace chain {
 				}
 
 				if (throttle(utInfo, transactionSource, applyState, readOnlyCache)) {
-					CATAPULT_LOG(warning) << "dropping transaction " << entityHash << " due to throttle";
+					CATAPULT_LOG(warning) << "dropping transaction " << entityHash << " " << entity.Type << " due to throttle";
 					applyState.FailureTransactions.emplace_back(FailureInfo{ entity, entityHash, effectiveHeight, Failure_Chain_Unconfirmed_Cache_Too_Full });
 					continue;
 				}

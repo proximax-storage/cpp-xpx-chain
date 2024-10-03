@@ -51,7 +51,8 @@ namespace catapult { namespace chain {
 					, m_cache({})
 					, m_cacheDelta(m_cache.createDelta())
 					, m_validatorContext(test::CreateValidatorContext(m_config, Height(123), m_cacheDelta.toReadOnly()))
-					, m_observerContext({ m_cacheDelta, m_state }, m_config, Height(123), Timestamp(0), executeMode, CreateResolverContext())
+					, m_observerState(m_cacheDelta, m_state, m_notifications)
+					, m_observerContext(m_observerState, m_config, Height(123), Timestamp(0), executeMode, CreateResolverContext())
 					, m_sub(m_validator, m_validatorContext, m_observer, m_observerContext) {
 				CATAPULT_LOG(debug) << "preparing test context with execute mode " << executeMode;
 			}
@@ -126,6 +127,8 @@ namespace catapult { namespace chain {
 			state::CatapultState m_state;
 
 			validators::ValidatorContext m_validatorContext;
+			std::vector<std::unique_ptr<model::Notification>> m_notifications;
+			observers::ObserverState m_observerState;
 			observers::ObserverContext m_observerContext;
 
 			ProcessingNotificationSubscriber m_sub;

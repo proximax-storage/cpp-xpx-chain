@@ -114,6 +114,14 @@ namespace catapult { namespace dbrb {
 			}
 		}
 
+		void registerDbrbProcess(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) {
+			if (m_shardingEnabled) {
+				m_pShardedDbrbProcess->registerDbrbProcess(pConfigHolder, now, height);
+			} else {
+				m_pDbrbProcess->registerDbrbProcess(pConfigHolder, now, height);
+			}
+		}
+
 		void broadcast(const Payload& payload, ViewData recipients) {
 			if (m_shardingEnabled) {
 				m_pShardedDbrbProcess->broadcast(payload, std::move(recipients));

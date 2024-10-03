@@ -427,6 +427,8 @@ namespace catapult { namespace consumers {
 				handlers.PostBlockCommit = [this](const auto& elements) {
 					return PostBlockCommit(elements);
 				};
+				handlers.PostBlockCommitNotifications = [](const auto& blockElement, const auto& notifications) {
+				};
 				auto config = model::NetworkConfiguration::Uninitialized();
 				config.MaxRollbackBlocks = Max_Rollback_Blocks;
 				auto pConfigHolder = config::CreateMockConfigurationHolder(config);

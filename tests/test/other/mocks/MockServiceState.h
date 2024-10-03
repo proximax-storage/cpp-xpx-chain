@@ -5,11 +5,11 @@
 **/
 
 #pragma once
-
-#include "MockStorageState.h"
+#include "MockAggregateNotificationHandler.h"
+#include "MockBlockChangeSubscriber.h"
 #include "MockNodeSubscriber.h"
 #include "MockStateChangeSubscriber.h"
-#include "MockBlockChangeSubscriber.h"
+#include "MockStorageState.h"
 #include "MockTransactionStatusSubscriber.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
@@ -27,23 +27,22 @@ namespace catapult { namespace mocks {
     class MockServiceState {
     public:
         MockServiceState()
-        : m_serviceState(
-                m_nodes,
-                m_cache,
-                m_state,
-                m_storage,
-                m_score,
-                *m_pUtCache,
-                m_timeSupplier,
-                m_transactionStatusSubscriber,
-                m_stateChangeSubscriber,
-                m_nodeSubscriber,
-                m_postBlockCommitSubscriber,
-                m_counters,
-                m_pluginManager,
-                m_pool
-          )
-        {
+        	: m_serviceState(
+				m_nodes,
+				m_cache,
+				m_state,
+				m_storage,
+				m_score,
+				*m_pUtCache,
+				m_timeSupplier,
+				m_transactionStatusSubscriber,
+				m_stateChangeSubscriber,
+				m_nodeSubscriber,
+				m_postBlockCommitSubscriber,
+				m_notificationSubscriber,
+				m_counters,
+				m_pluginManager,
+				m_pool) {
             m_pluginManager.setStorageState(std::make_unique<mocks::MockStorageState>());
             m_serviceState.hooks().setTransactionRangeConsumerFactory([](auto) { return [](auto&&) {}; });
         };
@@ -68,6 +67,7 @@ namespace catapult { namespace mocks {
         mocks::MockStateChangeSubscriber m_stateChangeSubscriber = mocks::MockStateChangeSubscriber{};
         mocks::MockNodeSubscriber m_nodeSubscriber = mocks::MockNodeSubscriber{};
         mocks::MockBlockChangeSubscriber m_postBlockCommitSubscriber = mocks::MockBlockChangeSubscriber{};
+		mocks::MockAggregateNotificationHandler m_notificationSubscriber = mocks::MockAggregateNotificationHandler{};
         std::vector<utils::DiagnosticCounter> m_counters = std::vector<utils::DiagnosticCounter>{};
         plugins::PluginManager m_pluginManager = plugins::PluginManager(
                 config::CreateMockConfigurationHolder(test::CreateUninitializedBlockchainConfiguration()),

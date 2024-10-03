@@ -8,6 +8,7 @@
 #include "src/observers/Observers.h"
 #include "src/utils/AVLTree.h"
 #include "tests/test/StorageTestUtils.h"
+#include "tests/test/other/mocks/MockStorageState.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -17,7 +18,7 @@ namespace catapult { namespace observers {
 
 	const std::unique_ptr<observers::LiquidityProviderExchangeObserver>  Liquidity_Provider = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
 
-    DEFINE_COMMON_OBSERVER_TESTS(EndDriveVerification, Liquidity_Provider)
+    DEFINE_COMMON_OBSERVER_TESTS(EndDriveVerification, Liquidity_Provider, nullptr)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -157,6 +158,7 @@ namespace catapult { namespace observers {
 
 			for (const auto& key : cacheValues.InitialReplicators) {
 				state::ReplicatorEntry replicatorEntry(key);
+				replicatorEntry.drives()[Drive_Key] = {};
 				replicatorCache.insert(replicatorEntry);
 				treeAdapter.insert(key);
 			}
@@ -187,8 +189,9 @@ namespace catapult { namespace observers {
 					nullptr,
 					buffer.data()
 			);
+			auto pStorageState = std::make_shared<mocks::MockStorageState>();
 
-            auto pObserver = CreateEndDriveVerificationObserver(Liquidity_Provider);
+            auto pObserver = CreateEndDriveVerificationObserver(Liquidity_Provider, pStorageState);
 
             // Act:
             test::ObserveNotification(*pObserver, notification, context);

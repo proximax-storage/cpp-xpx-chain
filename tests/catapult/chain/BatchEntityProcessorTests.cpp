@@ -78,7 +78,8 @@ namespace catapult { namespace chain {
 			ValidationResult process(Height height, Timestamp timestamp, const model::WeakEntityInfos& entityInfos) {
 				auto cache = test::CreateCatapultCacheWithMarkerAccount();
 				auto delta = cache.createDelta();
-				auto observerState = observers::ObserverState(delta, m_state);
+				std::vector<std::unique_ptr<model::Notification>> notifications;
+				auto observerState = observers::ObserverState(delta, m_state, notifications);
 				return m_processor(height, timestamp, entityInfos, observerState);
 			}
 

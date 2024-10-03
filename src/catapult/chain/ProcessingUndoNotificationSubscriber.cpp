@@ -33,8 +33,10 @@ namespace catapult { namespace chain {
 		auto undoMode = observers::NotifyMode::Commit == m_observerContext.Mode
 				? observers::NotifyMode::Rollback
 				: observers::NotifyMode::Commit;
+		std::vector<std::unique_ptr<model::Notification>> notifications;
+		observers::ObserverState observerState{ m_observerContext.Cache, m_observerContext.State, notifications };
 		auto undoObserverContext = observers::ObserverContext(
-				{ m_observerContext.Cache, m_observerContext.State },
+				observerState,
 				m_observerContext.Config,
 				m_observerContext.Height,
 				m_observerContext.Timestamp,

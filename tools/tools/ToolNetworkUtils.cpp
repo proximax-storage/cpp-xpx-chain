@@ -48,7 +48,7 @@ namespace catapult { namespace tools {
 				const std::shared_ptr<thread::IoThreadPool>& pPool) {
 			// attach the lifetime of the pool to the returned io in order to prevent it from being destroyed before the io
 			auto pBufferedIo = pSocket->buffered();
-			return std::shared_ptr<ionet::PacketIo>(pBufferedIo.get(), [pBufferedIo, pPool](const auto*) {});
+			return { pBufferedIo.get(), [pSocket, pBufferedIo, pPool](const auto*) {} };
 		}
 
 		auto MakePeerConnectException(const ionet::Node& node, net::PeerConnectCode connectCode) {

@@ -7,6 +7,7 @@
 #include "tests/test/StorageTestUtils.h"
 #include "catapult/model/StorageNotifications.h"
 #include "src/observers/Observers.h"
+#include "tests/test/other/mocks/MockStorageState.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -14,7 +15,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS StreamPaymentObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(StreamPayment,)
+    DEFINE_COMMON_OBSERVER_TESTS(StreamPayment, nullptr)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -84,7 +85,8 @@ namespace catapult { namespace observers {
 				values.Drive_Key,
                 values.Stream_Id,
                 values.Additional_Size);
-            auto pObserver = CreateStreamPaymentObserver();
+			auto pStorageState = std::make_shared<mocks::MockStorageState>();
+            auto pObserver = CreateStreamPaymentObserver(pStorageState);
         	auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 
             // Populate cache.

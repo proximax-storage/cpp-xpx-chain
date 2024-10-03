@@ -20,8 +20,10 @@
 
 #pragma once
 #include "Logging.h"
-#include "SpinLock.h"
+#include <atomic>
 #include <chrono>
+#include <mutex>
+#include <shared_mutex>
 
 namespace catapult { namespace utils {
 
@@ -49,7 +51,7 @@ namespace catapult { namespace utils {
 		bool isThrottled() {
 			++m_counter;
 
-			SpinLockGuard guard(m_lock);
+			std::unique_lock lock(m_mutex);
 			auto now = Clock::now();
 			if (Clock::time_point() != m_last && millis(now) < m_throttleMillis)
 				return true;
@@ -68,7 +70,7 @@ namespace catapult { namespace utils {
 		uint64_t m_throttleMillis;
 		std::atomic<uint32_t> m_counter; // atomic to allow increment / access outside of m_lock
 		Clock::time_point m_last; // protected by m_lock
-		utils::SpinLock m_lock;
+		std::shared_mutex m_mutex;
 	};
 
 /// Logs a throttled message at \a LEVEL at most every \a THROTTLE_MILLIS milliseconds.

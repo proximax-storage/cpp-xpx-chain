@@ -31,6 +31,7 @@ namespace catapult { namespace fastfinality {
 			, m_pBlockProducer(nullptr)
 			, m_unexpectedBlockHeight(false)
 			, m_isBlockBroadcastEnabled(false)
+			, m_failedNodeStateRetrievalCount(0)
 		{}
 
 	public:
@@ -129,6 +130,18 @@ namespace catapult { namespace fastfinality {
 			return m_isBlockBroadcastEnabled;
 		}
 
+		void resetFailedNodeStateRetrievalCount() {
+			m_failedNodeStateRetrievalCount = 0;
+		}
+
+		void incrementFailedNodeStateRetrievalCount() {
+			++m_failedNodeStateRetrievalCount;
+		}
+
+		auto failedNodeStateRetrievalCount() const {
+			return m_failedNodeStateRetrievalCount.load();
+		}
+
 	private:
 		const plugins::PluginManager& m_pluginManager;
 		std::atomic<FastFinalityRound> m_round;
@@ -142,5 +155,6 @@ namespace catapult { namespace fastfinality {
 		Height m_currentBlockHeight;
 		bool m_unexpectedBlockHeight;
 		bool m_isBlockBroadcastEnabled;
+		std::atomic_uint m_failedNodeStateRetrievalCount;
 	};
 }}

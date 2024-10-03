@@ -22,6 +22,7 @@ namespace catapult { namespace fastfinality {
 
 	namespace {
 		constexpr VersionType Block_Version = 7;
+		constexpr uint Max_Failed_Node_State_Retrieval_Attempt = 10;
 
 		bool ApprovalRatingSufficient(
 				const double approvalRating,
@@ -96,6 +97,12 @@ namespace catapult { namespace fastfinality {
 
 		  	const auto& config = pConfigHolder->Config().Network;
 		  	if (remoteNodeStates.empty()) {
+				fastFinalityData.incrementFailedNodeStateRetrievalCount();
+				if (fastFinalityData.failedNodeStateRetrievalCount() >= Max_Failed_Node_State_Retrieval_Attempt) {
+					fastFinalityData.resetFailedNodeStateRetrievalCount();
+					dbrbProcess.messageSender()->closeAllConnections();
+				}
+
 				DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 					TRY_GET_FSM()
 
@@ -168,6 +175,8 @@ namespace catapult { namespace fastfinality {
 						pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 					} else {
 						auto banned = (state.pluginManager().dbrbViewFetcher().getBanPeriod(dbrbProcess.id()) > BlockDuration(0));
+						if (!banned)
+							dbrbProcess.registerDbrbProcess(pConfigHolder, utils::NetworkTime(), localHeight + Height(1));
 						DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak, banned] {
 							TRY_GET_FSM()
 
@@ -267,7 +276,6 @@ namespace catapult { namespace fastfinality {
 			auto pMessageSender = pFsmShared->dbrbProcess().messageSender();
 			pMessageSender->clearQueue();
 			for (const auto& identityKey : chainSyncData.NodeIdentityKeys) {
-				std::vector<std::shared_ptr<model::Block>> blocks;
 				auto pPromise = std::make_shared<std::promise<std::vector<std::shared_ptr<model::Block>>>>();
 				pFsmShared->packetHandlers().registerRemovableHandler(ionet::PacketType::Pull_Blocks_Response, [pPromise, identityKey, &transactionRegistry = state.pluginManager().transactionRegistry()](
 						const auto& packet, auto& context) {
@@ -284,6 +292,7 @@ namespace catapult { namespace fastfinality {
 				});
 
 				bool pullBlocksFailure = false;
+				std::vector<std::shared_ptr<model::Block>> blocks;
 				try {
 					auto pPacket = ionet::CreateSharedPacket<api::PullBlocksRequest>();
 					pPacket->Height = startHeight;
@@ -291,12 +300,13 @@ namespace catapult { namespace fastfinality {
 					pPacket->NumResponseBytes = blocksFromOptions.NumBytes;
 					pMessageSender->enqueue(pPacket, true, { identityKey });
 					auto future = pPromise->get_future();
-					auto status = future.wait_for(std::chrono::seconds(60));
+					auto status = future.wait_for(std::chrono::seconds(15));
 					if (std::future_status::ready != status) {
 						CATAPULT_LOG(warning) << "pull blocks request timed out";
 						pullBlocksFailure = true;
+					} else {
+						blocks = future.get();
 					}
-					blocks = future.get();
 				} catch (std::exception const& error) {
 					CATAPULT_LOG(warning) << "error downloading blocks: " << error.what();
 					pullBlocksFailure = true;
@@ -508,6 +518,7 @@ namespace catapult { namespace fastfinality {
 			auto roundStart = utils::FromTimePoint(round.RoundStart);
 			auto& dbrbProcess = pFsmShared->dbrbProcess();
 			bool isInDbrbSystem = dbrbProcess.updateView(pConfigHolder, roundStart, fastFinalityData.currentBlockHeight());
+			dbrbProcess.registerDbrbProcess(pConfigHolder, roundStart, fastFinalityData.currentBlockHeight());
 			if (!isInDbrbSystem) {
 				auto banned = (pluginManager.dbrbViewFetcher().getBanPeriod(dbrbProcess.id()) > BlockDuration(0));
 				if (banned) {

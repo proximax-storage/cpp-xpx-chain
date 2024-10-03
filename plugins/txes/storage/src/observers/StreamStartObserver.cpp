@@ -8,7 +8,7 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(StreamStart, model::StreamStartNotification<1>, [&liquidityProvider](const model::StreamStartNotification<1>& notification, ObserverContext& context) {
+	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(StreamStart, model::StreamStartNotification<1>, ([&liquidityProvider, pStorageState](const model::StreamStartNotification<1>& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StreamStart)");
 
@@ -28,7 +28,7 @@ namespace catapult { namespace observers {
 		std::seed_seq seed(notification.StreamId.begin(), notification.StreamId.end());
 		std::mt19937 rng(seed);
 
-		const auto offboardingReplicators = driveEntry.offboardingReplicators();
+		const auto& offboardingReplicators = driveEntry.offboardingReplicators();
 		const auto requiredReplicatorsCount = pluginConfig.MinReplicatorCount * 2 / 3 + 1;
 		const auto maxOffboardingCount = driveEntry.replicators().size() < requiredReplicatorsCount ?
 				0ul :
@@ -41,5 +41,14 @@ namespace catapult { namespace observers {
 		utils::RefundDepositsOnOffboarding(notification.DriveKey, actualOffboardingReplicators, context, liquidityProvider);
 		utils::OffboardReplicatorsFromDrive(notification.DriveKey, actualOffboardingReplicators, context, rng);
 		utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
-	});
+
+		auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
+		auto& downloadChannelCache = context.Cache.template sub<cache::DownloadChannelCache>();
+		auto pDrive = utils::GetDrive(notification.DriveKey, pStorageState->replicatorKey(), context.Timestamp, driveCache, replicatorCache, downloadChannelCache);
+		context.Notifications.push_back(std::make_unique<model::StreamStartServiceNotification<1>>(
+			std::move(pDrive),
+			notification.StreamId,
+			notification.ExpectedUploadSize,
+			notification.FolderName));
+	}));
 }}

@@ -23,7 +23,6 @@
 #include "mappers/MapperUtils.h"
 #include "mappers/TransactionStatusMapper.h"
 #include "catapult/model/TransactionStatus.h"
-#include "catapult/utils/SpinLock.h"
 
 using namespace bsoncxx::builder::stream;
 
@@ -54,14 +53,14 @@ namespace catapult { namespace mongo {
 
 		public:
 			void notifyStatus(const model::Transaction& transaction, const Height&, const Hash256& hash, uint32_t status) override {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				m_transactionStatuses.emplace_back(hash, status, transaction.Deadline);
 			}
 
 			void flush() override {
 				decltype(m_transactionStatuses) transactionStatuses;
 				{
-					utils::SpinLockGuard guard(m_lock);
+					std::unique_lock lock(m_mutex);
 					transactionStatuses = std::move(m_transactionStatuses);
 				}
 
@@ -83,7 +82,7 @@ namespace catapult { namespace mongo {
 			MongoDatabase m_database;
 			MongoErrorPolicy m_errorPolicy;
 			std::vector<model::TransactionStatus> m_transactionStatuses;
-			utils::SpinLock m_lock;
+			std::shared_mutex m_mutex;
 		};
 	}
 

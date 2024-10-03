@@ -14,6 +14,7 @@
 #include "src/cache/PriorityQueueCache.h"
 #include "src/model/StorageReceiptType.h"
 #include "src/state/BcDriveEntry.h"
+#include "src/state/DownloadChannelEntry.h"
 #include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
 #include <queue>
 #include <random>
@@ -101,8 +102,149 @@ namespace catapult { namespace utils {
 			std::mt19937&);
 
 	/// Assigns each replicator from \a replicatorKeys to drives according to the drive priority queue.
-	void AssignReplicatorsToQueuedDrives(
+	std::vector<std::shared_ptr<state::Drive>> AssignReplicatorsToQueuedDrives(
+			const Key&,
 			const std::set<Key>&,
 			observers::ObserverContext&,
 			std::mt19937&);
+
+	template<typename TDriveCache, typename TReplicatorCache, typename TDownloadChannelCache>
+	std::shared_ptr<state::Drive> GetDrive(
+			const Key& driveKey,
+			const Key& localReplicatorKey,
+			const Timestamp& timestamp,
+			const TDriveCache& driveCache,
+			const TReplicatorCache& replicatorCache,
+			const TDownloadChannelCache& downloadChannelCache) {
+		auto driveIter = driveCache.find(driveKey);
+		const auto& driveEntry = driveIter.get();
+
+		auto pDrive = std::make_shared<state::Drive>();
+		pDrive->Id = driveKey;
+		pDrive->Owner= driveEntry.owner();
+		pDrive->RootHash = driveEntry.rootHash();
+		pDrive->Size = driveEntry.size();
+		pDrive->Replicators = utils::KeySet(driveEntry.replicators().begin(), driveEntry.replicators().end());
+
+		for (const auto& replicatorKey : pDrive->Replicators) {
+			auto replicatorIter = replicatorCache.find(replicatorKey);
+			const auto& replicatorEntry = replicatorIter.get();
+			auto driveInfoIter = replicatorEntry.drives().find(driveKey);
+			if (driveInfoIter == replicatorEntry.drives().cend())
+				CATAPULT_THROW_RUNTIME_ERROR_2("drive info not found", replicatorKey, driveKey)
+			const auto& driveInfo = driveInfoIter->second;
+			pDrive->ReplicatorInfo[replicatorKey] = state::ReplicatorDriveInfo{
+				driveInfo.LastApprovedDataModificationId,
+				driveInfo.InitialDownloadWorkMegabytes,
+				driveInfo.LastCompletedCumulativeDownloadWorkBytes,
+			};
+		}
+
+		for (const auto& [replicatorKey, shardInfo] : driveEntry.dataModificationShards()) {
+			pDrive->ModificationShards[replicatorKey] = state::ModificationShard{
+				shardInfo.ActualShardMembers,
+				shardInfo.FormerShardMembers,
+				shardInfo.OwnerUpload,
+			};
+		}
+
+		auto dataModificationShardIter = driveEntry.dataModificationShards().find(localReplicatorKey);
+		if (dataModificationShardIter != driveEntry.dataModificationShards().cend()) {
+			const auto& shard = dataModificationShardIter->second;
+			for (const auto& [key, _] : shard.ActualShardMembers)
+				pDrive->DonatorShard.push_back(key);
+		}
+
+		for (const auto& [key, shard]: driveEntry.dataModificationShards()){
+			const auto& actualShard = shard.ActualShardMembers;
+			if (actualShard.find(localReplicatorKey) != actualShard.end())
+				pDrive->RecipientShard.push_back(key);
+		}
+
+		for (const auto& channelId : driveEntry.downloadShards()) {
+			auto channelIter = downloadChannelCache.find(channelId);
+			const auto& channelEntry = channelIter.get();
+
+			const auto& replicators = channelEntry.shardReplicators();
+			if (replicators.find(localReplicatorKey) == replicators.end())
+				continue;
+
+			auto consumers = channelEntry.listOfPublicKeys();
+			consumers.emplace_back(channelEntry.consumer());
+
+			pDrive->DownloadChannels[channelId] = std::make_unique<state::DownloadChannel>(state::DownloadChannel{
+				channelEntry.id(),
+				driveKey,
+				channelEntry.downloadSize(),
+				consumers,
+				{ replicators.begin(), replicators.end() },
+				channelEntry.downloadApprovalInitiationEvent(),
+			});
+		}
+
+		const auto& activeDataModifications = driveEntry.activeDataModifications();
+		pDrive->DataModifications.reserve(activeDataModifications.size());
+		for (const auto& modification: activeDataModifications) {
+			pDrive->DataModifications.emplace_back(state::DataModification{
+				modification.Id,
+				driveKey,
+				modification.DownloadDataCdi,
+				modification.ExpectedUploadSizeMegabytes,
+				modification.ActualUploadSizeMegabytes,
+				modification.FolderName,
+				modification.ReadyForApproval,
+				modification.IsStream,
+			});
+		}
+
+		for(const auto& modification: driveEntry.completedDataModifications()) {
+			pDrive->CompletedModifications.push_back({
+				modification.Id,
+				modification.ApprovalState,
+			});
+		}
+
+		auto replicatorInfoIter = pDrive->ReplicatorInfo.find(localReplicatorKey);
+		pDrive->DownloadWorkBytes = (replicatorInfoIter != pDrive->ReplicatorInfo.end() ? replicatorInfoIter->second.LastCompletedCumulativeDownloadWorkBytes : 0);
+
+		const auto& modifications = driveEntry.completedDataModifications();
+		for (auto modificationIter = modifications.rbegin(); modificationIter != modifications.rend(); ++modificationIter) {
+			if (modificationIter->ApprovalState == state::DataModificationApprovalState::Approved) {
+				std::vector<Key> signers;
+				for (const auto& state : driveEntry.confirmedStates()) {
+					if (state.second == modificationIter->Id)
+						signers.emplace_back(state.first);
+				}
+
+				pDrive->LastApprovedDataModificationPtr = std::make_unique<state::ApprovedDataModification>(state::ApprovedDataModification{
+					modificationIter->Id,
+					driveEntry.key(),
+					modificationIter->DownloadDataCdi,
+					modificationIter->ExpectedUploadSizeMegabytes,
+					modificationIter->ActualUploadSizeMegabytes,
+					modificationIter->FolderName,
+					modificationIter->ReadyForApproval,
+					modificationIter->IsStream,
+					signers
+				});
+			}
+		}
+
+		if (driveEntry.verification()) {
+			const auto& verification = *driveEntry.verification();
+			pDrive->ActiveVerificationPtr = std::make_shared<state::DriveVerification>(state::DriveVerification{
+				driveKey,
+				verification.Duration,
+				verification.expired(timestamp),
+				verification.VerificationTrigger,
+				driveEntry.lastModificationId(),
+				verification.Shards,
+			});
+		}
+
+		return pDrive;
+	}
+
+	std::unique_ptr<state::DownloadChannel> GetDownloadChannel(const Key& localReplicatorKey, const state::DownloadChannelEntry& channelEntry);
+	std::shared_ptr<state::DriveVerification> GetDriveVerification(const state::BcDriveEntry& driveEntry, const Timestamp& timestamp);
 }}

@@ -89,6 +89,6 @@ namespace catapult { namespace disruptor {
 		boost::thread_group m_threads;
 		std::atomic<size_t> m_numActiveElements;
 
-		utils::SpinLock m_addSpinLock; // lock to serialize access to Disruptor::add
+		std::shared_mutex m_addMutex; // mutex to serialize access to Disruptor::add
 	};
 }}

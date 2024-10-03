@@ -19,6 +19,7 @@
 #include "tools/ToolMain.h"
 #include <boost/algorithm/string/split.hpp>
 #include <boost/filesystem.hpp>
+#include <list>
 
 namespace catapult { namespace tools { namespace upgrade {
 

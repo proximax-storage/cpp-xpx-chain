@@ -22,6 +22,7 @@
 #include "ObserverStatementBuilder.h"
 #include "catapult/cache/CatapultCacheDelta.h"
 #include "catapult/config/BlockchainConfiguration.h"
+#include "catapult/model/Notifications.h"
 #include "catapult/model/ResolverContext.h"
 #include "catapult/state/CatapultState.h"
 #include <iosfwd>
@@ -54,11 +55,18 @@ namespace catapult { namespace observers {
 	/// Block independent mutable state passed to all observers.
 	struct ObserverState {
 	public:
-		/// Creates an observer state around \a cache and \a state.
-		ObserverState(cache::CatapultCacheDelta& cache, state::CatapultState& state);
+		/// Creates an observer state around \a cache,  \a state and \a notifications.
+		ObserverState(
+			cache::CatapultCacheDelta& cache,
+			state::CatapultState& state,
+			std::vector<std::unique_ptr<model::Notification>>& notifications);
 
-		/// Creates an observer state around \a cache, \a state and \a blockStatementBuilder.
-		ObserverState(cache::CatapultCacheDelta& cache, state::CatapultState& state, model::BlockStatementBuilder& blockStatementBuilder);
+		/// Creates an observer state around \a cache, \a state, \a blockStatementBuilder and \a notifications.
+		ObserverState(
+			cache::CatapultCacheDelta& cache,
+			state::CatapultState& state,
+			model::BlockStatementBuilder& blockStatementBuilder,
+			std::vector<std::unique_ptr<model::Notification>>& notifications);
 
 	public:
 		/// Catapult cache.
@@ -69,6 +77,9 @@ namespace catapult { namespace observers {
 
 		/// Optional block statement builder.
 		model::BlockStatementBuilder* pBlockStatementBuilder;
+
+		/// Post block commit notifications.
+		std::vector<std::unique_ptr<model::Notification>>& Notifications;
 	};
 
 	// endregion
@@ -80,7 +91,7 @@ namespace catapult { namespace observers {
 	public:
 		/// Creates an observer context around \a state and \a config at \a height with specified \a mode and \a resolvers.
 		/// \note \a state is const to enable more consise code even though it only contains non-const references.
-		ObserverContext(const ObserverState& state, const config::BlockchainConfiguration& config, Height height,  const Timestamp& timestamp, NotifyMode mode, const model::ResolverContext& resolvers);
+		ObserverContext(ObserverState& state, const config::BlockchainConfiguration& config, Height height,  const Timestamp& timestamp, NotifyMode mode, const model::ResolverContext& resolvers);
 
 	public:
 		/// Catapult cache.
@@ -103,6 +114,9 @@ namespace catapult { namespace observers {
 
 		/// Alias resolvers.
 		const model::ResolverContext Resolvers;
+
+		/// Post block commit notifications.
+		std::vector<std::unique_ptr<model::Notification>>& Notifications;
 
 	public:
 		/// Statement builder.

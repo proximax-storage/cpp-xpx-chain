@@ -27,6 +27,7 @@
 #include "catapult/thread/TimedCallback.h"
 #include "catapult/utils/ModificationSafeIterableContainer.h"
 #include "catapult/utils/ThrottleLogger.h"
+#include <list>
 
 namespace catapult { namespace net {
 
@@ -59,28 +60,28 @@ namespace catapult { namespace net {
 
 		public:
 			size_t size() const {
-				utils::SpinLockGuard guard(m_lock);
+				std::shared_lock lock(m_mutex);
 				return m_writers.size();
 			}
 
 			size_t numOutgoingConnections() const {
-				utils::SpinLockGuard guard(m_lock);
+				std::shared_lock lock(m_mutex);
 				return m_outgoingNodeIdentityKeys.size();
 			}
 
 			size_t availableSize() const {
-				utils::SpinLockGuard guard(m_lock);
+				std::shared_lock lock(m_mutex);
 				return static_cast<size_t>(std::count_if(m_writers.cbegin(), m_writers.cend(), IsStateAvailable));
 			}
 
 			utils::KeySet identities() const {
-				utils::SpinLockGuard guard(m_lock);
+				std::shared_lock lock(m_mutex);
 				return m_nodeIdentityKeys;
 			}
 
 			template<typename THandler>
 			void forEach(THandler handler) {
-				utils::SpinLockGuard guard(m_lock);
+				std::shared_lock lock(m_mutex);
 				for (const auto& state : m_writers) {
 					if (!state.IsAvailable)
 						continue;
@@ -90,7 +91,7 @@ namespace catapult { namespace net {
 			}
 
 			bool pickOne(WriterState& state, const Key& identityKey) {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				auto* pState = (Key() == identityKey) ?
 					m_writers.nextIf(IsStateAvailable) :
 					m_writers.nextIf([&identityKey](const WriterState& state) {
@@ -105,7 +106,7 @@ namespace catapult { namespace net {
 			}
 
 			void makeAvailable(const SocketPointer& pSocket) {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				auto iter = findStateBySocket(pSocket);
 				if (m_writers.end() == iter)
 					return;
@@ -114,7 +115,7 @@ namespace catapult { namespace net {
 			}
 
 			bool prepareConnect(const ionet::Node& node) {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				if (!m_outgoingNodeIdentityKeys.insert(node.identityKey()).second) {
 					CATAPULT_LOG(debug) << "bypassing connection to already connected peer " << node;
 					return false;
@@ -124,7 +125,7 @@ namespace catapult { namespace net {
 			}
 
 			bool insert(const WriterState& state) {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 
 				// if the state is for an already connected node, ignore it
 				// 1. required for filtering accepted connections
@@ -140,13 +141,13 @@ namespace catapult { namespace net {
 			}
 
 			void abortConnect(const ionet::Node& node) {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				CATAPULT_LOG(debug) << "aborting connection to: " << node;
 				m_outgoingNodeIdentityKeys.erase(node.identityKey());
 			}
 
 			void remove(const SocketPointer& pSocket) {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				auto iter = findStateBySocket(pSocket);
 				if (m_writers.end() == iter) {
 					CATAPULT_LOG(warning) << "ignoring request to remove unknown socket";
@@ -157,7 +158,7 @@ namespace catapult { namespace net {
 			}
 
 			bool close(const Key& identityKey) {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				auto iter = findStateByKey(identityKey);
 				if (m_writers.end() == iter)
 					return false;
@@ -169,7 +170,7 @@ namespace catapult { namespace net {
 			}
 
 			void clear() {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				m_nodeIdentityKeys.clear();
 				m_outgoingNodeIdentityKeys.clear();
 				m_writers.clear();
@@ -199,7 +200,7 @@ namespace catapult { namespace net {
 			utils::KeySet m_nodeIdentityKeys; // keys of active writers (both connected AND accepted)
 			utils::KeySet m_outgoingNodeIdentityKeys; // keys of connecting or connected writers
 			Writers m_writers;
-			mutable utils::SpinLock m_lock;
+			mutable std::shared_mutex m_mutex;
 		};
 
 		class ErrorHandlingPacketIo : public ionet::PacketIo {

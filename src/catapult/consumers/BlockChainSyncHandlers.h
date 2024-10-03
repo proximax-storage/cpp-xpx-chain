@@ -89,8 +89,11 @@ namespace catapult { namespace consumers {
 		/// Prototype for transaction change notification.
 		using TransactionsChangeFunc = consumer<const TransactionsChangeInfo&>;
 
-		/// Prototype for transaction change notification.
+		/// Prototype for post block commit handler.
 		using PostBlockCommitFunc = consumer<const std::vector<model::BlockElement>&>;
+
+		/// Prototype for post block commit notifications handler.
+		using PostBlockCommitNotificationsFunc = consumer<const model::BlockElement&, const std::vector<std::unique_ptr<model::Notification>>&>;
 
 		/// Prototype for commit step notification.
 		using CommitStepFunc = consumer<CommitOperationStep>;
@@ -116,6 +119,9 @@ namespace catapult { namespace consumers {
 
 		/// Called with block elements that already commited.
 		PostBlockCommitFunc PostBlockCommit;
+
+		/// Called with block elements that already commited.
+		PostBlockCommitNotificationsFunc PostBlockCommitNotifications;
 
 		/// Called with the commit operation step.
 		CommitStepFunc CommitStep;

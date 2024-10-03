@@ -129,7 +129,9 @@ namespace catapult { namespace observers {
 
 			// - commit
 			auto config = config::BlockchainConfiguration::Uninitialized();
-			auto commitContext = test::CreateObserverContext(cacheDelta, state, config, commitHeight, NotifyMode::Commit);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			ObserverState observerState(cacheDelta, state, notifications);
+			auto commitContext = test::CreateObserverContext(observerState, config, commitHeight, NotifyMode::Commit);
 			test::ObserveNotification(*pObserver, TTraits::CreateNotification(key), commitContext);
 
 			// Sanity: the account was added
@@ -137,7 +139,7 @@ namespace catapult { namespace observers {
 			EXPECT_EQ(1u, accountStateCache.size());
 
 			// Act: rollback
-			auto rollbackContext = test::CreateObserverContext(cacheDelta, state, config, rollbackHeight, NotifyMode::Rollback);
+			auto rollbackContext = test::CreateObserverContext(observerState, config, rollbackHeight, NotifyMode::Rollback);
 			test::ObserveNotification(*pObserver, TTraits::CreateNotification(key), rollbackContext);
 
 			// Sanity: nothing changed so far

@@ -5,7 +5,6 @@
 **/
 
 #include "src/TransactionSender.h"
-#include "tests/test/other/mocks/MockStorageState.h"
 #include "plugins/txes/storage/src/model/DataModificationApprovalTransaction.h"
 #include "plugins/txes/storage/src/model/DataModificationSingleApprovalTransaction.h"
 #include "plugins/txes/storage/src/model/DownloadApprovalTransaction.h"
@@ -18,13 +17,12 @@ namespace catapult { namespace storage {
 #define TEST_CLASS ReplicatorEventHandlerTests
 
 	namespace {
-		auto CreateTransactionSender(state::StorageState& storageState, handlers::TransactionRangeHandler transactionRangeHandler) {
+		auto CreateTransactionSender(handlers::TransactionRangeHandler transactionRangeHandler) {
 			return TransactionSender(
 				crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"),
 				config::ImmutableConfiguration::Uninitialized(),
 				StorageConfiguration::Uninitialized(),
-				transactionRangeHandler,
-				storageState);
+				transactionRangeHandler);
 		}
 
 		auto CreateDataModificationApprovalTransactionInfo() {
@@ -78,12 +76,11 @@ namespace catapult { namespace storage {
 
     TEST(TEST_CLASS, SendDataModificationApprovalTransaction_WithOwnerUpload) {
         // Arrange:
-        mocks::MockStorageState storageState;
 		std::shared_ptr<model::Transaction> pTransaction;
 		auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
 			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
 		};
-		auto testee = CreateTransactionSender(storageState, transactionRangeHandler);
+		auto testee = CreateTransactionSender(transactionRangeHandler);
 		std::vector<Key> expectedPublicKeys{ Key({ 5 }), Key({ 2 }), Key({ 7 }), Key({ 3 }), Key({ 1 }), Key({ 6 }), Key( {11} ), Key({ 4 }) };
 		std::vector<uint64_t> expectedOpinions{ 1100, 900, 1000, 0, 400, 300, 500, 600, 1200, 800, 0, 700, 200, 0, 100 };
 		std::vector<uint8_t> presentOpinions{ 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1};
@@ -124,12 +121,11 @@ namespace catapult { namespace storage {
 
     TEST(TEST_CLASS, SendDataModificationSingleApprovalTransaction) {
         // Arrange:
-        mocks::MockStorageState storageState;
 		std::shared_ptr<model::Transaction> pTransaction;
 		auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
 			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
 		};
-		auto testee = CreateTransactionSender(storageState, transactionRangeHandler);
+		auto testee = CreateTransactionSender(transactionRangeHandler);
 		std::vector<Key> expectedPublicKeys{ Key({ 2 }), Key({ 3 }), Key({ 11 }) };
 		std::vector<uint64_t> expectedOpinions{ 100, 200, 300 };
 
@@ -185,12 +181,11 @@ namespace catapult { namespace storage {
 
     TEST(TEST_CLASS, SendDownloadApprovalTransaction) {
         // Arrange:
-        mocks::MockStorageState storageState;
 		std::shared_ptr<model::Transaction> pTransaction;
 		auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
 			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
 		};
-		auto testee = CreateTransactionSender(storageState, transactionRangeHandler);
+		auto testee = CreateTransactionSender(transactionRangeHandler);
 		std::vector<Key> expectedPublicKeys{ Key({ 5 }), Key({ 2 }), Key({ 3 }), Key({ 1 }), Key({ 6 }), Key({ 7 }), Key({ 4 }) };
 		std::vector<uint64_t> expectedOpinions{ 800, 900, 1000, 400, 300, 500, 700, 600, 200, 100 };
 		std::vector<uint8_t> presentOpinions{ 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1 };
@@ -237,12 +232,11 @@ namespace catapult { namespace storage {
 
 	TEST(TEST_CLASS, SendEndDriveVerifyApprovalTransactionWithPartialOpinions) {
 		// Arrange:
-		mocks::MockStorageState storageState;
 		std::shared_ptr<model::Transaction> pTransaction;
 		auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
 			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
 		};
-		auto testee = CreateTransactionSender(storageState, transactionRangeHandler);
+		auto testee = CreateTransactionSender(transactionRangeHandler);
 
 		auto transactionInfo = CreateEndDriveVerifyTransactionInfo(4, 5);
 		testee.sendEndDriveVerificationTransaction(transactionInfo);
@@ -272,12 +266,11 @@ namespace catapult { namespace storage {
 
 	TEST(TEST_CLASS, SendEndDriveVerifyApprovalTransactionWitFullOpinions) {
 		// Arrange:
-		mocks::MockStorageState storageState;
 		std::shared_ptr<model::Transaction> pTransaction;
 		auto transactionRangeHandler = [&pTransaction](model::AnnotatedEntityRange<catapult::model::Transaction>&& range) {
 			pTransaction = model::EntityRange<model::Transaction>::ExtractEntitiesFromRange(std::move(range.Range))[0];
 		};
-		auto testee = CreateTransactionSender(storageState, transactionRangeHandler);
+		auto testee = CreateTransactionSender(transactionRangeHandler);
 
 		auto transactionInfo = CreateEndDriveVerifyTransactionInfo(5, 5);
 		testee.sendEndDriveVerificationTransaction(transactionInfo);
