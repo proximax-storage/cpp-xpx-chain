@@ -46,8 +46,11 @@ namespace catapult { namespace observers {
 		return MAKE_OBSERVER(NAME, NOTIFICATION_TYPE, HANDLER);                     \
 	}
 
-	/// Observes changes triggered by prepare drive notifications.
-	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)();
+	/// Observes changes triggered by prepare drive notifications V1.
+	DECLARE_OBSERVER(PrepareDriveV1, model::PrepareDriveNotification<1>)();
+
+	/// Observes changes triggered by prepare drive notifications V2.
+	DECLARE_OBSERVER(PrepareDriveV2, model::PrepareDriveNotification<2>)();
 
 	/// Observes changes triggered by download notifications.
 	DECLARE_OBSERVER(DownloadChannel, model::DownloadNotification<1>)();

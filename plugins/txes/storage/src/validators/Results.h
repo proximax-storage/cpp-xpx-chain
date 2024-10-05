@@ -202,6 +202,9 @@ namespace catapult { namespace validators {
 	/// Replicator is bound with a boot key
 	DEFINE_STORAGE_RESULT(Replicator_Is_Bound_With_Boot_Key, 62);
 
+	/// Not enough replicators with sufficient amount of free space to be assigned to the drive
+	DEFINE_STORAGE_RESULT(Not_Enough_Suitable_Replicators, 63);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

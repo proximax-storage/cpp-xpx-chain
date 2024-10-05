@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -23,11 +23,18 @@ namespace catapult { namespace validators {
 	/// - plugin configuration is valid
 	DECLARE_STATELESS_VALIDATOR(StoragePluginConfig, model::PluginConfigNotification<1>)();
 
-	/// A validator implementation that applies to drive prepare drive notifications and validates that:
+	/// A validator implementation that applies to drive prepare drive notifications V1 and validates that:
 	/// - drive size >= minDriveSize
 	/// - number of replicators >= minReplicatorCount
 	/// - the drive does not exist
-	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, model::PrepareDriveNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(PrepareDriveV1, model::PrepareDriveNotification<1>)();
+
+	/// A validator implementation that applies to drive prepare drive notifications V2 and validates that:
+	/// - drive size >= minDriveSize
+	/// - number of replicators >= minReplicatorCount
+	/// - the drive does not exist
+	/// - there are enough working replicators in the network that can be immediately assigned to this drive
+	DECLARE_STATEFUL_VALIDATOR(PrepareDriveV2, model::PrepareDriveNotification<2>)();
 
 	/// A validator implementation that applies to drive data modification notifications and validates that:
 	/// - respective drive exists

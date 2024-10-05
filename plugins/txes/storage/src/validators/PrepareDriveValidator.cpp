@@ -1,17 +1,22 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
 
 #include "Validators.h"
+#include "src/cache/QueueCache.h"
+#include "src/cache/PriorityQueueCache.h"
+#include "src/utils/AVLTree.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::PrepareDriveNotification<1>;
+	template<VersionType version>
+	using Notification = model::PrepareDriveNotification<version>;
 
-	DECLARE_STATEFUL_VALIDATOR(PrepareDrive, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(PrepareDrive, [](const Notification& notification, const ValidatorContext& context) {
+	namespace {
+		template<VersionType version>
+		ValidationResult PrepareDriveValidator(const Notification<version>& notification, const ValidatorContext& context) {
 			const auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
@@ -35,6 +40,55 @@ namespace catapult { namespace validators {
 				return Failure_Storage_Drive_Already_Exists;
 
 			return ValidationResult::Success;
-		})
+		}
 	}
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(PrepareDriveV1, Notification<1>, ([](const Notification<1>& notification, const ValidatorContext& context) {
+	  	const ValidationResult result = PrepareDriveValidator(notification, context);
+		return result;
+	}))
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(PrepareDriveV2, Notification<2>, ([](const Notification<2>& notification, const ValidatorContext& context) {
+		const ValidationResult result = PrepareDriveValidator(notification, context);
+		if (result != ValidationResult::Success)
+			return result;
+
+	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+	  	auto& priorityQueueCache = context.Cache.sub<cache::PriorityQueueCache>();
+	  	auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
+
+	  	// Filter out replicators that are ready to be assigned to the drive,
+	  	// i.e. which have at least (notification.DriveSize) of storage units
+	  	// and at least (2 * notification.DriveSize) of streaming units:
+
+	  	auto keyExtractor = [=, &accountStateCache](const Key& key) {
+			return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+	  	};
+
+		utils::ReadOnlyAVLTreeAdapter<std::pair<Amount, Key>> treeAdapter(
+				context.Cache.template sub<cache::QueueCache>(),
+			  	state::ReplicatorsSetTree,
+			  	keyExtractor,
+			  	[&replicatorCache](const Key& key) -> state::AVLTreeNode {
+					return replicatorCache.find(key).get().replicatorsSetNode();
+			  	});
+
+	  	// Calculating the number of replicators ready to be assigned to the drive.
+	  	auto notSuitableReplicators = treeAdapter.numberOfLess({Amount(notification.DriveSize), Key()});
+	  	auto suitableReplicators = treeAdapter.size() - notSuitableReplicators;
+
+		// Check if Drive Owner is present among suitable replicators.
+		// If he is, account for it (drive owners cannot be assigned to their own drives).
+	  	bool ownerIsReplicator = replicatorCache.contains(notification.Owner);
+		bool ownerHasEnoughStorageMosaics = accountStateCache.find(notification.Owner).get().Balances.get(storageMosaicId) >= Amount(notification.DriveSize);
+
+		if (ownerIsReplicator && ownerHasEnoughStorageMosaics)
+			suitableReplicators -= 1;
+
+		if (suitableReplicators < notification.ReplicatorCount)
+			return Failure_Storage_Not_Enough_Suitable_Replicators;
+
+		return ValidationResult::Success;
+	}))
 }}

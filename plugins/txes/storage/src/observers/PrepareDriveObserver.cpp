@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -11,10 +11,12 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::PrepareDriveNotification<1>;
+	template<VersionType version>
+	using Notification = model::PrepareDriveNotification<version>;
 
-	DECLARE_OBSERVER(PrepareDrive, Notification)() {
-		return MAKE_OBSERVER(PrepareDrive, Notification, ([](const Notification& notification, ObserverContext& context) {
+	namespace {
+		template<VersionType version>
+		void PrepareDriveObserver(const Notification<version>& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (PrepareDrive)");
 
@@ -27,15 +29,15 @@ namespace catapult { namespace observers {
 
 			driveCache.insert(driveEntry);
 
-		  	std::seed_seq seed(notification.DriveKey.begin(), notification.DriveKey.end());
-		  	std::mt19937 rng(seed);
+			std::seed_seq seed(notification.DriveKey.begin(), notification.DriveKey.end());
+			std::mt19937 rng(seed);
 
-		  	PopulateDriveWithReplicators(notification.DriveKey, context, rng);
+			PopulateDriveWithReplicators(notification.DriveKey, context, rng);
 
-		  	// Insert the Drive into the payment Queue
-		  	auto& queueCache = context.Cache.template sub<cache::QueueCache>();
-		  	utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
-		  	queueAdapter.pushBack(driveEntry.entryKey());
+			// Insert the Drive into the payment Queue
+			auto& queueCache = context.Cache.template sub<cache::QueueCache>();
+			utils::QueueAdapter<cache::BcDriveCache> queueAdapter(queueCache, state::DrivePaymentQueueKey, driveCache);
+			queueAdapter.pushBack(driveEntry.entryKey());
 
 			// Insert the Drive into the Verification Queue
 			utils::AVLTreeAdapter<Key> treeAdapter(
@@ -49,6 +51,18 @@ namespace catapult { namespace observers {
 						return driveCache.find(key).get().verificationNode() = node;
 					});
 			treeAdapter.insert(driveEntry.key());
+		}
+	}
+
+	DECLARE_OBSERVER(PrepareDriveV1, Notification<1>)() {
+		return MAKE_OBSERVER(PrepareDriveV1, Notification<1>, ([](const Notification<1>& notification, ObserverContext& context) {
+		  	PrepareDriveObserver(notification, context);
+		}))
+	}
+
+	DECLARE_OBSERVER(PrepareDriveV2, Notification<2>)() {
+		return MAKE_OBSERVER(PrepareDriveV2, Notification<2>, ([](const Notification<2>& notification, ObserverContext& context) {
+		  	PrepareDriveObserver(notification, context);
 		}))
 	}
 }}

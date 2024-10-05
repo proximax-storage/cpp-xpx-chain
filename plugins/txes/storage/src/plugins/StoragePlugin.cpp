@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -200,7 +200,8 @@ namespace catapult { namespace plugins {
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 		  	builder
-				.add(validators::CreatePrepareDriveValidator())
+				.add(validators::CreatePrepareDriveV1Validator())
+				.add(validators::CreatePrepareDriveV2Validator())
 				.add(validators::CreateDataModificationValidator())
 				.add(validators::CreateDataModificationApprovalValidator())
 				.add(validators::CreateDataModificationApprovalDownloadWorkValidator())
@@ -234,7 +235,8 @@ namespace catapult { namespace plugins {
 
 		manager.addObserverHook([&state = *pStorageState, &liquidityProviderObserver, &storageUpdatesListeners](auto& builder) {
 			builder
-				.add(observers::CreatePrepareDriveObserver())
+				.add(observers::CreatePrepareDriveV1Observer())
+				.add(observers::CreatePrepareDriveV2Observer())
 				.add(observers::CreateDownloadChannelObserver())
 				.add(observers::CreateDataModificationObserver(liquidityProviderObserver))
 				.add(observers::CreateDataModificationApprovalObserver())

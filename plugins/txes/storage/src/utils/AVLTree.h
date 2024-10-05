@@ -476,4 +476,133 @@ private:
 	std::function<state::AVLTreeNode (const Key&)> m_nodeExtractor;
 	std::function<void (const Key&, const state::AVLTreeNode&)> m_nodeSaver;
 };
+
+template <class TKey>
+class ReadOnlyAVLTreeAdapter {
+public:
+	ReadOnlyAVLTreeAdapter(
+			const cache::QueueCache::CacheReadOnlyType& queueCache,
+			const Key& queueKey,
+			std::function<TKey (const Key&)> keyExtractor,
+			std::function<state::AVLTreeNode (const Key&)> nodeExtractor)
+			: m_queueCache(queueCache)
+			, m_queueKey(queueKey)
+			, m_keyExtractor(std::move(keyExtractor))
+			, m_nodeExtractor(std::move(nodeExtractor))
+	{}
+
+	Key lowerBound(const TKey& key) {
+		return lowerBound(getRoot(), key);
+	};
+
+	uint32_t numberOfLess(const TKey& key) {
+		return numberOfLess(getRoot(), key);
+	}
+
+	Key orderStatistics(uint32_t index) {
+		return orderStatistics(getRoot(), index);
+	}
+
+	uint32_t size() {
+		return getSize(getRoot());
+	}
+
+	bool checkTreeValidity() {
+		bool valid = true;
+		int totalHeight = checkTreeValidity(getRoot(), valid);
+		return valid;
+	}
+
+private:
+
+	Key getRoot() {
+		if (!m_queueCache.contains(m_queueKey))
+			CATAPULT_THROW_RUNTIME_ERROR_1("queue key not found", m_queueKey)
+
+		return m_queueCache.find(m_queueKey).get().getFirst();
+	}
+
+	int checkTreeValidity(const Key& nodePointer, bool& valid) {
+		if (isNull(nodePointer))
+			return 0;
+
+		auto node = m_nodeExtractor(nodePointer);
+		auto leftHeight = checkTreeValidity(node.Left, valid);
+		auto rightHeight = checkTreeValidity(node.Right, valid);
+		if (abs(leftHeight - rightHeight) > 1) {
+			valid = false;
+		}
+		return std::max(leftHeight, rightHeight) + 1;
+	}
+
+	bool isNull(const Key& nodeKey) const {
+		return nodeKey == Key();
+	}
+
+	Key orderStatistics(const Key& nodePointer, int index) {
+		if (isNull(nodePointer)) {
+			return nodePointer;
+		}
+
+		auto node = m_nodeExtractor(nodePointer);
+
+		auto leftSize = getSize(node.Left);
+
+		if (index < leftSize) {
+			return orderStatistics(node.Left, index);
+		} else if (index == leftSize) {
+			return nodePointer;
+		} else {
+			return orderStatistics(node.Right, index - leftSize - 1);
+		}
+	}
+
+	Key lowerBound(const Key& nodePointer, const TKey& key) {
+		if (isNull(nodePointer))
+			return nodePointer;
+
+		auto node = m_nodeExtractor(nodePointer);
+		auto nodeKey = m_keyExtractor(nodePointer);
+
+		if (nodeKey < key) {
+			return lowerBound(node.Right, key);
+		}
+		else {
+			Key leftLowerBound = lowerBound(node.Left, key);
+			if (!isNull(leftLowerBound)) {
+				return leftLowerBound;
+			}
+			else {
+				return nodePointer;
+			}
+		}
+	}
+
+	uint32_t numberOfLess(const Key& nodePointer, const TKey& key) {
+		if (isNull(nodePointer)) {
+			return 0;
+		}
+
+		auto node = m_nodeExtractor(nodePointer);
+		auto nodeKey = m_keyExtractor(nodePointer);
+
+		if (nodeKey < key) {
+			return numberOfLess(node.Right, key) + getSize(node.Left) + 1;
+		}
+
+		return numberOfLess(node.Left, key);
+	}
+
+	uint32_t getSize(const Key& nodePointer) const {
+		if (isNull(nodePointer))
+			return 0;
+
+		return m_nodeExtractor(nodePointer).Size;
+	}
+
+	const cache::QueueCache::CacheReadOnlyType& m_queueCache;
+	Key m_queueKey;
+	std::function<TKey (const Key&)> m_keyExtractor;
+	std::function<state::AVLTreeNode (const Key&)> m_nodeExtractor;
+};
 }

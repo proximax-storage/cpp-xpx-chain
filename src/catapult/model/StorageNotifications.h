@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -96,6 +96,9 @@ namespace catapult { namespace model {
 
 	/// Defines a replicator onboarding notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x001E);
+
+	/// Defines a prepare drive notification V2 type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Prepare_Drive_v2, 0x001F);
 
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
@@ -326,23 +329,17 @@ namespace catapult { namespace model {
 		const Key* ListOfPublicKeysPtr;
 	};
 
-	/// Notification of a drive preparation.
-	template<VersionType version>
-	struct PrepareDriveNotification;
-
-	template<>
-	struct PrepareDriveNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Storage_Prepare_Drive_v1_Notification;
+	/// Base prepare drive notification.
+	template<typename TDerivedNotification>
+	struct BasePrepareDriveNotification : public Notification {
 
 	public:
-		explicit PrepareDriveNotification(
+		explicit BasePrepareDriveNotification(
 				const Key& owner,
 				const Key& driveKey,
 				const uint64_t& driveSize,
 				const uint16_t& replicatorCount)
-			: Notification(Notification_Type, sizeof(PrepareDriveNotification<1>))
+			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 			, Owner(owner)
 			, DriveKey(driveKey)
 			, DriveSize(driveSize)
@@ -361,6 +358,42 @@ namespace catapult { namespace model {
 
 		/// Number of replicators.
 		uint16_t ReplicatorCount;
+	};
+
+	/// Notification of a drive preparation.
+	template<VersionType version>
+	struct PrepareDriveNotification;
+
+	template<>
+	struct PrepareDriveNotification<1> : public BasePrepareDriveNotification<PrepareDriveNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Prepare_Drive_v1_Notification;
+
+	public:
+		explicit PrepareDriveNotification(
+				const Key& owner,
+				const Key& driveKey,
+				const uint64_t& driveSize,
+				const uint16_t& replicatorCount)
+			: BasePrepareDriveNotification(owner, driveKey, driveSize, replicatorCount)
+		{}
+	};
+
+	template<>
+	struct PrepareDriveNotification<2> : public BasePrepareDriveNotification<PrepareDriveNotification<2>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Prepare_Drive_v2_Notification;
+
+	public:
+		explicit PrepareDriveNotification(
+				const Key& owner,
+				const Key& driveKey,
+				const uint64_t& driveSize,
+				const uint16_t& replicatorCount)
+			: BasePrepareDriveNotification(owner, driveKey, driveSize, replicatorCount)
+		{}
 	};
 
 	/// Notification of a drive.
