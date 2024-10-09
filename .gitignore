@@ -37,3 +37,6 @@ out
 gen
 cmake-build-*
 temp
+
+.DS_Store
+

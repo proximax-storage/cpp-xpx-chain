@@ -28,6 +28,8 @@
 #include "catapult/utils/ModificationSafeIterableContainer.h"
 #include "catapult/utils/ThrottleLogger.h"
 
+#include <list>
+
 namespace catapult { namespace net {
 
 	namespace {

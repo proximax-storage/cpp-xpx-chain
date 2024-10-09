@@ -180,3 +180,57 @@ mkdir _build && cd _build
 cmake -DDO_NOT_SKIP_BUILD_TESTS=TRUE -DGTEST_INCLUDE_DIR=/usr/local/include -DCMAKE_BUILD_TYPE=Release
 make publish && make -j 4
 ```
+
+### Ninja
+brew install ninja
+ninja publish
+
+
+### Clion
+Build --> "Build All ..."
+
+### Ruby
+sudo gem install mustache
+
+### mongodb (https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/)
+brew tap mongodb/brew
+brew install mongodb-community@8.0
+
+(brew services start mongodb/brew/mongodb-community)
+(brew services stop mongodb/brew/mongodb-community)
+
+##########################################
+Run debug catpult
+##########################################
+###
+
+#### Rest 
+brew install yarn node
+!!! nvm install 12.14.1
+
+cd .../js-xpx-chain-rest/rest
+yarn run build
+yarn run start
+
+
+#### Clear mongodb 
+brew services stop mongodb/brew/mongodb-community
+sudo rm -rf /opt/homebrew/var/mongodb/*
+brew services start mongodb/brew/mongodb-community
+
+#### Generate nemesis block
+/scripts/bootstrap/runCatapultServers.sh
+
+#### Remove server.lock
+rm -f ./cmake-build-debug/data/*/data/server.lock
+
+#### Prepare
+cd git@github.com:proximax-storage/go-xpx-chain-sdk.git
+cd go-xpx-chain-sdk
+git checkout 26873aac8592de1a2d3e489ce3c24610115a4bbd  (?)
+cd tools/liquidity_provider/
+go build
+cd ../transfer
+go build
+
+
