@@ -74,25 +74,16 @@ namespace catapult { namespace model {
 
 	// region MetadataValueNotification
 
-	/// Notification of metadata value.
-	template<VersionType version>
-	struct MetadataValueNotification;
-
-	template<>
-	struct MetadataValueNotification<1> : public Notification {
+	template<typename TDerivedNotification>
+	struct BasicMetadataValueNotification : public Notification {
 	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Metadata_v2_Value_Notification;
-
-	public:
-		/// Creates a notification around \a partialMetadataKey, \a metadataTarget, \a valueSizeDelta, \a valueSize and \a pValue.
-		MetadataValueNotification(
+		BasicMetadataValueNotification(
 				const UnresolvedPartialMetadataKey& partialMetadataKey,
 				const model::MetadataTarget& metadataTarget,
 				int16_t valueSizeDelta,
 				uint16_t valueSize,
 				const uint8_t* pValue)
-				: Notification(Notification_Type, sizeof(MetadataValueNotification))
+				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 				, PartialMetadataKey(partialMetadataKey)
 				, MetadataTarget(metadataTarget)
 				, ValueSizeDelta(valueSizeDelta)
@@ -117,10 +108,32 @@ namespace catapult { namespace model {
 		const uint8_t* ValuePtr;
 	};
 
+	/// Notification of metadata value.
+	template<VersionType version>
+	struct MetadataValueNotification;
+
+	template<>
+	struct MetadataValueNotification<1> : public BasicMetadataValueNotification<MetadataValueNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Metadata_v2_Value_Notification;
+
+	public:
+		/// Creates a notification around \a partialMetadataKey, \a metadataTarget, \a valueSizeDelta, \a valueSize and \a pValue.
+		MetadataValueNotification(
+				const UnresolvedPartialMetadataKey& partialMetadataKey,
+				const model::MetadataTarget& metadataTarget,
+				int16_t valueSizeDelta,
+				uint16_t valueSize,
+				const uint8_t* pValue)
+				: BasicMetadataValueNotification(partialMetadataKey, metadataTarget, valueSizeDelta, valueSize, pValue)
+		{}
+	};
+
 	// endregion
 
 	template<>
-	struct MetadataValueNotification<2> : public MetadataValueNotification<1> {
+	struct MetadataValueNotification<2> : public BasicMetadataValueNotification<MetadataValueNotification<2>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Metadata_v2_Value_v2_Notification;
@@ -134,7 +147,7 @@ namespace catapult { namespace model {
 				uint16_t valueSize,
 				const uint8_t* pValue,
 				bool isValueImmutable)
-			: MetadataValueNotification<1>(partialMetadataKey, metadataTarget, valueSizeDelta, valueSize, pValue)
+			: BasicMetadataValueNotification(partialMetadataKey, metadataTarget, valueSizeDelta, valueSize, pValue)
 			, IsValueImmutable(isValueImmutable)
 		{}
 

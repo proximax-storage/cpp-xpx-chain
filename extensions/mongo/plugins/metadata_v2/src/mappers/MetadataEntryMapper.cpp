@@ -46,7 +46,7 @@ namespace catapult { namespace mongo { namespace plugins {
 					<< "valueSize" << static_cast<int32_t>(value.size());
 
 		if (metadataEntry.version() > 1)
-			builder << "isImmutable" << metadataEntry.isImmutable();
+			builder << "isValueImmutable" << metadataEntry.isImmutable();
 
 		if (!value.empty())
 			builder << "value" << ToBinary(value.data(), value.size());

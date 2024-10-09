@@ -21,7 +21,7 @@ namespace catapult { namespace mongo { namespace plugins {
 					<< "scopedMetadataKey" << static_cast<int64_t>(transaction.ScopedMetadataKey)
 					<< "valueSizeDelta" << transaction.ValueSizeDelta
 					<< "valueSize" << transaction.ValueSize
-					<< "isImmutable" << transaction.IsValueImmutable;
+					<< "isValueImmutable" << transaction.IsValueImmutable;
 
 			if (0 < transaction.ValueSize)
 				builder << "value" << ToBinary(transaction.ValuePtr(), transaction.ValueSize);

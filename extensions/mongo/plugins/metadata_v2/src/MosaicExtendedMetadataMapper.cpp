@@ -22,7 +22,7 @@ namespace catapult { namespace mongo { namespace plugins {
 					<< "targetMosaicId" << ToInt64(transaction.TargetMosaicId)
 					<< "valueSizeDelta" << transaction.ValueSizeDelta
 					<< "valueSize" << transaction.ValueSize
-					<< "isImmutable" << transaction.IsValueImmutable;
+					<< "isValueImmutable" << transaction.IsValueImmutable;
 
 			if (0 < transaction.ValueSize)
 				builder << "value" << ToBinary(transaction.ValuePtr(), transaction.ValueSize);
