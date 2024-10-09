@@ -130,8 +130,6 @@ namespace catapult { namespace model {
 		{}
 	};
 
-	// endregion
-
 	template<>
 	struct MetadataValueNotification<2> : public BasicMetadataValueNotification<MetadataValueNotification<2>> {
 	public:
