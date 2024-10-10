@@ -23,6 +23,7 @@ namespace catapult { namespace fastfinality {
 	bool ValidateBlock(
 		FastFinalityFsm& fsm,
 		const ionet::Packet& packet,
+		const Hash256& payloadHash,
 		extensions::ServiceState& state,
 		const model::BlockElementSupplier& lastBlockElementSupplier,
 		const std::shared_ptr<thread::IoThreadPool>& pValidatorPool);

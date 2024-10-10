@@ -46,7 +46,8 @@ namespace catapult { namespace consumers {
 				auto pCacheDelta = cacheDetachedDelta.tryLock();
 
 				state::CatapultState stateCopy(m_state);
-				observers::ObserverState observerState(*pCacheDelta, stateCopy);
+				std::vector<std::unique_ptr<model::Notification>> notifications;
+				observers::ObserverState observerState(*pCacheDelta, stateCopy, notifications);
 
 				auto pLastBlockElement = m_lastBlockElementSupplier();
 				auto processResult = m_handlers.Processor(WeakBlockInfo(*pLastBlockElement), elements, observerState);

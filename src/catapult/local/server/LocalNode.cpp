@@ -23,6 +23,7 @@
 #include "MemoryCounters.h"
 #include "NemesisBlockNotifier.h"
 #include "NodeUtils.h"
+#include "catapult/crypto/CertificateDirectoryGenerator.h"
 #include "catapult/extensions/ConfigurationUtils.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateFileStorage.h"
@@ -36,7 +37,7 @@
 #include "catapult/local/HostUtils.h"
 #include "catapult/utils/StackLogger.h"
 #include "catapult/extensions/NemesisBlockLoader.h"
-#include "plugins/txes/config/src/cache/NetworkConfigCache.h"
+#include <filesystem>
 
 namespace catapult { namespace local {
 
@@ -78,6 +79,7 @@ namespace catapult { namespace local {
 							m_cacheHolder,
 							m_dataDirectory))
 					, m_pPostBlockCommitSubscriber(m_pBootstrapper->subscriptionManager().createPostBlockCommitSubscriber())
+					, m_pNotificationSubscriber(m_pBootstrapper->subscriptionManager().createNotificationSubscriber())
 					, m_pNodeSubscriber(CreateNodeSubscriber(m_pBootstrapper->subscriptionManager(), m_nodes))
 					, m_pluginManager(m_pBootstrapper->pluginManager())
 					, m_isBooted(false)
@@ -136,6 +138,9 @@ namespace catapult { namespace local {
 				const auto& config = pConfigHolder->Config(Height(0));
 				m_pBootstrapper->validateConfig(config);
 
+				/// Generate certificates
+				crypto::GenerateCertificateDirectory(m_serviceLocator.keyPair(), config.User.CertificateDirectory);
+
 				/// Load non system plugins
 				CATAPULT_LOG(debug) << "registering addon plugins";
 				auto addonPlugins = LoadConfigurablePlugins(*m_pBootstrapper, config.Network);
@@ -186,6 +191,7 @@ namespace catapult { namespace local {
 						*m_pStateChangeSubscriber,
 						*m_pNodeSubscriber,
 						*m_pPostBlockCommitSubscriber,
+						*m_pNotificationSubscriber,
 						m_counters,
 						m_pluginManager,
 						m_pBootstrapper->pool());
@@ -317,6 +323,7 @@ namespace catapult { namespace local {
 			std::unique_ptr<subscribers::TransactionStatusSubscriber> m_pTransactionStatusSubscriber;
 			std::unique_ptr<subscribers::StateChangeSubscriber> m_pStateChangeSubscriber;
 			std::unique_ptr<io::BlockChangeSubscriber> m_pPostBlockCommitSubscriber;
+			notification_handlers::AggregateNotificationHandlerPointer m_pNotificationSubscriber;
 			std::unique_ptr<subscribers::NodeSubscriber> m_pNodeSubscriber;
 
 			plugins::PluginManager& m_pluginManager;

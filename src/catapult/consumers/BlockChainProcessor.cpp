@@ -122,7 +122,7 @@ namespace catapult { namespace consumers {
 					ReceiptValidationMode receiptValidationMode) const {
 				return ReceiptValidationMode::Disabled == receiptValidationMode
 						? state
-						: observers::ObserverState(state.Cache, state.State, blockStatementBuilder);
+						: observers::ObserverState(state.Cache, state.State, blockStatementBuilder, state.Notifications);
 			}
 
 		private:

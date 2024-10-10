@@ -32,25 +32,28 @@ namespace catapult { namespace dbrb {
 	public:
 		void broadcast(const Payload& payload, ViewData recipients);
 		void processMessage(const Message& message);
-		bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf);
+		bool updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height);
+		void registerDbrbProcess(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height);
 
 	public:
 		void registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers);
 		void setValidationCallback(const ValidationCallback& callback);
 		void setDeliverCallback(const DeliverCallback& callback);
+		void setGetDbrbModeCallback(const GetDbrbModeCallback& callback);
 
 	public:
 		boost::asio::io_context::strand& strand();
-		std::shared_ptr<MessageSender> messageSender();
-		const View& currentView() const;
+		std::shared_ptr<MessageSender> messageSender() const;
 		const ProcessId& id() const;
 		size_t shardSize() const;
+		void maybeDeliver();
+		void clearData();
 
 	protected:
 		void disseminate(const std::shared_ptr<Message>& pMessage, ViewData recipients);
 		void send(const std::shared_ptr<Message>& pMessage, const ProcessId& recipient);
 
-		Signature sign(ionet::PacketType type, const Payload& payload, const DbrbTreeView& view);
+		Signature sign(ionet::PacketType type, const Payload& payload, const DbrbTreeView& view) const;
 		static bool verify(ionet::PacketType type, const ProcessId&, const Payload&, const DbrbTreeView&, const Signature&);
 
 		void onPrepareMessageReceived(const ShardPrepareMessage&);
@@ -66,6 +69,7 @@ namespace catapult { namespace dbrb {
 		NetworkPacketConverter m_converter;
 		ValidationCallback m_validationCallback;
 		DeliverCallback m_deliverCallback;
+		GetDbrbModeCallback m_getDbrbModeCallback;
 		std::shared_ptr<MessageSender> m_pMessageSender;
 		boost::asio::io_context::strand m_strand;
 		std::shared_ptr<TransactionSender> m_pTransactionSender;

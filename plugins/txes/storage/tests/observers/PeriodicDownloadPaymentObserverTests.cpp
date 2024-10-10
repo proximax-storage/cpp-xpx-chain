@@ -6,6 +6,7 @@
 
 #include "tests/test/StorageTestUtils.h"
 #include "src/observers/Observers.h"
+#include "tests/test/other/mocks/MockStorageState.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -13,7 +14,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PeriodicDownloadChannelPaymentObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(PeriodicDownloadChannelPayment,)
+	DEFINE_COMMON_OBSERVER_TESTS(PeriodicDownloadChannelPayment, nullptr)
 
 	const auto billingPeriodSeconds = 20000;
 
@@ -97,7 +98,8 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
             Notification notification({ { 1 } }, { { 1 } }, values.NotificationTime, Difficulty(0), 0, 0);
-            auto pObserver = CreatePeriodicDownloadChannelPaymentObserver();
+			auto pStorageState = std::make_shared<mocks::MockStorageState>();
+            auto pObserver = CreatePeriodicDownloadChannelPaymentObserver(pStorageState);
             auto& downloadCache = context.cache().sub<cache::DownloadChannelCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();

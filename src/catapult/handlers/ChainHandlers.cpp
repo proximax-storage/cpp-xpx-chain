@@ -117,8 +117,8 @@ namespace catapult { namespace handlers {
 			return std::min(config.MaxResponseBytes, info.pRequest->NumResponseBytes);
 		}
 
-		auto CreatePullBlocksHandler(const io::BlockStorageCache& storage, const PullBlocksHandlerConfiguration& config) {
-			return [&storage, config](const auto& packet, auto& context) {
+		auto CreatePullBlocksHandler(const io::BlockStorageCache& storage, const PullBlocksHandlerConfiguration& config, ionet::PacketType responseType) {
+			return [&storage, config, responseType](const auto& packet, auto& context) {
 				using RequestType = api::PullBlocksRequest;
 				auto storageView = storage.view();
 				auto info = HeightRequestProcessor<RequestType>::Process(storageView, packet, context, false);
@@ -140,7 +140,7 @@ namespace catapult { namespace handlers {
 					blocks.push_back(std::move(pBlock));
 				}
 
-				auto payload = ionet::PacketPayloadFactory::FromEntities(RequestType::Packet_Type, blocks);
+				auto payload = ionet::PacketPayloadFactory::FromEntities(responseType, blocks);
 				context.response(std::move(payload));
 			};
 		}
@@ -149,7 +149,8 @@ namespace catapult { namespace handlers {
 	void RegisterPullBlocksHandler(
 			ionet::ServerPacketHandlers& handlers,
 			const io::BlockStorageCache& storage,
-			const PullBlocksHandlerConfiguration& config) {
-		handlers.registerHandler(ionet::PacketType::Pull_Blocks, CreatePullBlocksHandler(storage, config));
+			const PullBlocksHandlerConfiguration& config,
+			ionet::PacketType responseType) {
+		handlers.registerHandler(ionet::PacketType::Pull_Blocks, CreatePullBlocksHandler(storage, config, responseType));
 	}
 }}

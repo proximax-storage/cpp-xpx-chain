@@ -193,7 +193,7 @@ namespace catapult { namespace net {
 				}
 
 			private:
-				ionet::socket m_socket;
+				ionet::NetworkSocket m_socket;
 				size_t m_id;
 				boost::asio::steady_timer m_deadline;
 				std::atomic<ConnectionStatus> m_status;
@@ -373,7 +373,7 @@ namespace catapult { namespace net {
 		// Act: connect to the server
 		boost::system::error_code connectEc;
 		boost::asio::io_context ioContext;
-		ionet::socket socket(ioContext);
+		ionet::NetworkSocket socket(ioContext);
 		socket.async_connect(test::CreateLocalHostEndpoint(), [&connectEc](const auto& ec) {
 			connectEc = ec;
 		});

@@ -350,7 +350,7 @@ namespace catapult { namespace plugins {
 		m_pStorageState = pState;
 	}
 
-	bool PluginManager::isStorageStateSet() {
+	bool PluginManager::isStorageStateSet() const {
 		return !!m_pStorageState;
 	}
 

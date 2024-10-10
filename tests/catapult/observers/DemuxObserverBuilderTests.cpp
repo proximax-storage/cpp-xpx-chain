@@ -41,7 +41,9 @@ namespace catapult { namespace observers {
 				cache::CatapultCache cache({});
 				auto cacheDelta = cache.createDelta();
 				auto config = config::BlockchainConfiguration::Uninitialized();
-				auto context = test::CreateObserverContext(cacheDelta, state, config, Height(123), mode);
+				std::vector<std::unique_ptr<model::Notification>> notifications;
+				ObserverState observerState(cacheDelta, state, notifications);
+				auto context = test::CreateObserverContext(observerState, config, Height(123), mode);
 				test::ObserveNotification<model::Notification>(*pDemuxObserver, test::TaggedNotification(notificationId), context);
 			}
 		};
@@ -199,7 +201,9 @@ namespace catapult { namespace observers {
 		cache::CatapultCache cache({});
 		auto cacheDelta = cache.createDelta();
 		auto config = config::BlockchainConfiguration::Uninitialized();
-		auto context = test::CreateObserverContext(cacheDelta, state, config, Height(123), observers::NotifyMode::Commit);
+		std::vector<std::unique_ptr<model::Notification>> notifications;
+		ObserverState observerState(cacheDelta, state, notifications);
+		auto context = test::CreateObserverContext(observerState, config, Height(123), observers::NotifyMode::Commit);
 
 		// - create an aggregate with five observers
 		DemuxObserverBuilder builder;
@@ -284,7 +288,9 @@ namespace catapult { namespace observers {
 		cache::CatapultCache cache({});
 		auto cacheDelta = cache.createDelta();
 		auto config = config::BlockchainConfiguration::Uninitialized();
-		auto context = test::CreateObserverContext(cacheDelta, state, config, Height(123), NotifyMode::Commit);
+		std::vector<std::unique_ptr<model::Notification>> notifications;
+		ObserverState observerState(cacheDelta, state, notifications);
+		auto context = test::CreateObserverContext(observerState, config, Height(123), NotifyMode::Commit);
 
 		builder
 			.add(CreateBreadcrumbObserver<model::AccountPublicKeyNotification<1>>(breadcrumbs, "alpha"))

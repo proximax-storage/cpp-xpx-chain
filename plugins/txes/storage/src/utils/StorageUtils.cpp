@@ -99,7 +99,10 @@ namespace catapult { namespace utils {
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		const auto zeroKey = Key();
 
-		if (!accountStateCache.contains(zeroKey))
+		const bool zeroKeyFound = accountStateCache.contains(zeroKey);
+		CATAPULT_LOG(debug) << "Zero key " << (zeroKeyFound ? "found" : "not found") << " in account state cache.";
+
+		if (!zeroKeyFound)
 			accountStateCache.addAccount(zeroKey, context.Height);
 
 		return accountStateCache.find(zeroKey);
@@ -109,7 +112,6 @@ namespace catapult { namespace utils {
 			const Key& driveKey,
 			const std::set<Key>& replicators,
 			observers::ObserverContext& context) {
-		auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
 		auto& accountCache = context.Cache.template sub<cache::AccountStateCache>();
 		auto& driveCache = context.Cache.template sub<cache::BcDriveCache>();
 
@@ -132,8 +134,6 @@ namespace catapult { namespace utils {
 		const auto streamingDepositRefundAmount = Amount(2 * driveEntry.size());
 
 		for (const auto& replicatorKey : replicators) {
-			auto replicatorIter = replicatorCache.find(replicatorKey);
-			auto& replicatorEntry = replicatorIter.get();
 			auto replicatorStateIter = accountCache.find(replicatorKey);
 			auto& replicatorState = replicatorStateIter.get();
 
@@ -539,7 +539,7 @@ namespace catapult { namespace utils {
 		// i.e. which have at least (driveSize) of storage units
 		// and at least (2 * driveSize) of streaming units:
 
-		auto keyExtractor = [=, &accountStateCache](const Key& key) {
+		auto keyExtractor = [&accountStateCache, &storageMosaicId](const Key& key) {
 			return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
 		};
 
@@ -577,11 +577,11 @@ namespace catapult { namespace utils {
 		// Preparing DriveInfo:
 		const auto& completedDataModifications = driveEntry.completedDataModifications();
 		const auto lastApprovedDataModificationIter = std::find_if(
-				completedDataModifications.rbegin(),
-				completedDataModifications.rend(),
-				[](const state::CompletedDataModification& modification){
-					return modification.ApprovalState == state::DataModificationApprovalState::Approved;
-				});
+			completedDataModifications.rbegin(),
+			completedDataModifications.rend(),
+			[](const state::CompletedDataModification& modification){
+				return modification.ApprovalState == state::DataModificationApprovalState::Approved;
+			});
 		const bool succeededVerifications = lastApprovedDataModificationIter != completedDataModifications.rend();
 		const auto lastApprovedDataModificationId = succeededVerifications ? lastApprovedDataModificationIter->Id : Hash256();
 		const auto initialDownloadWork = driveEntry.usedSizeBytes() - driveEntry.metaFilesSizeBytes();
@@ -643,17 +643,14 @@ namespace catapult { namespace utils {
 			}
 		}
 
-		for (const auto& replicatorKey: driveEntry.replicators()) {
+		for (const auto& replicatorKey: driveEntry.replicators())
 			treeAdapter.insert(replicatorKey);
-		}
 
-		for (const auto& replicatorKey: driveEntry.formerReplicators()) {
+		for (const auto& replicatorKey: driveEntry.formerReplicators())
 			treeAdapter.insert(replicatorKey);
-		}
 
-		if (replicatorCache.contains(driveEntry.owner())) {
+		if (replicatorCache.contains(driveEntry.owner()))
 			treeAdapter.insert(driveEntry.owner());
-		}
 
 		// If the actual number of assigned replicators is less than ordered,
 		// put the drive in the queue:
@@ -668,7 +665,8 @@ namespace catapult { namespace utils {
 		}
 	}
 
-	void AssignReplicatorsToQueuedDrives(
+	std::vector<std::shared_ptr<state::Drive>> AssignReplicatorsToQueuedDrives(
+			const Key& localReplicatorKey,
 			const std::set<Key>& replicatorKeys,
 			observers::ObserverContext& context,
 			std::mt19937& rng) {
@@ -687,7 +685,7 @@ namespace catapult { namespace utils {
 
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
-		auto keyExtractor = [=, &accountStateCache](const Key& key) {
+		auto keyExtractor = [&accountStateCache, &storageMosaicId](const Key& key) {
 			return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
 		};
 
@@ -704,6 +702,7 @@ namespace catapult { namespace utils {
 
 		// Tree Adapter does NOT contain the Replicators
 
+		std::unordered_map<Key, std::shared_ptr<state::Drive>, utils::ArrayHasher<Key>> drives;
 		for (const auto& replicatorKey : replicatorKeys) {
 			auto replicatorIter = replicatorCache.find(replicatorKey);
 			auto& replicatorEntry = replicatorIter.get();
@@ -731,8 +730,7 @@ namespace catapult { namespace utils {
 				bool replicatorIsBanned =
 						driveEntry.formerReplicators().find(replicatorKey) != driveEntry.formerReplicators().end();
 				bool replicatorIsOwner = driveEntry.owner() == replicatorKey;
-				if (driveSize <= remainingCapacity && !replicatorIsAssigned && !replicatorIsBanned &&
-					!replicatorIsOwner) {
+				if (driveSize <= remainingCapacity && !replicatorIsAssigned && !replicatorIsBanned && !replicatorIsOwner) {
 					// Updating drives() and replicators()
 					const auto& completedDataModifications = driveEntry.completedDataModifications();
 					const auto lastApprovedDataModificationIter = std::find_if(
@@ -792,14 +790,57 @@ namespace catapult { namespace utils {
 
 					// Updating remaining capacity
 					remainingCapacity -= driveSize;
+
+					if (driveEntry.replicators().find(localReplicatorKey) != driveEntry.replicators().end())
+						drives[driveKey] = GetDrive(driveKey, localReplicatorKey, context.Timestamp, driveCache, replicatorCache, downloadCache);
 				} else {
 					newQueue.push(drivePriorityPair);
 				}
 			}
 			originalQueue = std::move(newQueue);
 		}
-		for (const auto& replicatorKey: replicatorKeys) {
+
+		for (const auto& replicatorKey: replicatorKeys)
 			treeAdapter.insert(replicatorKey);
-		}
+
+		std::vector<std::shared_ptr<state::Drive>> updatedDrives;
+		updatedDrives.reserve(drives.size());
+		for (const auto& [_, pDrive] : drives)
+			updatedDrives.push_back(pDrive);
+
+		return updatedDrives;
+	}
+
+	std::unique_ptr<state::DownloadChannel> GetDownloadChannel(const Key& localReplicatorKey, const state::DownloadChannelEntry& channelEntry) {
+		const auto& replicators = channelEntry.shardReplicators();
+		if (replicators.find(localReplicatorKey) == replicators.end())
+			return nullptr;
+
+		auto consumers = channelEntry.listOfPublicKeys();
+		consumers.emplace_back(channelEntry.consumer());
+
+		return std::make_unique<state::DownloadChannel>(state::DownloadChannel{
+				channelEntry.id(),
+				channelEntry.drive(),
+				channelEntry.downloadSize(),
+				consumers,
+				{ replicators.begin(), replicators.end() },
+				channelEntry.downloadApprovalInitiationEvent(),
+		});
+	}
+
+	std::shared_ptr<state::DriveVerification> GetDriveVerification(const state::BcDriveEntry& driveEntry, const Timestamp& timestamp) {
+		if (!driveEntry.verification())
+			CATAPULT_THROW_RUNTIME_ERROR_1("no verification", driveEntry.key())
+
+		const auto& verification = *driveEntry.verification();
+		return std::make_shared<state::DriveVerification>(state::DriveVerification{
+				driveEntry.key(),
+				verification.Duration,
+				verification.expired(timestamp),
+				verification.VerificationTrigger,
+				driveEntry.lastModificationId(),
+				verification.Shards,
+		});
 	}
 }}

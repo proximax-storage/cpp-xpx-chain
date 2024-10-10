@@ -34,6 +34,7 @@ namespace catapult { namespace chain {
 		m_accounts = m_pAccountCollector->accounts();
 		m_failedBlockProposers.clear();
 		m_ineligibleHarvesters.clear();
+		m_banPeriods.clear();
 	}
 
 	void WeightedVotingCommitteeManagerV3::logCommittee() const {
@@ -63,7 +64,8 @@ namespace catapult { namespace chain {
 					CATAPULT_THROW_RUNTIME_ERROR_1("block proposer not found", m_committee.BlockProposer)
 				auto blockGenerationTargetTime = utils::TimeSpan::FromMilliseconds(networkConfig.MinCommitteePhaseTime.millis() * chain::CommitteePhaseCount);
 				iter->second.BanPeriod = config.HarvesterBanPeriod.blocks(blockGenerationTargetTime);
-				CATAPULT_LOG(warning) << "banned harvester " << m_committee.BlockProposer << " for " << iter->second.BanPeriod << " blocks";
+				m_banPeriods[iter->second.BootKey] = iter->second.BanPeriod;
+				CATAPULT_LOG(warning) << "banned harvester " << m_committee.BlockProposer << " (process id " << iter->second.BootKey << ") for " << iter->second.BanPeriod << " blocks";
 			}
 		}
 
@@ -93,7 +95,7 @@ namespace catapult { namespace chain {
 		}
 
 		m_committee.BlockProposer = blockProposerCandidates.begin()->second;
-		CATAPULT_LOG(trace) << "committee: block proposer " << m_committee.BlockProposer << " (stake " << (m_accounts.at(m_committee.BlockProposer).EffectiveBalance.unwrap() / 1'000'000) << " XPX";
+		CATAPULT_LOG(trace) << "committee: block proposer " << m_committee.BlockProposer << " (stake " << (m_accounts.at(m_committee.BlockProposer).EffectiveBalance.unwrap() / 1'000'000) << " XPX)";
 
 		// Reject this harvester when selecting block proposer for the next round.
 		m_failedBlockProposers.insert(m_committee.BlockProposer);
@@ -102,5 +104,10 @@ namespace catapult { namespace chain {
 			CATAPULT_LOG(debug) << "clearing failed harvesters";
 			m_failedBlockProposers.clear();
 		}
+	}
+
+	std::map<dbrb::ProcessId, BlockDuration> WeightedVotingCommitteeManagerV3::babPeriods() const {
+		std::lock_guard<std::mutex> guard(m_mutex);
+		return m_banPeriods;
 	}
 }}

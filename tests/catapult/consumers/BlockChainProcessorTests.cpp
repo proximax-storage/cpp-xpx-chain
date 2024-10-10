@@ -221,7 +221,8 @@ namespace catapult { namespace consumers {
 			ValidationResult Process(const model::BlockElement& parentBlockElement, BlockElements& elements) {
 				auto cache = test::CreateCatapultCacheWithMarkerAccount();
 				auto delta = cache.createDelta();
-				auto observerState = observers::ObserverState(delta, State);
+				std::vector<std::unique_ptr<model::Notification>> notifications;
+				auto observerState = observers::ObserverState(delta, State, notifications);
 
 				return Processor(WeakBlockInfo(parentBlockElement), elements, observerState);
 			}

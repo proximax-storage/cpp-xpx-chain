@@ -5,6 +5,7 @@
 **/
 
 #pragma  once
+#include "MessageValidationResult.h"
 #include "catapult/ionet/Packet.h"
 #include "catapult/types.h"
 #include "catapult/functions.h"
@@ -20,6 +21,12 @@ namespace catapult { namespace dbrb {
 
 	constexpr size_t ProcessId_Size = Key_Size;
 
-	using ValidationCallback = predicate<const Payload&>;
+	enum class DbrbMode {
+		Running,
+		Paused,
+	};
+
+	using GetDbrbModeCallback = supplier<DbrbMode>;
+	using ValidationCallback = std::function<MessageValidationResult (const Payload&, const Hash256&)>;
 	using DeliverCallback = consumer<const Payload&>;
 }}

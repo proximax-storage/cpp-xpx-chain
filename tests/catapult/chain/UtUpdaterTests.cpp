@@ -365,10 +365,11 @@ namespace catapult { namespace chain {
 				ASSERT_EQ(failedIndexes.size(), m_failedTransactionStatuses.size());
 				for (auto i = 0u; i < failedIndexes.size(); ++i) {
 					auto failedIndex = failedIndexes[i].first;
+					auto timeOffset = Default_Time.unwrap() + 1;
 					auto message = "failed index " + std::to_string(failedIndex);
 					EXPECT_EQ(entityInfos[failedIndex].hash(), m_failedTransactionStatuses[i].Hash) << message;
 					EXPECT_EQ(failedIndexes[i].second, validators::ValidationResult(m_failedTransactionStatuses[i].Status)) << message;
-					EXPECT_EQ(Timestamp(failedIndex * failedIndex), m_failedTransactionStatuses[i].Deadline) << message;
+					EXPECT_EQ(Timestamp((timeOffset + failedIndex) * (timeOffset + failedIndex)), m_failedTransactionStatuses[i].Deadline) << message;
 				}
 			}
 
@@ -469,7 +470,8 @@ namespace catapult { namespace chain {
 
 		TransactionData CreateTransactionData(size_t count, size_t start = 0) {
 			TransactionData data;
-			data.UtInfos = test::CreateTransactionInfos(count, [start](auto i) { return Timestamp((i + start) * (i + start)); });
+			auto timeOffset = Default_Time.unwrap() + 1;
+			data.UtInfos = test::CreateTransactionInfos(count, [timeOffset, start](auto i) { return Timestamp((timeOffset + i + start) * (timeOffset + i + start)); });
 			data.Entities = test::ExtractEntities(data.UtInfos);
 			data.Hashes = test::ExtractHashes(data.UtInfos);
 			for (auto i = 0u; i < count; ++i)

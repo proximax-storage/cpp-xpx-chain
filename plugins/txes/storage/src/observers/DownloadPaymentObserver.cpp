@@ -8,14 +8,22 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(DownloadPayment, model::DownloadPaymentNotification<1>, [](const model::DownloadPaymentNotification<1>& notification, ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadPayment)");
+	using Notification = model::DownloadPaymentNotification<1>;
 
-	  	auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
-	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
-	  	auto& downloadChannelEntry = downloadChannelIter.get();
+	DECLARE_OBSERVER(DownloadPayment, Notification)(const std::shared_ptr<state::StorageState>& pStorageState) {
+		return MAKE_OBSERVER(DownloadPayment, Notification, ([pStorageState](const Notification& notification, ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadPayment)");
 
-		downloadChannelEntry.increaseDownloadSize(notification.DownloadSizeMegabytes);
-	});
+			auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
+			auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
+			auto& downloadChannelEntry = downloadChannelIter.get();
+
+			downloadChannelEntry.increaseDownloadSize(notification.DownloadSizeMegabytes);
+
+			auto pChannel = utils::GetDownloadChannel(pStorageState->replicatorKey(), downloadChannelEntry);
+			if (pChannel)
+				context.Notifications.push_back(std::make_unique<model::DownloadPaymentServiceNotification<1>>(std::move(pChannel)));
+		}))
+	}
 }}

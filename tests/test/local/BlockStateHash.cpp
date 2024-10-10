@@ -54,7 +54,8 @@ namespace catapult { namespace test {
 
 		auto catapultState = state::CatapultState();
 		catapultState.LastRecalculationHeight = importanceHeight;
-		auto observerState = observers::ObserverState(cache, catapultState);
+		std::vector<std::unique_ptr<model::Notification>> notifications;
+		auto observerState = observers::ObserverState(cache, catapultState, notifications);
 
 		// 3. prepare resolvers
 		auto readOnlyCache = cache.toReadOnly();

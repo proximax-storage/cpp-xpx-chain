@@ -12,8 +12,8 @@
 namespace catapult { namespace mocks {
 
 	MockDbrbProcess::MockDbrbProcess(
+		std::vector<std::shared_ptr<MockDbrbProcess>>& dbrbProcessPool,
 		bool fakeDissemination,
-		std::weak_ptr<net::PacketWriters> pWriters,
 		const ionet::NodeContainer& nodeContainer,
 		const crypto::KeyPair& keyPair,
 		const std::shared_ptr<thread::IoThreadPool>& pPool,
@@ -25,20 +25,20 @@ namespace catapult { namespace mocks {
 					keyPair.publicKey(),
 					ionet::NodeEndpoint(),
 					ionet::NodeMetadata() },
-					std::move(pWriters),
 					nodeContainer,
 					dbrbConfig.IsDbrbProcess,
-					nullptr,
 					pPool,
 					utils::TimeSpan::FromMilliseconds(500)),
 				pPool,
 				nullptr,
-				dbrbViewFetcher) {
+				dbrbViewFetcher),
+			DbrbProcessPool(dbrbProcessPool) {
 		m_fakeDissemination = fakeDissemination;
 		setDeliverCallback([this](const dbrb::Payload& payload) {
 			const auto payloadHash = dbrb::CalculatePayloadHash(payload);
 		  	this->m_deliveredPayloads.insert(payloadHash);
 		});
+		setGetDbrbModeCallback([]() { return dbrb::DbrbMode::Running; });
 	}
 
 	void MockDbrbProcess::setCurrentView(const dbrb::View& view) {
@@ -49,16 +49,24 @@ namespace catapult { namespace mocks {
 		m_bootstrapView = view;
 	}
 
+	const dbrb::View& MockDbrbProcess::currentView() const {
+		return m_currentView;
+	}
+
+	const dbrb::View& MockDbrbProcess::bootstrapView() const {
+		return m_bootstrapView;
+	}
+
 	void MockDbrbProcess::broadcast(const dbrb::Payload& payload, std::set<dbrb::ProcessId> recipients) {
 		dbrb::View broadcastView{ recipients };
 		if (!(broadcastView <= m_currentView)) {
-			CATAPULT_LOG(warning) << "[DBRB] BROADCAST: " << broadcastView << " is not a subview of the current view " << m_currentView << ", aborting broadcast";
+			CATAPULT_LOG(warning) << "[DBRB] BROADCAST: broadcast view is not a subview of the current view, aborting broadcast";
 			return;
 		}
 
 		CATAPULT_LOG(debug) << "[DBRB] BROADCAST: payload " << payload->Type;
 		if (!broadcastView.isMember(m_id)) {
-			CATAPULT_LOG(warning) << "[DBRB] BROADCAST: not a member of the current view " << broadcastView << ", aborting broadcast.";
+			CATAPULT_LOG(warning) << "[DBRB] BROADCAST: not a member of the current view, aborting broadcast.";
 			return;
 		}
 
@@ -91,7 +99,7 @@ namespace catapult { namespace mocks {
 	}
 
 	void MockDbrbProcess::disseminate(const std::shared_ptr<dbrb::Message>& pMessage, std::set<dbrb::ProcessId> recipients) {
-		auto pPacket = pMessage->toNetworkPacket(&m_keyPair);
+		auto pPacket = pMessage->toNetworkPacket();
 		m_disseminationHistory.emplace_back(pMessage, recipients);
 
 		if (m_fakeDissemination)
@@ -130,12 +138,11 @@ namespace catapult { namespace mocks {
 		data.Signatures[std::make_pair(message.View, message.Sender)] = message.PayloadSignature;
 		bool quorumCollected = data.QuorumManager.update(message, data.Payload->Type);
 		if (quorumCollected && data.Certificate.empty())
-			onAcknowledgedQuorumCollected(message);
+			onAcknowledgedQuorumCollected(message, data);
 	}
 
-	void MockDbrbProcess::onAcknowledgedQuorumCollected(const dbrb::AcknowledgedMessage& message) {
+	void MockDbrbProcess::onAcknowledgedQuorumCollected(const dbrb::AcknowledgedMessage& message, dbrb::BroadcastData& data) {
 		// Replacing certificate.
-		auto& data = m_broadcastData[message.PayloadHash];
 		CATAPULT_LOG(debug) << "[DBRB] ACKNOWLEDGED: " << m_id << " collected quorum";
 		data.Certificate.clear();
 		const auto& acknowledgedSet = data.QuorumManager.AcknowledgedPayloads[message.View];
@@ -147,7 +154,7 @@ namespace catapult { namespace mocks {
 		// Disseminating Commit message.
 		CATAPULT_LOG(debug) << "[DBRB] " << m_id << " is disseminating COMMIT message";
 		auto pMessage = std::make_shared<dbrb::CommitMessage>(m_id, message.PayloadHash, data.Certificate, data.BroadcastView);
-		data.CommitMessageReceived = true;
+		data.CommitMessageDisseminated = true;
 		disseminate(pMessage, message.View.Data);
 	}
 
@@ -168,8 +175,8 @@ namespace catapult { namespace mocks {
 
 		// Update stored PayloadData and ProcessState, if necessary,
 		// and disseminate Commit message with updated view.
-		if (!data.CommitMessageReceived) {
-			data.CommitMessageReceived = true;
+		if (!data.CommitMessageDisseminated) {
+			data.CommitMessageDisseminated = true;
 
 			CATAPULT_LOG(debug) << "[DBRB] " << m_id << " is disseminating COMMIT message";
 			auto pMessage = std::make_shared<dbrb::CommitMessage>(m_id, message.PayloadHash, message.Certificate, message.View);

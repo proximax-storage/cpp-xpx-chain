@@ -31,13 +31,12 @@ namespace catapult { namespace handlers {
 			return model::HashRange::CopyFixed(reinterpret_cast<const uint8_t*>(hashes.data()), hashes.size());
 		}
 
-		auto CreateSubCacheMerkleRootsHandler(extensions::ServiceState& state) {
-			return [&state](const auto& packet, auto& context) {
-				if (!state.pluginManager().immutableConfig().ShouldEnableVerifiableState)
+		auto CreateSubCacheMerkleRootsHandler(const io::BlockStorageCache& storage, bool shouldEnableVerifiableState) {
+			return [&storage, shouldEnableVerifiableState](const auto& packet, auto& context) {
+				if (!shouldEnableVerifiableState)
 					return;
 
 				using RequestType = api::HeightPacket<ionet::PacketType::Sub_Cache_Merkle_Roots>;
-				const auto& storage = state.storage();
 				auto storageView = storage.view();
 				auto info = HeightRequestProcessor<RequestType>::Process(storageView, packet, context, false);
 				if (!info.pRequest)
@@ -52,7 +51,7 @@ namespace catapult { namespace handlers {
 		}
 	}
 
-	void RegisterSubCacheMerkleRootsHandler(extensions::ServiceState& state) {
-		state.packetHandlers().registerHandler(ionet::PacketType::Sub_Cache_Merkle_Roots, CreateSubCacheMerkleRootsHandler(state));
+	void RegisterSubCacheMerkleRootsHandler(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, bool shouldEnableVerifiableState) {
+		handlers.registerHandler(ionet::PacketType::Sub_Cache_Merkle_Roots, CreateSubCacheMerkleRootsHandler(storage, shouldEnableVerifiableState));
 	}
 }}

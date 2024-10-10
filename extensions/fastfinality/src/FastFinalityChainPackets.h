@@ -38,33 +38,5 @@ namespace catapult { namespace fastfinality {
 		uint8_t HarvesterKeysCount;
 	};
 
-	struct RemoteNodeStateTraits {
-	public:
-		using ResultType = RemoteNodeState;
-		static constexpr auto Packet_Type = ionet::PacketType::Pull_Remote_Node_State;
-		static constexpr auto Friendly_Name = "remote node state";
-
-		static auto CreateRequestPacketPayload(Height height) {
-			auto pPacket = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
-			pPacket->Height = std::move(height);
-			return ionet::PacketPayload(pPacket);
-		}
-
-	public:
-		bool tryParseResult(const ionet::Packet& packet, ResultType& result) const {
-			const auto* pResponse = static_cast<const RemoteNodeStatePacket*>(&packet);
-			const auto* pResponseData = reinterpret_cast<const Key*>(pResponse + 1);
-
-			result.Height = pResponse->Height;
-			result.BlockHash = pResponse->BlockHash;
-			result.NodeWorkState = pResponse->NodeWorkState;
-			for (auto i = 0; i < pResponse->HarvesterKeysCount; ++i) {
-				result.HarvesterKeys.push_back(pResponseData[i]);
-			}
-
-			return true;
-		}
-	};
-
 #pragma pack(pop)
 }}

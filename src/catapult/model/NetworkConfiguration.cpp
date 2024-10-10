@@ -34,7 +34,7 @@ namespace catapult { namespace model {
 	}
 
 	NetworkConfiguration NetworkConfiguration::Uninitialized() {
-		return NetworkConfiguration();
+		return {};
 	}
 
 	NetworkConfiguration NetworkConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
@@ -129,6 +129,8 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(EnableDbrbFastFinality);
 		config.CheckNetworkHeightInterval = 10;
 		TRY_LOAD_CHAIN_PROPERTY(CheckNetworkHeightInterval);
+		config.BlockTimeUpdateStrategy = BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient;
+		TRY_LOAD_CHAIN_PROPERTY(BlockTimeUpdateStrategy);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 
@@ -182,7 +184,7 @@ namespace catapult { namespace model {
 	}
 
 	utils::TimeSpan CalculateRollbackVariabilityBufferDuration(const NetworkConfiguration& config) {
-		// use the greater of 25% of the rollback time or one hour as a buffer against block time variability
+		// use the greatest of 25% of the rollback time or one hour as a buffer against block time variability
 		return utils::TimeSpan::FromHours(4).millis() > CalculateFullRollbackDuration(config).millis()
 				? utils::TimeSpan::FromHours(1)
 				: utils::TimeSpan::FromMilliseconds(CalculateFullRollbackDuration(config).millis() / 4);

@@ -38,6 +38,8 @@ namespace catapult { namespace notification_handlers {
 	using AggregateNotificationHandler = AggregateNotificationHandlerT<model::Notification, const HandlerContext&>;
 	using DemuxHandlerBuilder = DemuxHandlerBuilderT<const HandlerContext&>;
 
+	using AggregateNotificationHandlerPointer = std::unique_ptr<const notification_handlers::AggregateNotificationHandler>;
+
 /// Declares a stateful handler with \a NAME for notifications of type \a NOTIFICATION_TYPE.
 #define DECLARE_HANDLER(NAME, NOTIFICATION_TYPE) \
 	NotificationHandlerPointerT<NOTIFICATION_TYPE> Create##NAME##Handler

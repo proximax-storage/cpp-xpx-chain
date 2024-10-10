@@ -4,8 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "fastfinality/src/weighted_voting/WeightedVotingFsm.h"
 #include "catapult/crypto/KeyPair.h"
+#include "catapult/dbrb/Messages.h"
+#include "fastfinality/src/FastFinalityChainPackets.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace fastfinality {
@@ -23,13 +24,11 @@ namespace catapult { namespace fastfinality {
 			};
 
 			auto originalMessage = createMessage(nodes);
-			auto keyPair = crypto::KeyPair::FromString("CBD84EF8F5F38A25C01308785EA99627DE897D151AFDFCDA7AB07EFD8ED98534");
-			auto pPacket = originalMessage.toNetworkPacket(&keyPair);
+			auto pPacket = originalMessage.toNetworkPacket();
 			auto pUnpackedMessage = dbrb::NetworkPacketConverter().toMessage(*pPacket);
 			const auto& unpackedMessage = reinterpret_cast<const TMessage&>(*pUnpackedMessage);
 			EXPECT_EQ(originalMessage.Sender, unpackedMessage.Sender);
 			EXPECT_EQ(originalMessage.Type, unpackedMessage.Type);
-			EXPECT_EQ(originalMessage.Signature, unpackedMessage.Signature);
 
 			callback(originalMessage, unpackedMessage);
 		}
@@ -51,6 +50,17 @@ namespace catapult { namespace fastfinality {
 				EXPECT_EQ(originalMessage.BootstrapView, unpackedMessage.BootstrapView);
 				EXPECT_EQ(originalMessage.Payload->Size, unpackedMessage.Payload->Size);
 				EXPECT_EQ_MEMORY(originalMessage.Payload.get(), unpackedMessage.Payload.get(), originalMessage.Payload->Size);
+			});
+	}
+
+	TEST(TEST_CLASS, ValidateAcknowledgedDeclinedMessageSerialization) {
+		RunMessageSerializationTest<dbrb::AcknowledgedDeclinedMessage>([](const auto& nodes) {
+				auto payload = ionet::CreateSharedPacket<RemoteNodeStatePacket>();
+				auto payloadHash = dbrb::CalculatePayloadHash(payload);
+				return dbrb::AcknowledgedDeclinedMessage(nodes[0], payloadHash);
+			},
+			[](const dbrb::AcknowledgedDeclinedMessage& originalMessage, const dbrb::AcknowledgedDeclinedMessage& unpackedMessage) {
+				EXPECT_EQ(originalMessage.PayloadHash, unpackedMessage.PayloadHash);
 			});
 	}
 

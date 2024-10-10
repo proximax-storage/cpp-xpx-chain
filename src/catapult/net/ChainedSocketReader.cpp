@@ -20,29 +20,32 @@
 
 #include "ChainedSocketReader.h"
 #include "catapult/ionet/PacketSocket.h"
+#include "catapult/ionet/SslPacketSocket.h"
 #include "catapult/ionet/SocketReader.h"
 
 namespace catapult { namespace net {
 
 	namespace {
+		template<typename TPacketSocket>
 		class DefaultChainedSocketReader
 				: public ChainedSocketReader
-				, public std::enable_shared_from_this<DefaultChainedSocketReader> {
+				, public std::enable_shared_from_this<DefaultChainedSocketReader<TPacketSocket>> {
 		public:
 			DefaultChainedSocketReader(
-					const std::shared_ptr<ionet::PacketSocket>& pPacketSocket,
+					const std::shared_ptr<TPacketSocket>& pPacketSocket,
+					const std::shared_ptr<ionet::PacketIo>& pBufferedIo,
 					const ionet::ServerPacketHandlers& serverHandlers,
 					const ionet::ReaderIdentity& identity,
 					const ChainedSocketReader::CompletionHandler& completionHandler)
 					: m_pPacketSocket(pPacketSocket)
 					, m_identity(identity)
 					, m_completionHandler(completionHandler)
-					, m_pReader(CreateSocketReader(m_pPacketSocket, m_pPacketSocket->buffered(), serverHandlers, identity))
+					, m_pReader(CreateSocketReader(m_pPacketSocket, pBufferedIo, serverHandlers, identity))
 			{}
 
 		public:
 			void start() override {
-				m_pReader->read([pThis = shared_from_this()](auto code) { pThis->read(code); });
+				m_pReader->read([pThis = this->shared_from_this()](auto code) { pThis->read(code); });
 			}
 
 			void stop() override {
@@ -67,7 +70,7 @@ namespace catapult { namespace net {
 			}
 
 		private:
-			std::shared_ptr<ionet::PacketSocket> m_pPacketSocket;
+			std::shared_ptr<TPacketSocket> m_pPacketSocket;
 			ionet::ReaderIdentity m_identity;
 			ChainedSocketReader::CompletionHandler m_completionHandler;
 			std::unique_ptr<ionet::SocketReader> m_pReader;
@@ -77,15 +80,17 @@ namespace catapult { namespace net {
 	std::shared_ptr<ChainedSocketReader> CreateChainedSocketReader(
 			const std::shared_ptr<ionet::PacketSocket>& pPacketSocket,
 			const ionet::ServerPacketHandlers& serverHandlers,
-			const ionet::ReaderIdentity& identity) {
-		return CreateChainedSocketReader(pPacketSocket, serverHandlers, identity, [](auto) {});
+			const ionet::ReaderIdentity& identity,
+			const ChainedSocketReader::CompletionHandler& completionHandler) {
+		return std::make_shared<DefaultChainedSocketReader<ionet::PacketSocket>>(pPacketSocket, pPacketSocket->buffered(), serverHandlers, identity, completionHandler);
 	}
 
 	std::shared_ptr<ChainedSocketReader> CreateChainedSocketReader(
-			const std::shared_ptr<ionet::PacketSocket>& pPacketSocket,
+			const std::shared_ptr<ionet::SslPacketSocket>& pPacketSocket,
+			const std::shared_ptr<ionet::PacketIo>& pBufferedIo,
 			const ionet::ServerPacketHandlers& serverHandlers,
 			const ionet::ReaderIdentity& identity,
 			const ChainedSocketReader::CompletionHandler& completionHandler) {
-		return std::make_shared<DefaultChainedSocketReader>(pPacketSocket, serverHandlers, identity, completionHandler);
+		return std::make_shared<DefaultChainedSocketReader<ionet::SslPacketSocket>>(pPacketSocket, pBufferedIo, serverHandlers, identity, completionHandler);
 	}
 }}

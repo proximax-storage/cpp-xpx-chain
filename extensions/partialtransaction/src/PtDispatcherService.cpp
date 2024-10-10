@@ -166,10 +166,10 @@ namespace catapult { namespace partialtransaction {
 					state.timeSupplier(),
 					extensions::CreateHashCheckOptions(nodeConfig.ShortLivedCacheTransactionDuration, nodeConfig));
 			auto cosignaturesSink = CreateNewCosignaturesSink(locator);
-			auto pCacheLock = std::make_shared<utils::SpinLock>();
+			auto pCacheMutex = std::make_shared<std::shared_mutex>();
 			auto& hooks = GetPtServerHooks(locator);
 			hooks.setCosignedTransactionInfosConsumer(
-					[&dispatcher = *pBatchRangeDispatcher, &ptUpdater, pRecentHashCache, cosignaturesSink, pCacheLock](auto&& infos) {
+					[&dispatcher = *pBatchRangeDispatcher, &ptUpdater, pRecentHashCache, cosignaturesSink, pCacheMutex](auto&& infos) {
 				CATAPULT_LOG(debug) << "pushing infos " << infos.size() << " to pt dispatcher";
 				std::vector<model::DetachedCosignature> newCosignatures;
 				SplitCosignedTransactionInfos(
@@ -177,8 +177,8 @@ namespace catapult { namespace partialtransaction {
 						[&dispatcher](auto&& transactionRange) {
 							dispatcher.queue(std::move(transactionRange), InputSource::Remote_Pull);
 						},
-						[&ptUpdater, &newCosignatures, pRecentHashCache, pCacheLock](auto&& cosignature) {
-							utils::SpinLockGuard guard(*pCacheLock);
+						[&ptUpdater, &newCosignatures, pRecentHashCache, pCacheMutex](auto&& cosignature) {
+							std::unique_lock lock(*pCacheMutex);
 							if (pRecentHashCache->add(ToHash(cosignature))) {
 								ptUpdater.update(cosignature);
 								newCosignatures.push_back(cosignature);
@@ -193,8 +193,8 @@ namespace catapult { namespace partialtransaction {
 				dispatcher.queue(std::move(transactionRange), InputSource::Remote_Push);
 			});
 
-			hooks.setCosignatureRangeConsumer([&ptUpdater, pRecentHashCache, cosignaturesSink, pCacheLock](auto&& cosignatureRange) {
-				utils::SpinLockGuard guard(*pCacheLock);
+			hooks.setCosignatureRangeConsumer([&ptUpdater, pRecentHashCache, cosignaturesSink, pCacheMutex](auto&& cosignatureRange) {
+				std::unique_lock lock(*pCacheMutex);
 				std::vector<model::DetachedCosignature> newCosignatures;
 				for (const auto& cosignature : cosignatureRange.Range) {
 					if (pRecentHashCache->add(ToHash(cosignature))) {

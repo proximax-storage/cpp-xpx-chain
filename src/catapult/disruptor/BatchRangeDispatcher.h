@@ -22,7 +22,6 @@
 #include "ConsumerDispatcher.h"
 #include "catapult/utils/Casting.h"
 #include "catapult/utils/Hashers.h"
-#include "catapult/utils/SpinLock.h"
 #include <unordered_map>
 #include <vector>
 
@@ -61,7 +60,7 @@ namespace catapult { namespace disruptor {
 	public:
 		/// Queues processing of \a range from \a source.
 		void queue(TAnnotatedEntityRange&& range, InputSource source) {
-			utils::SpinLockGuard guard(m_lock);
+			std::unique_lock lock(m_mutex);
 			m_rangesMap[{ range.SourcePublicKey, source }].push_back(std::move(range.Range));
 		}
 
@@ -70,7 +69,7 @@ namespace catapult { namespace disruptor {
 			GroupedRangesMap rangesMap;
 
 			{
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				rangesMap = std::move(m_rangesMap);
 			}
 
@@ -83,13 +82,13 @@ namespace catapult { namespace disruptor {
 	public:
 		/// Returns \c true if no ranges are currently queued.
 		bool empty() const {
-			utils::SpinLockGuard guard(m_lock);
+			std::shared_lock lock(m_mutex);
 			return m_rangesMap.empty();
 		}
 
 	private:
 		ConsumerDispatcher& m_dispatcher;
 		GroupedRangesMap m_rangesMap;
-		mutable utils::SpinLock m_lock;
+		mutable std::shared_mutex m_mutex;
 	};
 }}

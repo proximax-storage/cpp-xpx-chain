@@ -40,9 +40,10 @@ namespace catapult { namespace cache {
 	public:
 		using Size = AddressMixins::Size;
 		using ContainsAddress = AddressMixins::Contains;
-		using ContainsKey = ContainsMixin<
+		using ContainsKey = LookupContainsMixin<
 			AccountStateCacheTypes::KeyLookupMapTypes::BaseSetType,
-			AccountStateCacheTypes::KeyLookupMapTypesDescriptor>;
+			AccountStateCacheTypes::KeyLookupMapTypesDescriptor,
+			AccountStateCacheTypes::PrimaryTypes::BaseSetType>;
 		using Iteration = AddressMixins::Iteration;
 		using ConstAccessorAddress = AddressMixins::ConstAccessor;
 		using ConstAccessorKey = KeyMixins::ConstAccessor;

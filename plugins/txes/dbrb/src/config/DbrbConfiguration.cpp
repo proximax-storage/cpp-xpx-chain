@@ -23,6 +23,8 @@ namespace catapult { namespace config {
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
 		config.DbrbProcessLifetimeAfterExpiration = utils::TimeSpan();
 		TRY_LOAD_CHAIN_PROPERTY(DbrbProcessLifetimeAfterExpiration);
+		config.EnableDbrbProcessBanning = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableDbrbProcessBanning);
 #undef TRY_LOAD_CHAIN_PROPERTY
 
 		return config;

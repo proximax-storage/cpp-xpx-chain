@@ -21,6 +21,7 @@ namespace catapult { namespace cache {
     public:
 		dbrb::ViewData getView(Timestamp timestamp) const override;
 		Timestamp getExpirationTime(const dbrb::ProcessId& processId) const override;
+		BlockDuration getBanPeriod(const dbrb::ProcessId& processId) const override;
 		void logAllProcesses() const override;
 		void logView(const dbrb::ViewData& view) const override;
 
@@ -31,5 +32,6 @@ namespace catapult { namespace cache {
 	private:
 		std::map<dbrb::ProcessId, Timestamp> m_processes;
 		std::map<Timestamp, std::unordered_set<dbrb::ProcessId, utils::ArrayHasher<dbrb::ProcessId>>> m_expirationTimes;
+		std::map<dbrb::ProcessId, BlockDuration> m_banPeriods;
     };
 }}

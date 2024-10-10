@@ -14,7 +14,7 @@ namespace catapult {
 		class NodePacketIoPair;
 		class Packet;
 	}
-	namespace net { class PacketWriters; }
+	namespace net { class PacketReadersWriters; }
 	namespace dbrb { class TransactionSender; }
 	namespace config { class BlockchainConfigurationHolder; }
 	namespace thread { class IoThreadPool; }
@@ -27,32 +27,35 @@ namespace catapult { namespace dbrb {
 	public:
 		virtual ~MessageSender() = default;
 
+	public:
 		// Message sending
 		virtual void enqueue(const Payload& payload, bool dropOnFailure, const std::set<ProcessId>& recipients) = 0;
 		virtual void clearQueue() = 0;
-		virtual ionet::NodePacketIoPair getNodePacketIoPair(const ProcessId& id) = 0;
-		virtual void pushNodePacketIoPair(const ProcessId& id, const ionet::NodePacketIoPair& nodePacketIoPair) = 0;
 
 	public:
 		// Node discovery
-		virtual void findNodes(std::set<ProcessId> requestedIds) = 0;
+		virtual void connectNodes(const std::set<ProcessId>& requestedIds) = 0;
+		virtual void closeAllConnections() = 0;
+		virtual void closeConnections(const std::set<ProcessId>& requestedIds) = 0;
 		virtual void addNodes(const std::vector<ionet::Node>& nodes) = 0;
 		virtual void sendNodes(const std::vector<ionet::Node>& nodes, const ProcessId& recipient) = 0;
-		virtual void removeNode(const ProcessId& id) = 0;
-		virtual bool isNodeAdded(const ProcessId& id) = 0;
-		virtual void addRemoveNodeResponse(const ProcessId& idToRemove, const ProcessId& respondentId, const Timestamp& timestamp, const Signature& signature) = 0;
-		virtual void clearNodeRemovalData() = 0;
 		virtual ViewData getUnreachableNodes(ViewData& view) const = 0;
 		virtual size_t getUnreachableNodeCount(const dbrb::ViewData& view) const = 0;
-		virtual std::vector<ionet::Node> getKnownNodes(ViewData& view) const = 0;
+		virtual std::vector<ionet::Node> getKnownNodes(const ViewData& view) const = 0;
+
+	public:
+		void setWriters(std::weak_ptr<net::PacketReadersWriters> pWriters) {
+			m_pWriters = std::move(pWriters);
+		}
+
+	protected:
+		std::weak_ptr<net::PacketReadersWriters> m_pWriters;
 	};
 
 	std::shared_ptr<MessageSender> CreateMessageSender(
 		ionet::Node thisNode,
-		std::weak_ptr<net::PacketWriters> pWriters,
 		const ionet::NodeContainer& nodeContainer,
 		bool broadcastThisNode,
-		std::shared_ptr<TransactionSender> pTransactionSender,
 		const std::shared_ptr<thread::IoThreadPool>& pPool,
 		const utils::TimeSpan& resendMessagesInterval);
 }}

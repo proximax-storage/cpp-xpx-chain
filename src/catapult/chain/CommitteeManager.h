@@ -58,6 +58,11 @@ namespace catapult { namespace chain {
 		/// or empty committee after reset().
 		virtual Committee committee() const = 0;
 
+		/// Returns mapping of DBRB process identifiers (boot keys) to ban periods.
+		virtual std::map<dbrb::ProcessId, BlockDuration> babPeriods() const {
+			return {};
+		}
+
 		/// Sets last block element \a supplier.
 		void setLastBlockElementSupplier(const model::BlockElementSupplier& supplier);
 

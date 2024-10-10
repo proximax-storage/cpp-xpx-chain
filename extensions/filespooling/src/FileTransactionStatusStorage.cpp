@@ -21,7 +21,8 @@
 #include "FileTransactionStatusStorage.h"
 #include "catapult/io/EntityIoUtils.h"
 #include "catapult/model/Transaction.h"
-#include "catapult/utils/SpinLock.h"
+#include <mutex>
+#include <shared_mutex>
 
 namespace catapult { namespace filespooling {
 
@@ -35,7 +36,7 @@ namespace catapult { namespace filespooling {
 		public:
 			void notifyStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) override {
 				// synchronize access because notifyStatus can be called concurrently
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 
 				m_pOutputStream->write(hash);
 				io::Write64(*m_pOutputStream, height.unwrap());
@@ -45,13 +46,13 @@ namespace catapult { namespace filespooling {
 
 			void flush() override {
 				// synchronize access because flush can be called concurrently by block and transaction dispatchers
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				m_pOutputStream->flush();
 			}
 
 		private:
 			std::unique_ptr<io::OutputStream> m_pOutputStream;
-			utils::SpinLock m_lock;
+			std::shared_mutex m_mutex;
 		};
 	}
 

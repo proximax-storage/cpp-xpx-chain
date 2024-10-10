@@ -32,14 +32,13 @@ namespace catapult { namespace dbrb {
 	{}
 
 	void ShardedDbrbProcess::registerPacketHandlers(ionet::ServerPacketHandlers& packetHandlers) {
-		auto handler = [pThisWeak = weak_from_this(), &converter = m_converter, &strand = m_strand](const auto& packet, auto& context) {
-			const auto& messagePacket = static_cast<const MessagePacket&>(packet);
-			auto hash = CalculateHash(messagePacket.buffers());
-			if (!crypto::Verify(messagePacket.Sender, hash, messagePacket.Signature))
+		auto handler = [pThisWeak = weak_from_this()](const auto& packet, auto& context) {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
 				return;
 
-			auto pMessage = converter.toMessage(packet);
-			boost::asio::post(strand, [pThisWeak, pMessage]() {
+			auto pMessage = pThis->m_converter.toMessage(packet);
+			boost::asio::post(pThis->m_strand, [pThisWeak, pMessage]() {
 				auto pThis = pThisWeak.lock();
 				if (pThis)
 					pThis->processMessage(*pMessage);
@@ -59,16 +58,16 @@ namespace catapult { namespace dbrb {
 		m_deliverCallback = callback;
 	}
 
+	void ShardedDbrbProcess::setGetDbrbModeCallback(const GetDbrbModeCallback& callback) {
+		m_getDbrbModeCallback = callback;
+	}
+
 	boost::asio::io_context::strand& ShardedDbrbProcess::strand() {
 		return m_strand;
 	}
 
-	std::shared_ptr<MessageSender> ShardedDbrbProcess::messageSender() {
+	std::shared_ptr<MessageSender> ShardedDbrbProcess::messageSender() const {
 		return m_pMessageSender;
-	}
-
-	const View& ShardedDbrbProcess::currentView() const {
-		return m_currentView;
 	}
 
 	const ProcessId& ShardedDbrbProcess::id() const  {
@@ -77,6 +76,20 @@ namespace catapult { namespace dbrb {
 
 	size_t ShardedDbrbProcess::shardSize() const {
 		return m_shardSize;
+	}
+
+	void ShardedDbrbProcess::maybeDeliver() {
+	}
+
+	void ShardedDbrbProcess::clearData() {
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this()]() {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
+				return;
+
+			CATAPULT_LOG(trace) << "[DBRB] removing broadcast data";
+			pThis->m_broadcastData.clear();
+		});
 	}
 
 	// Basic operations:
@@ -96,12 +109,12 @@ namespace catapult { namespace dbrb {
 			}
 
 			if (broadcastView > pThis->m_currentView) {
-				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: " << broadcastView << " is not a subview of the current view " << pThis->m_currentView << ", aborting broadcast";
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: broadcast view is not a subview of the current view, aborting broadcast";
 				return;
 			}
 
 			if (!broadcastView.isMember(pThis->m_id)) {
-				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the current view " << pThis->m_currentView << ", aborting broadcast";
+				CATAPULT_LOG(debug) << "[DBRB] BROADCAST: not a member of the current view, aborting broadcast";
 				return;
 			}
 
@@ -137,8 +150,8 @@ namespace catapult { namespace dbrb {
 	// Basic private methods:
 
 	void ShardedDbrbProcess::disseminate(const std::shared_ptr<Message>& pMessage, ViewData recipients) {
-		CATAPULT_LOG(trace) << "[DBRB] disseminating message " << pMessage->Type << " to " << View{ recipients };
-		auto pPacket = pMessage->toNetworkPacket(&m_keyPair);
+		CATAPULT_LOG(trace) << "[DBRB] disseminating message " << pMessage->Type << " to " << recipients.size() << " recipient(s)";
+		auto pPacket = pMessage->toNetworkPacket();
 		for (auto iter = recipients.begin(); iter != recipients.end(); ++iter) {
 			if (m_id == *iter) {
 				boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pMessage]() {
@@ -159,7 +172,7 @@ namespace catapult { namespace dbrb {
 		disseminate(pMessage, ViewData{ recipient });
 	}
 
-	Signature ShardedDbrbProcess::sign(ionet::PacketType type, const Payload& payload, const DbrbTreeView& view) {
+	Signature ShardedDbrbProcess::sign(ionet::PacketType type, const Payload& payload, const DbrbTreeView& view) const {
 		// Forms a hash based on message type, payload and the broadcast view and signs it.
 		uint32_t packetPayloadSize = 2 * sizeof(uint32_t) + view.size() * ProcessId_Size;
 		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>(packetPayloadSize);
@@ -219,7 +232,8 @@ namespace catapult { namespace dbrb {
 
 	void ShardedDbrbProcess::onPrepareMessageReceived(const ShardPrepareMessage& message) {
 		CATAPULT_LOG(trace) << "[DBRB] PREPARE: received payload " << message.Payload->Type << " from " << message.Sender;
-		if (!m_validationCallback(message.Payload)) {
+		auto payloadHash = CalculatePayloadHash(message.Payload);
+		if (m_validationCallback(message.Payload, payloadHash) != MessageValidationResult::Message_Valid) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: Aborting message processing (message invalid)";
 			return;
 		}
@@ -238,7 +252,6 @@ namespace catapult { namespace dbrb {
 			return;
 		}
 
-		auto payloadHash = CalculatePayloadHash(message.Payload);
 		auto& data = m_broadcastData[payloadHash];
 		if (data.Payload) {
 			CATAPULT_LOG(debug) << "[DBRB] PREPARE: message already processed";
@@ -282,15 +295,6 @@ namespace catapult { namespace dbrb {
 		data.ChildShardQuorumSize = data.SubTreeView.quorumSize();
 
 		auto signature = sign(ionet::PacketType::Dbrb_Shard_Acknowledged_Message, message.Payload, message.View);
-		std::ostringstream out;
-		out << " view: ";
-		bool empty = true;
-		for (const auto& id : message.View) {
-			if (!empty)
-				out << ", ";
-			out << id;
-			empty = false;
-		}
 		data.AcknowledgeCertificate.emplace(m_id, signature);
 		if (!data.Acknowledged && data.AcknowledgeCertificate.size() >= data.ChildShardQuorumSize) {
 			CATAPULT_LOG(trace) << "[DBRB] PREPARE: Sending Acknowledged message to sender " << message.Sender;
@@ -512,7 +516,7 @@ namespace catapult { namespace dbrb {
 		}
 	}
 
-	bool ShardedDbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height, bool registerSelf) {
+	bool ShardedDbrbProcess::updateView(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) {
 		auto view = View{ m_dbrbViewFetcher.getView(now) };
 		m_dbrbViewFetcher.logAllProcesses();
 		m_dbrbViewFetcher.logView(view.Data);
@@ -521,10 +525,6 @@ namespace catapult { namespace dbrb {
 		CATAPULT_LOG(debug) << "[DBRB] getting config at height " << height;
 		const auto& config = pConfigHolder->Config(height).Network;
 		auto bootstrapView = View{ config.DbrbBootstrapProcesses };
-		if (bootstrapView.Data.empty()) {
-			CATAPULT_LOG(debug) << "[DBRB] no bootstrap nodes, getting config at height " << height + Height(1);
-			bootstrapView = View{ pConfigHolder->Config(height + Height(1)).Network.DbrbBootstrapProcesses };
-		}
 		auto isBootstrapProcess = bootstrapView.isMember(m_id);
 
 		view.merge(bootstrapView);
@@ -532,44 +532,64 @@ namespace catapult { namespace dbrb {
 			CATAPULT_THROW_RUNTIME_ERROR("no DBRB processes")
 
 		auto shardSize = config.DbrbShardSize;
-		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, view, isTemporaryProcess, isBootstrapProcess, shardSize, gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis()), registerSelf]() {
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, view, isTemporaryProcess, isBootstrapProcess, shardSize, gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis())]() {
 			auto pThis = pThisWeak.lock();
 			if (!pThis)
 				return;
 
 			pThis->m_pMessageSender->clearQueue();
-			pThis->m_pMessageSender->clearNodeRemovalData();
 			pThis->m_broadcastData.clear();
 
-			pThis->m_pMessageSender->findNodes(view.Data);
+			pThis->m_pMessageSender->connectNodes(view.Data);
 			pThis->m_shardSize = shardSize;
 			pThis->m_currentView = view;
-			CATAPULT_LOG(debug) << "[DBRB] Current view (" << view.Data.size() << ") is now set to " << view;
-
-			if (registerSelf) {
-				bool isRegistrationRequired = false;
-				if (!isTemporaryProcess && !isBootstrapProcess) {
-					CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
-					isRegistrationRequired = true;
-				} else if (isTemporaryProcess) {
-					auto expirationTime = pThis->m_dbrbViewFetcher.getExpirationTime(pThis->m_id);
-					LogTime("[DBRB] process expires at ", expirationTime);
-					if (expirationTime < gracePeriod)
-						CATAPULT_THROW_RUNTIME_ERROR_1("invalid expiration time", pThis->m_id)
-
-					auto gracePeriodStart = expirationTime - gracePeriod;
-					LogTime("[DBRB] process grace period starts at ", gracePeriodStart);
-					if (now >= gracePeriodStart) {
-						CATAPULT_LOG(debug) << "[DBRB] node registration in the DBRB system soon expires";
-						isRegistrationRequired = true;
-					}
-				}
-
-				if (isRegistrationRequired)
-					pThis->m_pTransactionSender->sendAddDbrbProcessTransaction();
-			}
+			CATAPULT_LOG(debug) << "[DBRB] Current view size " << view.Data.size();
 		});
 
 		return isTemporaryProcess || isBootstrapProcess;
+	}
+
+	void ShardedDbrbProcess::registerDbrbProcess(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) {
+		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, height]() {
+			auto pThis = pThisWeak.lock();
+			if (!pThis)
+				return;
+
+			if (!pThis->m_pTransactionSender) {
+				CATAPULT_LOG(debug) << "[DBRB] skipping node registration because transaction sender is not set";
+				return;
+			}
+
+			auto banPeriod = pThis->m_dbrbViewFetcher.getBanPeriod(pThis->m_id);
+			if (banPeriod != BlockDuration(0)) {
+				CATAPULT_LOG(debug) << "[DBRB] skipping node registration because DBRB process banned (for " << banPeriod << " blocks)";
+				return;
+			}
+
+			const auto& config = pConfigHolder->Config(height).Network;
+			auto gracePeriod = Timestamp(config.DbrbRegistrationGracePeriod.millis());
+			auto isBootstrapProcess = View{ config.DbrbBootstrapProcesses }.isMember(pThis->m_id);
+			auto isTemporaryProcess = !isBootstrapProcess && pThis->m_currentView.isMember(pThis->m_id);
+			bool isRegistrationRequired = false;
+			if (!isTemporaryProcess && !isBootstrapProcess) {
+				CATAPULT_LOG(debug) << "[DBRB] node is not registered in the DBRB system";
+				isRegistrationRequired = true;
+			} else if (isTemporaryProcess) {
+				auto expirationTime = pThis->m_dbrbViewFetcher.getExpirationTime(pThis->m_id);
+				LogTime("[DBRB] process expires at ", expirationTime);
+				if (expirationTime < gracePeriod)
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid expiration time", pThis->m_id)
+
+				auto gracePeriodStart = expirationTime - gracePeriod;
+				LogTime("[DBRB] process grace period starts at ", gracePeriodStart);
+				if (now >= gracePeriodStart) {
+					CATAPULT_LOG(debug) << "[DBRB] node registration in the DBRB system soon expires";
+					isRegistrationRequired = true;
+				}
+			}
+
+			if (isRegistrationRequired)
+				pThis->m_pTransactionSender->sendAddDbrbProcessTransaction();
+		});
 	}
 }}

@@ -37,11 +37,11 @@ committeeApproval = 1
 committeePhaseTime = 5s
 minCommitteePhaseTime = 3750ms
 maxCommitteePhaseTime = 1m
-committeeSilenceInterval = 100ms
+committeeSilenceInterval = 500ms
 committeeRequestInterval = 500ms
 committeeChainHeightRequestInterval = 3s
 committeeTimeAdjustment = 1.1
-committeeEndSyncApproval = 0.45
+committeeEndSyncApproval = 0.0
 committeeBaseTotalImportance = 100
 committeeNotRunningContribution = 0.5
 
@@ -56,6 +56,8 @@ dbrbShardSize = 6
 
 enableDbrbFastFinality = true
 checkNetworkHeightInterval = 10
+
+blockTimeUpdateStrategy = increase-coefficient
 
 [bootstrap.harvesters]
 
@@ -211,7 +213,7 @@ maxValueSize = 1024
 
 [plugin:catapult.plugins.liquidityprovider]
 enabled = true
-managerPublicKeys = FA04036C14B76B01FAC19F6522C487509691FC5566B7CD95BC0B2207A3F3D162
+managerPublicKeys = E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21
 maxWindowSize = 10
 percentsDigitsAfterDot = 2
 
@@ -256,3 +258,4 @@ enabled = true
 
 # 1 week = 7 days = 168 hours
 dbrbProcessLifetimeAfterExpiration = 168h
+enableDbrbProcessBanning = true

@@ -23,7 +23,7 @@
 #include "ClientConnector.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/ionet/SocketReader.h"
-#include "catapult/utils/SpinLock.h"
+#include <shared_mutex>
 
 namespace catapult { namespace net {
 
@@ -33,7 +33,6 @@ namespace catapult { namespace net {
 		struct ReaderState {
 		public:
 			Key PublicKey;
-			std::shared_ptr<ionet::PacketIo> pBufferedIo;
 			std::weak_ptr<ChainedSocketReader> pReader;
 		};
 
@@ -47,12 +46,12 @@ namespace catapult { namespace net {
 
 		public:
 			size_t size() const {
-				utils::SpinLockGuard guard(m_lock);
+				std::shared_lock lock(m_mutex);
 				return m_readers.size();
 			}
 
 			utils::KeySet identities() const {
-				utils::SpinLockGuard guard(m_lock);
+				std::shared_lock lock(m_mutex);
 				utils::KeySet activeIdentities;
 				for (const auto& pair : m_readers)
 					activeIdentities.emplace(pair.second.PublicKey);
@@ -63,9 +62,8 @@ namespace catapult { namespace net {
 			bool insert(const Key& identityKey, const PacketSocketPointer& pSocket, const ChainedSocketReaderFactory& readerFactory) {
 				ReaderState state;
 				state.PublicKey = identityKey;
-				state.pBufferedIo = pSocket->buffered();
 
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 
 				auto insertedReaderIter = m_readers.end();
 				for (auto i = 0u; i < m_maxConnectionsPerIdentity; ++i) {
@@ -90,7 +88,7 @@ namespace catapult { namespace net {
 			}
 
 			bool close(const Key& identityKey) {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 
 				bool anyClosed = false;
 				for (auto i = 0u; i < m_maxConnectionsPerIdentity; ++i)
@@ -100,12 +98,12 @@ namespace catapult { namespace net {
 			}
 
 			bool close(const Key& identityKey, uint32_t id) {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				return closeSingle(identityKey, id);
 			}
 
 			void clear() {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				for (auto& pair : m_readers)
 					stop(pair.second);
 
@@ -145,7 +143,7 @@ namespace catapult { namespace net {
 		private:
 			uint32_t m_maxConnectionsPerIdentity;
 			Readers m_readers;
-			mutable utils::SpinLock m_lock;
+			mutable std::shared_mutex m_mutex;
 		};
 
 		class DefaultPacketReaders : public PacketReaders, public std::enable_shared_from_this<DefaultPacketReaders> {

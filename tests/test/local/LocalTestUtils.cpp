@@ -307,6 +307,7 @@ namespace catapult { namespace test {
 
 		config.User.BootKey = Local_Node_Private_Key;
 		config.User.DataDirectory = dataDirectory;
+		config.User.CertificateDirectory = dataDirectory + "/certificate";
 		config.SupportedEntityVersions = CreateSupportedEntityVersions();
 		return config.ToConst();
 	}

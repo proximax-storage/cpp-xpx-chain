@@ -24,6 +24,8 @@ namespace catapult { namespace extensions {
 
 	net::ConnectionSettings GetConnectionSettings(const config::BlockchainConfiguration& config) {
 		net::ConnectionSettings settings;
+		settings.NetworkIdentifier = config.Immutable.NetworkIdentifier;
+
 		settings.Timeout = config.Node.ConnectTimeout;
 		settings.SocketWorkingBufferSize = config.Node.SocketWorkingBufferSize;
 		settings.SocketWorkingBufferSensitivity = config.Node.SocketWorkingBufferSensitivity;
@@ -31,11 +33,39 @@ namespace catapult { namespace extensions {
 
 		settings.OutgoingSecurityMode = config.Node.OutgoingSecurityMode;
 		settings.IncomingSecurityModes = config.Node.IncomingSecurityModes;
+
+		return settings;
+	}
+
+	net::ConnectionSettings GetSslConnectionSettings(const config::BlockchainConfiguration& config) {
+		net::ConnectionSettings settings;
+		settings.NetworkIdentifier = config.Immutable.NetworkIdentifier;
+
+		settings.Timeout = config.Node.ConnectTimeout;
+		settings.SocketWorkingBufferSize = config.Node.SocketWorkingBufferSize;
+		settings.SocketWorkingBufferSensitivity = config.Node.SocketWorkingBufferSensitivity;
+		settings.MaxPacketDataSize = config.Node.MaxPacketDataSize;
+
+		settings.OutgoingSecurityMode = config.Node.OutgoingSecurityMode;
+		settings.IncomingSecurityModes = config.Node.IncomingSecurityModes;
+
+		settings.SslOptions.ContextSupplier = ionet::CreateSslContextSupplier(config.User.CertificateDirectory);
+		settings.SslOptions.VerifyCallbackSupplier = ionet::CreateSslVerifyCallbackSupplier();
+
 		return settings;
 	}
 
 	void UpdateAsyncTcpServerSettings(net::AsyncTcpServerSettings& settings, const config::BlockchainConfiguration& config) {
 		settings.PacketSocketOptions = GetConnectionSettings(config).toSocketOptions();
+		settings.AllowAddressReuse = config.Node.ShouldAllowAddressReuse;
+
+		const auto& connectionsConfig = config.Node.IncomingConnections;
+		settings.MaxActiveConnections = connectionsConfig.MaxConnections;
+		settings.MaxPendingConnections = connectionsConfig.BacklogSize;
+	}
+
+	void UpdateAsyncTcpServerSettings(net::AsyncSslTcpServerSettings& settings, const config::BlockchainConfiguration& config) {
+		settings.PacketSocketOptions = GetSslConnectionSettings(config).toSocketOptions();
 		settings.AllowAddressReuse = config.Node.ShouldAllowAddressReuse;
 
 		const auto& connectionsConfig = config.Node.IncomingConnections;

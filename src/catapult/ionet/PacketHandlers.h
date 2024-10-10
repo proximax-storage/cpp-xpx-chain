@@ -69,7 +69,12 @@ namespace catapult { namespace ionet {
 
 	public:
 		/// Creates packet handlers with a max packet data size (\a maxPacketDataSize).
-		explicit ServerPacketHandlers(uint32_t maxPacketDataSize = std::numeric_limits<uint32_t>::max());
+		explicit ServerPacketHandlers(uint32_t maxPacketDataSize = std::numeric_limits<uint32_t>::max(), bool ignoreUnknownPackets = false);
+		~ServerPacketHandlers() = default;
+		ServerPacketHandlers(const ServerPacketHandlers&);
+		ServerPacketHandlers(ServerPacketHandlers&&);
+		ServerPacketHandlers& operator=(const ServerPacketHandlers&);
+		ServerPacketHandlers& operator=(ServerPacketHandlers&&);
 
 	public:
 		/// Gets the number of registered handlers.
@@ -92,11 +97,21 @@ namespace catapult { namespace ionet {
 		/// Registers a \a handler for the specified packet \a type.
 		void registerHandler(PacketType type, const PacketHandler& handler);
 
+		/// Registers a removable \a handler for the specified packet \a type.
+		void registerRemovableHandler(PacketType type, const PacketHandler& handler);
+
+		/// Removes a removable handler for the specified packet \a type.
+		void removeHandler(PacketType type);
+
 	private:
 		const PacketHandler* findHandler(const Packet& packet) const;
+		const PacketHandler* findRemovableHandler(const Packet& packet) const;
 
 	private:
 		uint32_t m_maxPacketDataSize;
 		std::vector<PacketHandler> m_handlers;
+		std::vector<PacketHandler> m_removableHandlers;
+		mutable std::mutex m_mutex;
+		bool m_ignoreUnknownPackets;
 	};
 }}

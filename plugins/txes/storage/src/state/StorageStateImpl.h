@@ -16,33 +16,8 @@ namespace catapult { namespace state {
         explicit StorageStateImpl() = default;
 
     public:
-    	Height getChainHeight() override;
-
-		bool isReplicatorRegistered(const Key& key) override;
-
-        bool driveExists(const Key& driveKey) override;
-        Drive getDrive(const Key& driveKey) override;
-        bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) override;
-        bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) override;
-        std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey) override;
-        std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) override;
-        std::vector<Key> getDriveReplicators(const Key& driveKey) override;
-        std::vector<Hash256> getDriveChannels(const Key& driveKey) override;
-        std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) override;
-        ModificationShard getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) override;
-        std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) override;
-//        SizeMap getCumulativeUploadSizesBytes(const Key& driveKey, const Key& replicatorKey) override;
-
-		std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) override;
-
-		std::vector<CompletedModification> getCompletedModifications(const Key& driveKey) override;
-
-        uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) override;
-
-        bool downloadChannelExists(const Hash256& id) override;
-        std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) override;
-
-		std::optional<DriveVerification> getActiveVerification(const Key& driveKey, const Timestamp& blockTimestamp) override;
-		std::set<Hash256> getReplicatorChannelIds(const Key& replicatorKey) override;
+		bool isReplicatorRegistered() override;
+        std::shared_ptr<Drive> getDrive(const Key& driveKey, const Timestamp& timestamp) override;
+        std::vector<std::shared_ptr<Drive>> getDrives(const Timestamp& timestamp) override;
     };
 }}
