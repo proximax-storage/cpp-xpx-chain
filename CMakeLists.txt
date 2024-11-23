@@ -84,7 +84,7 @@ endfunction()
 add_subdirectory(external)
 
 if(NOT APPLE)
-#	set(DO_NOT_SKIP_BUILD_TESTS TRUE)
+	set(DO_NOT_SKIP_BUILD_TESTS TRUE)
 endif()
 
 # run catapult tests first
