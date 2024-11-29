@@ -25,6 +25,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <rocksdb/iterator.h>
 
 namespace rocksdb {
 	class ColumnFamilyHandle;
@@ -57,6 +58,9 @@ namespace catapult { namespace cache {
 		/// Move assignment operator.
 		RdbDataIterator& operator=(RdbDataIterator&&);
 
+		/// Copy constructor
+		RdbDataIterator(const RdbDataIterator&) noexcept;
+
 	public:
 		/// Iterator representing no match.
 		static RdbDataIterator End();
@@ -72,8 +76,18 @@ namespace catapult { namespace cache {
 		/// Returns storage associated with iterator.
 		rocksdb::PinnableSlice& storage() const;
 
+		/// Gets an iterator to the next element
+		RdbDataIterator next() const;
+
+		RdbDataIterator prev() const;
+
+		bool iterable() const;
+
 		/// Sets flag to \a found indicating that iterator contains data.
 		void setFound(bool found);
+
+		/// Sets rocksDb iterator and takes over ownership
+		void setIterator(rocksdb::Iterator * iterator);
 
 		/// Returns storage as raw buffer.
 		RawBuffer buffer() const;
@@ -137,6 +151,9 @@ namespace catapult { namespace cache {
 
 		/// Gets the first data \a result by <= \a key from \a columnId.
 		void getLowerOrEqual(size_t columnId, const rocksdb::Slice& key, RdbDataIterator& result);
+
+		/// Gets the iterator for the first result in the column family identified by \a columnId.
+		void getIteratorAtStart(size_t columnId, RdbDataIterator& result);
 
 		/// Puts \a value with \a key in \a columnId.
 		void put(size_t columnId, const rocksdb::Slice& key, const std::string& value);

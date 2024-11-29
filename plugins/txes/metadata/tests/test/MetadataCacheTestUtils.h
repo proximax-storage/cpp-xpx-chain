@@ -5,8 +5,8 @@
 **/
 
 #pragma once
-#include "src/cache/MetadataCache.h"
-#include "src/cache/MetadataCacheStorage.h"
+#include "src/cache/MetadataV1Cache.h"
+#include "src/cache/MetadataV1CacheStorage.h"
 #include "plugins/txes/mosaic/src/cache/MosaicCache.h"
 #include "plugins/txes/namespace/src/cache/NamespaceCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
@@ -22,14 +22,14 @@
 namespace catapult { namespace test {
 
 	/// Cache factory for creating a catapult cache composed of account cache and core caches.
-	struct MetadataCacheFactory {
+	struct MetadataV1CacheFactory {
 	private:
 		static auto CreateSubCachesWithMetadataCache(const config::BlockchainConfiguration& config) {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cache::MosaicCache::Id + 1);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
-			subCaches[cache::MetadataCache::Id] =
-					MakeSubCachePlugin<cache::MetadataCache, cache::MetadataCacheStorage>();
+			subCaches[cache::MetadataV1Cache::Id] =
+					MakeSubCachePlugin<cache::MetadataV1Cache, cache::MetadataV1CacheStorage>();
 			subCaches[cache::MosaicCache::Id] =
 					MakeSubCachePlugin<cache::MosaicCache, cache::MosaicCacheStorage>();
 			subCaches[cache::NamespaceCache::Id] =
@@ -52,7 +52,7 @@ namespace catapult { namespace test {
 	};
 
 	/// Asserts that \a expected and \a actual are equal.
-	inline void AssertEqual(const state::MetadataEntry& expected, const state::MetadataEntry& actual) {
+	inline void AssertEqual(const state::MetadataV1Entry& expected, const state::MetadataV1Entry& actual) {
 		EXPECT_EQ(expected.metadataId(), actual.metadataId());
 		EXPECT_EQ(expected.raw(), actual.raw());
 		EXPECT_EQ(expected.type(), actual.type());

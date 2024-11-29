@@ -20,6 +20,8 @@
 
 #pragma once
 #include "catapult/types.h"
+#include "NemesisConfiguration.h"
+#include "NemesisTransactions.h"
 #include <vector>
 #include <memory>
 
@@ -44,6 +46,9 @@ namespace catapult { namespace tools { namespace nemgen {
 
 	/// Calculates the block execution dependent hashes after executing nemesis \a blockElement for network configured with \a config.
 	BlockExecutionHashesInfo CalculateNemesisBlockExecutionHashes(
+			const NemesisConfiguration& nemesisConfig,
 			const model::BlockElement& blockElement,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+			NemesisTransactions* transactions,
+			plugins::PluginManager* manager);
 }}}

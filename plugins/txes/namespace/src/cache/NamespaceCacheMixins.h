@@ -22,9 +22,11 @@
 #include "src/state/NamespaceEntry.h"
 #include "src/state/RootNamespaceHistory.h"
 #include "catapult/deltaset/BaseSetDelta.h"
+#include "catapult/cache/CacheMixins.h"
 #include <numeric>
+namespace catapult {
 
-namespace catapult { namespace cache {
+	namespace cache {
 
 	/// Extended namespace sizes.
 	struct NamespaceSizes {

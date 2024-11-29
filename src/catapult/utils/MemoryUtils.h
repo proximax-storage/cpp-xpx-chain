@@ -26,6 +26,20 @@
 
 namespace catapult { namespace utils {
 
+	/// Converts \a value to a vector.
+	template<typename T>
+	auto ToVector(T value) {
+		std::vector<uint8_t> vec(sizeof(T));
+		reinterpret_cast<T&>(vec[0]) = value;
+		return vec;
+	}
+
+	/// Converts an array (\a value) to a vector.
+	template<size_t N>
+	auto ToVector(const std::array<uint8_t, N>& value) {
+		return std::vector<uint8_t>(value.cbegin(), value.cend());
+	}
+
 	/// Creates a unique pointer of the specified type with custom \a size.
 	template<typename T>
 	model::UniqueEntityPtr<T> MakeUniqueWithSize(size_t size) {
@@ -49,7 +63,12 @@ namespace catapult { namespace utils {
 	std::shared_ptr<T> UniqueToShared(std::unique_ptr<T, Deleter>&& pointer) {
 		return std::move(pointer);
 	}
-
+	/// Copies \a count bytes from \a pSrc to \a pDest.
+	/// \note This wrapper only requires valid pointers when \a count is nonzero.
+	inline void memcpy_cond(void* pDest, const void* pSrc, size_t count) {
+		if (0 < count)
+			std::memcpy(pDest, pSrc, count);
+	}
 	/// A simple memory pool for allocating memory chunks for objects or arrays of objects.
 	/// Note: constructors/destructors are not called on object memory allocation/deallocation.
 	struct Mempool {

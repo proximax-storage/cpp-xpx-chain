@@ -1,7 +1,7 @@
 PATH_TO_CATAPULT_SERVER=$(dirname $(dirname $(dirname $(realpath $0))))
 PATH_TO_BOOTSTRAP=$PATH_TO_CATAPULT_SERVER/scripts/bootstrap
 
-WORK_DIR=$PATH_TO_CATAPULT_SERVER/cmake-build-debug
+WORK_DIR=$PATH_TO_CATAPULT_SERVER/_build
 num_addresses=50
 raw_addresses_path=$WORK_DIR/addresses/raw-addresses.txt
 formatted_address_path=$WORK_DIR/addresses/addresses.yaml

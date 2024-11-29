@@ -19,17 +19,7 @@
 **/
 
 #include "BlockGenerator.h"
-#include "NemesisConfiguration.h"
-#include "NemesisExecutionHasher.h"
-#include "TransactionRegistryFactory.h"
-#include "catapult/builders/AddHarvesterBuilder.h"
-#include "catapult/builders/NetworkConfigBuilder.h"
 #include "catapult/builders/BlockchainUpgradeBuilder.h"
-#include "catapult/builders/MosaicAliasBuilder.h"
-#include "catapult/builders/MosaicDefinitionBuilder.h"
-#include "catapult/builders/MosaicSupplyChangeBuilder.h"
-#include "catapult/builders/RegisterNamespaceBuilder.h"
-#include "catapult/builders/TransferBuilder.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/BlockExtensions.h"
 #include "catapult/extensions/ConversionExtensions.h"
@@ -38,172 +28,22 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
-#include "catapult/version/version.h"
+#include "StateBroker.h"
 #include "catapult/utils/NetworkTime.h"
+#include <inttypes.h>
+
+
 
 namespace catapult { namespace tools { namespace nemgen {
 
 	namespace {
-		std::string FixName(const std::string& mosaicName) {
-			auto name = mosaicName;
-			for (auto& ch : name) {
-				if (':' == ch)
-					ch = '.';
-			}
-
-			return name;
-		}
-
 		std::string GetChildName(const std::string& namespaceName) {
 			return namespaceName.substr(namespaceName.rfind('.') + 1);
 		}
-
-		model::MosaicFlags GetFlags(const model::MosaicProperties& properties) {
-			auto flags = model::MosaicFlags::None;
-			auto allFlags = std::initializer_list<model::MosaicFlags>{
-				model::MosaicFlags::Supply_Mutable, model::MosaicFlags::Transferable
-			};
-
-			for (auto flag : allFlags) {
-				if (properties.is(flag))
-					flags |= flag;
-			}
-
-			return flags;
-		}
-
-		class NemesisTransactions {
-		public:
-			NemesisTransactions(
-					model::NetworkIdentifier networkIdentifier,
-					const GenerationHash& generationHash,
-					const crypto::KeyPair& signer)
-					: m_networkIdentifier(networkIdentifier)
-					, m_generationHash(generationHash)
-					, m_signer(signer)
-			{}
-
-		public:
-			void addRegisterNamespace(const std::string& namespaceName, BlockDuration duration) {
-				builders::RegisterNamespaceBuilder builder(m_networkIdentifier, m_signer.publicKey());
-				builder.setName({ reinterpret_cast<const uint8_t*>(namespaceName.data()), namespaceName.size() });
-				builder.setDuration(duration);
-				signAndAdd(builder.build());
-			}
-
-			void addRegisterNamespace(const std::string& namespaceName, NamespaceId parentId) {
-				builders::RegisterNamespaceBuilder builder(m_networkIdentifier, m_signer.publicKey());
-				builder.setName({ reinterpret_cast<const uint8_t*>(namespaceName.data()), namespaceName.size() });
-				builder.setParentId(parentId);
-				signAndAdd(builder.build());
-			}
-
-			MosaicId addMosaicDefinition(MosaicNonce nonce, const model::MosaicProperties& properties) {
-				builders::MosaicDefinitionBuilder builder(m_networkIdentifier, m_signer.publicKey());
-				builder.setMosaicNonce(nonce);
-				builder.setFlags(GetFlags(properties));
-				builder.setDivisibility(properties.divisibility());
-				if (Eternal_Artifact_Duration != properties.duration())
-					builder.addProperty({ model::MosaicPropertyId::Duration, properties.duration().unwrap() });
-
-				auto pTransaction = builder.build();
-				auto id = pTransaction->MosaicId;
-				signAndAdd(std::move(pTransaction));
-				return id;
-			}
-
-			UnresolvedMosaicId addMosaicAlias(const std::string& mosaicName, MosaicId mosaicId) {
-				auto namespaceName = FixName(mosaicName);
-				auto namespacePath = extensions::GenerateNamespacePath(namespaceName);
-				auto namespaceId = namespacePath[namespacePath.size() - 1];
-				builders::MosaicAliasBuilder builder(m_networkIdentifier, m_signer.publicKey());
-				builder.setNamespaceId(namespaceId);
-				builder.setMosaicId(mosaicId);
-				auto pTransaction = builder.build();
-				signAndAdd(std::move(pTransaction));
-
-				CATAPULT_LOG(debug)
-						<< "added alias from ns " << utils::HexFormat(namespaceId) << " (" << namespaceName
-						<< ") -> mosaic " << utils::HexFormat(mosaicId);
-				return UnresolvedMosaicId(namespaceId.unwrap());
-			}
-
-			void addMosaicSupplyChange(UnresolvedMosaicId mosaicId, Amount delta) {
-				builders::MosaicSupplyChangeBuilder builder(m_networkIdentifier, m_signer.publicKey());
-				builder.setMosaicId(mosaicId);
-				builder.setDirection(model::MosaicSupplyChangeDirection::Increase);
-				builder.setDelta(delta);
-				auto pTransaction = builder.build();
-				signAndAdd(std::move(pTransaction));
-			}
-
-			void addTransfer(
-					const std::map<std::string, UnresolvedMosaicId>& mosaicNameToMosaicIdMap,
-					const Address& recipientAddress,
-					const std::vector<MosaicSeed>& seeds) {
-				auto recipientUnresolvedAddress = extensions::CopyToUnresolvedAddress(recipientAddress);
-				builders::TransferBuilder builder(m_networkIdentifier, m_signer.publicKey());
-				builder.setRecipient(recipientUnresolvedAddress);
-				for (const auto& seed : seeds) {
-					auto mosaicId = mosaicNameToMosaicIdMap.at(seed.Name);
-					builder.addMosaic({ mosaicId, seed.Amount });
-				}
-
-				signAndAdd(builder.build());
-			}
-
-			void addConfig(const std::string& resourcesPath) {
-				builders::NetworkConfigBuilder builder(m_networkIdentifier, m_signer.publicKey());
-				builder.setApplyHeightDelta(BlockDuration{0});
-				auto resPath = boost::filesystem::path(resourcesPath);
-				builder.setBlockChainConfig((resPath / "resources/config-network.properties").generic_string());
-				builder.setSupportedVersionsConfig((resPath / "resources/supported-entities.json").generic_string());
-
-				signAndAdd(builder.build());
-			}
-
-			void addUpgrade() {
-				builders::BlockchainUpgradeBuilder builder(m_networkIdentifier, m_signer.publicKey());
-				builder.setUpgradePeriod(BlockDuration{0});
-				builder.setNewBlockchainVersion(version::CurrentBlockchainVersion);
-
-				signAndAdd(builder.build());
-			}
-
-			void addHarvester(const std::string& harvesterPrivateKey) {
-				auto signer = crypto::KeyPair::FromString(harvesterPrivateKey);
-				builders::AddHarvesterBuilder builder(m_networkIdentifier, signer.publicKey(), signer.publicKey());
-
-				signAndAdd(builder.build(), signer);
-			}
-
-		public:
-			const model::Transactions& transactions() const {
-				return m_transactions;
-			}
-
-		private:
-			void signAndAdd(model::UniqueEntityPtr<model::Transaction>&& pTransaction) {
-				signAndAdd(std::move(pTransaction), m_signer);
-			}
-
-			void signAndAdd(model::UniqueEntityPtr<model::Transaction>&& pTransaction, const crypto::KeyPair& signer) {
-				pTransaction->Deadline = Timestamp(1);
-				extensions::TransactionExtensions(m_generationHash).sign(signer, *pTransaction);
-				m_transactions.push_back(std::move(pTransaction));
-			}
-
-		private:
-			model::NetworkIdentifier m_networkIdentifier;
-			const GenerationHash& m_generationHash;
-			const crypto::KeyPair& m_signer;
-			model::Transactions m_transactions;
-		};
 	}
-
 	model::UniqueEntityPtr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config, const std::string& resourcesPath) {
 		auto signer = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey);
-		NemesisTransactions transactions(config.NetworkIdentifier, config.NemesisGenerationHash, signer);
+		NemesisTransactions transactions(signer, config);
 
 		// - namespace creation
 		for (const auto& rootPair : config.RootNamespaces) {
@@ -282,7 +122,10 @@ namespace catapult { namespace tools { namespace nemgen {
 		block.StateHash = executionHashesDescriptor.StateHash;
 
 		auto signer = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey);
-		extensions::BlockExtensions(config.NemesisGenerationHash).signFullBlock(signer, block);
+		if(!config.EnableSpool)
+			extensions::BlockExtensions(config.NemesisGenerationHash).signFullBlock(signer, block);
+		else
+			model::SignBlockHeader(signer, block);
 		return model::CalculateHash(block);
 	}
 
@@ -290,5 +133,81 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto registry = CreateTransactionRegistry();
 		auto generationHash = config.NemesisGenerationHash;
 		return extensions::BlockExtensions(generationHash, registry).convertBlockToBlockElement(block, generationHash);
+	}
+
+	model::BlockElement ReconstructNemesisBlockElement(const NemesisConfiguration& config, const model::Block& block, const NemesisTransactions& nemesisTransactions) {
+		model::BlockElement blockElement(block);
+		blockElement.EntityHash = model::CalculateHash(block);
+		blockElement.GenerationHash = config.NemesisGenerationHash;
+		if(!config.EnableSpool)
+		{
+			auto transactionsView = nemesisTransactions.createView();
+			for (const auto& transaction : transactionsView) {
+				blockElement.Transactions.push_back(model::TransactionElement(*transaction.transaction));
+				auto& transactionElement = blockElement.Transactions.back();
+				transactionElement.EntityHash = transaction.entityHash;
+				transactionElement.MerkleComponentHash = transaction.merkleHash;
+			}
+		}
+		return blockElement;
+	}
+	model::UniqueEntityPtr<model::Block> CreateNemesisBlock(
+			const model::PreviousBlockContext& context,
+			model::NetworkIdentifier networkIdentifier,
+			const Key& signerPublicKey,
+			const uint64_t transactionPayloadSize,
+			VersionType version) {
+		auto headerSize = (version > 3) ? sizeof(model::BlockHeaderV4) : sizeof(model::BlockHeader);
+		auto size = headerSize + transactionPayloadSize;
+		auto pBlock = utils::MakeUniqueWithSize<model::Block>(size);
+		std::memset(static_cast<void*>(pBlock.get()), 0, headerSize);
+		pBlock->Size = static_cast<uint32_t>(size);
+		pBlock->Version = MakeVersion(networkIdentifier, version);
+		pBlock->setTransactionPayloadSize(transactionPayloadSize);
+
+		pBlock->Signer = signerPublicKey;
+		pBlock->Type = model::Entity_Type_Block;
+
+		pBlock->Height = context.BlockHeight + Height(1);
+		pBlock->Difficulty = Difficulty();
+		pBlock->PreviousBlockHash = context.BlockHash;
+
+		// we skip transaction copying as transactions are kept in temporary files at this point
+		return pBlock;
+	}
+
+	model::UniqueEntityPtr<model::Block> ReconstructNemesisBlock(
+			const NemesisConfiguration& config,
+			NemesisTransactions& transactions,
+			cache::CatapultCache& cache,
+			const plugins::PluginManager& pluginManager,
+			const std::shared_ptr<config::BlockchainConfigurationHolder> pConfig,
+			StateBroker& broker) {
+
+		auto signer = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey);
+
+		// Recreate nemesis transactions from existing state.
+		broker.ProcessCaches(cache.height(), [&transactions](model::UniqueEntityPtr<model::Transaction>&& transaction){
+			transactions.signAndAdd(std::move(transaction));
+		});
+		transactions.finalize();
+
+		model::PreviousBlockContext context;
+		auto pBlock = CreateNemesisBlock(context, config.NetworkIdentifier, signer.publicKey(), transactions.Size());
+		pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
+		pBlock->Type = model::Entity_Type_Nemesis_Block;
+		pBlock->FeeInterest = 1;
+		pBlock->FeeInterestDenominator = 1;
+		pBlock->Timestamp = utils::NetworkTime();
+
+		if(config.EnableSpool) {
+			// Sign transactionless block header.
+			pBlock->BlockTransactionsHash = transactions.TxHash();
+			model::SignBlockHeader(signer, *pBlock);
+			return pBlock;
+		}
+		// Regular signing
+		extensions::BlockExtensions(config.NemesisGenerationHash).signFullBlock(signer, *pBlock);
+		return pBlock;
 	}
 }}}

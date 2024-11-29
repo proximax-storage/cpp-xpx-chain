@@ -50,6 +50,9 @@ namespace catapult { namespace config {
 		/// Initial currency atomic units available in the network.
 		Amount InitialCurrencyAtomicUnits;
 
+		/// Initial nemesis height in the network.
+		Height NemesisHeight;
+
 	private:
 		ImmutableConfiguration() = default;
 

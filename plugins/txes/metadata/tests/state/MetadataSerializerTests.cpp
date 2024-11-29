@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/state/MetadataSerializer.h"
+#include "src/state/MetadataV1Serializer.h"
 #include "catapult/utils/HexFormatter.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/SerializerOrderingTests.h"
@@ -13,7 +13,7 @@
 
 namespace catapult { namespace state {
 
-#define TEST_CLASS MetadataSerializerTests
+#define TEST_CLASS MetadataV1SerializerTests
 
 	namespace {
 		class TestContext {
@@ -31,16 +31,16 @@ namespace catapult { namespace state {
 			}
 
 		public:
-			auto createEntry(model::MetadataType type, size_t fieldCount) {
+			auto createEntry(model::MetadataV1Type type, size_t fieldCount) {
 				auto str = test::GenerateRandomString(15);
 				std::vector<uint8_t> buffer(str.size());
 				std::copy(str.cbegin(), str.cend(), buffer.begin());
-				state::MetadataEntry entry(buffer, type);
+				state::MetadataV1Entry entry(buffer, type);
 
 				for (size_t i = 0; i < fieldCount; ++i) {
 					auto key = test::GenerateRandomString(20);
 					auto value = test::GenerateRandomString(40);
-					entry.fields().emplace_back(MetadataField{key, value, Height{i}});
+					entry.fields().emplace_back(MetadataV1Field{key, value, Height{i}});
 				}
 
 				return entry;
@@ -51,7 +51,7 @@ namespace catapult { namespace state {
 			mocks::MockMemoryStream m_stream;
 		};
 
-		const uint8_t* AssertFieldBuffer(const std::vector<MetadataField>& fields, const uint8_t* pData) {
+		const uint8_t* AssertFieldBuffer(const std::vector<MetadataV1Field>& fields, const uint8_t* pData) {
 			auto count = *reinterpret_cast<const uint8_t*>(pData);
 			EXPECT_EQ(fields.size(), count);
 			pData += sizeof(uint8_t);
@@ -81,7 +81,7 @@ namespace catapult { namespace state {
 			return pData;
 		}
 
-		const uint8_t* AssertEntryBuffer(const state::MetadataEntry& entry, const uint8_t* pData, VersionType version) {
+		const uint8_t* AssertEntryBuffer(const state::MetadataV1Entry& entry, const uint8_t* pData, VersionType version) {
 			uint8_t rawIdSize = entry.raw().size();
 			EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
 			pData += sizeof(VersionType);
@@ -93,7 +93,7 @@ namespace catapult { namespace state {
 			EXPECT_EQ(buffer, entry.raw());
 			pData += rawIdSize;
 
-			EXPECT_EQ(entry.type(), *reinterpret_cast<const model::MetadataType*>(pData));
+			EXPECT_EQ(entry.type(), *reinterpret_cast<const model::MetadataV1Type*>(pData));
 			pData += sizeof(uint8_t);
 
 			return AssertFieldBuffer(entry.fields(), pData);
@@ -102,10 +102,10 @@ namespace catapult { namespace state {
 		void AssertCanSaveSingleEntry(VersionType version) {
 			// Arrange:
 			TestContext context;
-			auto entry = context.createEntry(model::MetadataType::Address, 5);
+			auto entry = context.createEntry(model::MetadataV1Type::Address, 5);
 
 			// Act:
-			MetadataSerializer::Save(entry, context.outputStream());
+			MetadataV1Serializer::Save(entry, context.outputStream());
 
 			// Assert:
 			AssertEntryBuffer(entry, context.buffer().data(), version);
@@ -114,14 +114,14 @@ namespace catapult { namespace state {
 		void AssertCanSaveMultipleEntries(VersionType version) {
 			// Arrange:
 			TestContext context;
-			auto entry1 = context.createEntry(model::MetadataType::Address, 10);
-			auto entry2 = context.createEntry(model::MetadataType::MosaicId, 15);
-			auto entry3 = context.createEntry(model::MetadataType::NamespaceId, 20);
+			auto entry1 = context.createEntry(model::MetadataV1Type::Address, 10);
+			auto entry2 = context.createEntry(model::MetadataV1Type::MosaicId, 15);
+			auto entry3 = context.createEntry(model::MetadataV1Type::NamespaceId, 20);
 
 			// Act:
-			MetadataSerializer::Save(entry1, context.outputStream());
-			MetadataSerializer::Save(entry2, context.outputStream());
-			MetadataSerializer::Save(entry3, context.outputStream());
+			MetadataV1Serializer::Save(entry1, context.outputStream());
+			MetadataV1Serializer::Save(entry2, context.outputStream());
+			MetadataV1Serializer::Save(entry3, context.outputStream());
 
 			// Assert:
 			const auto* pBuffer = context.buffer().data();
@@ -146,7 +146,7 @@ namespace catapult { namespace state {
 	// region Load
 
 	namespace {
-		std::vector<uint8_t> CreateEntryBuffer(const state::MetadataEntry& entry, VersionType version) {
+		std::vector<uint8_t> CreateEntryBuffer(const state::MetadataV1Entry& entry, VersionType version) {
 			std::vector<uint8_t> buffer;
 			auto pData = reinterpret_cast<const uint8_t*>(&version);
 			std::copy(pData, pData + sizeof(VersionType), std::back_inserter(buffer));
@@ -175,7 +175,7 @@ namespace catapult { namespace state {
 			return buffer;
 		}
 
-		void AssertEqual(const state::MetadataEntry& expectedEntry, const state::MetadataEntry& entry) {
+		void AssertEqual(const state::MetadataV1Entry& expectedEntry, const state::MetadataV1Entry& entry) {
 			EXPECT_EQ(expectedEntry.metadataId(), entry.metadataId());
 			EXPECT_EQ(expectedEntry.type(), entry.type());
 			EXPECT_EQ(expectedEntry.raw(), entry.raw());
@@ -190,12 +190,12 @@ namespace catapult { namespace state {
 		void AssertCanLoadSingleEntry(VersionType version) {
 			// Arrange:
 			TestContext context;
-			auto originalEntry = context.createEntry(model::MetadataType::Address, 5);
+			auto originalEntry = context.createEntry(model::MetadataV1Type::Address, 5);
 			auto buffer = CreateEntryBuffer(originalEntry, version);
-			state::MetadataEntry result;
+			state::MetadataV1Entry result;
 
 			// Act:
-			test::RunLoadValueTest<MetadataSerializer>(buffer, result);
+			test::RunLoadValueTest<MetadataV1Serializer>(buffer, result);
 
 			// Assert:
 			AssertEqual(originalEntry, result);

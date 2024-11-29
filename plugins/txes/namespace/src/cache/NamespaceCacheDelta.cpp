@@ -52,6 +52,8 @@ namespace catapult { namespace cache {
 			, NamespaceCacheDeltaMixins::Touch(*namespaceSets.pPrimary, *namespaceSets.pHeightGrouping)
 			, NamespaceCacheDeltaMixins::DeltaElements(*namespaceSets.pPrimary)
 			, NamespaceCacheDeltaMixins::NamespaceDeepSize(namespaceSizes)
+			, NamespaceCacheDeltaMixins::PrivateAccessor(*namespaceSets.pPrimary, *namespaceSets.pFlatMap, *namespaceSets.pHeightGrouping)
+			, NamespaceCacheDeltaMixins::BroadIteration(*namespaceSets.pPrimary, *namespaceSets.pFlatMap, *namespaceSets.pHeightGrouping)
 			, NamespaceCacheDeltaMixins::NamespaceLookup(*namespaceSets.pPrimary, *namespaceSets.pFlatMap)
 			, m_pHistoryById(namespaceSets.pPrimary)
 			, m_pNamespaceById(namespaceSets.pFlatMap)
@@ -211,5 +213,15 @@ namespace catapult { namespace cache {
 		});
 
 		return collectedIds;
+	}
+	void BasicNamespaceCacheDelta::insertRaw(const state::RootNamespaceHistory& ns) {
+		m_pHistoryById->insert(ns);
+	}
+	void BasicNamespaceCacheDelta::insertRaw(const state::Namespace& ns) {
+		m_pNamespaceById->insert(ns);
+	}
+
+	void BasicNamespaceCacheDelta::insertRaw(const NamespaceCacheTypes::HeightGroupingTypes::BaseSetDeltaType::ElementType& grouping) {
+		m_pRootNamespaceIdsByExpiryHeight->insert(grouping);
 	}
 }}

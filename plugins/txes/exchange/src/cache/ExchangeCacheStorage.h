@@ -6,7 +6,7 @@
 
 #pragma once
 #include "ExchangeCacheTypes.h"
-#include "src/state/ExchangeEntrySerializer.h"
+#include "plugins/txes/exchange/src/state/ExchangeEntrySerializer.h"
 #include "catapult/cache/CacheStorageInclude.h"
 
 namespace catapult { namespace cache {

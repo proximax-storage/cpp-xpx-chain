@@ -71,7 +71,7 @@ namespace catapult { namespace cache {
 		const TSet& m_set;
 	};
 
-	/// A mixin for adding iteration support to a cache.
+	/// A mixin for adding iteration support to a memory based cache.
 	template<typename TSet>
 	class IterationMixin {
 	public:
@@ -212,6 +212,116 @@ namespace catapult { namespace cache {
 
 	private:
 		const TSet& m_set;
+	};
+
+	/// A mixin for adding iteration support to a cache supporting both in memory and storage.
+	template<typename TSet, typename ... Args>
+	class BroadIterationMixin {
+	public:
+		/// An iterable view of the cache.
+		template<typename TChildSet>
+		struct IterableView {
+		public:
+			/// Creates a view around \a set.
+			explicit IterableView(const TChildSet& set) : m_set(set)
+			{}
+
+		public:
+			/// Returns a const iterator to the first element of the underlying set.
+			auto begin() const {
+				return MakeBroadIterableView(m_set).begin();
+			}
+
+			/// Returns a const iterator to the element following the last element of the underlying set.
+			auto end() const {
+				return MakeBroadIterableView(m_set).end();
+			}
+
+		private:
+			const TChildSet& m_set;
+		};
+
+	public:
+		/// Creates a mixin around \a set.
+		explicit BroadIterationMixin(const TSet& set, const Args&... args) : m_sets(set, args...)
+		{}
+
+	public:
+		/// Creates an iterable view of the cache.
+		/// \note \c nullptr will be returned if the cache does not support iteration.
+		template<typename TSetType = TSet>
+		auto tryMakeBroadIterableView() const {
+			// use argument dependent lookup to resolve IsBaseSetIterable
+			return IsBaseSetBroadIterable(std::get<const TSetType&>(m_sets)) ? std::make_unique<IterableView<TSetType>>(std::get<const TSetType&>(m_sets)) : nullptr;
+		}
+
+	private:
+		std::tuple<const TSet&, const Args&...> m_sets;
+	};
+
+	/// A mixin for adding non-const access support to a cache.
+	/// \note This is not simply a specialization of ConstAccessorMixin due to differences in function constness.
+	template<
+			typename TSet,
+			typename TCacheDescriptor,
+			typename TValueAdapter = detail::NoOpAdapter<typename TCacheDescriptor::ValueType>,
+			typename ...TRest>
+	class BroadMutableAccessorMixin : BroadMutableAccessorMixin<TRest...>{
+	private:
+		using KeyType = typename TCacheDescriptor::KeyType;
+		using ValueType = typename TValueAdapter::AdaptedValueType;
+		using SetIteratorType = typename TSet::FindIterator;
+
+	public:
+		/// Find (mutable) iterator.
+		using iterator = detail::CacheFindIterator<TCacheDescriptor, TValueAdapter, SetIteratorType, ValueType>;
+		using BroadMutableAccessorMixin<TRest...>::mfind;
+	public:
+		/// Creates a mixin around \a set.
+		template<typename ...TSets>
+		explicit BroadMutableAccessorMixin(TSet& set, TSets&& ...params) : m_set(set), BroadMutableAccessorMixin<TRest...>(std::forward<TSets>(params)...)
+		{}
+
+	public:
+		/// Finds the cache value identified by \a key.
+		iterator mfind(const KeyType& key, Tag<TSet> = Tag<TSet>()) {
+			auto setIter = m_set.find(key);
+			return iterator(std::move(setIter), key);
+		}
+
+	private:
+		TSet& m_set;
+	};
+
+	/// A mixin for adding non-const access support to a cache.
+	/// \note This is not simply a specialization of ConstAccessorMixin due to differences in function constness.
+	template<
+			typename TSet,
+			typename TCacheDescriptor,
+			typename TValueAdapter>
+	class BroadMutableAccessorMixin<TSet, TCacheDescriptor, TValueAdapter>{
+	private:
+		using KeyType = typename TCacheDescriptor::KeyType;
+		using ValueType = typename TValueAdapter::AdaptedValueType;
+		using SetIteratorType = typename TSet::FindIterator;
+
+	public:
+		/// Find (mutable) iterator.
+		using iterator = detail::CacheFindIterator<TCacheDescriptor, TValueAdapter, SetIteratorType, ValueType>;
+	public:
+		/// Creates a mixin around \a set.
+		explicit BroadMutableAccessorMixin(TSet& set) : m_set(set)
+		{}
+
+	public:
+		/// Finds the cache value identified by \a key.
+		iterator mfind(const KeyType& key, Tag<TSet> = Tag<TSet>()) {
+			auto setIter = m_set.find(key);
+			return iterator(std::move(setIter), key);
+		}
+
+	private:
+		TSet& m_set;
 	};
 
 	/// A mixin for adding non-const access support to a cache.

@@ -4,14 +4,14 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/MetadataCache.h"
+#include "src/cache/MetadataV1Cache.h"
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CachePruneTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
 
 namespace catapult { namespace cache {
 
-#define TEST_CLASS MetadataCacheTests
+#define TEST_CLASS MetadataV1CacheTests
 
 	// region mixin traits based tests
 
@@ -19,14 +19,14 @@ namespace catapult { namespace cache {
 		constexpr auto Max_Rollback_Blocks = 7u;
 
 		struct MetadataCacheMixinTraits {
-			class CacheType : public MetadataCache {
+			class CacheType : public MetadataV1Cache {
 			public:
-				CacheType() : MetadataCache(CacheConfiguration())
+				CacheType() : MetadataV1Cache(CacheConfiguration())
 				{}
 			};
 
 			using IdType = Hash256;
-			using ValueType = state::MetadataEntry;
+			using ValueType = state::MetadataV1Entry;
 
 			static uint8_t GetRawId(const IdType& id) {
 				return id[0];
@@ -41,20 +41,20 @@ namespace catapult { namespace cache {
 			}
 
 			static ValueType CreateWithId(uint8_t id) {
-				return state::MetadataEntry(IdType{ { id } });
+				return state::MetadataV1Entry(IdType{ { id } });
 			}
 
-			static state::MetadataEntry CreateWithIdAndExpiration(uint8_t id, Height height) {
-				auto metadataEntry = state::MetadataEntry(IdType{ { id } });
-				metadataEntry.fields().push_back(state::MetadataField { "Key" , "Value", height });
+			static state::MetadataV1Entry CreateWithIdAndExpiration(uint8_t id, Height height) {
+				auto metadataEntry = state::MetadataV1Entry(IdType{ { id } });
+				metadataEntry.fields().push_back(state::MetadataV1Field { "Key" , "Value", height });
 				return metadataEntry;
 			}
 		};
 
 		struct MetadataEntryModificationPolicy : public test::DeltaRemoveInsertModificationPolicy {
-			static void Modify(MetadataCacheDelta& delta, const state::MetadataEntry& metadataEntry) {
+			static void Modify(MetadataV1CacheDelta& delta, const state::MetadataV1Entry& metadataEntry) {
 				auto& metadataFromCache = delta.find(metadataEntry.metadataId()).get();
-				metadataFromCache.fields().push_back(state::MetadataField { "Key" , "Value", Height(0) });
+				metadataFromCache.fields().push_back(state::MetadataV1Field { "Key" , "Value", Height(0) });
 			}
 		};
 	}

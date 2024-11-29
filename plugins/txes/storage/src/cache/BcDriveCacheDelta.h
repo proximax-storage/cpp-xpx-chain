@@ -28,6 +28,7 @@ namespace catapult { namespace cache {
 		using ConstAccessor = PrimaryMixins::MutableAccessor;
 		using DeltaElements = PrimaryMixins::DeltaElements;
 		using BasicInsertRemove = PrimaryMixins::BasicInsertRemove;
+		using BroadIteration = PrimaryMixins::BroadIteration;
 		using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::StorageConfiguration>;
 	};
 
@@ -41,6 +42,7 @@ namespace catapult { namespace cache {
 			, public BcDriveCacheDeltaMixins::PatriciaTreeDelta
 			, public BcDriveCacheDeltaMixins::BasicInsertRemove
 			, public BcDriveCacheDeltaMixins::DeltaElements
+			, public BcDriveCacheDeltaMixins::BroadIteration
 			, public BcDriveCacheDeltaMixins::ConfigBasedEnable {
 	public:
 		using ReadOnlyView = BcDriveCacheTypes::CacheReadOnlyType;
@@ -57,6 +59,7 @@ namespace catapult { namespace cache {
 				, BcDriveCacheDeltaMixins::PatriciaTreeDelta(*driveSets.pPrimary, driveSets.pPatriciaTree)
 				, BcDriveCacheDeltaMixins::BasicInsertRemove(*driveSets.pPrimary)
 				, BcDriveCacheDeltaMixins::DeltaElements(*driveSets.pPrimary)
+				, BcDriveCacheDeltaMixins::BroadIteration(*driveSets.pPrimary)
 				, BcDriveCacheDeltaMixins::ConfigBasedEnable(
 					pConfigHolder, [](const auto& config) { return config.Enabled; })
 				, m_pBcDriveEntries(driveSets.pPrimary)

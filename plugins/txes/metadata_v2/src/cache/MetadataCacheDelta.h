@@ -25,7 +25,7 @@
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/deltaset/BaseSetDelta.h"
-#include "src/config/MetadataConfiguration.h"
+#include "plugins/txes/metadata_v2/src/config/MetadataConfiguration.h"
 
 namespace catapult { namespace cache {
 
@@ -42,6 +42,7 @@ namespace catapult { namespace cache {
 			, public MetadataCacheDeltaMixins::PatriciaTreeDelta
 			, public MetadataCacheDeltaMixins::BasicInsertRemove
 			, public MetadataCacheDeltaMixins::DeltaElements
+			, public MetadataCacheDeltaMixins::BroadIteration
 			, public MetadataCacheDeltaMixins::ConfigBasedEnable<config::MetadataConfiguration> {
 	public:
 		using ReadOnlyView = MetadataCacheTypes::CacheReadOnlyType;
@@ -58,6 +59,7 @@ namespace catapult { namespace cache {
 				, MetadataCacheDeltaMixins::PatriciaTreeDelta(*metadataSets.pPrimary, metadataSets.pPatriciaTree)
 				, MetadataCacheDeltaMixins::BasicInsertRemove(*metadataSets.pPrimary)
 				, MetadataCacheDeltaMixins::DeltaElements(*metadataSets.pPrimary)
+				, MetadataCacheDeltaMixins::BroadIteration(*metadataSets.pPrimary)
 				, MetadataCacheDeltaMixins::ConfigBasedEnable<config::MetadataConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 				, m_pMetadataEntries(metadataSets.pPrimary)
 		{}

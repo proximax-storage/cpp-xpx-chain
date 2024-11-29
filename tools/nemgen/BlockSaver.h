@@ -20,6 +20,10 @@
 
 #pragma once
 
+#include "catapult/io/FileBlockStorage.h"
+#include "catapult/io/Stream.h"
+#include "NemesisTransactions.h"
+
 namespace catapult {
 	namespace model { struct BlockElement; }
 	namespace tools { namespace nemgen { struct NemesisConfiguration; } }
@@ -29,4 +33,19 @@ namespace catapult { namespace tools { namespace nemgen {
 
 	/// Saves nemesis \a blockElement according to \a config.
 	void SaveNemesisBlockElement(const model::BlockElement& blockElement, const NemesisConfiguration& config);
+
+	/// Writes \a blockElement into \a outputStream.
+	void WriteBlockElement(io::OutputStream& outputStream, const model::BlockElement& blockElement, NemesisTransactions& transactions);
+
+	/// Saves nemesis \a blockElement according to \a config.
+	void SaveNemesisBlockElementWithSpooling(const model::BlockElement& blockElement, const NemesisConfiguration& config, NemesisTransactions& transactions);
+
+	class NemesisFileBlockStorage : public io::FileBlockStorage {
+	/// Creates a file-based block storage, where blocks will be stored inside \a dataDirectory
+	/// with specified storage \a mode.
+	explicit NemesisFileBlockStorage(const std::string& dataDirectory, io::FileBlockStorageMode mode = io::FileBlockStorageMode::Hash_Index) : FileBlockStorage(dataDirectory, mode) {
+		
+	}
+	void saveBlock(const model::BlockElement& blockElement, NemesisTransactions& transactions);
+};
 }}}

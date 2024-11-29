@@ -6,13 +6,13 @@
 
 #pragma once
 #include "mongo/src/mappers/MapperInclude.h"
-#include "plugins/txes/metadata/src/state/MetadataEntry.h"
+#include "plugins/txes/metadata/src/state/MetadataV1Entry.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 
 	/// Maps a \a metadataEntry to the corresponding db model value.
-	bsoncxx::document::value ToDbModel(const state::MetadataEntry& metadataEntry);
+	bsoncxx::document::value ToDbModel(const state::MetadataV1Entry& metadataEntry);
 
 	/// Maps a database \a document to the corresponding model value.
-	state::MetadataEntry ToMetadataEntry(const bsoncxx::document::view& document);
+	state::MetadataV1Entry ToMetadataEntry(const bsoncxx::document::view& document);
 }}}

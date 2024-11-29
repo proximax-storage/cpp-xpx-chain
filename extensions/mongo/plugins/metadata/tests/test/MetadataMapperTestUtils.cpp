@@ -14,13 +14,13 @@ namespace catapult { namespace test {
 	// region metadata entry related
 
 	namespace {
-		void AssertFields(const std::vector<state::MetadataField>& fields, const bsoncxx::document::view& dbFields) {
+		void AssertFields(const std::vector<state::MetadataV1Field>& fields, const bsoncxx::document::view& dbFields) {
 			ASSERT_EQ(fields.size(), test::GetFieldCount(dbFields));
 
 			for (const auto& dbField : dbFields) {
 				std::string key = std::string(dbField["key"].get_utf8().value);
 				std::string value = std::string(dbField["value"].get_utf8().value);
-				auto iter = std::find_if(fields.begin(), fields.end(), [&key, &value](const state::MetadataField& field) {
+				auto iter = std::find_if(fields.begin(), fields.end(), [&key, &value](const state::MetadataV1Field& field) {
 					return (field.MetadataKey == key) && (field.MetadataValue == value);
 				});
 
@@ -29,11 +29,11 @@ namespace catapult { namespace test {
 		}
 	}
 
-	void AssertEqualMetadataData(const state::MetadataEntry& entry, const bsoncxx::document::view& dbMetadata) {
+	void AssertEqualMetadataData(const state::MetadataV1Entry& entry, const bsoncxx::document::view& dbMetadata) {
 		std::vector<uint8_t> raw;
 		mongo::mappers::DbBinaryToStdContainer(raw, dbMetadata["metadataId"].get_binary());
 		EXPECT_EQ(entry.raw(), raw);
-		EXPECT_EQ(entry.type(), model::MetadataType(GetUint32(dbMetadata, "metadataType")));
+		EXPECT_EQ(entry.type(), model::MetadataV1Type(GetUint32(dbMetadata, "metadataType")));
 
 		AssertFields(entry.fields(), dbMetadata["fields"].get_array().value);
 	}

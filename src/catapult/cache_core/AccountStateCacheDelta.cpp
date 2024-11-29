@@ -53,6 +53,7 @@ namespace catapult { namespace cache {
 			, AccountStateCacheDeltaMixins::MutableAccessorKey(*pKeyLookupAdapter)
 			, AccountStateCacheDeltaMixins::PatriciaTreeDelta(*accountStateSets.pPrimary, accountStateSets.pPatriciaTree)
 			, AccountStateCacheDeltaMixins::DeltaElements(*accountStateSets.pPrimary)
+			, AccountStateCacheDeltaMixins::Iteration(*accountStateSets.pPrimary)
 			, m_pStateByAddress(accountStateSets.pPrimary)
 			, m_pKeyToAddress(accountStateSets.pKeyLookupMap)
 			, m_options(options)

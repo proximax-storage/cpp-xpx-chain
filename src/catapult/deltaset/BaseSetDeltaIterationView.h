@@ -25,9 +25,9 @@
 namespace catapult { namespace deltaset {
 
 	/// View that provides iteration support to a base set delta.
-	/// \note This is only supported for set types where SetType and MemorySetType are the same.
+	/// \note This is only supported for set types where SetType and MemorySetType are the same or with ConditionalContainers.
 	/// \note Iteration preserves natural order of unremoved original elements followed by added elements.
-	template<typename TSetTraits>
+	template<typename TSetTraits, typename TSetType>
 	class BaseSetDeltaIterationView {
 	private:
 		using SetType = typename TSetTraits::MemorySetType;
@@ -35,7 +35,7 @@ namespace catapult { namespace deltaset {
 
 	public:
 		/// Creates a view around \a originalElements, \a deltas and \a size.
-		BaseSetDeltaIterationView(const SetType& originalElements, const DeltaElements<SetType>& deltas, size_t size)
+		BaseSetDeltaIterationView(const TSetType& originalElements, const DeltaElements<SetType>& deltas, size_t size)
 				: m_originalElements(originalElements)
 				, m_deltas(deltas)
 				, m_size(size)
@@ -53,14 +53,15 @@ namespace catapult { namespace deltaset {
 
 		public:
 			/// Creates an iterator around the original \a elements and \a deltas at \a position given a total of \a size elements.
-			iterator(const SetType& elements, const DeltaElements<SetType>& deltas, size_t position, size_t size)
+			iterator(const TSetType& elements, const DeltaElements<SetType>& deltas, size_t position, size_t size)
 					: m_elements(elements)
 					, m_deltas(deltas)
 					, m_position(position)
 					, m_size(size)
 					, m_stage(IterationStage::Original)
-					, m_iter(m_elements.cbegin())
-					, m_originalIter(m_iter) {
+					, m_isOriginal(true)
+					, m_iter(m_deltas.Added.cbegin())
+					, m_originalIter(m_elements.begin()) {
 				if (m_position == m_size)
 					m_iter = m_deltas.Added.cend();
 				else
@@ -114,6 +115,7 @@ namespace catapult { namespace deltaset {
 
 					// all original elements have been iterated, so advance to the next stage
 					m_stage = IterationStage::Added;
+					m_isOriginal = false;
 					m_iter = m_deltas.Added.cbegin();
 				}
 
@@ -131,7 +133,13 @@ namespace catapult { namespace deltaset {
 
 					// prioritize copied elements
 					auto copiedIter = m_deltas.Copied.find(key);
-					m_iter = m_deltas.Copied.cend() == copiedIter ? m_originalIter : copiedIter;
+					if(m_deltas.Copied.cend() != copiedIter) {
+						m_isOriginal = false;
+						m_iter = copiedIter;
+					}
+					else {
+						m_isOriginal = true;
+					}
 					return true;
 				}
 
@@ -160,7 +168,7 @@ namespace catapult { namespace deltaset {
 				if (m_position == m_size)
 					CATAPULT_THROW_OUT_OF_RANGE("cannot dereference at end");
 
-				return &*m_iter;
+				return m_isOriginal ? &*m_originalIter : &*m_iter;
 			}
 
 			/// Gets a reference to the current element.
@@ -172,13 +180,14 @@ namespace catapult { namespace deltaset {
 			enum class IterationStage { Original, Added };
 
 		private:
-			const SetType& m_elements;
+			const TSetType& m_elements;
 			DeltaElements<SetType> m_deltas;
 			size_t m_position;
+			bool m_isOriginal;
 			size_t m_size;
 			IterationStage m_stage;
 			typename SetType::const_iterator m_iter;
-			typename SetType::const_iterator m_originalIter;
+			typename TSetType::const_iterator m_originalIter;
 		};
 
 		/// Gets a const iterator to the first element of the underlying set.
@@ -192,7 +201,7 @@ namespace catapult { namespace deltaset {
 		}
 
 	private:
-		const SetType& m_originalElements;
+		const TSetType& m_originalElements;
 		DeltaElements<SetType> m_deltas; // by value because deltas holds all sets by reference
 		size_t m_size;
 	};
@@ -200,7 +209,20 @@ namespace catapult { namespace deltaset {
 	/// Makes a base set \a delta iterable.
 	/// \note This should only be supported for in memory views.
 	template<typename TElementTraits, typename TSetTraits>
-	BaseSetDeltaIterationView<TSetTraits> MakeIterableView(const BaseSetDelta<TElementTraits, TSetTraits>& delta) {
-		return BaseSetDeltaIterationView<TSetTraits>(SelectIterableSet(delta.m_originalElements), delta.deltas(), delta.size());
+	BaseSetDeltaIterationView<TSetTraits,typename TSetTraits::MemorySetType> MakeIterableView(const BaseSetDelta<TElementTraits, TSetTraits>& delta) {
+		return BaseSetDeltaIterationView<TSetTraits,typename TSetTraits::MemorySetType>(SelectIterableSet(delta.m_originalElements), delta.deltas(), delta.size());
+	}
+
+	/// Returns \c true if \a set is iterable.
+	template<typename TElementTraits, typename TSetTraits>
+	bool IsBaseSetBroadIterable(const BaseSetDelta<TElementTraits, TSetTraits>& set) {
+		return IsSetBroadIterable(set.m_originalElements);
+	}
+
+	/// Makes a base conditional \a set iterable.
+	/// \note This only currently supports conditional containers.
+	template<typename TElementTraits, typename TSetTraits>
+	auto MakeBroadIterableView(const BaseSetDelta<TElementTraits, TSetTraits>& delta) -> BaseSetDeltaIterationView<TSetTraits, std::remove_reference_t<decltype(SelectBroadIterableSet(delta.m_originalElements))>>{
+		return BaseSetDeltaIterationView<TSetTraits, std::remove_reference_t<decltype(SelectBroadIterableSet(delta.m_originalElements))>>(SelectBroadIterableSet(delta.m_originalElements), delta.deltas(), delta.size());
 	}
 }}

@@ -50,6 +50,7 @@ namespace catapult { namespace cache {
 			, MosaicCacheDeltaMixins::BasicInsertRemove(*mosaicSets.pPrimary)
 			, MosaicCacheDeltaMixins::Touch(*mosaicSets.pPrimary, *mosaicSets.pHeightGrouping)
 			, MosaicCacheDeltaMixins::DeltaElements(*mosaicSets.pPrimary)
+			, MosaicCacheDeltaMixins::BroadIteration(*mosaicSets.pPrimary, *mosaicSets.pHeightGrouping)
 			, m_pEntryById(mosaicSets.pPrimary)
 			, m_pMosaicIdsByExpiryHeight(mosaicSets.pHeightGrouping)
 	{}

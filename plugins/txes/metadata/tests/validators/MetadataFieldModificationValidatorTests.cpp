@@ -11,30 +11,30 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS MetadataFieldModificationValidatorTests
+#define TEST_CLASS MetadataV1FieldModificationValidatorTests
 
 	constexpr uint8_t MAX_KEY_SIZE = 5;
 	constexpr uint8_t MAX_VALUE_SIZE = 10;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataFieldModification)
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataV1FieldModification)
 
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult,
-				model::MetadataModificationType modificationType,
+				model::MetadataV1ModificationType modificationType,
 				const std::string& key, const std::string& value) {
 			// Arrange:
-			model::ModifyMetadataFieldNotification<1> notification(
+			model::ModifyMetadataV1FieldNotification<1> notification(
 					modificationType,
 					key.size(), key.data(),
 					value.size(), value.data());
-			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
+			auto pluginConfig = config::MetadataV1Configuration::Uninitialized();
 			pluginConfig.MaxFieldKeySize = MAX_KEY_SIZE;
 			pluginConfig.MaxFieldValueSize = MAX_VALUE_SIZE;
 			test::MutableBlockchainConfiguration mutableConfig;
 			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pValidator = CreateMetadataFieldModificationValidator();
+			auto pValidator = CreateMetadataV1FieldModificationValidator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
@@ -46,37 +46,37 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessValidatingNotification) {
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, model::MetadataModificationType::Add, "key", "value");
-		AssertValidationResult(ValidationResult::Success, model::MetadataModificationType::Del, "key", "value");
+		AssertValidationResult(ValidationResult::Success, model::MetadataV1ModificationType::Add, "key", "value");
+		AssertValidationResult(ValidationResult::Success, model::MetadataV1ModificationType::Del, "key", "value");
 	}
 
 	TEST(TEST_CLASS, FailureWhenUnknownModificationType) {
 		// Assert:
-		AssertValidationResult(Failure_Metadata_Modification_Type_Invalid, model::MetadataModificationType(3), "key", "value");
+		AssertValidationResult(Failure_Metadata_Modification_Type_Invalid, model::MetadataV1ModificationType(3), "key", "value");
 	}
 
 	TEST(TEST_CLASS, FailureWhenKeySizeIsBetterThanMaxKeySize) {
 		// Assert:
-		AssertValidationResult(Failure_Metadata_Modification_Key_Invalid, model::MetadataModificationType::Add, "keyMore", "value");
+		AssertValidationResult(Failure_Metadata_Modification_Key_Invalid, model::MetadataV1ModificationType::Add, "keyMore", "value");
 	}
 
 	TEST(TEST_CLASS, FailureWhenKeySizeIsZero) {
 		// Assert:
-		AssertValidationResult(Failure_Metadata_Modification_Key_Invalid, model::MetadataModificationType::Add, "", "value");
+		AssertValidationResult(Failure_Metadata_Modification_Key_Invalid, model::MetadataV1ModificationType::Add, "", "value");
 	}
 
 	TEST(TEST_CLASS, FailureWhenValueSizeIsBetterThanMaxValueSize) {
 		// Assert:
-		AssertValidationResult(Failure_Metadata_Modification_Value_Invalid, model::MetadataModificationType::Add, "key", "valueMoreThan");
+		AssertValidationResult(Failure_Metadata_Modification_Value_Invalid, model::MetadataV1ModificationType::Add, "key", "valueMoreThan");
 	}
 
 	TEST(TEST_CLASS, FailureWhenValueSizeIsZeroAndTypeAdd) {
 		// Assert:
-		AssertValidationResult(Failure_Metadata_Modification_Value_Invalid, model::MetadataModificationType::Add, "key", "");
+		AssertValidationResult(Failure_Metadata_Modification_Value_Invalid, model::MetadataV1ModificationType::Add, "key", "");
 	}
 
 	TEST(TEST_CLASS, SuccessWhenValueSizeIsZeroAndTypeDel) {
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, model::MetadataModificationType::Del, "key", "");
+		AssertValidationResult(ValidationResult::Success, model::MetadataV1ModificationType::Del, "key", "");
 	}
 }}

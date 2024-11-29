@@ -30,7 +30,7 @@
 namespace catapult { namespace local {
 
 	namespace {
-		constexpr auto Nemesis_Height = Height(1);
+		//constexpr auto Nemesis_Height = Height(1);
 		constexpr auto Nemesis_Chain_Score = static_cast<uint64_t>(1);
 
 		bool HasPreviousExecution(const cache::CatapultCache& cache) {
@@ -68,17 +68,18 @@ namespace catapult { namespace local {
 			// notify nemesis cache state
 			auto nemesisChainScore = model::ChainScore(Nemesis_Chain_Score);
 			subscriber.notifyScoreChange(nemesisChainScore);
-			subscriber.notifyStateChange({ cache::CacheChanges(*pCacheDelta), nemesisChainScore, Nemesis_Height });
+			subscriber.notifyStateChange({ cache::CacheChanges(*pCacheDelta), nemesisChainScore, pluginManager.configHolder()->Config().Immutable.NemesisHeight });
 		});
 	}
 
 	void NemesisBlockNotifier::raise(const consumer<model::BlockElement>& action) {
 		// bypass if chain has advanced past nemesis and/or appears to have been previously executed
 		auto storageView = m_storage.view();
-		if (Nemesis_Height != storageView.chainHeight() || HasPreviousExecution(m_cache))
+
+		if (m_pluginManager.configHolder()->Config().Immutable.NemesisHeight != storageView.chainHeight() || HasPreviousExecution(m_cache))
 			CATAPULT_THROW_RUNTIME_ERROR("NemesisBlockNotifier can only be called during first boot");
 
-		auto pNemesisBlockElement = storageView.loadBlockElement(Nemesis_Height);
+		auto pNemesisBlockElement = storageView.loadBlockElement(m_pluginManager.configHolder()->Config().Immutable.NemesisHeight);
 		action(*pNemesisBlockElement);
 	}
 }}

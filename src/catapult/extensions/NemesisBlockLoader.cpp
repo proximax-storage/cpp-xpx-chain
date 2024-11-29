@@ -180,7 +180,7 @@ namespace catapult { namespace extensions {
 	void NemesisBlockLoader::execute(const LocalNodeStateRef& stateRef, StateHashVerification stateHashVerification) {
 		// 1. load the nemesis block
 		auto storageView = stateRef.Storage.view();
-		auto pNemesisBlockElement = storageView.loadBlockElement(Height(1));
+		auto pNemesisBlockElement = storageView.loadBlockElement(stateRef.ConfigHolder->Config().Immutable.NemesisHeight);
 
 		// 2. execute the nemesis block
 		execute(stateRef.ConfigHolder, *pNemesisBlockElement, stateRef.State, stateHashVerification, Verbosity::On);
@@ -191,7 +191,7 @@ namespace catapult { namespace extensions {
 		execute(stateRef, stateHashVerification);
 
 		// 2. commit changes
-		stateRef.Cache.commit(Height(1));
+		stateRef.Cache.commit(stateRef.ConfigHolder->Config().Immutable.NemesisHeight);
 	}
 
 	void NemesisBlockLoader::execute(const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder, const model::BlockElement& nemesisBlockElement) {

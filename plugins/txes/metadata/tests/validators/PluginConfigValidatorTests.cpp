@@ -12,12 +12,12 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PluginConfigValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataPluginConfig,)
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataV1PluginConfig,)
 
 	namespace {
 		struct PluginConfigTraits {
 			static auto CreatePluginConfigValidator() {
-				return validators::CreateMetadataPluginConfigValidator();
+				return validators::CreateMetadataV1PluginConfigValidator();
 			}
 
 			static auto GetValidConfigBag() {

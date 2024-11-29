@@ -22,24 +22,34 @@
 #include "PluginLoader.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
+#include "NemesisExecutionHasher.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 
 	BlockExecutionHashesInfo CalculateNemesisBlockExecutionHashes(
+			const NemesisConfiguration& nemesisConfig,
 			const model::BlockElement& blockElement,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+			NemesisTransactions* transactions,
+			plugins::PluginManager* manager) {
 		// 1. load all plugins
 		PluginLoader pluginLoader(pConfigHolder);
 		pluginLoader.loadAll();
-		auto& pluginManager = pluginLoader.manager();
-		auto initializers = pluginManager.createPluginInitializer();
+		plugins::PluginManager* pluginManager;
+		if(manager != nullptr)
+			pluginManager = manager;
+		else {
+			pluginManager = &pluginLoader.manager();
+		}
+
+		auto initializers = pluginManager->createPluginInitializer();
 		initializers(const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network));
 
 		// 2. prepare observer
-		observers::NotificationObserverAdapter entityObserver(pluginManager.createObserver(), pluginManager.createNotificationPublisher());
+		observers::NotificationObserverAdapter entityObserver(pluginManager->createObserver(), pluginManager->createNotificationPublisher());
 
 		// 3. prepare observer state
-		auto cache = pluginManager.createCache();
+		auto cache = pluginManager->createCache();
 		pConfigHolder->SetCache(&cache);
 		auto cacheDetachableDelta = cache.createDetachableDelta();
 		auto cacheDetachedDelta = cacheDetachableDelta.detach();
@@ -50,12 +60,20 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		// 4. prepare resolvers
 		auto readOnlyCache = pCacheDelta->toReadOnly();
-		auto resolverContext = pluginManager.createResolverContext(readOnlyCache);
+		auto resolverContext = pluginManager->createResolverContext(readOnlyCache);
 
 		// 5. execute block
-		chain::ExecuteBlock(blockElement, { entityObserver, resolverContext, pConfigHolder, observerState });
+		if(nemesisConfig.EnableSpool)
+		{
+			auto transactionView = transactions->createView();
+			ExecuteBlock(blockElement, { entityObserver, resolverContext, pConfigHolder, observerState }, transactionView, [&blockElement](const auto& transaction){
+				return model::WeakEntityInfo(*transaction.transaction, transaction.entityHash, blockElement.Block);
+			});
+		}
+		else chain::ExecuteBlock(blockElement, { entityObserver, resolverContext, pConfigHolder, observerState });
+
 		auto cacheStateHashInfo = pCacheDelta->calculateStateHash(blockElement.Block.Height);
-		auto blockReceiptsHash = pluginManager.immutableConfig().ShouldEnableVerifiableReceipts
+		auto blockReceiptsHash = pluginManager->immutableConfig().ShouldEnableVerifiableReceipts
 				? model::CalculateMerkleHash(*blockStatementBuilder.build())
 				: Hash256();
 

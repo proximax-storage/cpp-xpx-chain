@@ -54,7 +54,7 @@ namespace catapult { namespace validators {
 			auto accountProperties = state::AccountProperties(address);
 			auto& accountProperty = accountProperties.property(model::PropertyType::TransactionType);
 			for (auto value : values)
-				TOperationTraits::Add(accountProperty, state::ToVector(value));
+				TOperationTraits::Add(accountProperty, utils::ToVector(value));
 
 			propertyCacheDelta.insert(accountProperties);
 			cache.commit(Height(1));

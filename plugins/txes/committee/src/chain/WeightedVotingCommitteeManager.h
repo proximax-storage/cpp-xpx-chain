@@ -6,7 +6,7 @@
 
 #pragma once
 #include "catapult/chain/CommitteeManager.h"
-#include "src/cache/CommitteeAccountCollector.h"
+#include "plugins/txes/committee/src/cache/CommitteeAccountCollector.h"
 
 namespace catapult { namespace config { class CommitteeConfiguration; } }
 

@@ -10,9 +10,9 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS ModifyMosaicMetadataValidatorTests
+#define TEST_CLASS ModifyMosaicMetadataV1ValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMosaicMetadata,)
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMosaicMetadataV1,)
 
 	namespace {
 		const Key Mosaic_Owner = test::GenerateRandomByteArray<Key>();
@@ -37,11 +37,11 @@ namespace catapult { namespace validators {
 				Key signer) {
 			// Arrange:
 			test::MutableBlockchainConfiguration config;
-			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
+			auto pluginConfig = config::MetadataV1Configuration::Uninitialized();
 			config.Network.SetPluginConfiguration(pluginConfig);
-			auto cache = test::MetadataCacheFactory::Create(config.ToConst());
+			auto cache = test::MetadataV1CacheFactory::Create(config.ToConst());
 			PopulateCache(cache);
-			auto pValidator = CreateModifyMosaicMetadataValidator();
+			auto pValidator = CreateModifyMosaicMetadataV1Validator();
 			auto notification = model::ModifyMosaicMetadataNotification_v1(signer, metadataId);
 
 			// Act:

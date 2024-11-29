@@ -24,6 +24,7 @@
 #include "catapult/cache/CachePatriciaTree.h"
 #include "catapult/cache/PatriciaTreeEncoderAdapters.h"
 #include "catapult/tree/BasePatriciaTree.h"
+#include "catapult/deltaset/BaseSetDelta.h"
 
 namespace catapult { namespace cache {
 

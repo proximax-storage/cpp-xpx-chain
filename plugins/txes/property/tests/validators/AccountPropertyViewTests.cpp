@@ -47,7 +47,7 @@ namespace catapult { namespace validators {
 			auto accountProperties = state::AccountProperties(address);
 			auto& accountProperty = accountProperties.property(model::PropertyType::MosaicId);
 			for (auto i = 0u; i < options.NumProperties; ++i) {
-				auto modification = model::RawPropertyModification{ model::PropertyModificationType::Add, state::ToVector(MosaicId(i)) };
+				auto modification = model::RawPropertyModification{ model::PropertyModificationType::Add, utils::ToVector(MosaicId(i)) };
 				if (options.ShouldBlock)
 					accountProperty.block(modification);
 				else

@@ -23,22 +23,56 @@
 #include "catapult/deltaset/BaseSetDeltaIterationView.h"
 #include "catapult/deltaset/BaseSetIterationView.h"
 #include "tests/TestHarness.h"
+#include "catapult/deltaset/ConditionalContainer.h"
 
 namespace catapult { namespace test {
 
 	// region BaseSetIterationCommonTests
 
+	namespace detail{
+		template<typename TTraits>
+		struct BaseSetIterationTypeTraits {
+			static auto MakeVariableView(const decltype(*TTraits::Create())& set) {
+				return MakeIterableView(set);
+			}
+
+			using IterableSetType = decltype(MakeVariableView(*TTraits::Create()));
+			using IteratorType = decltype(MakeVariableView(*TTraits::Create()).begin());
+		};
+		template<typename TTraits>
+		using set_from_traits_t = std::remove_reference_t<std::remove_cv_t<decltype(*TTraits::Create())>>;
+
+		// Must never be used at runtime. Is just here to ensure compilation due to content inside contexpr if still causing template instantiation.
+		template<typename TTraits, typename TTestType = void>
+		struct BaseSetBroadIterationTypeTraits {
+			static auto MakeVariableView(const decltype(*TTraits::Create())& set) {
+				return MakeIterableView(set);
+			}
+
+			using IterableSetType = decltype(MakeVariableView(*TTraits::Create()));
+			using IteratorType = decltype(MakeVariableView(*TTraits::Create()).begin());
+		};
+		template<typename TTraits>
+		struct BaseSetBroadIterationTypeTraits<TTraits, std::enable_if_t<deltaset::BroadIterabilityEvaluator<test::detail::set_from_traits_t<TTraits>>::value>> {
+			static auto MakeVariableView(const decltype(*TTraits::Create())& set) {
+				return MakeBroadIterableView(set);
+			}
+
+			using IterableSetType = decltype(MakeVariableView(*TTraits::Create()));
+			using IteratorType = decltype(MakeVariableView(*TTraits::Create()).begin());
+		};
+	}
 	/// All iteration tests that apply to both BaseSet and BaseSetDelta.
-	template<typename TTraits>
+	template<typename TTraits, typename TIterationTraits = detail::BaseSetIterationTypeTraits<TTraits>>
 	class BaseSetIterationCommonTests {
 	private:
 		using SetType = decltype(*TTraits::Create());
-		using IterableSetType = decltype(MakeIterableView(*TTraits::Create()));
+		using IterableSetType = typename TIterationTraits::IterableSetType;
 
 	protected:
 		static void AssertBeginEndIteratorConsistency(const SetType& set) {
 			// Sanity: ensure begin and end iterators are only equal when the set is empty
-			auto iterableSet = MakeIterableView(set);
+			auto iterableSet = TIterationTraits::MakeVariableView(set);
 			if (set.empty())
 				EXPECT_EQ(iterableSet.begin(), iterableSet.end());
 			else
@@ -50,7 +84,7 @@ namespace catapult { namespace test {
 			std::set<TestElement> elements;
 			size_t numIteratedElements = 0;
 
-			for (const auto& element : MakeIterableView(set)) {
+			for (const auto& element : TIterationTraits::MakeVariableView(set)) {
 				elements.insert(*TTraits::ToPointerFromStorage(element));
 				++numIteratedElements;
 			}
@@ -96,7 +130,14 @@ namespace catapult { namespace test {
 	};
 
 #define MAKE_COMMON_BASE_SET_ITERATION_TEST(TEST_CLASS, TRAITS, TEST_NAME) \
-	TEST(TEST_CLASS, TEST_NAME) { test::BaseSetIterationCommonTests<TRAITS>::Assert##TEST_NAME(); }
+	TEST(TEST_CLASS, TEST_NAME) { test::BaseSetIterationCommonTests<TRAITS, test::detail::BaseSetIterationTypeTraits<TRAITS>>::Assert##TEST_NAME(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Broad) {                                     \
+        if constexpr(deltaset::BroadIterabilityEvaluator<test::detail::set_from_traits_t<TRAITS>>::value){                                                               \
+			test::BaseSetIterationCommonTests<TRAITS, test::detail::BaseSetBroadIterationTypeTraits<TRAITS>>::Assert##TEST_NAME();\
+		}                                                                        \
+        else                                                                     \
+			CATAPULT_LOG(debug) << "Skipping test as this container does not support broad iteration.";\
+	}
 
 #define DEFINE_COMMON_BASE_SET_ITERATION_TESTS(TEST_CLASS, TRAITS) \
 	MAKE_COMMON_BASE_SET_ITERATION_TEST(TEST_CLASS, TRAITS, CanIterateThroughEmptySetWithConstIterator) \
@@ -109,13 +150,13 @@ namespace catapult { namespace test {
 
 	/// All iteration tests that apply to BaseSet but not BaseSetDelta.
 	/// \note Iteration is an extended feature and can be disabled from testing by undefining DEFINE_BASE_SET_ITERATION_TESTS.
-	template<typename TTraits>
+	template<typename TTraits, typename TIterationTraits = detail::BaseSetIterationTypeTraits<TTraits>>
 	class BaseSetIterationTests {
 	public:
 		static void AssertFindIteratorReturnsIteratorToElementWhenElementExists() {
 			// Arrange:
 			auto pSet = TTraits::CreateWithElements(3);
-			auto iterableSet = MakeIterableView(*pSet);
+			auto iterableSet = TIterationTraits::MakeVariableView(*pSet);
 			auto element = TTraits::CreateElement("TestElement", 1);
 
 			// Act:
@@ -140,8 +181,14 @@ namespace catapult { namespace test {
 	};
 
 #define MAKE_BASE_SET_ITERATION_TEST(TEST_CLASS, TRAITS, TEST_NAME) \
-	TEST(TEST_CLASS, TEST_NAME) { test::BaseSetIterationTests<TRAITS>::Assert##TEST_NAME(); }
-
+	TEST(TEST_CLASS, TEST_NAME) { test::BaseSetIterationTests<TRAITS, test::detail::BaseSetIterationTypeTraits<TRAITS>>::Assert##TEST_NAME(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Broad) {                                     \
+        if constexpr(deltaset::BroadIterabilityEvaluator<test::detail::set_from_traits_t<TRAITS>>::value){                                                               \
+			test::BaseSetIterationTests<TRAITS, test::detail::BaseSetBroadIterationTypeTraits<TRAITS>>::Assert##TEST_NAME();\
+		}                                                                 \
+        else                                                                     \
+			CATAPULT_LOG(debug) << "Skipping test as this container does not support broad iteration.";\
+	}
 #define DEFINE_BASE_SET_ITERATION_TESTS(TEST_CLASS, TRAITS) \
 	DEFINE_COMMON_BASE_SET_ITERATION_TESTS(TEST_CLASS, TRAITS) \
 	\
@@ -154,20 +201,20 @@ namespace catapult { namespace test {
 
 	/// All iteration tests that apply to BaseSetDelta but not BaseSet.
 	/// \note Iteration is an extended feature and can be disabled from testing by undefining DEFINE_BASE_SET_DELTA_ITERATION_TESTS.
-	template<typename TTraits>
+	template<typename TTraits, typename TIterationTraits = detail::BaseSetIterationTypeTraits<TTraits>>
 	class BaseSetIterationDeltaTests
 			: private BaseSetDeltaTestUtils<TTraits>
-			, private BaseSetIterationCommonTests<TTraits> {
+			, private BaseSetIterationCommonTests<TTraits, TIterationTraits> {
 	private:
 		using BaseSetDeltaTestUtils<TTraits>::CreateSetForBatchFindTests;
 		using BaseSetDeltaTestUtils<TTraits>::CreateExpectedElementsForBatchFindTests;
 		using BaseSetDeltaTestUtils<TTraits>::SetDummyValue;
-		using BaseSetIterationCommonTests<TTraits>::AssertBeginEndIteratorConsistency;
-		using BaseSetIterationCommonTests<TTraits>::ExtractElements;
+		using BaseSetIterationCommonTests<TTraits, TIterationTraits>::AssertBeginEndIteratorConsistency;
+		using BaseSetIterationCommonTests<TTraits, TIterationTraits>::ExtractElements;
 
 	private:
 		using SetType = decltype(*TTraits::Create());
-		using IteratorType = decltype(MakeIterableView(*TTraits::Create()).begin());
+		using IteratorType = typename TIterationTraits::IteratorType;
 
 	public:
 		static void AssertDeltaIterationIncludesOriginalElements() {
@@ -254,7 +301,7 @@ namespace catapult { namespace test {
 		static std::set<size_t> ExtractDummyValues(const SetType& set) {
 			std::set<size_t> dummyValues;
 			size_t numIteratedElements = 0;
-			for (const auto& element : MakeIterableView(set)) {
+			for (const auto& element : TIterationTraits::MakeVariableView(set)) {
 				dummyValues.insert(TTraits::ToPointerFromStorage(element)->Dummy);
 				++numIteratedElements;
 			}
@@ -325,7 +372,7 @@ namespace catapult { namespace test {
 			// Act: iterate
 			std::set<size_t> dummyValues;
 			size_t numIteratedElements = 0;
-			for (const auto& element : MakeIterableView(*pDelta)) {
+			for (const auto& element : TIterationTraits::MakeVariableView(*pDelta)) {
 				auto pCurrentElement = TTraits::ToPointerFromStorage(element);
 				auto dummyValue = pCurrentElement->Dummy;
 				dummyValues.insert(dummyValue);
@@ -353,7 +400,7 @@ namespace catapult { namespace test {
 		static void AssertDeltaCannotDereferenceAtEnd() {
 			// Arrange:
 			auto pDelta = TTraits::CreateWithElements(3);
-			auto iterableDelta = MakeIterableView(*pDelta);
+			auto iterableDelta = TIterationTraits::MakeVariableView(*pDelta);
 			auto iter = iterableDelta.end();
 
 			// Act + Assert:
@@ -375,7 +422,7 @@ namespace catapult { namespace test {
 		static void AssertDeltaCannotAdvancePostfixIteratorBeyondEnd() {
 			// Arrange:
 			auto pDelta = TTraits::CreateWithElements(3);
-			auto iterableDelta = MakeIterableView(*pDelta);
+			auto iterableDelta = TIterationTraits::MakeVariableView(*pDelta);
 			auto iter = iterableDelta.end();
 
 			// Act + Assert:
@@ -397,10 +444,10 @@ namespace catapult { namespace test {
 		static void AssertDeltaBeginEndIteratorsBasedOnDifferentContainerAreNotEqual() {
 			// Arrange:
 			auto pDelta1 = TTraits::CreateWithElements(3);
-			auto iterableDelta1 = MakeIterableView(*pDelta1);
+			auto iterableDelta1 = TIterationTraits::MakeVariableView(*pDelta1);
 
 			auto pDelta2 = TTraits::CreateWithElements(3);
-			auto iterableDelta2 = MakeIterableView(*pDelta2);
+			auto iterableDelta2 = TIterationTraits::MakeVariableView(*pDelta2);
 
 			// Act + Assert:
 			EXPECT_NE(iterableDelta1.begin(), iterableDelta2.begin());
@@ -411,7 +458,7 @@ namespace catapult { namespace test {
 		static void AssertDeltaIteration(const consumer<IteratorType&>& increment) {
 			// Arrange:
 			auto pDelta = CreateSetForBatchFindTests();
-			auto iterableDelta = MakeIterableView(*pDelta);
+			auto iterableDelta = TIterationTraits::MakeVariableView(*pDelta);
 
 			// Act:
 			std::set<TestElement> actualElements;
@@ -447,7 +494,14 @@ namespace catapult { namespace test {
 	};
 
 #define MAKE_BASE_SET_DELTA_ITERATION_TEST(TEST_CLASS, TRAITS, TEST_NAME) \
-	TEST(TEST_CLASS, TEST_NAME) { test::BaseSetIterationDeltaTests<TRAITS>::Assert##TEST_NAME(); }
+	TEST(TEST_CLASS, TEST_NAME) { test::BaseSetIterationDeltaTests<TRAITS, test::detail::BaseSetIterationTypeTraits<TRAITS>>::Assert##TEST_NAME(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Broad) {                                     \
+        if constexpr(deltaset::BroadIterabilityEvaluator<test::detail::set_from_traits_t<TRAITS>>::value){                                                               \
+			test::BaseSetIterationDeltaTests<TRAITS, test::detail::BaseSetBroadIterationTypeTraits<TRAITS>>::Assert##TEST_NAME(); \
+		}                                                                       \
+        else                                                                     \
+			CATAPULT_LOG(debug) << "Skipping test as this container does not support broad iteration.";\
+	}
 
 #define DEFINE_BASE_SET_DELTA_ITERATION_TESTS(TEST_CLASS, TRAITS) \
 	DEFINE_COMMON_BASE_SET_ITERATION_TESTS(TEST_CLASS, TRAITS) \

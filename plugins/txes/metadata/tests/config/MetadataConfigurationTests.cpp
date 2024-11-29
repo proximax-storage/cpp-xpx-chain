@@ -4,14 +4,14 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/config/MetadataConfiguration.h"
+#include "src/config/MetadataV1Configuration.h"
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
 
 namespace catapult { namespace config {
 
 	namespace {
 		struct MetadataConfigurationTraits {
-			using ConfigurationType = MetadataConfiguration;
+			using ConfigurationType = MetadataV1Configuration;
 
 			static utils::ConfigurationBag::ValuesContainer CreateProperties() {
 				return {
@@ -38,14 +38,14 @@ namespace catapult { namespace config {
 				return false;
 			}
 
-			static void AssertZero(const MetadataConfiguration& config) {
+			static void AssertZero(const MetadataV1Configuration& config) {
 				// Assert:
 				EXPECT_EQ(0u, config.MaxFields);
 				EXPECT_EQ(0u, config.MaxFieldKeySize);
 				EXPECT_EQ(0u, config.MaxFieldValueSize);
 			}
 
-			static void AssertCustom(const MetadataConfiguration& config) {
+			static void AssertCustom(const MetadataV1Configuration& config) {
 				// Assert:
 				EXPECT_EQ(10u, config.MaxFields);
 				EXPECT_EQ(128u, config.MaxFieldKeySize);

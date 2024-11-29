@@ -53,11 +53,29 @@ namespace catapult { namespace tools { namespace nemgen {
 			return out.str();
 		}
 	}
-
+	namespace detail {
+		observers::ObserverContext CreateObserverContext(
+				const chain::BlockExecutionContext& executionContext,
+				Height height,
+				const Timestamp& timestamp,
+				observers::NotifyMode mode) {
+			return observers::ObserverContext(
+					executionContext.State,
+					executionContext.ConfigHolder->Config(height),
+					height,
+					timestamp,
+					mode,
+					executionContext.Resolvers
+			);
+		}
+	}
 	NemesisExecutionHashesDescriptor CalculateAndLogNemesisExecutionHashes(
+			const NemesisConfiguration& nemesisConfig,
 			const model::BlockElement& blockElement,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			CacheDatabaseCleanupMode databaseCleanupMode) {
+			CacheDatabaseCleanupMode databaseCleanupMode,
+			NemesisTransactions* transactions,
+			plugins::PluginManager* manager) {
 		if (!pConfigHolder->Config().Node.ShouldUseCacheDatabaseStorage || !pConfigHolder->Config().Immutable.ShouldEnableVerifiableState)
 			CATAPULT_LOG(warning) << "cache database storage and verifiable state must both be enabled to calculate state hash";
 
@@ -73,7 +91,8 @@ namespace catapult { namespace tools { namespace nemgen {
 		}
 
 		CATAPULT_LOG(info) << "calculating nemesis state hash";
-		auto blockExecutionHashesInfo = CalculateNemesisBlockExecutionHashes(blockElement, pConfigHolder);
+
+		auto blockExecutionHashesInfo = CalculateNemesisBlockExecutionHashes(nemesisConfig, blockElement, pConfigHolder, transactions, manager);
 		std::ostringstream out;
 		out
 				<< "           Height: " << blockElement.Block.Height << std::endl

@@ -49,6 +49,34 @@ namespace catapult { namespace cache {
 				return m_iterator == rhs.m_iterator;
 			}
 
+			const_iterator& operator++()
+			{
+				m_iterator = m_iterator.next();
+				m_pStorage.reset();
+				return *this;
+			}
+
+			const_iterator operator++(int)
+			{
+				const_iterator iter = *this;
+				++(*this);
+				return iter;
+			}
+
+			const_iterator& operator--()
+			{
+				m_iterator = m_iterator.prev();
+				m_pStorage.reset();
+				return *this;
+			}
+
+			const_iterator operator--(int)
+			{
+				const_iterator iter = *this;
+				--(*this);
+				return iter;
+			}
+
 			/// Returns \c true if this iterator and \a rhs are not equal.
 			bool operator!=(const const_iterator& rhs) const {
 				return !(*this == rhs);
@@ -62,7 +90,7 @@ namespace catapult { namespace cache {
 
 				if (!m_pStorage) {
 					auto value = TDescriptor::Serializer::DeserializeValue(m_iterator.buffer());
-					m_pStorage = std::make_unique<StorageType>(TDescriptor::ToStorage(value));
+					m_pStorage = std::make_shared<StorageType>(TDescriptor::ToStorage(value));
 				}
 
 				return *m_pStorage;
@@ -118,6 +146,20 @@ namespace catapult { namespace cache {
 #if !defined(NDEBUG) && defined(_MSC_VER)
 #pragma warning(pop)
 #endif
+
+		const_iterator cbegin() const{
+			const_iterator iter;
+			TContainer::getIteratorAtStart(iter.dbIterator());
+			return iter;
+		}
+
+		const_iterator begin() const {
+			return cbegin();
+		}
+
+		const_iterator end() const{
+			return cend();
+		}
 
 		/// Finds element with \a key. Returns cend() if \a key has not been found.
 		const_iterator find(const KeyType& key) const {

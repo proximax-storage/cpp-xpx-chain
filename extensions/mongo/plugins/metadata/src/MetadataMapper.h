@@ -11,13 +11,13 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	/// Creates a mongo address metadata transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<MongoTransactionPlugin> CreateAddressMetadataTransactionMongoPlugin();
+	std::unique_ptr<MongoTransactionPlugin> CreateAddressMetadataV1TransactionMongoPlugin();
 
 	/// Creates a mongo mosaic metadata transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<MongoTransactionPlugin> CreateMosaicMetadataTransactionMongoPlugin();
+	std::unique_ptr<MongoTransactionPlugin> CreateMosaicMetadataV1TransactionMongoPlugin();
 
 	/// Creates a mongo namespace metadata transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<MongoTransactionPlugin> CreateNamespaceMetadataTransactionMongoPlugin();
+	std::unique_ptr<MongoTransactionPlugin> CreateNamespaceMetadataV1TransactionMongoPlugin();
 }}}

@@ -425,7 +425,7 @@ namespace catapult { namespace test {
 		using CacheViewType = SimpleCacheViewExtension<TViewExtension, TDeltaExtension>;
 		using CacheDeltaType = SimpleCacheDeltaExtension<TViewExtension, TDeltaExtension>;
 		using CacheReadOnlyType = SimpleCacheReadOnlyType<TViewExtension, TDeltaExtension>;
-
+		using Descriptor = void;
 	public:
 		/// Creates a cache with an optional auto set flag (\a pFlag) and view \a mode.
 		explicit BasicSimpleCacheExtension(

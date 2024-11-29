@@ -34,6 +34,8 @@ namespace catapult { namespace cache {
 		using Touch = HeightBasedTouchMixin<
 			typename MosaicCacheTypes::PrimaryTypes::BaseSetDeltaType,
 			typename MosaicCacheTypes::HeightGroupingTypes::BaseSetDeltaType>;
+		using PatriciaTreeCacheMixins<MosaicCacheTypes::PrimaryTypes::BaseSetDeltaType, MosaicCacheDescriptor>::Height;
+		using BroadIteration = BroadIterationMixin<MosaicCacheTypes::PrimaryTypes::BaseSetDeltaType, MosaicCacheTypes::HeightGroupingTypes::BaseSetDeltaType>;
 	};
 
 	/// Basic delta on top of the mosaic cache.
@@ -49,10 +51,10 @@ namespace catapult { namespace cache {
 			, public MosaicCacheDeltaMixins::Touch
 			, public MosaicCacheDeltaMixins::DeltaElements
 			, public MosaicCacheDeltaMixins::Enable
-			, public MosaicCacheDeltaMixins::Height {
+			, public MosaicCacheDeltaMixins::Height
+			, public MosaicCacheDeltaMixins::BroadIteration{
 	public:
 		using ReadOnlyView = MosaicCacheTypes::CacheReadOnlyType;
-
 	public:
 		/// Creates a delta around \a mosaicSets.
 		explicit BasicMosaicCacheDelta(const MosaicCacheTypes::BaseSetDeltaPointers& mosaicSets);
@@ -60,7 +62,6 @@ namespace catapult { namespace cache {
 	public:
 		using MosaicCacheDeltaMixins::ConstAccessor::find;
 		using MosaicCacheDeltaMixins::MutableAccessor::find;
-
 	public:
 		/// Inserts the mosaic \a entry into the cache.
 		void insert(const state::MosaicEntry& entry);

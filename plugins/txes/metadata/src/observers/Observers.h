@@ -5,20 +5,20 @@
 **/
 
 #pragma once
-#include "src/model/MetadataNotifications.h"
+#include "src/model/MetadataV1Notifications.h"
 #include "catapult/observers/ObserverTypes.h"
 
 namespace catapult { namespace observers {
 
 	/// Observes changes triggered by modify address metadata value notifications and:
 	/// - adds / deletes metadata to address to / from cache
-	DECLARE_OBSERVER(AddressMetadataValueModification, model::ModifyAddressMetadataValueNotification_v1)();
+	DECLARE_OBSERVER(AddressMetadataV1ValueModification, model::ModifyAddressMetadataValueNotification_v1)();
 
 	/// Observes changes triggered by modify mosaic metadata value notifications and:
 	/// - adds / deletes metadata to mosaic to / from cache
-	DECLARE_OBSERVER(MosaicMetadataValueModification, model::ModifyMosaicMetadataValueNotification_v1)();
+	DECLARE_OBSERVER(MosaicMetadataV1ValueModification, model::ModifyMosaicMetadataValueNotification_v1)();
 
 	/// Observes changes triggered by modify namespace metadata value notifications and:
 	/// - adds / deletes metadata to namespace to / from cache
-	DECLARE_OBSERVER(NamespaceMetadataValueModification, model::ModifyNamespaceMetadataValueNotification_v1)();
+	DECLARE_OBSERVER(NamespaceMetadataV1ValueModification, model::ModifyNamespaceMetadataValueNotification_v1)();
 }}

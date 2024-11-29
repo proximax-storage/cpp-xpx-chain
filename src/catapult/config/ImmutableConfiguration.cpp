@@ -37,7 +37,10 @@ namespace catapult { namespace config {
 		LOAD_IMMUTABLE_PROPERTY(InitialCurrencyAtomicUnits);
 
 #undef LOAD_IMMUTABLE_PROPERTY
-
+#define TRY_LOAD_IMMUTABLE_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "immutable", #NAME, config.NAME)
+		config.NemesisHeight = Height(1);
+		TRY_LOAD_IMMUTABLE_PROPERTY(NemesisHeight);
+#undef TRY_LOAD_IMMUTABLE_PROPERTY
 		utils::VerifyBagSizeLte(bag, 12);
 		return config;
 	}

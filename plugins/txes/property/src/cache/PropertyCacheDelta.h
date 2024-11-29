@@ -43,6 +43,7 @@ namespace catapult { namespace cache {
 			, public PropertyCacheDeltaMixins::BasicInsertRemove
 			, public PropertyCacheDeltaMixins::DeltaElements
 			, public PropertyCacheDeltaMixins::Enable
+			, public PropertyCacheDeltaMixins::BroadIteration
 			, public PropertyCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = PropertyCacheTypes::CacheReadOnlyType;
@@ -59,6 +60,7 @@ namespace catapult { namespace cache {
 				, PropertyCacheDeltaMixins::PatriciaTreeDelta(*propertySets.pPrimary, propertySets.pPatriciaTree)
 				, PropertyCacheDeltaMixins::BasicInsertRemove(*propertySets.pPrimary)
 				, PropertyCacheDeltaMixins::DeltaElements(*propertySets.pPrimary)
+				, PropertyCacheDeltaMixins::BroadIteration(*propertySets.pPrimary)
 				, m_pPropertyEntries(propertySets.pPrimary)
 				, m_pConfigHolder(pConfigHolder)
 		{}

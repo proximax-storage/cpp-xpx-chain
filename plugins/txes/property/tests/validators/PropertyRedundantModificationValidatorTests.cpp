@@ -69,7 +69,7 @@ namespace catapult { namespace validators {
 			if (CacheSeed::Yes == cacheSeed) {
 				auto address = model::PublicKeyToAddress(notification.Key, model::NetworkIdentifier::Zero);
 				auto accountProperties = state::AccountProperties(address);
-				accountProperties.property(TPropertyValueTraits::Property_Type).allow({ Add, state::ToVector(values[1]) });
+				accountProperties.property(TPropertyValueTraits::Property_Type).allow({ Add, utils::ToVector(values[1]) });
 				auto delta = cache.createDelta();
 				auto& propertyDelta = delta.template sub<cache::PropertyCache>();
 				propertyDelta.insert(accountProperties);

@@ -46,7 +46,7 @@ namespace catapult { namespace local {
 		auto pStorage = mocks::CreateMemoryBlockStorage(10);
 
 		// Act:
-		auto startHeight = FindStartHeight(*pStorage);
+		auto startHeight = FindStartHeight(*pStorage, Height(1));
 
 		// Assert:
 		EXPECT_EQ(Height(1), startHeight);
@@ -57,7 +57,7 @@ namespace catapult { namespace local {
 		auto pStorage = CreateStorageWithBlocks(Height(22), 1);
 
 		// Act:
-		auto startHeight = FindStartHeight(*pStorage);
+		auto startHeight = FindStartHeight(*pStorage, Height(1));
 
 		// Assert:
 		EXPECT_EQ(Height(22), startHeight);
@@ -68,7 +68,7 @@ namespace catapult { namespace local {
 		auto pStorage = CreateStorageWithBlocks(Height(22), 5);
 
 		// Act:
-		auto startHeight = FindStartHeight(*pStorage);
+		auto startHeight = FindStartHeight(*pStorage, Height(1));
 
 		// Assert:
 		EXPECT_EQ(Height(22), startHeight);
@@ -79,6 +79,6 @@ namespace catapult { namespace local {
 		auto pStorage = CreateStorageWithBlocks(Height(22), 0);
 
 		// Act + Assert:
-		EXPECT_THROW(FindStartHeight(*pStorage), catapult_file_io_error);
+		EXPECT_THROW(FindStartHeight(*pStorage, Height(1)), catapult_file_io_error);
 	}
 }}

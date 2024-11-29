@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "src/state/CommitteeEntry.h"
+#include "plugins/txes/committee/src/state/CommitteeEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/cache/IdentifierSerializer.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"

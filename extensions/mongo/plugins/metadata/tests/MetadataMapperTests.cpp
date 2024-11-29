@@ -8,10 +8,10 @@
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTransactionPluginTestUtils.h"
-#include "plugins/txes/metadata/src/model/AddressMetadataTransaction.h"
-#include "plugins/txes/metadata/src/model/MosaicMetadataTransaction.h"
-#include "plugins/txes/metadata/src/model/NamespaceMetadataTransaction.h"
-#include "plugins/txes/metadata/src/state/MetadataUtils.h"
+#include "plugins/txes/metadata/src/model/AddressMetadataV1Transaction.h"
+#include "plugins/txes/metadata/src/model/MosaicMetadataV1Transaction.h"
+#include "plugins/txes/metadata/src/model/NamespaceMetadataV1Transaction.h"
+#include "plugins/txes/metadata/src/state/MetadataV1Utils.h"
 #include "plugins/txes/metadata/tests/test/MetadataTestUtils.h"
 
 namespace catapult { namespace mongo { namespace plugins {
@@ -29,22 +29,22 @@ namespace catapult { namespace mongo { namespace plugins {
         static void AssertCanMapMetadataTransactionWithSingleField() {
             // Assert:
             AssertCanMapMetadataTransaction({
-                test::CreateModification(model::MetadataModificationType::Add, 1, 2).get()
+                test::CreateModification(model::MetadataV1ModificationType::Add, 1, 2).get()
             });
         }
 
         static void AssertCanMapMetadataTransactionWithMultipleFields() {
             // Assert:
             AssertCanMapMetadataTransaction({
-                test::CreateModification(model::MetadataModificationType::Add, 1, 2).get(),
-                test::CreateModification(model::MetadataModificationType::Add, 3, 4).get(),
-                test::CreateModification(model::MetadataModificationType::Add, 5, 6).get()
+                test::CreateModification(model::MetadataV1ModificationType::Add, 1, 2).get(),
+                test::CreateModification(model::MetadataV1ModificationType::Add, 3, 4).get(),
+                test::CreateModification(model::MetadataV1ModificationType::Add, 5, 6).get()
             });
         }
 
     private:
         static void AssertMetadataTransaction(const typename TTraits::TransactionType& transaction, const bsoncxx::document::view& dbTransaction) {
-            EXPECT_EQ(transaction.MetadataType, model::MetadataType(test::GetUint8(dbTransaction, "metadataType")));
+            EXPECT_EQ(transaction.MetadataType, model::MetadataV1Type(test::GetUint8(dbTransaction, "metadataType")));
             std::vector<uint8_t> metadataId;
             mongo::mappers::DbBinaryToStdContainer(metadataId, dbTransaction["metadataId"].get_binary());
             EXPECT_EQ(state::ToVector(transaction.MetadataId), metadataId);
@@ -56,7 +56,7 @@ namespace catapult { namespace mongo { namespace plugins {
             for (const auto& modification : modifications) {
                 EXPECT_EQ(
                         modification.ModificationType,
-                        static_cast<model::MetadataModificationType>(test::GetUint8(iter->get_document().view(), "modificationType")));
+                        static_cast<model::MetadataV1ModificationType>(test::GetUint8(iter->get_document().view(), "modificationType")));
                 EXPECT_EQ(
                         std::string(modification.KeyPtr(), modification.KeySize),
 						std::string(iter->get_document().view()["key"].get_utf8().value));
@@ -67,7 +67,7 @@ namespace catapult { namespace mongo { namespace plugins {
             }
         }
 
-        static void AssertCanMapMetadataTransaction(std::initializer_list<model::MetadataModification*> modifications) {
+        static void AssertCanMapMetadataTransaction(std::initializer_list<model::MetadataV1Modification*> modifications) {
             // Arrange:
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>(modifications);
             auto pPlugin = TTraits::CreatePlugin();
@@ -97,9 +97,9 @@ namespace catapult { namespace mongo { namespace plugins {
 	MAKE_METADATA_MAPPER_TEST(TRAITS, PREFIX, CanMapMetadataTransactionWithMultipleFields)
 
     namespace {
-        DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(AddressMetadata, Address)
-        DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(MosaicMetadata, Mosaic)
-        DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(NamespaceMetadata, Namespace)
+        DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(AddressMetadataV1, Address)
+        DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(MosaicMetadataV1, Mosaic)
+        DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(NamespaceMetadataV1, Namespace)
     }
 
     DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Address, _Address, model::Entity_Type_Address_Metadata)

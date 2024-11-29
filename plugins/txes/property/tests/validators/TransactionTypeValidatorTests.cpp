@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 			auto& accountProperties = propertyCacheDelta.find(accountAddress).get();
 			auto& accountProperty = accountProperties.property(model::PropertyType::TransactionType);
 			for (auto rawValue : rawValues)
-				TOperationTraits::Add(accountProperty, state::ToVector(rawValue));
+				TOperationTraits::Add(accountProperty, utils::ToVector(rawValue));
 
 			cache.commit(Height(1));
 		}

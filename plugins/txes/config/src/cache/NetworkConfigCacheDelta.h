@@ -28,7 +28,8 @@ namespace catapult { namespace cache {
 			, public NetworkConfigCacheDeltaMixins::BasicInsertRemove
 			, public NetworkConfigCacheDeltaMixins::DeltaElements
 			, public NetworkConfigCacheDeltaMixins::Enable
-			, public NetworkConfigCacheDeltaMixins::Height {
+			, public NetworkConfigCacheDeltaMixins::Height
+			, public NetworkConfigCacheDeltaMixins::BroadIteration {
 	public:
 		using ReadOnlyView = NetworkConfigCacheTypes::CacheReadOnlyType;
 
@@ -42,6 +43,7 @@ namespace catapult { namespace cache {
 				, NetworkConfigCacheDeltaMixins::PatriciaTreeDelta(*networkConfigSets.pPrimary, networkConfigSets.pPatriciaTree)
 				, NetworkConfigCacheDeltaMixins::BasicInsertRemove(*networkConfigSets.pPrimary)
 				, NetworkConfigCacheDeltaMixins::DeltaElements(*networkConfigSets.pPrimary)
+				, NetworkConfigCacheDeltaMixins::BroadIteration(*networkConfigSets.pPrimary)
 				, m_pNetworkConfigEntries(networkConfigSets.pPrimary)
 				, m_pDeltaHeights(networkConfigSets.pDeltaHeights)
 				, m_PrimaryHeights(networkConfigSets.PrimaryHeights)

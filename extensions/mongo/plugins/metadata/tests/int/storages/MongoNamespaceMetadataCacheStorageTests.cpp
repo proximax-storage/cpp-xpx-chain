@@ -13,7 +13,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
     namespace {
         struct NamespaceMetadataEntryTraits {
-            static constexpr auto MetadataType = model::MetadataType::NamespaceId;
+            static constexpr auto MetadataType = model::MetadataV1Type::NamespaceId;
 
             static std::vector<uint8_t> GenerateEntryBuffer(model::NetworkIdentifier) {
 				return test::GenerateRandomVector(sizeof(NamespaceId));

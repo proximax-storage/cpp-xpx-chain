@@ -11,9 +11,9 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS ModifyNamespaceMetadataValidatorTests
+#define TEST_CLASS ModifyNamespaceMetadataV1ValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyNamespaceMetadata,)
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyNamespaceMetadataV1,)
 
 	namespace {
 		constexpr NamespaceId CreateValidNamespaceId(uint64_t value) {
@@ -57,12 +57,12 @@ namespace catapult { namespace validators {
 			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			auto namespacePluginConfig = config::NamespaceConfiguration::Uninitialized();
 			namespacePluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(100);
-			auto metadataPluginConfig = config::MetadataConfiguration::Uninitialized();
+			auto metadataPluginConfig = config::MetadataV1Configuration::Uninitialized();
 			config.Network.SetPluginConfiguration(namespacePluginConfig);
 			config.Network.SetPluginConfiguration(metadataPluginConfig);
-			auto cache = test::MetadataCacheFactory::Create(config.ToConst());
+			auto cache = test::MetadataV1CacheFactory::Create(config.ToConst());
 			PopulateCache(cache);
-			auto pValidator = CreateModifyNamespaceMetadataValidator();
+			auto pValidator = CreateModifyNamespaceMetadataV1Validator();
 			auto notification = model::ModifyNamespaceMetadataNotification_v1(signer, metadataId);
 
 			// Act:

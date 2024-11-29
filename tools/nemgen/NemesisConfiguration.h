@@ -88,6 +88,16 @@ namespace catapult { namespace tools { namespace nemgen {
 		/// Private keys of initial harvesters.
 		std::vector<std::string> HarvesterPrivateKeys;
 
+		/// Whether to enable transaction spooling into files
+		bool EnableSpool;
+
+		/// Path for transaction spooling
+		std::string TransactionsPath;
+
+		/// Maximum in memory buffer size of transactions
+		uint8_t TxBufferSize;
+
+		std::string AccountEquivalenceFile;
 	public:
 		/// Loads a nemesis configuration from \a bag.
 		static NemesisConfiguration LoadFromBag(const utils::ConfigurationBag& bag);

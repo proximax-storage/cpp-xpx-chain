@@ -5,11 +5,11 @@
 **/
 
 #pragma once
-#include "plugins/txes/metadata/src/state/MetadataEntry.h"
+#include "plugins/txes/metadata/src/state/MetadataV1Entry.h"
 #include <bsoncxx/json.hpp>
 
 namespace catapult { namespace test {
 
         /// Verifies that db metadata (\a dbMetadata) is equivalent to model metadata \a entry.
-        void AssertEqualMetadataData(const state::MetadataEntry& entry, const bsoncxx::document::view& dbMetadata);
+        void AssertEqualMetadataData(const state::MetadataV1Entry& entry, const bsoncxx::document::view& dbMetadata);
     }}

@@ -20,7 +20,7 @@
 
 #pragma once
 #include "AccountProperty.h"
-#include "PropertyUtils.h"
+#include "catapult/utils/MemoryUtils.h"
 
 namespace catapult { namespace state {
 
@@ -45,18 +45,18 @@ namespace catapult { namespace state {
 
 		/// Returns \c true if the underlying property contains \a value.
 		bool contains(const TPropertyValue& value) const {
-			return m_property.contains(ToVector(value));
+			return m_property.contains(utils::ToVector(value));
 		}
 
 	public:
 		/// Returns \c true if \a modification can be applied to the underlying property.
 		bool canAllow(const model::PropertyModification<TPropertyValue>& modification) const {
-			return m_property.canAllow({ modification.ModificationType, ToVector(modification.Value) });
+			return m_property.canAllow({ modification.ModificationType, utils::ToVector(modification.Value) });
 		}
 
 		/// Returns \c true if \a modification can be applied to the underlying property.
 		bool canBlock(const model::PropertyModification<TPropertyValue>& modification) const {
-			return m_property.canBlock({ modification.ModificationType, ToVector(modification.Value) });
+			return m_property.canBlock({ modification.ModificationType, utils::ToVector(modification.Value) });
 		}
 
 	private:

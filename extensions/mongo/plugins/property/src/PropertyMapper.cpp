@@ -24,7 +24,6 @@
 #include "plugins/txes/property/src/model/AddressPropertyTransaction.h"
 #include "plugins/txes/property/src/model/MosaicPropertyTransaction.h"
 #include "plugins/txes/property/src/model/TransactionTypePropertyTransaction.h"
-#include "plugins/txes/property/src/state/PropertyUtils.h"
 
 using namespace catapult::mongo::mappers;
 
@@ -49,7 +48,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				size_t numModifications) {
 			auto modificationsArray = builder << "modifications" << bson_stream::open_array;
 			for (auto i = 0u; i < numModifications; ++i)
-				StreamModification(modificationsArray, pModifications[i].ModificationType, state::ToVector(pModifications[i].Value));
+				StreamModification(modificationsArray, pModifications[i].ModificationType, utils::ToVector(pModifications[i].Value));
 
 			modificationsArray << bson_stream::close_array;
 		}

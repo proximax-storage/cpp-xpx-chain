@@ -57,7 +57,7 @@ namespace catapult { namespace observers {
 			auto modificationType = NotifyMode::Commit == context.Mode
 					? modification.ModificationType
 					: InvertModificationType(modification.ModificationType);
-			auto resolvedRawValue = state::ToVector(Resolve(context.Resolvers, modification.Value));
+			auto resolvedRawValue = utils::ToVector(Resolve(context.Resolvers, modification.Value));
 			model::RawPropertyModification rawModification{ modificationType, resolvedRawValue };
 
 			if (state::OperationType::Allow == notification.PropertyDescriptor.operationType())

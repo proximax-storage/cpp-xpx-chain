@@ -6,7 +6,7 @@
 
 #pragma once
 #include "CommitteeCacheTypes.h"
-#include "src/state/CommitteeEntrySerializer.h"
+#include "plugins/txes/committee/src/state/CommitteeEntrySerializer.h"
 #include "catapult/cache/CacheSerializerAdapter.h"
 
 namespace catapult { namespace cache {

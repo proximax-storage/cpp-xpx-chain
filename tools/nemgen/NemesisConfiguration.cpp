@@ -206,6 +206,15 @@ namespace catapult { namespace tools { namespace nemgen {
 
 #undef LOAD_OUTPUT_PROPERTY
 
+#define LOAD_OUTPUT_PROPERTY(NAME) LOAD_PROPERTY("spooling", NAME)
+
+		LOAD_OUTPUT_PROPERTY(TxBufferSize);
+		LOAD_OUTPUT_PROPERTY(TransactionsPath);
+		LOAD_OUTPUT_PROPERTY(EnableSpool);
+		LOAD_OUTPUT_PROPERTY(AccountEquivalenceFile);
+
+#undef LOAD_OUTPUT_PROPERTY
+
 		// the nemesis account owns all namespaces and mosaic definitions in the configuration
 		auto owner = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey).publicKey();
 

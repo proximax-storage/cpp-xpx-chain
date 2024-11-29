@@ -21,6 +21,14 @@
 #pragma once
 #include "catapult/model/Block.h"
 #include "catapult/model/Elements.h"
+#include "catapult/plugins/PluginManager.h"
+#include "catapult/model/BlockUtils.h"
+#include "NemesisConfiguration.h"
+#include "NemesisExecutionHasher.h"
+#include "TransactionRegistryFactory.h"
+#include "catapult/crypto/MerkleHashBuilder.h"
+#include "NemesisTransactions.h"
+#include "StateBroker.h"
 #include <memory>
 
 namespace catapult {
@@ -32,11 +40,33 @@ namespace catapult {
 	}
 }
 
+
+
 namespace catapult { namespace tools { namespace nemgen {
+
+	model::UniqueEntityPtr<model::Block> CreateNemesisBlock(
+			const model::PreviousBlockContext& context,
+			model::NetworkIdentifier networkIdentifier,
+			const Key& signerPublicKey,
+			const uint64_t transactionPayloadSize,
+			VersionType version = model::Block::Current_Version);
+
+	void SignNemesisBlock(const GenerationHash& hash, const crypto::KeyPair& signer, model::Block& block, const NemesisTransactions& transactions);
 
 	/// Creates a nemesis block according to \a config.
 	model::UniqueEntityPtr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config, const std::string& resourcesPath);
 
+	/// Creates a nemesis block according to \a config.
+	model::UniqueEntityPtr<model::Block> ReconstructNemesisBlock(
+			const NemesisConfiguration& config,
+			NemesisTransactions& transactions,
+			cache::CatapultCache& cache,
+			const plugins::PluginManager& pluginManager,
+			const std::shared_ptr<config::BlockchainConfigurationHolder> pConfig,
+			StateBroker& broker);
+
+	/// Creates a nemesis block according to \a config and using \a nemesisTransactions.
+	model::BlockElement ReconstructNemesisBlockElement(const NemesisConfiguration& config, const model::Block& block, const NemesisTransactions& nemesisTransactions);
 	/// Updates nemesis \a block according to \a config with \a executionHashesDescriptor.
 	Hash256 UpdateNemesisBlock(
 			const NemesisConfiguration& config,

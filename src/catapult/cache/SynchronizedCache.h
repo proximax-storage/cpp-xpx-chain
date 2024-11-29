@@ -206,7 +206,7 @@ namespace catapult { namespace cache {
 		using CacheViewType = typename TCache::CacheViewType;
 		using CacheDeltaType = typename TCache::CacheDeltaType;
 		using CacheReadOnlyType = typename TCache::CacheReadOnlyType;
-
+		using Descriptor = typename TCache::Descriptor;
 	public:
 		/// Creates a synchronized decorator around \a cache.
 		explicit SynchronizedCache(TCache&& cache)

@@ -22,9 +22,87 @@
 #include "BaseSetDefaultTraits.h"
 #include "catapult/utils/traits/StlTraits.h"
 #include <unordered_set>
+#include <type_traits>
+#include "catapult/utils/Functional.h"
 
 namespace catapult { namespace deltaset {
 
+
+	/// Mixin that wraps BaseSetDelta and provides a facade on top of BaseSetDelta::deltas() for multiple sets.
+	template<typename ...TSetDelta>
+	class DeltaElementsMultiSetMixin {
+	private:
+
+		template<typename TSet, bool IsMap = utils::traits::is_map_v<TSet>>
+		struct ValueAccessorT {
+			using ValueType = typename TSet::value_type;
+
+			static const ValueType* GetPointer(const typename TSet::value_type& value) {
+				return &value;
+			}
+		};
+
+		template<typename TSet>
+		struct ValueAccessorT<TSet, true> { // map specialization
+			using ValueType = typename TSet::value_type::second_type;
+
+			static const ValueType* GetPointer(const typename TSet::value_type& pair) {
+				return &pair.second;
+			}
+		};
+
+		// endregion
+
+	private:
+
+		// use MemorySetType for detection because it is always stl (memory) container
+		template<typename TDeltaSet>
+		using ValueAccessor = ValueAccessorT<typename TDeltaSet::MemorySetType>;
+		template<typename TDeltaSet>
+		using ValueType = typename ValueAccessor<TDeltaSet>::ValueType;
+
+		using PointerContainer = std::tuple<std::unordered_set<const ValueType<TSetDelta>*>...>;
+
+	public:
+		/// Creates a mixin around \a setDelta.
+		explicit DeltaElementsMultiSetMixin(const TSetDelta& ...setsDelta) : m_setsDelta(std::make_tuple(std::cref(setsDelta)...))
+		{}
+
+	public:
+		/// Gets pointers to all added elements.
+		PointerContainer addedElements() const {
+			auto structurizedElements = utils::make_tuple_unpack([](auto& data){return &data.deltas().Added;}, m_setsDelta);
+			return CollectAllPointers(structurizedElements);
+		}
+
+		/// Gets pointers to all modified elements.
+		PointerContainer modifiedElements() const {
+			auto structurizedElements = utils::make_tuple_unpack([](auto& data){return &data.deltas().Copied;}, m_setsDelta);
+			return CollectAllPointers(structurizedElements);
+		}
+
+		/// Gets pointers to all removed elements.
+		PointerContainer removedElements() const {
+			auto structurizedElements = utils::make_tuple_unpack([](auto& data) {return &data.deltas().Removed;}, m_setsDelta);
+			return CollectAllPointers(structurizedElements);
+		}
+
+	private:
+		template<typename TSourceTuple>
+		static PointerContainer CollectAllPointers(const TSourceTuple& source) {
+			PointerContainer dest;
+			constexpr auto size = std::tuple_size<typename std::remove_reference<decltype(source)>::type>::value;
+			utils::for_sequence(std::make_index_sequence<size>{}, [&](auto i){
+			  for(auto& elem : *std::get<i>(source))
+			  {
+				  std::get<i>(dest).insert(ValueAccessor<typename std::remove_cv<typename std::remove_reference<decltype(std::get<i>(m_setsDelta))>::type>::type>::GetPointer(elem));
+			  }
+			});
+			return dest;
+		}
+	private:
+		std::tuple<const TSetDelta&...> m_setsDelta;
+	};
 	/// Mixin that wraps BaseSetDelta and provides a facade on top of BaseSetDelta::deltas().
 	template<typename TSetDelta>
 	class DeltaElementsMixin {

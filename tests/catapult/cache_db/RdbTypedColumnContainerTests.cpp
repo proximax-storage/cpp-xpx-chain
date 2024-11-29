@@ -19,10 +19,16 @@
 **/
 
 #include "catapult/cache_db/RdbTypedColumnContainer.h"
-#include "tests/catapult/cache_db/test/BasicMapDescriptor.h"
-#include "tests/catapult/cache_db/test/StringKey.h"
+#include <catapult/io/StringOutputStream.h>
+#include "catapult/io/BufferInputStreamAdapter.h"
+#include "tests/test/cache/BasicMapDescriptor.h"
+#include "tests/test/cache/StringKey.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
+#include "catapult/cache_db/RocksInclude.h"
+#include "catapult/io/PodIoUtils.h"
+#include "tests/test/other/DeltaElementsTestUtils.h"
+#include "tests/test/cache/RdbTestUtils.h"
 
 namespace catapult { namespace cache {
 
@@ -346,4 +352,246 @@ namespace catapult { namespace cache {
 	}
 
 	// endregion
+
+	// region test real container iteration
+	namespace {
+
+		auto CreateRealTestValues(int count)
+		{
+			std::map<std::string, test::RealTestValue> values;
+			for(auto i = 0; i < count; i++)
+			{
+				auto key = std::string(reinterpret_cast<const char*>(test::GenerateRandomArray<10>().data()), 10);
+				values[key] = {key, rand(), std::string(reinterpret_cast<const char*>(test::GenerateRandomArray<20>().data()), 20)};
+			}
+
+			return values;
+		}
+		auto CreateSettings(size_t numKilobytes, FilterPruningMode pruningMode = FilterPruningMode::Disabled) {
+			return RocksDatabaseSettings(
+					test::TempDirectoryGuard::DefaultName(),
+					{ "default" },
+					utils::FileSize::FromKilobytes(numKilobytes),
+					pruningMode);
+		}
+
+		auto DefaultSettings() {
+			return CreateSettings(0);
+		}
+
+		auto CreateRealContainer(RocksDatabase& db) {
+			return RdbTypedColumnContainer<test::RealColumnDescriptor, RdbColumnContainer>(db, 0);
+		}
+
+	}
+	TEST(TEST_CLASS, CanIterateOverExistingCacheValues) {
+		// Arrange:
+		auto values = CreateRealTestValues(10);
+		test::RdbTestContext context(DefaultSettings(), [&values](auto& db, const auto& columns) {
+			for(auto& val : values)
+			{
+				db.Put(rocksdb::WriteOptions(), columns[0], test::ToSlice(val.second.KeyCopy), test::RealColumnDescriptor::Serializer::SerializeValue(val.second));
+			}
+
+		});
+		auto container = CreateRealContainer(context.database());
+
+		// Assert:
+		for(auto val : std::as_const(container))
+		{
+			EXPECT_NE(values.find(val.first.str()), values.cend());
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.first.str());
+			EXPECT_EQ(values[val.first.str()].Integer, val.second.Integer);
+			EXPECT_EQ(values[val.first.str()].RandomData, val.second.RandomData);
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.second.KeyCopy);
+		}
+	}
+
+	TEST(TEST_CLASS, CanIterateOverExistingCacheValuesManual) {
+		// Arrange:
+		auto values = CreateRealTestValues(10);
+		test::RdbTestContext context(DefaultSettings(), [&values](auto& db, const auto& columns) {
+		  for(auto& val : values)
+		  {
+			  db.Put(rocksdb::WriteOptions(), columns[0], test::ToSlice(val.second.KeyCopy), test::RealColumnDescriptor::Serializer::SerializeValue(val.second));
+		  }
+
+		});
+		auto container = CreateRealContainer(context.database());
+
+		// Assert:
+		auto iter = container.cbegin();
+		for(auto i = 0; i < 10; i++)
+		{
+			auto val = *iter;
+			EXPECT_NE(values.find(val.first.str()), values.cend());
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.first.str());
+			EXPECT_EQ(values[val.first.str()].Integer, val.second.Integer);
+			EXPECT_EQ(values[val.first.str()].RandomData, val.second.RandomData);
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.second.KeyCopy);
+			iter++;
+		}
+
+		EXPECT_EQ(iter, container.cend());
+
+	}
+
+	namespace {
+		struct TestWrapper {
+			TestWrapper(cache::RdbTypedColumnContainer<test::RealColumnDescriptor>* container) : m_pContainer(container) {
+			}
+			class const_iterator {
+			public:
+				/// Creates an uninitialized iterator.
+				const_iterator() = default;
+
+				/// Creates a conditional iterator around \a iter for a storage container.
+				explicit const_iterator(cache::RdbTypedColumnContainer<test::RealColumnDescriptor>::const_iterator&& iterator)
+					: m_storageIter(std::move(iterator))
+				{}
+			public:
+				/// Returns \c true if this iterator is equal to \a rhs.
+				bool operator==(const const_iterator& rhs) const {
+					return m_storageIter == rhs.m_storageIter;
+				}
+
+				/// Returns \c true if this iterator is not equal to \a rhs.
+				bool operator!=(const const_iterator& rhs) const {
+					return !(*this == rhs);
+				}
+
+			public:
+				const_iterator& operator++()
+				{
+					m_storageIter++;
+					return *this;
+				}
+
+				const_iterator operator++(int)
+				{
+					const_iterator iter = *this;
+					++(*this);
+					return *this;
+				}
+
+				const_iterator& operator--()
+				{
+					m_storageIter--;
+					return *this;
+				}
+
+				const_iterator operator--(int)
+				{
+					const_iterator iter = *this;
+					--(*this);
+					return iter;
+				}
+
+			public:
+				/// Returns a const reference to the current element.
+				const auto& operator*() const {
+					return *m_storageIter;
+				}
+
+				/// Returns a const pointer to the current element.
+				const auto* operator->() const {
+					return &operator*();
+				}
+
+			private:
+				cache::RdbTypedColumnContainer<test::RealColumnDescriptor>::const_iterator m_storageIter;
+			};
+
+			/// Returns a const iterator to the element following the last element of the underlying set.
+			const_iterator cend() const {
+				return const_iterator(m_pContainer->cend());
+			}
+
+			/// Returns a const iterator to the first element of the underlying set.
+			const_iterator cbegin() const {
+				return const_iterator(m_pContainer->cbegin());
+			}
+
+			const_iterator end() const {
+				return cend();
+			}
+
+			/// Returns a const iterator to the first element of the underlying set.
+			const_iterator begin() const {
+				return cbegin();
+			}
+
+			cache::RdbTypedColumnContainer<test::RealColumnDescriptor>* m_pContainer;
+		};
+	}
+
+	TEST(TEST_CLASS, CanIterateOverExistingCacheValuesManualForLoopWithWrapper) {
+		// Arrange:
+		auto values = CreateRealTestValues(10);
+		test::RdbTestContext context(DefaultSettings(), [&values](auto& db, const auto& columns) {
+			for(auto& val : values)
+			{
+				db.Put(rocksdb::WriteOptions(), columns[0], test::ToSlice(val.second.KeyCopy), test::RealColumnDescriptor::Serializer::SerializeValue(val.second));
+			}
+
+		});
+		auto container = CreateRealContainer(context.database());
+		auto wrapper =  TestWrapper(&container);
+		// Assert:
+		auto iter = wrapper.cbegin();
+		for(auto i = 0; i < 10; i++)
+		{
+			auto val = *iter;
+			EXPECT_NE(values.find(val.first.str()), values.cend());
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.first.str());
+			EXPECT_EQ(values[val.first.str()].Integer, val.second.Integer);
+			EXPECT_EQ(values[val.first.str()].RandomData, val.second.RandomData);
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.second.KeyCopy);
+			iter++;
+		}
+
+		EXPECT_EQ(iter, wrapper.cend());
+
+	}
+
+	TEST(TEST_CLASS, CanIterateOverExistingCacheValuesManualForLoop) {
+		// Arrange:
+		auto values = CreateRealTestValues(10);
+		test::RdbTestContext context(DefaultSettings(), [&values](auto& db, const auto& columns) {
+			for(auto& val : values)
+			{
+				db.Put(rocksdb::WriteOptions(), columns[0], test::ToSlice(val.second.KeyCopy), test::RealColumnDescriptor::Serializer::SerializeValue(val.second));
+			}
+
+		});
+		auto container = CreateRealContainer(context.database());
+
+		// Assert:
+		for(auto val : container)
+		{
+			EXPECT_NE(values.find(val.first.str()), values.cend());
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.first.str());
+			EXPECT_EQ(values[val.first.str()].Integer, val.second.Integer);
+			EXPECT_EQ(values[val.first.str()].RandomData, val.second.RandomData);
+			EXPECT_EQ(values[val.first.str()].KeyCopy, val.second.KeyCopy);
+		}
+
+	}
+
+
+	TEST(TEST_CLASS, IterateOverEmptyColumn) {
+		// Arrange:
+		test::RdbTestContext context(DefaultSettings(), [](auto& db, const auto& columns) {
+
+		});
+		auto container = CreateRealContainer(context.database());
+
+		// Assert:
+		auto iter = container.cbegin();
+		EXPECT_EQ(iter, container.cend());
+
+	}
+
+
+		// endregion
 }}

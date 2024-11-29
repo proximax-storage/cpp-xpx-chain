@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <src/catapult/model/NetworkConfiguration.h>
+#include "catapult/model/NetworkConfiguration.h"
 #include "NamespaceBaseSets.h"
 #include "NamespaceCacheMixins.h"
 #include "NamespaceCacheSerializers.h"
@@ -54,6 +54,20 @@ namespace catapult { namespace cache {
 
 		using Enable = PrimaryMixins::Enable;
 		using Height = PrimaryMixins::Height;
+		using PrivateAccessor = BroadMutableAccessorMixin<
+				NamespaceCacheTypes::PrimaryTypes::BaseSetDeltaType,
+				NamespaceCacheDescriptor,
+				detail::NoOpAdapter<NamespaceCacheDescriptor::ValueType>,
+				NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaType,
+				NamespaceCacheTypes::FlatMapTypesDescriptor,
+				detail::NoOpAdapter<NamespaceCacheTypes::FlatMapTypesDescriptor::ValueType>,
+				NamespaceCacheTypes::HeightGroupingTypes::BaseSetDeltaType,
+				NamespaceCacheTypes::HeightGroupingTypesDescriptor,
+				detail::NoOpAdapter<NamespaceCacheTypes::HeightGroupingTypesDescriptor::ValueType>>;
+		using BroadIteration = BroadIterationMixin<
+				NamespaceCacheTypes::PrimaryTypes::BaseSetDeltaType,
+				NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaType,
+				NamespaceCacheTypes::HeightGroupingTypes::BaseSetDeltaType>;
 	};
 
 	/// Basic delta on top of the namespace cache.
@@ -66,8 +80,10 @@ namespace catapult { namespace cache {
 			, public NamespaceCacheDeltaMixins::DeltaElements
 			, public NamespaceCacheDeltaMixins::NamespaceDeepSize
 			, public NamespaceCacheDeltaMixins::NamespaceLookup
+			, public NamespaceCacheDeltaMixins::PrivateAccessor
 			, public NamespaceCacheDeltaMixins::Enable
-			, public NamespaceCacheDeltaMixins::Height {
+			, public NamespaceCacheDeltaMixins::Height
+			, public NamespaceCacheDeltaMixins::BroadIteration {
 	public:
 		using ReadOnlyView = NamespaceCacheTypes::CacheReadOnlyType;
 		using CollectedIds = std::unordered_set<NamespaceId, utils::BaseValueHasher<NamespaceId>>;
@@ -100,10 +116,22 @@ namespace catapult { namespace cache {
 		void removeChild(const state::Namespace& ns);
 
 	private:
+		/// Inserts the namespace \a ns into the cache. Raw method for direct manipulation
+		void insertRaw(const state::RootNamespaceHistory& ns);
+		/// Inserts the namespace \a ns into the cache. Raw method for direct manipulation
+		void insertRaw(const state::Namespace& ns);
+		/// Inserts the namespace \a ns into the cache. Raw method for direct manipulation
+		void insertRaw(const NamespaceCacheTypes::HeightGroupingTypes::BaseSetDeltaType::ElementType& grouping);
+
+	private:
 		NamespaceCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pHistoryById;
 		NamespaceCacheTypes::NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaPointerType m_pNamespaceById;
 		NamespaceCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pRootNamespaceIdsByExpiryHeight;
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
+
+		friend class utils::detail::CacheConversionFunctions<NamespaceCache, RootNamespaceHistoryPrimarySerializer>;
+		friend class utils::detail::CacheConversionFunctions<NamespaceCache, NamespaceFlatMapTypesSerializer>;
+		friend class utils::detail::CacheConversionFunctions<cache::NamespaceCache, cache::NamespaceHeightGroupingSerializer>;
 	};
 
 	/// Delta on top of the namespace cache.

@@ -55,6 +55,13 @@ namespace catapult { namespace state {
 			, m_version(version)
 		{}
 
+		// Creates an exchange entry around \a owner and \a version.
+		ExchangeEntry(const ExchangeEntry& entry, const Key& owner)
+		{
+			*this = entry;
+			m_owner = owner;
+		}
+
 	public:
 		static constexpr Height Invalid_Expiry_Height = Height(0);
 		static constexpr VersionType Current_Version = 3;

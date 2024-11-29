@@ -10,23 +10,23 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS MetadataModificationsValidatorTests
+#define TEST_CLASS MetadataV1ModificationsValidatorTests
 
 	constexpr uint8_t MaxFields = 5;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications)
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataV1Modifications)
 
 	namespace {
 		const Address Raw_Data = test::GenerateRandomByteArray<Address>();
-		const model::MetadataType Metadata_Type = model::MetadataType::Address;
+		const model::MetadataV1Type Metadata_Type = model::MetadataV1Type::Address;
 		const Hash256 Metadata_Id = state::GetHash(state::ToVector(Raw_Data), Metadata_Type);
 
-		using Fields = std::vector<state::MetadataField>;
+		using Fields = std::vector<state::MetadataV1Field>;
 
 		void PopulateCache(cache::CatapultCache& cache, const Fields& initValues) {
 			auto delta = cache.createDelta();
-			auto& metadataCacheDelta = delta.sub<cache::MetadataCache>();
-			auto metadataEntry = state::MetadataEntry(state::ToVector(Raw_Data), Metadata_Type);
+			auto& metadataCacheDelta = delta.sub<cache::MetadataV1Cache>();
+			auto metadataEntry = state::MetadataV1Entry(state::ToVector(Raw_Data), Metadata_Type);
 			metadataEntry.fields().assign(initValues.begin(), initValues.end());
 
 			metadataCacheDelta.insert(metadataEntry);
@@ -37,7 +37,7 @@ namespace catapult { namespace validators {
 		struct Modification {
 			std::string Key;
 			std::string Value;
-			model::MetadataModificationType Type;
+			model::MetadataV1ModificationType Type;
 		};
 
 		void AssertValidationResult(
@@ -47,38 +47,38 @@ namespace catapult { namespace validators {
 				const std::vector<Modification> modifications) {
 			// Arrange:
 			test::MutableBlockchainConfiguration mutableConfig;
-			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
+			auto pluginConfig = config::MetadataV1Configuration::Uninitialized();
 			pluginConfig.MaxFields = MaxFields;
 			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
-			auto cache = test::MetadataCacheFactory::Create(config);
+			auto cache = test::MetadataV1CacheFactory::Create(config);
 			PopulateCache(cache, initValues);
-			auto pValidator = CreateMetadataModificationsValidator();
+			auto pValidator = CreateMetadataV1ModificationsValidator();
 
 			uint32_t sizeOfBuffer = 0;
 
 			for (const auto& modification : modifications)
-				sizeOfBuffer += sizeof(model::MetadataModification) + modification.Key.size() + modification.Value.size();
+				sizeOfBuffer += sizeof(model::MetadataV1Modification) + modification.Key.size() + modification.Value.size();
 
 			std::vector<uint8_t> modificationBuffer(sizeOfBuffer);
-			std::vector<const model::MetadataModification*> pointers;
+			std::vector<const model::MetadataV1Modification*> pointers;
 
 			uint8_t* pointer = modificationBuffer.data();
 			for (const auto& modification : modifications) {
-				auto* pModifications = reinterpret_cast<model::MetadataModification*>(pointer);
+				auto* pModifications = reinterpret_cast<model::MetadataV1Modification*>(pointer);
 				pModifications->KeySize = modification.Key.size();
 				pModifications->ValueSize = modification.Value.size();
 				pModifications->ModificationType = modification.Type;
 
-				pModifications->Size = sizeof(model::MetadataModification) + modification.Key.size() + modification.Value.size();
+				pModifications->Size = sizeof(model::MetadataV1Modification) + modification.Key.size() + modification.Value.size();
 
-				std::memcpy(pointer + sizeof(model::MetadataModification), modification.Key.data(), modification.Key.size());
-				std::memcpy(pointer + sizeof(model::MetadataModification) + modification.Key.size(), modification.Value.data(), modification.Value.size());
+				std::memcpy(pointer + sizeof(model::MetadataV1Modification), modification.Key.data(), modification.Key.size());
+				std::memcpy(pointer + sizeof(model::MetadataV1Modification) + modification.Key.size(), modification.Value.data(), modification.Value.size());
 				pointer += pModifications->Size;
 				pointers.emplace_back(pModifications);
 			}
 
-			auto notification = model::MetadataModificationsNotification<1>(metadataId, pointers);
+			auto notification = model::MetadataV1ModificationsNotification<1>(metadataId, pointers);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
@@ -106,9 +106,9 @@ namespace catapult { namespace validators {
 			{},
 			Metadata_Id,
 			{
-				{ "Hello1", "World", model::MetadataModificationType::Add },
-				{ "Hello2", "World", model::MetadataModificationType::Add },
-				{ "Hello3", "World", model::MetadataModificationType::Add },
+				{ "Hello1", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello2", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello3", "World", model::MetadataV1ModificationType::Add },
 			});
 	}
 
@@ -119,9 +119,9 @@ namespace catapult { namespace validators {
 			{},
 			test::GenerateRandomByteArray<Hash256>(),
 			{
-				{ "Hello1", "World", model::MetadataModificationType::Add },
-				{ "Hello2", "World", model::MetadataModificationType::Add },
-				{ "Hello3", "World", model::MetadataModificationType::Add },
+				{ "Hello1", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello2", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello3", "World", model::MetadataV1ModificationType::Add },
 			});
 	}
 
@@ -135,9 +135,9 @@ namespace catapult { namespace validators {
 			},
 			test::GenerateRandomByteArray<Hash256>(),
 			{
-				{ "Hello1", "World", model::MetadataModificationType::Add },
-				{ "Hello2", "World", model::MetadataModificationType::Add },
-				{ "Hello3", "World", model::MetadataModificationType::Add },
+				{ "Hello1", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello2", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello3", "World", model::MetadataV1ModificationType::Add },
 			});
 	}
 
@@ -149,11 +149,11 @@ namespace catapult { namespace validators {
 			},
 			test::GenerateRandomByteArray<Hash256>(),
 			{
-				{ "Hello1", "World", model::MetadataModificationType::Add },
-				{ "Hello2", "World", model::MetadataModificationType::Add },
-				{ "Hello3", "World", model::MetadataModificationType::Add },
-				{ "Hello4", "World", model::MetadataModificationType::Add },
-				{ "Hello5", "World", model::MetadataModificationType::Add },
+				{ "Hello1", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello2", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello3", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello4", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello5", "World", model::MetadataV1ModificationType::Add },
 			});
 	}
 
@@ -165,12 +165,12 @@ namespace catapult { namespace validators {
 			},
 			test::GenerateRandomByteArray<Hash256>(),
 			{
-				{ "Hello1", "World", model::MetadataModificationType::Add },
-				{ "Hello2", "World", model::MetadataModificationType::Add },
-				{ "Hello3", "World", model::MetadataModificationType::Add },
-				{ "Hello4", "World", model::MetadataModificationType::Add },
-				{ "Hello5", "World", model::MetadataModificationType::Add },
-				{ "Hello6", "World", model::MetadataModificationType::Add },
+				{ "Hello1", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello2", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello3", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello4", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello5", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello6", "World", model::MetadataV1ModificationType::Add },
 			});
 	}
 
@@ -185,9 +185,9 @@ namespace catapult { namespace validators {
 			},
 			Metadata_Id,
 			{
-				{ "Hello1", "World", model::MetadataModificationType::Add },
-				{ "Hello2", "World", model::MetadataModificationType::Add },
-				{ "Hello3", "World", model::MetadataModificationType::Add },
+				{ "Hello1", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello2", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello3", "World", model::MetadataV1ModificationType::Add },
 			});
 	}
 
@@ -202,9 +202,9 @@ namespace catapult { namespace validators {
 			},
 			Metadata_Id,
 			{
-				{ "Hello1", "World", model::MetadataModificationType::Add },
-				{ "Hello2", "World", model::MetadataModificationType::Add },
-				{ "Hello3", "World", model::MetadataModificationType::Add },
+				{ "Hello1", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello2", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello3", "World", model::MetadataV1ModificationType::Add },
 			});
 	}
 
@@ -218,9 +218,9 @@ namespace catapult { namespace validators {
 			},
 			Metadata_Id,
 			{
-				{ "Hello1", "World1", model::MetadataModificationType::Add },
-				{ "Hello1", "World2", model::MetadataModificationType::Add },
-				{ "Hello2", "World", model::MetadataModificationType::Add },
+				{ "Hello1", "World1", model::MetadataV1ModificationType::Add },
+				{ "Hello1", "World2", model::MetadataV1ModificationType::Add },
+				{ "Hello2", "World", model::MetadataV1ModificationType::Add },
 			});
 	}
 
@@ -234,9 +234,9 @@ namespace catapult { namespace validators {
 			},
 			Metadata_Id,
 			{
-				{ "Hello0", "World", model::MetadataModificationType::Add },
-				{ "Hello1", "World", model::MetadataModificationType::Add },
-				{ "Hello2", "World", model::MetadataModificationType::Add },
+				{ "Hello0", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello1", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello2", "World", model::MetadataV1ModificationType::Add },
 			});
 	}
 
@@ -250,9 +250,9 @@ namespace catapult { namespace validators {
 			},
 			Metadata_Id,
 			{
-				{ "Hello0", "World1", model::MetadataModificationType::Add },
-				{ "Hello1", "World", model::MetadataModificationType::Add },
-				{ "Hello2", "World", model::MetadataModificationType::Add },
+				{ "Hello0", "World1", model::MetadataV1ModificationType::Add },
+				{ "Hello1", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello2", "World", model::MetadataV1ModificationType::Add },
 			});
 	}
 
@@ -271,9 +271,9 @@ namespace catapult { namespace validators {
 			},
 			Metadata_Id,
 			{
-				{ "Hello1", "", model::MetadataModificationType::Del },
-				{ "Hello2", "World231", model::MetadataModificationType::Del },
-				{ "Hello3", "World4214", model::MetadataModificationType::Del },
+				{ "Hello1", "", model::MetadataV1ModificationType::Del },
+				{ "Hello2", "World231", model::MetadataV1ModificationType::Del },
+				{ "Hello3", "World4214", model::MetadataV1ModificationType::Del },
 			});
 	}
 
@@ -288,9 +288,9 @@ namespace catapult { namespace validators {
 			},
 			Metadata_Id,
 			{
-				{ "Hello1", "", model::MetadataModificationType::Del },
-				{ "Hello2", "World231", model::MetadataModificationType::Del },
-				{ "Hello3", "World4214", model::MetadataModificationType::Del },
+				{ "Hello1", "", model::MetadataV1ModificationType::Del },
+				{ "Hello2", "World231", model::MetadataV1ModificationType::Del },
+				{ "Hello3", "World4214", model::MetadataV1ModificationType::Del },
 			});
 	}
 
@@ -302,7 +302,7 @@ namespace catapult { namespace validators {
 			},
 			test::GenerateRandomByteArray<Hash256>(),
 			{
-				{ "Hello1", "", model::MetadataModificationType::Del },
+				{ "Hello1", "", model::MetadataV1ModificationType::Del },
 			});
 	}
 
@@ -314,7 +314,7 @@ namespace catapult { namespace validators {
 			},
 			Metadata_Id,
 			{
-				{ "Hello1", "", model::MetadataModificationType::Del },
+				{ "Hello1", "", model::MetadataV1ModificationType::Del },
 			});
 	}
 
@@ -333,14 +333,14 @@ namespace catapult { namespace validators {
 			},
 			Metadata_Id,
 			{
-				{ "Hello1", "", model::MetadataModificationType::Del },
-				{ "Hello2", "World231", model::MetadataModificationType::Del },
-				{ "Hello3", "World4214", model::MetadataModificationType::Del },
-				{ "Hello4", "World", model::MetadataModificationType::Add },
-				{ "Hello5", "World", model::MetadataModificationType::Add },
-				{ "Hello6", "World", model::MetadataModificationType::Add },
-				{ "Hello7", "World", model::MetadataModificationType::Add },
-				{ "Hello8", "World", model::MetadataModificationType::Add },
+				{ "Hello1", "", model::MetadataV1ModificationType::Del },
+				{ "Hello2", "World231", model::MetadataV1ModificationType::Del },
+				{ "Hello3", "World4214", model::MetadataV1ModificationType::Del },
+				{ "Hello4", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello5", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello6", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello7", "World", model::MetadataV1ModificationType::Add },
+				{ "Hello8", "World", model::MetadataV1ModificationType::Add },
 			});
 	}
 
@@ -355,8 +355,8 @@ namespace catapult { namespace validators {
 			},
 			Metadata_Id,
 			{
-				{ "Hello1", "", model::MetadataModificationType::Del },
-				{ "Hello1", "World123", model::MetadataModificationType::Add },
+				{ "Hello1", "", model::MetadataV1ModificationType::Del },
+				{ "Hello1", "World123", model::MetadataV1ModificationType::Add },
 			});
 	}
 

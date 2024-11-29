@@ -21,12 +21,71 @@
 #pragma once
 #include "TestElement.h"
 #include "catapult/deltaset/DeltaElements.h"
+#include "catapult/cache_db/RdbTypedColumnContainer.h"
+#include "catapult/utils/Hashers.h"
+#include "catapult/cache/CacheDescriptorAdapters.h"
+#include "catapult/io/StringOutputStream.h"
+#include "catapult/io/BufferInputStreamAdapter.h"
 #include <map>
 #include <unordered_map>
-
+#include "catapult/io/PodIoUtils.h"
+#include "tests/test/cache/StringKey.h"
+#include "tests/test/cache/BasicMapDescriptor.h"
+#include "catapult/io/SizeCalculatingOutputStream.h"
+#include "catapult/utils/RawBuffer.h"
 namespace catapult { namespace test {
 
 	/// Test helpers for interacting with delta elements representing mutable element values with storage virtualization.
+	struct RealTestValue {
+	public:
+
+		std::string KeyCopy; //10
+		int Integer; //4
+		std::string RandomData; //20
+	};
+	struct RealColumnDescriptor : public test::BasicMapDescriptor<test::StringKey, RealTestValue> {
+	public:
+		struct Serializer {
+		public:
+
+			static void Save(const ValueType& value, io::OutputStream& output) {
+				io::Write32(output, value.KeyCopy.size());
+				output.write(utils::RawBuffer(
+						reinterpret_cast<const unsigned char*>(value.KeyCopy.c_str()), value.KeyCopy.size()));
+				io::Write32(output, value.RandomData.size());
+				output.write(utils::RawBuffer(
+						reinterpret_cast<const unsigned char*>(value.RandomData.c_str()), value.RandomData.size()));
+				io::Write32(output, value.Integer);
+			}
+			static std::string SerializeValue(const ValueType& value) {
+				io::SizeCalculatingOutputStream calculator;
+				Save(value, calculator);
+				io::StringOutputStream output(calculator.size());
+				Save(value, output);
+				return output.str();
+			}
+
+			static ValueType DeserializeValue(const RawBuffer& buffer) {
+				io::BufferInputStreamAdapter<RawBuffer> input(buffer);
+				RealTestValue returnValue;
+				auto size = io::Read32(input);
+				std::vector<uint8_t> key(size);
+				io::Read(input, key);
+				size = io::Read32(input);
+				std::vector<uint8_t> additional(size);
+				io::Read(input, additional);
+				returnValue.Integer = io::Read32(input);
+				returnValue.KeyCopy = std::string(key.begin(), key.end());
+				returnValue.RandomData = std::string(additional.begin(), additional.end());
+				return returnValue;
+			}
+
+			static uint64_t KeyToBoundary(const KeyType& key) {
+				return key.size();
+			}
+		};
+	};
+
 	class DeltaElementsTestUtils {
 	public:
 		/// Type definitions.
@@ -37,9 +96,20 @@ namespace catapult { namespace test {
 		public:
 			using StorageMapType = std::map<std::pair<std::string, unsigned int>, ElementType>;
 			using MemoryMapType = std::unordered_map<std::pair<std::string, unsigned int>, ElementType, MapKeyHasher>;
-
+			using RealStorageMapType = cache::RdbTypedColumnContainer<RealColumnDescriptor>;
+			using RealMemoryMapType = std::unordered_map<test::StringKey, RealColumnDescriptor::ValueType, MapKeyHasher>;
 			// to emulate storage virtualization, use two separate sets (ordered and unordered)
 			using StorageTraits = deltaset::MapStorageTraits<StorageMapType, TestElementToKeyConverter<ElementType>, MemoryMapType>;
+			// to emulate true storage, use two separate sets (ordered and unordered)
+			using RealStorageTraits = deltaset::MapStorageTraits<
+					deltaset::ConditionalContainer<
+							RealColumnDescriptor,
+							RealStorageMapType,
+							RealMemoryMapType
+							>,
+					RealColumnDescriptor,
+					RealMemoryMapType
+					>;
 		};
 
 	public:
@@ -122,4 +192,9 @@ namespace catapult { namespace test {
 				, public GenerationalChangeMixin<TSet>
 		{};
 	};
+
+	template<typename TContainer>
+	auto ToSlice(const TContainer& container) {
+		return rocksdb::Slice(reinterpret_cast<const char*>(container.data()), container.size());
+	}
 }}

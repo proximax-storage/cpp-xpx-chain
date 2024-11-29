@@ -28,6 +28,7 @@
 #include "catapult/deltaset/BaseSetDelta.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/IdentifierGroup.h"
+#include "catapult/cache/CacheConstants.h"
 
 namespace catapult {
 	namespace cache {
@@ -75,6 +76,7 @@ namespace catapult { namespace cache {
 		}
 	};
 
+
 	/// Namespace cache types.
 	struct NamespaceCacheTypes {
 	public:
@@ -92,9 +94,10 @@ namespace catapult { namespace cache {
 
 	// region secondary descriptors
 
-	private:
+	public:
 		struct FlatMapTypesDescriptor {
 		public:
+			static constexpr auto Name = "NamespaceCache";
 			using KeyType = NamespaceId;
 			using ValueType = state::Namespace;
 			using Serializer = NamespaceFlatMapTypesSerializer;
@@ -108,6 +111,7 @@ namespace catapult { namespace cache {
 	public:
 		struct HeightGroupingTypesDescriptor {
 		public:
+			static constexpr auto Name = "NamespaceCache";
 			using KeyType = Height;
 			using ValueType = utils::UnorderedIdentifierGroup<NamespaceId, Height, utils::BaseValueHasher<NamespaceId>>;
 			using Serializer = NamespaceHeightGroupingSerializer;

@@ -4,4 +4,5 @@ add_subdirectory(test)
 
 set(TARGET_NAME tests.catapult.plugins.property)
 
+target_link_libraries(catapult.utils)
 catapult_tx_plugin_tests(${TARGET_NAME})

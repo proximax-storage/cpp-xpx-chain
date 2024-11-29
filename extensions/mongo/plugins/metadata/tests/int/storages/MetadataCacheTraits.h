@@ -16,15 +16,15 @@ namespace catapult { namespace test {
 
     template<typename TMetadataEntryTraits>
     struct MetadataCacheTraits {
-        using CacheType = cache::MetadataCache;
-        using ModelType = state::MetadataEntry;
+        using CacheType = cache::MetadataV1Cache;
+        using ModelType = state::MetadataV1Entry;
 
         static constexpr auto Collection_Name = "metadatas";
         static constexpr auto Network_Id = static_cast<model::NetworkIdentifier>(0x5A);
         static constexpr auto CreateCacheStorage = mongo::plugins::CreateMongoMetadataCacheStorage;
 
         static cache::CatapultCache CreateCache() {
-            return test::MetadataCacheFactory::Create();
+            return test::MetadataV1CacheFactory::Create();
         }
 
         static ModelType GenerateRandomElement(uint32_t) {
@@ -32,7 +32,7 @@ namespace catapult { namespace test {
             auto entry = ModelType{ buffer, TMetadataEntryTraits::MetadataType };
 
             for (uint32_t i = 0; i < 5; ++i) {
-                entry.fields().emplace_back(state::MetadataField{
+                entry.fields().emplace_back(state::MetadataV1Field{
                         test::GenerateRandomString(15), test::GenerateRandomString(10), Height{0}});
             }
 
@@ -40,12 +40,12 @@ namespace catapult { namespace test {
         }
 
         static void Add(cache::CatapultCacheDelta& delta, const ModelType& entry) {
-            auto& metadataCacheDelta = delta.sub<cache::MetadataCache>();
+            auto& metadataCacheDelta = delta.sub<cache::MetadataV1Cache>();
             metadataCacheDelta.insert(entry);
         }
 
         static void Remove(cache::CatapultCacheDelta& delta, const ModelType& entry) {
-            auto& metadataCacheDelta = delta.sub<cache::MetadataCache>();
+            auto& metadataCacheDelta = delta.sub<cache::MetadataV1Cache>();
             metadataCacheDelta.remove(entry.metadataId());
         }
 
@@ -53,12 +53,12 @@ namespace catapult { namespace test {
             // update expected
             auto key = test::GenerateRandomString(5);
             auto value = test::GenerateRandomString(8);
-            entry.fields().emplace_back(state::MetadataField{key, value, Height{0}});
+            entry.fields().emplace_back(state::MetadataV1Field{key, value, Height{0}});
 
             // update cache
-            auto& metadataCacheDelta = delta.sub<cache::MetadataCache>();
+            auto& metadataCacheDelta = delta.sub<cache::MetadataV1Cache>();
             auto& entryFromCache = metadataCacheDelta.find(entry.metadataId()).get();
-            entryFromCache.fields().emplace_back(state::MetadataField{key, value, Height{0}});
+            entryFromCache.fields().emplace_back(state::MetadataV1Field{key, value, Height{0}});
         }
 
         static auto GetFindFilter(const ModelType& entry) {

@@ -12,7 +12,7 @@
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
-#include "src/config/CommitteeConfiguration.h"
+#include "plugins/txes/committee/src/config/CommitteeConfiguration.h"
 
 namespace catapult { namespace cache {
 
@@ -29,6 +29,7 @@ namespace catapult { namespace cache {
 			, public CommitteeCacheDeltaMixins::PatriciaTreeDelta
 			, public CommitteeCacheDeltaMixins::BasicInsertRemove
 			, public CommitteeCacheDeltaMixins::DeltaElements
+			, public CommitteeCacheDeltaMixins::BroadIteration
 			, public CommitteeCacheDeltaMixins::ConfigBasedEnable<config::CommitteeConfiguration> {
 	public:
 		using ReadOnlyView = CommitteeCacheTypes::CacheReadOnlyType;
@@ -45,6 +46,7 @@ namespace catapult { namespace cache {
 				, CommitteeCacheDeltaMixins::PatriciaTreeDelta(*committeeSets.pPrimary, committeeSets.pPatriciaTree)
 				, CommitteeCacheDeltaMixins::BasicInsertRemove(*committeeSets.pPrimary)
 				, CommitteeCacheDeltaMixins::DeltaElements(*committeeSets.pPrimary)
+				, CommitteeCacheDeltaMixins::BroadIteration(*committeeSets.pPrimary)
 				, CommitteeCacheDeltaMixins::ConfigBasedEnable<config::CommitteeConfiguration>(
 					pConfigHolder, [](const auto& config) { return config.Enabled; })
 				, m_pCommitteeEntries(committeeSets.pPrimary)

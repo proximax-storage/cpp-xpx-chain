@@ -11,9 +11,9 @@
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	// transaction support
-	manager.addTransactionSupport(catapult::mongo::plugins::CreateAddressMetadataTransactionMongoPlugin());
-	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicMetadataTransactionMongoPlugin());
-	manager.addTransactionSupport(catapult::mongo::plugins::CreateNamespaceMetadataTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateAddressMetadataV1TransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicMetadataV1TransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateNamespaceMetadataV1TransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoMetadataCacheStorage(

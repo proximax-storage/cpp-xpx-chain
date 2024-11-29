@@ -209,12 +209,12 @@ namespace catapult { namespace cache {
 	}
 
 	/// Defines cache types for an unordered, mutable, memory backed set based cache.
-	template<typename TDescriptor, typename TValueHasher>
+	template<typename TDescriptor, typename TValueHasher = std::hash<typename TDescriptor::KeyType>>
 	using MutableUnorderedMemorySetAdapter = detail::UnorderedMemorySetAdapter<
 		deltaset::MutableTypeTraits<typename TDescriptor::ValueType>, TValueHasher>;
 
 	/// Defines cache types for an unordered, immutable, memory backed set based cache.
-	template<typename TDescriptor, typename TValueHasher>
+	template<typename TDescriptor, typename TValueHasher = std::hash<typename TDescriptor::KeyType>>
 	using ImmutableUnorderedMemorySetAdapter = detail::UnorderedMemorySetAdapter<
 		deltaset::ImmutableTypeTraits<typename TDescriptor::ValueType>, TValueHasher>;
 

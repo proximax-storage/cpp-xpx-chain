@@ -11,9 +11,9 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS ModifyAddressMetadataValidatorTests
+#define TEST_CLASS ModifyAddressMetadataV1ValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyAddressMetadata,)
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyAddressMetadataV1,)
 
 	namespace {
 		const Key Account_Public_Key = test::GenerateRandomByteArray<Key>();
@@ -33,11 +33,11 @@ namespace catapult { namespace validators {
 				Key signer) {
 			// Arrange:
 			test::MutableBlockchainConfiguration config;
-			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
+			auto pluginConfig = config::MetadataV1Configuration::Uninitialized();
 			config.Network.SetPluginConfiguration(pluginConfig);
-			auto cache = test::MetadataCacheFactory::Create(config.ToConst());
+			auto cache = test::MetadataV1CacheFactory::Create(config.ToConst());
 			PopulateCache(cache);
-			auto pValidator = CreateModifyAddressMetadataValidator();
+			auto pValidator = CreateModifyAddressMetadataV1Validator();
 			auto notification = model::ModifyAddressMetadataNotification_v1(signer, metadataId);
 
 			// Act:

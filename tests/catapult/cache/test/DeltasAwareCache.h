@@ -38,7 +38,7 @@ namespace catapult { namespace test {
 
 		using CacheValueType = std::vector<uint8_t>;
 		using Breadcrumbs = std::vector<std::pair<std::vector<uint8_t>, std::vector<OperationType>>>;
-
+		using Descriptor = void;
 		// stub out view-required size, tryMakeIterableView and asReadOnly functions
 		struct CacheViewType
 				: public cache::EnableMixin

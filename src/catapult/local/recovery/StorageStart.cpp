@@ -23,12 +23,12 @@
 
 namespace catapult { namespace local {
 
-	Height FindStartHeight(const io::BlockStorage& storage) {
+	Height FindStartHeight(const io::BlockStorage& storage, Height nemesisHeight) {
 		// load block to trigger exception if block at chain height does not exist
 		auto height = storage.chainHeight();
 		storage.loadBlock(height);
 
-		while (height != Height(1)) {
+		while (height != nemesisHeight) {
 			try {
 				storage.loadBlock(height - Height(1));
 				height = height - Height(1);

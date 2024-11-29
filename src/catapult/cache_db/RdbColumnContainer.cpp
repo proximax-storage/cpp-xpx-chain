@@ -19,6 +19,7 @@
 **/
 
 #include "RdbColumnContainer.h"
+#include "RdbPropertyNames.h"
 #include "RocksDatabase.h"
 #include "RocksInclude.h"
 
@@ -32,6 +33,9 @@ namespace catapult { namespace cache {
 		void VerifyName(const std::string& propertyName) {
 			if (propertyName.size() >= Special_Key_Max_Length)
 				CATAPULT_THROW_INVALID_ARGUMENT_1("property name too long", propertyName);
+
+			if (std::none_of(property_names::AllProperties.cbegin(), property_names::AllProperties.cend(), [&propertyName](const auto& property) { return (propertyName == property); }))
+				CATAPULT_THROW_INVALID_ARGUMENT_1("property name is unknown", propertyName);
 		}
 	}
 
@@ -39,7 +43,7 @@ namespace catapult { namespace cache {
 			: m_database(database)
 			, m_columnId(columnId) {
 		uint64_t size = 0;
-		load("size", [&size](const char* buffer) {
+		load(property_names::SIZE_PROPERTY, [&size](const char* buffer) {
 			if (!buffer)
 				return;
 
@@ -66,7 +70,7 @@ namespace catapult { namespace cache {
 	}
 
 	void RdbColumnContainer::setSize(size_t newSize) {
-		setProp("size", static_cast<uint64_t>(newSize));
+		setProp(property_names::SIZE_PROPERTY, static_cast<uint64_t>(newSize));
 		m_size = newSize;
 	}
 
@@ -76,6 +80,10 @@ namespace catapult { namespace cache {
 
 	void RdbColumnContainer::findLowerOrEqual(const RawBuffer& key, RdbDataIterator& iterator) const {
 		m_database.getLowerOrEqual(m_columnId, ToSlice(key), iterator);
+	}
+
+	void RdbColumnContainer::getIteratorAtStart(RdbDataIterator& iterator) const {
+		m_database.getIteratorAtStart(m_columnId, iterator);
 	}
 
 	void RdbColumnContainer::insert(const RawBuffer& key, const std::string& value) {

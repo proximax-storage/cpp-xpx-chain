@@ -12,17 +12,17 @@
 
 namespace catapult { namespace observers {
 
-#define TEST_CLASS MetadataModificationValueObserverTests
+#define TEST_CLASS MetadataV1ModificationValueObserverTests
 
-	using ObserverTestContext = test::ObserverTestContextT<test::MetadataCacheFactory>;
+	using ObserverTestContext = test::ObserverTestContextT<test::MetadataV1CacheFactory>;
 
-	DEFINE_COMMON_OBSERVER_TESTS(AddressMetadataValueModification,)
-	DEFINE_COMMON_OBSERVER_TESTS(MosaicMetadataValueModification,)
-	DEFINE_COMMON_OBSERVER_TESTS(NamespaceMetadataValueModification,)
+	DEFINE_COMMON_OBSERVER_TESTS(AddressMetadataV1ValueModification,)
+	DEFINE_COMMON_OBSERVER_TESTS(MosaicMetadataV1ValueModification,)
+	DEFINE_COMMON_OBSERVER_TESTS(NamespaceMetadataV1ValueModification,)
 
 	namespace {
-		constexpr auto Add = model::MetadataModificationType::Add;
-		constexpr auto Del = model::MetadataModificationType::Del;
+		constexpr auto Add = model::MetadataV1ModificationType::Add;
+		constexpr auto Del = model::MetadataV1ModificationType::Del;
 		const Address Metadata_Main_Address = test::GenerateRandomByteArray<Address>();
 		const MosaicId Metadata_Main_MosaicId = MosaicId(25);
 		const NamespaceId Metadata_Main_NamespaceId = NamespaceId(25);
@@ -32,46 +32,46 @@ namespace catapult { namespace observers {
 			using ValueType = UnresolvedAddress;
 			using Notification = model::ModifyAddressMetadataValueNotification_v1;
 
-			static constexpr auto Metadata_Type = model::MetadataType::Address;
+			static constexpr auto Metadata_Type = model::MetadataV1Type::Address;
 
 			static auto MainMetadataId() {
 				return extensions::CopyToUnresolvedAddress(Metadata_Main_Address);
 			}
 
-			static constexpr auto CreateObserver = CreateAddressMetadataValueModificationObserver;
+			static constexpr auto CreateObserver = CreateAddressMetadataV1ValueModificationObserver;
 		};
 
 		struct MosaicMetadataTraits {
 			using ValueType = UnresolvedMosaicId;
 			using Notification = model::ModifyMosaicMetadataValueNotification_v1;
 
-			static constexpr auto Metadata_Type = model::MetadataType::MosaicId;
+			static constexpr auto Metadata_Type = model::MetadataV1Type::MosaicId;
 
 			static auto MainMetadataId() {
 				return ValueType(Metadata_Main_MosaicId.unwrap());
 			}
 
-			static constexpr auto CreateObserver = CreateMosaicMetadataValueModificationObserver;
+			static constexpr auto CreateObserver = CreateMosaicMetadataV1ValueModificationObserver;
 		};
 
 		struct NamespaceMetadataTraits  {
 			using ValueType = NamespaceId;
 			using Notification = model::ModifyNamespaceMetadataValueNotification_v1;
 
-			static constexpr auto Metadata_Type = model::MetadataType::NamespaceId;
+			static constexpr auto Metadata_Type = model::MetadataV1Type::NamespaceId;
 
 			static auto MainMetadataId() {
 				return Metadata_Main_NamespaceId;
 			}
 
-			static constexpr auto CreateObserver = CreateNamespaceMetadataValueModificationObserver;
+			static constexpr auto CreateObserver = CreateNamespaceMetadataV1ValueModificationObserver;
 		};
 
 
 		template<typename TMetadataValueTraits>
-		void PopulateCache(cache::CatapultCacheDelta& delta, const std::vector<state::MetadataField>& initValues) {
-			auto& metadataCacheDelta = delta.sub<cache::MetadataCache>();
-			auto metadataEntry = state::MetadataEntry(state::ToVector(TMetadataValueTraits::MainMetadataId()), TMetadataValueTraits::Metadata_Type);
+		void PopulateCache(cache::CatapultCacheDelta& delta, const std::vector<state::MetadataV1Field>& initValues) {
+			auto& metadataCacheDelta = delta.sub<cache::MetadataV1Cache>();
+			auto metadataEntry = state::MetadataV1Entry(state::ToVector(TMetadataValueTraits::MainMetadataId()), TMetadataValueTraits::Metadata_Type);
 			metadataEntry.fields().assign(initValues.begin(), initValues.end());
 
 			metadataCacheDelta.insert(metadataEntry);
@@ -79,9 +79,9 @@ namespace catapult { namespace observers {
 
 		template<typename TMetadataValueTraits>
 		void AssertCache(
-				const cache::MetadataCacheDelta& delta,
+				const cache::MetadataV1CacheDelta& delta,
 				const typename TMetadataValueTraits::ValueType& metadataId,
-				const std::vector<state::MetadataField>& expectedFields) {
+				const std::vector<state::MetadataV1Field>& expectedFields) {
 			// Assert:
 
 			auto id = state::GetHash(state::ToVector(metadataId), TMetadataValueTraits::Metadata_Type);
@@ -103,14 +103,14 @@ namespace catapult { namespace observers {
 		struct Modification {
 			std::string Key;
 			std::string Value;
-			model::MetadataModificationType Type;
+			model::MetadataV1ModificationType Type;
 		};
 
 		template<typename TMetadataValueTraits>
 		void RunTest(
-				const std::vector<state::MetadataField>& initValues,
+				const std::vector<state::MetadataV1Field>& initValues,
 				Modification modification,
-				const std::vector<state::MetadataField>& expectedFields,
+				const std::vector<state::MetadataV1Field>& expectedFields,
 				observers::NotifyMode notifyMode) {
 			// Arrange:
 			ObserverTestContext context(notifyMode, CurrentHeight);
@@ -130,7 +130,7 @@ namespace catapult { namespace observers {
 
 			// Assert:
 			AssertCache<TMetadataValueTraits>(
-					context.cache().sub<cache::MetadataCache>(),
+					context.cache().sub<cache::MetadataV1Cache>(),
 					TMetadataValueTraits::MainMetadataId(),
 					expectedFields);
 		}

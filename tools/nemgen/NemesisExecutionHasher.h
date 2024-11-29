@@ -20,6 +20,9 @@
 
 #pragma once
 #include "catapult/types.h"
+#include "NemesisConfiguration.h"
+#include "NemesisTransactions.h"
+#include "catapult/chain/BlockExecutor.h"
 #include <string>
 #include <memory>
 
@@ -54,7 +57,36 @@ namespace catapult { namespace tools { namespace nemgen {
 	/// Calculates and logs the nemesis block execution dependent hashes after executing nemesis \a blockElement
 	/// for network configured with \a config with specified cache database cleanup mode (\a databaseCleanupMode).
 	NemesisExecutionHashesDescriptor CalculateAndLogNemesisExecutionHashes(
+			const NemesisConfiguration& nemesisConfig,
 			const model::BlockElement& blockElement,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			CacheDatabaseCleanupMode databaseCleanupMode);
+			CacheDatabaseCleanupMode databaseCleanupMode,
+			NemesisTransactions* transactions,
+			plugins::PluginManager* manager = nullptr);
+
+	namespace detail {
+		observers::ObserverContext CreateObserverContext(
+				const chain::BlockExecutionContext& executionContext,
+				Height height,
+				const Timestamp& timestamp,
+				observers::NotifyMode mode);
+		template<typename TWeakEntityInfoProvider, typename TWeakEntityInfoProcessor>
+		void ObserveAll(
+				const observers::EntityObserver& observer,
+				observers::ObserverContext& context,
+				TWeakEntityInfoProvider& entityInfos,
+				TWeakEntityInfoProcessor entityPostOp) {
+			for (const auto& entityInfo : entityInfos){
+				auto result = entityPostOp(entityInfo);
+				observer.notify(result, context);
+			}
+		}
+	}
+
+	template<typename TWeakEntityInfoProvider, typename TWeakEntityInfoProcessor>
+	void ExecuteBlock(const model::BlockElement& blockElement, const chain::BlockExecutionContext& executionContext, TWeakEntityInfoProvider& entityInfoProvider, TWeakEntityInfoProcessor entityPostOp) {
+		executionContext.State.Cache.setHeight(blockElement.Block.Height);
+		auto context = detail::CreateObserverContext(executionContext, blockElement.Block.Height, blockElement.Block.Timestamp, observers::NotifyMode::Commit);
+		detail::ObserveAll(executionContext.Observer, context, entityInfoProvider, entityPostOp);
+	}
 }}}

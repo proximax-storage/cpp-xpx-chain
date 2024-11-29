@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "src/catapult/types.h"
+#include "catapult/types.h"
 
 namespace catapult { namespace state {
 

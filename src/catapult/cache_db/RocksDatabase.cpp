@@ -20,15 +20,39 @@
 
 #include "RocksDatabase.h"
 #include "RocksInclude.h"
+#include "RdbPropertyNames.h"
 #include "catapult/utils/StackLogger.h"
 #include <boost/filesystem.hpp>
 
 namespace catapult { namespace cache {
 
 	// region RdbDataIterator
+	namespace {
+		bool IsProperty(rocksdb::Iterator* pIterator) {
+			auto key = pIterator->key().ToString();
+			return std::any_of(property_names::AllProperties.cbegin(), property_names::AllProperties.cend(), [&key](const auto& property) { return (key == property); });
+		}
+	}
 
 	struct RdbDataIterator::Impl {
 		rocksdb::PinnableSlice Result;
+		rocksdb::Iterator* IteratorPtr = nullptr;
+
+		void updateResult() {
+			Result.Reset();
+			Result.PinSelf(IteratorPtr->value());
+		}
+
+		bool isProperty() const {
+			return IsProperty(IteratorPtr);
+		}
+
+		~Impl() {
+			if (IteratorPtr) {
+				IteratorPtr->Reset();
+				delete IteratorPtr;
+			}
+		}
 	};
 
 	RdbDataIterator::RdbDataIterator(StorageStrategy storageStrategy)
@@ -43,6 +67,8 @@ namespace catapult { namespace cache {
 
 	RdbDataIterator::RdbDataIterator(RdbDataIterator&&) = default;
 
+	RdbDataIterator::RdbDataIterator(const RdbDataIterator&) noexcept = default;
+
 	RdbDataIterator& RdbDataIterator::operator=(RdbDataIterator&&) = default;
 
 	RdbDataIterator RdbDataIterator::End() {
@@ -50,7 +76,57 @@ namespace catapult { namespace cache {
 	}
 
 	bool RdbDataIterator::operator==(const RdbDataIterator& rhs) const {
-		return m_isFound == rhs.m_isFound;
+		if (!m_isFound) {
+			return !rhs.m_isFound;
+		}
+
+		if (m_pImpl->IteratorPtr)
+			return m_pImpl == rhs.m_pImpl;
+
+		return true;
+	}
+
+	RdbDataIterator RdbDataIterator::next() const {
+		if (iterable()) {
+			m_pImpl->IteratorPtr->Next();
+			auto status = m_pImpl->IteratorPtr->status();
+			if (status.ok()) {
+				if (m_pImpl->IteratorPtr->Valid()) {
+					if (m_pImpl->isProperty())
+						return next();
+
+					m_pImpl->updateResult();
+					return *this;
+				} else {
+					return End();
+				}
+			}
+		}
+
+		return End();
+	}
+
+	bool RdbDataIterator::iterable() const{
+		return m_isFound && m_pImpl->IteratorPtr;
+	}
+
+	RdbDataIterator RdbDataIterator::prev() const {
+		if (iterable()) {
+			m_pImpl->IteratorPtr->Prev();
+			auto status = m_pImpl->IteratorPtr->status();
+			if (status.ok()) {
+				if (m_pImpl->IteratorPtr->Valid()) {
+					if (m_pImpl->isProperty())
+						return prev();
+
+					m_pImpl->updateResult();
+					return *this;
+				} else {
+					return End();
+				}
+			}
+		}
+		return End();
 	}
 
 	bool RdbDataIterator::operator!=(const RdbDataIterator& rhs) const {
@@ -63,6 +139,12 @@ namespace catapult { namespace cache {
 
 	void RdbDataIterator::setFound(bool found) {
 		m_isFound = found;
+	}
+
+	void RdbDataIterator::setIterator(rocksdb::Iterator* pIterator) {
+		setFound(true);
+		m_pImpl->IteratorPtr = pIterator;
+		m_pImpl->updateResult();
 	}
 
 	RawBuffer RdbDataIterator::buffer() const {
@@ -116,7 +198,7 @@ namespace catapult { namespace cache {
 
 		std::vector<rocksdb::ColumnFamilyDescriptor> columnFamilies;
 		for (const auto& columnFamilyName : settings.ColumnFamilyNames)
-			columnFamilies.push_back(rocksdb::ColumnFamilyDescriptor(columnFamilyName, defaultColumnOptions));
+			columnFamilies.emplace_back(rocksdb::ColumnFamilyDescriptor(columnFamilyName, defaultColumnOptions));
 
 		auto status = rocksdb::DB::Open(dbOptions, m_settings.DatabaseDirectory, columnFamilies, &m_handles, &pDb);
 		m_pDb.reset(pDb);
@@ -159,6 +241,30 @@ namespace catapult { namespace cache {
 
 		if (!status.IsNotFound())
 			CATAPULT_THROW_DB_KEY_ERROR("could not retrieve value for get");
+	}
+
+	void RocksDatabase::getIteratorAtStart(size_t columnId, RdbDataIterator& result) {
+		if (!m_pDb)
+			CATAPULT_THROW_INVALID_ARGUMENT("RocksDatabase has not been initialized");
+
+		auto iterator = m_pDb->NewIterator(rocksdb::ReadOptions(), m_handles[columnId]);
+
+		iterator->SeekToFirst();
+
+		auto status = iterator->status();
+		while (status.ok() && iterator->Valid()) {
+			if (IsProperty(iterator)) {
+				iterator->Next();
+				status = iterator->status();
+			} else {
+				result.setIterator(iterator);
+				return;
+			}
+		}
+
+		result.setFound(false);
+		iterator->Reset();
+		delete iterator;
 	}
 
 	void RocksDatabase::getLowerOrEqual(size_t columnId, const rocksdb::Slice& key, RdbDataIterator& result) {

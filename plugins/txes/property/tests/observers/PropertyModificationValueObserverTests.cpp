@@ -145,7 +145,7 @@ namespace catapult { namespace observers {
 			propertyCacheDelta.insert(state::AccountProperties(accountAddress));
 
 			auto& accountProperties = propertyCacheDelta.find(accountAddress).get();
-			TOperationTraits::Add(accountProperties.property(model::PropertyType::Address), state::ToVector(filteredAddress));
+			TOperationTraits::Add(accountProperties.property(model::PropertyType::Address), utils::ToVector(filteredAddress));
 			TOperationTraits::Add(accountProperties.property(model::PropertyType::MosaicId), test::GenerateRandomVector(sizeof(MosaicId)));
 
 			auto modificationType = NotifyMode::Commit == notifyMode ? Del : Add;

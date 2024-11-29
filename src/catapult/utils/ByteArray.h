@@ -22,7 +22,8 @@
 #include "HexFormatter.h"
 #include <array>
 #include <cstring>
-
+#include <algorithm>
+#include "catapult/exceptions.h"
 namespace catapult { namespace utils {
 
 	/// Base class for wrappers of byte array types, to provide some type-safety.

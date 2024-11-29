@@ -14,7 +14,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToDbModel
 
 	namespace {
-		void StreamMetadataField(bson_stream::array_context& context, const state::MetadataField& field) {
+		void StreamMetadataField(bson_stream::array_context& context, const state::MetadataV1Field& field) {
 			auto keyContext = context
 					<< bson_stream::open_document
 					<< "key" << field.MetadataKey
@@ -24,7 +24,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		}
 	}
 
-	bsoncxx::document::value ToDbModel(const state::MetadataEntry& metadataEntry) {
+	bsoncxx::document::value ToDbModel(const state::MetadataV1Entry& metadataEntry) {
 		bson_stream::document builder;
 		auto doc = builder << "metadata" << bson_stream::open_document
 				<< "metadataId" << ToBinary(metadataEntry.raw().data(), metadataEntry.raw().size())
@@ -46,20 +46,20 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	// region ToModel
 
-	state::MetadataEntry ToMetadataEntry(const bsoncxx::document::view& document) {
+	state::MetadataV1Entry ToMetadataEntry(const bsoncxx::document::view& document) {
 		auto dbMetadataEntry = document["metadata"];
 		std::vector<uint8_t> raw;
-		model::MetadataType type;
+		model::MetadataV1Type type;
 		DbBinaryToStdContainer(raw, dbMetadataEntry["metadataId"].get_binary());
-		type = model::MetadataType(ToUint8(dbMetadataEntry["metadataType"].get_int32()));
-		state::MetadataEntry metadataEntry(raw, type);
+		type = model::MetadataV1Type(ToUint8(dbMetadataEntry["metadataType"].get_int32()));
+		state::MetadataV1Entry metadataEntry(raw, type);
 
 		auto dbFields = dbMetadataEntry["fields"].get_array().value;
 		for (const auto& dbField : dbFields) {
 			std::string key = std::string(dbField["key"].get_utf8().value);
 			std::string value = std::string(dbField["value"].get_utf8().value);
 
-			metadataEntry.fields().emplace_back(state::MetadataField{ key, value, Height(0) });
+			metadataEntry.fields().emplace_back(state::MetadataV1Field{ key, value, Height(0) });
 		}
 
 		return metadataEntry;

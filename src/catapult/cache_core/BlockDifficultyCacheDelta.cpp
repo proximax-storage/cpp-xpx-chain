@@ -32,7 +32,7 @@ namespace catapult { namespace cache {
 			, m_pConfigHolder(options.ConfigHolderPtr)
 			// note: empty indicates initial cache seeding;
 			//       it cannot happen due to a rollback because the nemesis block cannot be rolled back
-			, m_startHeight(m_pOrderedDelta->empty() ? Height(1) : MakeIterableView(*m_pOrderedDelta).begin()->BlockHeight)
+			, m_startHeight(m_pOrderedDelta->empty() ? m_pConfigHolder->Config().Immutable.NemesisHeight : MakeIterableView(*m_pOrderedDelta).begin()->BlockHeight)
 	{}
 
 	deltaset::PruningBoundary<BasicBlockDifficultyCacheDelta::ValueType> BasicBlockDifficultyCacheDelta::pruningBoundary() const {

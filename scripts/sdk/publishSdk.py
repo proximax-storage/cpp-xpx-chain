@@ -176,11 +176,11 @@ def publish_all():
     publisher = Publisher(args.root, args.publish)
     publisher.set_verbose(args.verbose)
 
-    for component in ['api', 'config', 'crypto', 'io', 'ionet', 'model', 'net', 'state', 'thread', 'utils', 'version']:
+    for component in ['api', 'config', 'crypto', 'io', 'ionet', 'model', 'net', 'state', 'thread', 'utils', 'version', 'config_holder']:
         publisher.publish_component(component)
 
-    for transaction in ['account_link', 'aggregate', 'committee', 'config', 'contract', 'lock_hash', 'lock_secret', 'mosaic', 'multisig', 'namespace', 'property', 'storage', 'transfer', 'upgrade']:
-        publisher.publish_plugin('txes', transaction, ['model', 'plugins', 'state'])
+    for transaction in ['exchange', 'state_modify', 'metadata', 'metadata_v2', 'account_link', 'aggregate', 'committee', 'config', 'contract', 'lock_hash', 'lock_secret', 'mosaic', 'multisig', 'namespace', 'property', 'storage', 'transfer', 'upgrade']:
+        publisher.publish_plugin('txes', transaction, ['model', 'plugins', 'state', 'cache', 'config'])
 
     for service in ['hashcache']:
         publisher.publish_plugin('services', service, ['state'])

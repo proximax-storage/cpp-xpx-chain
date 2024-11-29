@@ -20,8 +20,8 @@
 **/
 
 #pragma once
-#include "plugins/txes/metadata_v2/src/model/MetadataTypes.h"
 #include "plugins/txes/namespace/src/types.h"
+#include "src/model/MetadataTypes.h"
 #include <vector>
 
 namespace catapult { namespace model { class ResolverContext; } }

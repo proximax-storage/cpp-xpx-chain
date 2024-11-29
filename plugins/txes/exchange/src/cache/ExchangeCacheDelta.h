@@ -11,7 +11,7 @@
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
-#include "src/config/ExchangeConfiguration.h"
+#include "plugins/txes/exchange/src/config/ExchangeConfiguration.h"
 
 namespace catapult { namespace cache {
 
@@ -33,7 +33,8 @@ namespace catapult { namespace cache {
 			, public ExchangeCacheDeltaMixins::BasicInsertRemove
 			, public ExchangeCacheDeltaMixins::Pruning
 			, public ExchangeCacheDeltaMixins::DeltaElements
-			, public ExchangeCacheDeltaMixins::ConfigBasedEnable<config::ExchangeConfiguration> {
+			, public ExchangeCacheDeltaMixins::ConfigBasedEnable<config::ExchangeConfiguration>
+		, public ExchangeCacheDeltaMixins::BroadIteration {
 	public:
 		using ReadOnlyView = ExchangeCacheTypes::CacheReadOnlyType;
 		using OfferOwners = ExchangeCacheTypes::HeightGroupingTypes::BaseSetDeltaType::ElementType::Identifiers;

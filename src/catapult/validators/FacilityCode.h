@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 		COPY_FACILITY_CODE(Streaming),
 		COPY_FACILITY_CODE(Queue),
 		COPY_FACILITY_CODE(PriorityQueue),
-
+		COPY_FACILITY_CODE(ModifyState),
 		/// Chain facility code.
 		Chain = 0xFF,
 

@@ -4,8 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/plugins/MetadataPlugin.h"
-#include "plugins/txes/metadata/src/model/MetadataEntityType.h"
+#include "src/plugins/MetadataV1Plugin.h"
+#include "plugins/txes/metadata/src/model/MetadataV1EntityType.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 
@@ -29,7 +29,7 @@ namespace catapult { namespace plugins {
                 }}));
 
 				auto manager = test::CreatePluginManager(config);
-                RegisterMetadataSubsystem(manager);
+                RegisterMetadataV1Subsystem(manager);
 
                 // Act:
                 action(manager);
@@ -92,5 +92,5 @@ namespace catapult { namespace plugins {
         };
     }
 
-    DEFINE_PLUGIN_TESTS(MetadataPluginTests, MetadataPluginTraits)
+    DEFINE_PLUGIN_TESTS(MetadataV1PluginTests, MetadataPluginTraits)
 }}

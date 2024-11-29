@@ -4,16 +4,16 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/model/MosaicMetadataTransaction.h"
+#include "src/model/MosaicMetadataV1Transaction.h"
 #include "tests/test/core/TransactionContainerTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/MetadataTestUtils.h"
 
 namespace catapult { namespace model {
 
-        using TransactionType = MosaicMetadataTransaction;
+        using TransactionType = MosaicMetadataV1Transaction;
 
-#define TEST_CLASS MosaicMetadataTransactionTests
+#define TEST_CLASS MosaicMetadataV1TransactionTests
 
         // region size + properties
 
@@ -22,7 +22,7 @@ namespace catapult { namespace model {
             void AssertEntityHasExpectedSize(size_t baseSize) {
                 // Arrange:
                 auto expectedSize = baseSize // base
-                    + sizeof(model::MetadataType) // MetadataType
+                    + sizeof(model::MetadataV1Type) // MetadataType
                     + sizeof(MosaicId); // MetadataId
 
                 // Assert:
@@ -38,7 +38,7 @@ namespace catapult { namespace model {
             }
         }
 
-        ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(MosaicMetadata)
+        ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(MosaicMetadataV1)
 
         // endregion
 
@@ -78,9 +78,9 @@ namespace catapult { namespace model {
     DATA_POINTER_TEST(ModificationsAreAccessibleWhenTransactionHasModifications) {
         // Arrange:
         auto pTransaction = test::CreateTransaction<TransactionType>({
-            test::CreateModification(MetadataModificationType::Add, 1, 2).get(),
-            test::CreateModification(MetadataModificationType::Del, 3, 4).get(),
-            test::CreateModification(MetadataModificationType::Add, 5, 6).get()
+            test::CreateModification(MetadataV1ModificationType::Add, 1, 2).get(),
+            test::CreateModification(MetadataV1ModificationType::Del, 3, 4).get(),
+            test::CreateModification(MetadataV1ModificationType::Add, 5, 6).get()
         });
         const auto* pTransactionEnd = test::AsVoidPointer(pTransaction.get() + 1);
         auto& accessor = TTraits::GetAccessor(*pTransaction);
@@ -113,12 +113,12 @@ namespace catapult { namespace model {
 
     TEST(TEST_CLASS, CalculateRealSizeWithWrongModificationSize) {
         // Arrange:
-        auto pInvalidModification = test::CreateModification(MetadataModificationType::Add, 1, 2);
+        auto pInvalidModification = test::CreateModification(MetadataV1ModificationType::Add, 1, 2);
         pInvalidModification->Size--;
         auto pTransaction = test::CreateTransaction<TransactionType>({
             pInvalidModification.get(),
-            test::CreateModification(MetadataModificationType::Del, 3, 4).get(),
-            test::CreateModification(MetadataModificationType::Add, 5, 6).get()
+            test::CreateModification(MetadataV1ModificationType::Del, 3, 4).get(),
+            test::CreateModification(MetadataV1ModificationType::Add, 5, 6).get()
         });
 
         // Act:
@@ -131,9 +131,9 @@ namespace catapult { namespace model {
     TEST(TEST_CLASS, CalculateRealSizeWithValidModificationSizes) {
         // Arrange:
         auto pTransaction = test::CreateTransaction<TransactionType>({
-            test::CreateModification(MetadataModificationType::Add, 1, 2).get(),
-            test::CreateModification(MetadataModificationType::Del, 3, 4).get(),
-            test::CreateModification(MetadataModificationType::Add, 5, 6).get()
+            test::CreateModification(MetadataV1ModificationType::Add, 1, 2).get(),
+            test::CreateModification(MetadataV1ModificationType::Del, 3, 4).get(),
+            test::CreateModification(MetadataV1ModificationType::Add, 5, 6).get()
          });
 
         // Act:

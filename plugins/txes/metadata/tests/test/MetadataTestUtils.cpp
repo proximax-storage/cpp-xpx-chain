@@ -8,10 +8,10 @@
 
 namespace catapult { namespace test {
 
-    model::UniqueEntityPtr<model::MetadataModification> CreateModification(
-            model::MetadataModificationType type, uint8_t keySize, uint16_t valueSize) {
-        uint32_t entitySize = sizeof(model::MetadataModification) + keySize + valueSize;
-        auto pModification = utils::MakeUniqueWithSize<model::MetadataModification>(entitySize);
+    model::UniqueEntityPtr<model::MetadataV1Modification> CreateModification(
+            model::MetadataV1ModificationType type, uint8_t keySize, uint16_t valueSize) {
+        uint32_t entitySize = sizeof(model::MetadataV1Modification) + keySize + valueSize;
+        auto pModification = utils::MakeUniqueWithSize<model::MetadataV1Modification>(entitySize);
         pModification->Size = entitySize;
         pModification->ModificationType = type;
         pModification->KeySize = keySize;

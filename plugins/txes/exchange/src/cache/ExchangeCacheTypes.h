@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "src/state/ExchangeEntry.h"
+#include "plugins/txes/exchange/src/state/ExchangeEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
 #include "catapult/utils/Hashers.h"

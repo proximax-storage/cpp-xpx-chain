@@ -20,9 +20,9 @@
 **/
 
 #pragma once
-#include "plugins/txes/namespace/src/types.h"
+#include "catapult/types.h"
 #include <vector>
-
+#include <cstdint>
 namespace catapult { namespace model {
 
 #if defined(__GNUC__)

@@ -10,15 +10,15 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS MetadataTypeValidatorTests
+#define TEST_CLASS MetadataV1TypeValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataType,)
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataV1Type,)
 
 	namespace {
-		void AssertValidationResult(ValidationResult expectedResult, model::MetadataType metadataType) {
+		void AssertValidationResult(ValidationResult expectedResult, model::MetadataV1Type metadataType) {
 			// Arrange:
-			model::MetadataTypeNotification<1> notification(metadataType);
-			auto pValidator = CreateMetadataTypeValidator();
+			model::MetadataV1TypeNotification<1> notification(metadataType);
+			auto pValidator = CreateMetadataV1TypeValidator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);
@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 			EXPECT_EQ(expectedResult, result) << "notification with metadata type " << utils::to_underlying_type(metadataType);
 		}
 
-		void AssertValidTypes(std::initializer_list<model::MetadataType> metadataTypes) {
+		void AssertValidTypes(std::initializer_list<model::MetadataV1Type> metadataTypes) {
 			for (auto metadataType : metadataTypes) {
 				AssertValidationResult(ValidationResult::Success, metadataType);
 			}
@@ -36,13 +36,13 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenValidatingNotificationWithKnownMetadataType) {
 		// Assert:
-		AssertValidTypes({ model::MetadataType::Address, model::MetadataType::MosaicId, model::MetadataType::NamespaceId });
+		AssertValidTypes({ model::MetadataV1Type::Address, model::MetadataV1Type::MosaicId, model::MetadataV1Type::NamespaceId });
 	}
 
 	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithUnknownMetadataType) {
 		// Assert:
-		AssertValidationResult(Failure_Metadata_Invalid_Metadata_Type, model::MetadataType(0x0));
-		AssertValidationResult(Failure_Metadata_Invalid_Metadata_Type, model::MetadataType(0x4));
-		AssertValidationResult(Failure_Metadata_Invalid_Metadata_Type, model::MetadataType(0x10));
+		AssertValidationResult(Failure_Metadata_Invalid_Metadata_Type, model::MetadataV1Type(0x0));
+		AssertValidationResult(Failure_Metadata_Invalid_Metadata_Type, model::MetadataV1Type(0x4));
+		AssertValidationResult(Failure_Metadata_Invalid_Metadata_Type, model::MetadataV1Type(0x10));
 	}
 }}

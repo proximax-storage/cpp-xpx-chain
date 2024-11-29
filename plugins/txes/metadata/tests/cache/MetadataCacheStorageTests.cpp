@@ -8,22 +8,22 @@
 
 namespace catapult { namespace cache {
 
-#define TEST_CLASS MetadataCacheStorageTests
+#define TEST_CLASS MetadataV1CacheStorageTests
 
 	TEST(TEST_CLASS, CanLoadValueIntoCache) {
 		// Arrange:
-		state::MetadataEntry originalMetadataEntry(state::ToVector(test::GenerateRandomByteArray<Address>()), model::MetadataType{0});
+		state::MetadataV1Entry originalMetadataEntry(state::ToVector(test::GenerateRandomByteArray<Address>()), model::MetadataV1Type{0});
 		for (auto i = 0u; i < 3; ++i)
-			originalMetadataEntry.fields().push_back(state::MetadataField{ "Hello", "World", Height(1 + i) });
+			originalMetadataEntry.fields().push_back(state::MetadataV1Field{ "Hello", "World", Height(1 + i) });
 
 		// Sanity:
 		EXPECT_EQ(3u, originalMetadataEntry.fields().size());
 
 		// Act:
-		MetadataCache cache(CacheConfiguration{});
+		MetadataV1Cache cache(CacheConfiguration{});
 		{
 			auto delta = cache.createDelta(Height{0});
-			MetadataCacheStorage::LoadInto(originalMetadataEntry, *delta);
+			MetadataV1CacheStorage::LoadInto(originalMetadataEntry, *delta);
 			cache.commit();
 		}
 

@@ -169,4 +169,10 @@ namespace catapult {
 
 	struct VmVersion_tag {};
 	using VmVersion = utils::BaseValue<uint64_t, VmVersion_tag>;
+
+	/// A simple tag used for tag dispatching
+	template<typename T>
+	struct Tag{
+		using Type = T;
+	};
 }

@@ -25,7 +25,19 @@
 #include <list>
 #include <set>
 
-namespace catapult { namespace state {
+namespace catapult {
+	namespace cache {
+		class NamespaceCache;
+		class RootNamespaceHistoryPrimarySerializer;
+		class NamespaceFlatMapTypesSerializer;
+	}
+	namespace utils {
+		namespace detail {
+			template<typename TCache, typename TSerializer = typename TCache::Descriptor::Serializer>
+			struct CacheConversionFunctions;
+		}
+	}
+	namespace state {
 
 	/// A root namespace history.
 	class RootNamespaceHistory {
@@ -40,8 +52,10 @@ namespace catapult { namespace state {
 		/// Move constructor.
 		RootNamespaceHistory(RootNamespaceHistory&& history) = default;
 
-	public:
 		RootNamespace& operator=(const RootNamespace& rhs) = delete;
+	private:
+		RootNamespaceHistory& operator=(const RootNamespaceHistory& rhs) = default;
+
 
 	public:
 		/// Gets a value indicating whether or not the history is empty.
@@ -97,5 +111,8 @@ namespace catapult { namespace state {
 	private:
 		NamespaceId m_id;
 		std::list<RootNamespace> m_rootHistory;
+
+		friend class utils::detail::CacheConversionFunctions<cache::NamespaceCache, cache::RootNamespaceHistoryPrimarySerializer>;
+		friend class utils::detail::CacheConversionFunctions<cache::NamespaceCache, cache::NamespaceFlatMapTypesSerializer>;
 	};
 }}

@@ -36,7 +36,7 @@ namespace catapult { namespace io {
 	};
 
 	/// File-based block storage.
-	class FileBlockStorage final : public PrunableBlockStorage {
+	class FileBlockStorage : public PrunableBlockStorage {
 	public:
 		/// Creates a file-based block storage, where blocks will be stored inside \a dataDirectory
 		/// with specified storage \a mode.
@@ -60,7 +60,7 @@ namespace catapult { namespace io {
 	private:
 		void requireHeight(Height height, const char* description) const;
 
-	private:
+	protected:
 		class HashFile final {
 		public:
 			explicit HashFile(const std::string& dataDirectory);

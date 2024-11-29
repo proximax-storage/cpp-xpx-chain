@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/cache_db/CacheDatabase.h"
 #include "catapult/cache_db/PatriciaTreeRdbDataSource.h"
+#include "catapult/cache_db/RdbPropertyNames.h"
 #include <memory>
 
 namespace catapult { namespace cache {
@@ -66,7 +67,7 @@ namespace catapult { namespace cache {
 					, m_dataSource(m_container)
 					, m_pTree(std::make_unique<TTree>(m_dataSource)) {
 				Hash256 rootHash;
-				if (!m_container.prop("root", rootHash))
+				if (!m_container.prop(property_names::ROOT_PROPERTY, rootHash))
 					return;
 
 				if (Hash256() == rootHash)
@@ -90,10 +91,10 @@ namespace catapult { namespace cache {
 
 				// skip setProp if hash did not change
 				Hash256 rootHash;
-				if (m_container.prop("root", rootHash) && rootHash == m_pTree->root())
+				if (m_container.prop(property_names::ROOT_PROPERTY, rootHash) && rootHash == m_pTree->root())
 					return;
 
-				m_container.setProp("root", m_pTree->root());
+				m_container.setProp(property_names::ROOT_PROPERTY, m_pTree->root());
 			}
 
 		private:

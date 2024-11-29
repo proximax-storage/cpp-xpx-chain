@@ -20,6 +20,9 @@ namespace catapult { namespace cache {
 			using Pruning = HeightBasedPruningMixin<
 				LevyCacheTypes::PrimaryTypes::BaseSetDeltaType,
 				LevyCacheTypes::HeightGroupingTypes::BaseSetDeltaType>;
+			using BroadIteration = BroadIterationMixin<
+					LevyCacheTypes::PrimaryTypes::BaseSetDeltaType,
+					LevyCacheTypes::HeightGroupingTypes::BaseSetDeltaType>;
 		};
 		
 		/// Basic delta on top of levy cache.
@@ -33,6 +36,7 @@ namespace catapult { namespace cache {
 				, public LevyCacheDeltaMixins::BasicInsertRemove
 				, public LevyCacheDeltaMixins::Pruning
 				, public LevyCacheDeltaMixins::DeltaElements
+				, public LevyCacheDeltaMixins::BroadIteration
 				, public LevyCacheDeltaMixins::ConfigBasedEnable<config::MosaicConfiguration> {
 		public:
 			using ReadOnlyView = LevyCacheTypes::CacheReadOnlyType;
@@ -49,6 +53,7 @@ namespace catapult { namespace cache {
 				, LevyCacheDeltaMixins::PatriciaTreeDelta(*LevySets.pPrimary, LevySets.pPatriciaTree)
 				, LevyCacheDeltaMixins::BasicInsertRemove(*LevySets.pPrimary)
 				, LevyCacheDeltaMixins::Pruning(*LevySets.pPrimary, *LevySets.pHistoryAtHeight)
+				, LevyCacheDeltaMixins::BroadIteration(*LevySets.pPrimary, *LevySets.pHistoryAtHeight)
 				, LevyCacheDeltaMixins::DeltaElements(*LevySets.pPrimary)
 				, LevyCacheDeltaMixins::ConfigBasedEnable<config::MosaicConfiguration>(pConfigHolder, [](const auto& config) { return config.LevyEnabled; })
 				, m_pLevyEntries(LevySets.pPrimary)

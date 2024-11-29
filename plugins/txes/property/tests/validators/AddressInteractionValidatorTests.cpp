@@ -68,7 +68,7 @@ namespace catapult { namespace validators {
 				auto& accountProperties = propertyCacheDelta.find(sourceAddress).get();
 				auto& accountProperty = accountProperties.property(model::PropertyType::Address);
 				for (const auto& value : pair.second)
-					TOperationTraits::Add(accountProperty, state::ToVector(model::PublicKeyToAddress(value, Default_Network)));
+					TOperationTraits::Add(accountProperty, utils::ToVector(model::PublicKeyToAddress(value, Default_Network)));
 			}
 
 			cache.commit(Height(1));

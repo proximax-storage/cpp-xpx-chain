@@ -20,38 +20,38 @@ namespace catapult { namespace mongo { namespace plugins {
     namespace {
         constexpr auto Network_Identifier = model::NetworkIdentifier::Private_Test;
 
-        state::MetadataEntry CreateMetadataEntry(int fieldCount, model::MetadataType type) {
+        state::MetadataV1Entry CreateMetadataEntry(int fieldCount, model::MetadataV1Type type) {
             std::vector<uint8_t> buffer;
             switch (type) {
-                case model::MetadataType::Address: {
+                case model::MetadataV1Type::Address: {
                     auto pubKey = test::GenerateRandomByteArray<Key>();
                     auto address = model::PublicKeyToAddress(pubKey, Network_Identifier);
                     std::copy(address.begin(), address.end(), std::back_inserter(buffer));
                     break;
                 }
 
-                case model::MetadataType::MosaicId: {
+                case model::MetadataV1Type::MosaicId: {
 					buffer = test::GenerateRandomVector(sizeof(UnresolvedMosaicId));
                     break;
                 }
 
-                case model::MetadataType::NamespaceId: {
+                case model::MetadataV1Type::NamespaceId: {
 					buffer = test::GenerateRandomVector(sizeof(NamespaceId));
                     break;
                 }
             }
 
-            auto entry = state::MetadataEntry{ buffer, type };
+            auto entry = state::MetadataV1Entry{ buffer, type };
 
             for (int i = 0; i < fieldCount; ++i) {
-                entry.fields().emplace_back(state::MetadataField{
+                entry.fields().emplace_back(state::MetadataV1Field{
                         test::GenerateRandomString(15), test::GenerateRandomString(10), Height{0}});
             }
 
             return entry;
         }
 
-        void AssertCanMapMetadataEntry(int fieldCount, model::MetadataType type) {
+        void AssertCanMapMetadataEntry(int fieldCount, model::MetadataV1Type type) {
             // Arrange:
             auto entry = CreateMetadataEntry(fieldCount, type);
 
@@ -70,32 +70,32 @@ namespace catapult { namespace mongo { namespace plugins {
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_ModelToDbModel_Address) {
         // Assert:
-        AssertCanMapMetadataEntry(0, model::MetadataType::Address);
+        AssertCanMapMetadataEntry(0, model::MetadataV1Type::Address);
     }
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithFields_ModelToDbModel_Address) {
         // Assert:
-        AssertCanMapMetadataEntry(5, model::MetadataType::Address);
+        AssertCanMapMetadataEntry(5, model::MetadataV1Type::Address);
     }
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_ModelToDbModel_MosaicId) {
         // Assert:
-        AssertCanMapMetadataEntry(0, model::MetadataType::MosaicId);
+        AssertCanMapMetadataEntry(0, model::MetadataV1Type::MosaicId);
     }
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithFields_ModelToDbModel_MosaicId) {
         // Assert:
-        AssertCanMapMetadataEntry(5, model::MetadataType::MosaicId);
+        AssertCanMapMetadataEntry(5, model::MetadataV1Type::MosaicId);
     }
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_ModelToDbModel_NamespaceId) {
         // Assert:
-        AssertCanMapMetadataEntry(0, model::MetadataType::NamespaceId);
+        AssertCanMapMetadataEntry(0, model::MetadataV1Type::NamespaceId);
     }
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithFields_ModelToDbModel_NamespaceId) {
         // Assert:
-        AssertCanMapMetadataEntry(5, model::MetadataType::NamespaceId);
+        AssertCanMapMetadataEntry(5, model::MetadataV1Type::NamespaceId);
     }
 
     // endregion
@@ -103,11 +103,11 @@ namespace catapult { namespace mongo { namespace plugins {
     // region ToMetadataEntry
 
     namespace {
-        bsoncxx::document::value CreateDbMetadataEntry(int fieldCount, model::MetadataType type) {
+        bsoncxx::document::value CreateDbMetadataEntry(int fieldCount, model::MetadataV1Type type) {
             return ToDbModel(CreateMetadataEntry(fieldCount, type));
         }
 
-        void AssertCanMapDbMetadataEntry(int fieldCount, model::MetadataType type) {
+        void AssertCanMapDbMetadataEntry(int fieldCount, model::MetadataV1Type type) {
             // Arrange:
             auto dbMetadataEntry = CreateDbMetadataEntry(fieldCount, type);
 
@@ -126,32 +126,32 @@ namespace catapult { namespace mongo { namespace plugins {
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_DbModelToModel_Address) {
         // Assert:
-        AssertCanMapDbMetadataEntry(0, model::MetadataType::Address);
+        AssertCanMapDbMetadataEntry(0, model::MetadataV1Type::Address);
     }
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithFields_DbModelToModel_Address) {
         // Assert:
-        AssertCanMapDbMetadataEntry(5, model::MetadataType::Address);
+        AssertCanMapDbMetadataEntry(5, model::MetadataV1Type::Address);
     }
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_DbModelToModel_MosaicId) {
         // Assert:
-        AssertCanMapDbMetadataEntry(0, model::MetadataType::MosaicId);
+        AssertCanMapDbMetadataEntry(0, model::MetadataV1Type::MosaicId);
     }
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithFields_DbModelToModel_MosaicId) {
         // Assert:
-        AssertCanMapDbMetadataEntry(5, model::MetadataType::MosaicId);
+        AssertCanMapDbMetadataEntry(5, model::MetadataV1Type::MosaicId);
     }
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_DbModelToModel_NamespaceId) {
         // Assert:
-        AssertCanMapDbMetadataEntry(0, model::MetadataType::NamespaceId);
+        AssertCanMapDbMetadataEntry(0, model::MetadataV1Type::NamespaceId);
     }
 
     TEST(TEST_CLASS, CanMapMetadataEntryWithFields_DbModelToModel_NamespaceId) {
         // Assert:
-        AssertCanMapDbMetadataEntry(5, model::MetadataType::NamespaceId);
+        AssertCanMapDbMetadataEntry(5, model::MetadataV1Type::NamespaceId);
     }
 
     // endregion

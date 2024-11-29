@@ -7,10 +7,10 @@
 #include "MetadataMapper.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "plugins/txes/metadata/src/model/AddressMetadataTransaction.h"
-#include "plugins/txes/metadata/src/model/MosaicMetadataTransaction.h"
-#include "plugins/txes/metadata/src/model/NamespaceMetadataTransaction.h"
-#include "plugins/txes/metadata/src/state/MetadataUtils.h"
+#include "plugins/txes/metadata/src/model/AddressMetadataV1Transaction.h"
+#include "plugins/txes/metadata/src/model/MosaicMetadataV1Transaction.h"
+#include "plugins/txes/metadata/src/model/NamespaceMetadataV1Transaction.h"
+#include "plugins/txes/metadata/src/state/MetadataV1Utils.h"
 
 using namespace catapult::mongo::mappers;
 
@@ -19,7 +19,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	namespace {
 		void StreamModification(
 				bson_stream::array_context& context,
-				const model::MetadataModification& modification) {
+				const model::MetadataV1Modification& modification) {
 			context
 					<< bson_stream::open_document
 						<< "modificationType" << utils::to_underlying_type(modification.ModificationType)
@@ -50,7 +50,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		};
 	}
 
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(AddressMetadata, MetadataTransactionStreamer<UnresolvedAddress>::Stream)
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(MosaicMetadata, MetadataTransactionStreamer<UnresolvedMosaicId>::Stream)
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(NamespaceMetadata, MetadataTransactionStreamer<NamespaceId>::Stream)
+	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(AddressMetadataV1, MetadataTransactionStreamer<UnresolvedAddress>::Stream)
+	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(MosaicMetadataV1, MetadataTransactionStreamer<UnresolvedMosaicId>::Stream)
+	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(NamespaceMetadataV1, MetadataTransactionStreamer<NamespaceId>::Stream)
 }}}

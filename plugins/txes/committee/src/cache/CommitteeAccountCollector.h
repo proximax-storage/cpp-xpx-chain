@@ -6,7 +6,7 @@
 
 #pragma once
 #include "catapult/utils/Hashers.h"
-#include "src/state/CommitteeEntry.h"
+#include "plugins/txes/committee/src/state/CommitteeEntry.h"
 #include <unordered_map>
 #include <map>
 

@@ -5,12 +5,12 @@
 **/
 
 #include "catapult/model/Address.h"
-#include "src/state/MetadataEntry.h"
+#include "src/state/MetadataV1Entry.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace state {
 
-#define TEST_CLASS MetadataEntryTests
+#define TEST_CLASS MetadataV1EntryTests
 
     namespace {
         constexpr auto Network_Identifier = model::NetworkIdentifier::Private_Test;
@@ -18,11 +18,11 @@ namespace catapult { namespace state {
 
     TEST(TEST_CLASS, CanCreateEmptyMetadataEntry) {
         // Act:
-        auto entry = MetadataEntry{};
+        auto entry = MetadataV1Entry{};
 
         // Assert:
         EXPECT_TRUE(entry.fields().empty());
-        EXPECT_EQ(model::MetadataType{0}, entry.type());
+        EXPECT_EQ(model::MetadataV1Type{0}, entry.type());
         EXPECT_TRUE(entry.raw().empty());
     }
 
@@ -32,11 +32,11 @@ namespace catapult { namespace state {
         auto address = model::PublicKeyToAddress(pubKey, Network_Identifier);
         std::vector<uint8_t> buffer{address.size()};
         std::copy(address.begin(), address.end(), std::back_inserter(buffer));
-        auto type = model::MetadataType::Address;
+        auto type = model::MetadataV1Type::Address;
         auto hash = GetHash(buffer, type);
 
         // Act:
-        auto entry = MetadataEntry{buffer, type};
+        auto entry = MetadataV1Entry{buffer, type};
 
         // Assert:
         EXPECT_EQ(hash, entry.metadataId());
@@ -51,11 +51,11 @@ namespace catapult { namespace state {
         auto mosaicId = MosaicId{0x1234567890ABCDEF};
         auto pData = reinterpret_cast<uint8_t*>(&mosaicId);
         std::copy(pData, pData + sizeof(MosaicId), std::back_inserter(buffer));
-        auto type = model::MetadataType::MosaicId;
+        auto type = model::MetadataV1Type::MosaicId;
         auto hash = GetHash(buffer, type);
 
         // Act:
-        auto entry = MetadataEntry{buffer, type};
+        auto entry = MetadataV1Entry{buffer, type};
 
         // Assert:
         EXPECT_EQ(hash, entry.metadataId());
@@ -70,11 +70,11 @@ namespace catapult { namespace state {
         auto namespaceId = NamespaceId{0x1234567890ABCDEF};
         auto pData = reinterpret_cast<uint8_t*>(&namespaceId);
         std::copy(pData, pData + sizeof(NamespaceId), std::back_inserter(buffer));
-        auto type = model::MetadataType::NamespaceId;
+        auto type = model::MetadataV1Type::NamespaceId;
         auto hash = GetHash(buffer, type);
 
         // Act:
-        auto entry = MetadataEntry{buffer, type};
+        auto entry = MetadataV1Entry{buffer, type};
 
         // Assert:
         EXPECT_EQ(hash, entry.metadataId());

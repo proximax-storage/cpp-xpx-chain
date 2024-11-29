@@ -14,7 +14,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
     namespace {
         struct AddressMetadataEntryTraits {
-            static constexpr auto MetadataType = model::MetadataType::Address;
+            static constexpr auto MetadataType = model::MetadataV1Type::Address;
 
             static std::vector<uint8_t> GenerateEntryBuffer(model::NetworkIdentifier network_Id) {
                 auto pubKey = test::GenerateRandomByteArray<Key>();

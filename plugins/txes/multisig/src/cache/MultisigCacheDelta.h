@@ -1,4 +1,4 @@
-/**
+	/**
 *** Copyright (c) 2016-present,
 *** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
 ***
@@ -41,6 +41,7 @@ namespace catapult { namespace cache {
 			, public MultisigCacheDeltaMixins::BasicInsertRemove
 			, public MultisigCacheDeltaMixins::DeltaElements
 			, public MultisigCacheDeltaMixins::Enable
+			, public MultisigCacheDeltaMixins::BroadIteration
 			, public MultisigCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = MultisigCacheTypes::CacheReadOnlyType;
@@ -54,6 +55,7 @@ namespace catapult { namespace cache {
 				, MultisigCacheDeltaMixins::MutableAccessor(*multisigSets.pPrimary)
 				, MultisigCacheDeltaMixins::PatriciaTreeDelta(*multisigSets.pPrimary, multisigSets.pPatriciaTree)
 				, MultisigCacheDeltaMixins::BasicInsertRemove(*multisigSets.pPrimary)
+				, MultisigCacheDeltaMixins::BroadIteration(*multisigSets.pPrimary)
 				, MultisigCacheDeltaMixins::DeltaElements(*multisigSets.pPrimary)
 				, m_pMultisigEntries(multisigSets.pPrimary)
 		{}

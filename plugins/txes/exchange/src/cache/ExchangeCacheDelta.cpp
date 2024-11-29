@@ -19,6 +19,7 @@ namespace catapult { namespace cache {
 			, ExchangeCacheDeltaMixins::BasicInsertRemove(*exchangeSets.pPrimary)
 			, ExchangeCacheDeltaMixins::Pruning(*exchangeSets.pPrimary, *exchangeSets.pHeightGrouping)
 			, ExchangeCacheDeltaMixins::DeltaElements(*exchangeSets.pPrimary)
+			, ExchangeCacheDeltaMixins::BroadIteration(*exchangeSets.pPrimary)
 			, ExchangeCacheDeltaMixins::ConfigBasedEnable<config::ExchangeConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 			, m_pExchangeEntries(exchangeSets.pPrimary)
 			, m_pHeightGroupingDelta(exchangeSets.pHeightGrouping)

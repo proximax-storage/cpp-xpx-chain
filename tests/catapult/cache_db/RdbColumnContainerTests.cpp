@@ -20,8 +20,9 @@
 
 #include "catapult/cache_db/RdbColumnContainer.h"
 #include "catapult/cache_db/RocksInclude.h"
-#include "tests/catapult/cache_db/test/RdbTestUtils.h"
+#include "tests/test/cache/RdbTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/cache_db/RdbPropertyNames.h"
 
 namespace catapult { namespace cache {
 
@@ -39,6 +40,10 @@ namespace catapult { namespace cache {
 
 			void findLowerOrEqual(const RawBuffer& key, RdbDataIterator& iterator) const {
 				RdbColumnContainer::findLowerOrEqual(key, iterator);
+			}
+
+			void getIteratorAtStart(RdbDataIterator& iterator) const {
+				RdbColumnContainer::getIteratorAtStart(iterator);
 			}
 
 			void insert(const RawBuffer& key, const std::string& value) {
@@ -168,23 +173,18 @@ namespace catapult { namespace cache {
 
 		// Act + Assert:
 		PropType value;
-		EXPECT_FALSE(container.prop("amazing", value));
+		EXPECT_FALSE(container.prop(cache::property_names::SIZE_PROPERTY, value));
 	}
 
-	TEST(TEST_CLASS, CanSetCustomProperty) {
+	TEST(TEST_CLASS, ThrowsWhenGettingCustomProperty) {
+		// Arrange:
 		// Arrange:
 		test::RdbTestContext context(DefaultSettings());
 		RdbColumnContainer container(context.database(), 0);
-		PropType originalProperty;
-		test::FillWithRandomData(originalProperty);
 
-		// Act:
-		container.setProp("amazing", originalProperty);
-
-		// Assert:
+		// Act + Assert:
 		PropType value;
-		EXPECT_TRUE(container.prop("amazing", value));
-		EXPECT_EQ(originalProperty, value);
+		EXPECT_THROW(container.prop("amazing", value), catapult_invalid_argument);
 	}
 
 	TEST(TEST_CLASS, PropFailsWhenPropertyNameIsTooLong) {
@@ -397,6 +397,40 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(100u, numRemoved);
 		AssertKeys(container, 0, 200, AssertNoKey);
 		AssertKeys(container, 200, 238, AssertValidKey);
+	}
+
+	// endregion
+
+	// region iteration
+
+	TEST(TEST_CLASS, CanIterateRecords) {
+		// Arrange:
+		std::vector<std::string> keys;
+		for(auto i = 0; i < 8; i++)
+			keys.push_back(std::to_string(i));
+		test::RdbTestContext context(DefaultSettings(), [&keys](auto& db, const auto& columns) {
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[0]), "world1");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[1]), "world2");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[2]), "world3");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[3]), "world4");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[4]), "world5");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[5]), "world6");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[6]), "world7");
+		  db.Put(rocksdb::WriteOptions(), columns[0], ToSlice(keys[7]), "world8");
+		});
+		TestColumnContainer container(context.database(), 0);
+
+		// Act:
+		RdbDataIterator iter;
+		container.getIteratorAtStart(iter);
+
+		// Assert:
+		for(auto i = 1; i < 9; i++)
+		{
+			test::AssertIteratorValue("world" + std::to_string(i), iter);
+			iter = iter.next();
+		}
+
 	}
 
 	// endregion

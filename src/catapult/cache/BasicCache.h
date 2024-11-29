@@ -35,6 +35,7 @@ namespace catapult { namespace cache {
 		using CacheViewType = typename TCacheDescriptor::CacheViewType;
 		using CacheDeltaType = typename TCacheDescriptor::CacheDeltaType;
 		using CacheReadOnlyType = typename CacheViewType::ReadOnlyView;
+		using Descriptor = TCacheDescriptor;
 
 	public:
 		/// Creates an empty cache with \a config and arguments (\a subViewArgs).

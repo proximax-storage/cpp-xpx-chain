@@ -4,24 +4,24 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/model/AddressMetadataTransaction.h"
-#include "src/model/MetadataNotifications.h"
-#include "src/model/MosaicMetadataTransaction.h"
-#include "src/model/NamespaceMetadataTransaction.h"
-#include "src/plugins/MetadataTransactionPlugin.h"
-#include "src/state/MetadataUtils.h"
+#include "src/model/AddressMetadataV1Transaction.h"
+#include "src/model/MetadataV1Notifications.h"
+#include "src/model/MosaicMetadataV1Transaction.h"
+#include "src/model/NamespaceMetadataV1Transaction.h"
+#include "src/plugins/MetadataV1TransactionPlugin.h"
+#include "src/state/MetadataV1Utils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/MetadataTestUtils.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 
 namespace catapult { namespace plugins {
 
-#define TEST_CLASS MetadataTransactionPluginTests
+#define TEST_CLASS MetadataV1TransactionPluginTests
 
     namespace {
-        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AddressMetadata, 1, 1, AddressMetadata)
-        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicMetadata, 1, 1, MosaicMetadata)
-        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(NamespaceMetadata, 1, 1, NamespaceMetadata)
+        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AddressMetadataV1, 1, 1, AddressMetadata)
+        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicMetadataV1, 1, 1, MosaicMetadata)
+        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(NamespaceMetadataV1, 1, 1, NamespaceMetadata)
 
         template<typename TTransaction, typename TTransactionTraits>
         struct AddressTraits : public TTransactionTraits {
@@ -30,8 +30,8 @@ namespace catapult { namespace plugins {
             using ModifyMetadataValueNotification = model::ModifyAddressMetadataValueNotification_v1;
         };
 
-        using AddressRegularTraits = AddressTraits<model::AddressMetadataTransaction, AddressMetadataRegularTraits>;
-        using AddressEmbeddedTraits = AddressTraits<model::EmbeddedAddressMetadataTransaction, AddressMetadataEmbeddedTraits>;
+        using AddressRegularTraits = AddressTraits<model::AddressMetadataV1Transaction, AddressMetadataRegularTraits>;
+        using AddressEmbeddedTraits = AddressTraits<model::EmbeddedAddressMetadataV1Transaction, AddressMetadataEmbeddedTraits>;
 
         template<typename TTransaction, typename TTransactionTraits>
         struct MosaicTraits : public TTransactionTraits {
@@ -40,8 +40,8 @@ namespace catapult { namespace plugins {
             using ModifyMetadataValueNotification = model::ModifyMosaicMetadataValueNotification_v1;
         };
 
-        using MosaicRegularTraits = MosaicTraits<model::MosaicMetadataTransaction, MosaicMetadataRegularTraits>;
-        using MosaicEmbeddedTraits = MosaicTraits<model::EmbeddedMosaicMetadataTransaction, MosaicMetadataEmbeddedTraits>;
+        using MosaicRegularTraits = MosaicTraits<model::MosaicMetadataV1Transaction, MosaicMetadataRegularTraits>;
+        using MosaicEmbeddedTraits = MosaicTraits<model::EmbeddedMosaicMetadataV1Transaction, MosaicMetadataEmbeddedTraits>;
 
         template<typename TTransaction, typename TTransactionTraits>
         struct NamespaceTraits : public TTransactionTraits {
@@ -50,8 +50,8 @@ namespace catapult { namespace plugins {
             using ModifyMetadataValueNotification = model::ModifyNamespaceMetadataValueNotification_v1;
         };
 
-        using NamespaceRegularTraits = NamespaceTraits<model::NamespaceMetadataTransaction, NamespaceMetadataRegularTraits>;
-        using NamespaceEmbeddedTraits = NamespaceTraits<model::EmbeddedNamespaceMetadataTransaction, NamespaceMetadataEmbeddedTraits>;
+        using NamespaceRegularTraits = NamespaceTraits<model::NamespaceMetadataV1Transaction, NamespaceMetadataRegularTraits>;
+        using NamespaceEmbeddedTraits = NamespaceTraits<model::EmbeddedNamespaceMetadataV1Transaction, NamespaceMetadataEmbeddedTraits>;
     }
 
     template<typename TTraits>
@@ -64,15 +64,15 @@ namespace catapult { namespace plugins {
             auto pPlugin = TTraits::CreatePlugin();
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({
-                test::CreateModification(model::MetadataModificationType::Add, 1, 2).get(),
-                test::CreateModification(model::MetadataModificationType::Del, 3, 4).get()
+                test::CreateModification(model::MetadataV1ModificationType::Add, 1, 2).get(),
+                test::CreateModification(model::MetadataV1ModificationType::Del, 3, 4).get()
             });
 
             // Act:
             auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
             // Assert:
-            EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 2 * sizeof(model::MetadataModification) + 1 + 2 + 3 + 4, realSize);
+            EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 2 * sizeof(model::MetadataV1Modification) + 1 + 2 + 3 + 4, realSize);
         }
 
         // endregion
@@ -81,7 +81,7 @@ namespace catapult { namespace plugins {
 
         static void AssertCanPublishMetadataTypeNotification() {
             // Arrange:
-            mocks::MockTypedNotificationSubscriber<model::MetadataTypeNotification<1>> sub;
+            mocks::MockTypedNotificationSubscriber<model::MetadataV1TypeNotification<1>> sub;
             auto pPlugin = TTraits::CreatePlugin();
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({});
@@ -122,12 +122,12 @@ namespace catapult { namespace plugins {
 
         static void AssertCanPublishMetadataModificationsNotification() {
             // Arrange:
-            mocks::MockTypedNotificationSubscriber<model::MetadataModificationsNotification<1>> sub;
+            mocks::MockTypedNotificationSubscriber<model::MetadataV1ModificationsNotification<1>> sub;
             auto pPlugin = TTraits::CreatePlugin();
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({
-                test::CreateModification(model::MetadataModificationType::Add, 1, 2).get(),
-                test::CreateModification(model::MetadataModificationType::Del, 3, 4).get()
+                test::CreateModification(model::MetadataV1ModificationType::Add, 1, 2).get(),
+                test::CreateModification(model::MetadataV1ModificationType::Del, 3, 4).get()
             });
             auto metadataId = state::GetHash(state::ToVector(pTransaction->MetadataId), pTransaction->MetadataType);
 
@@ -149,12 +149,12 @@ namespace catapult { namespace plugins {
 
         static void AssertCanPublishModifyMetadataFieldNotification() {
             // Arrange:
-            mocks::MockTypedNotificationSubscriber<model::ModifyMetadataFieldNotification<1>> sub;
+            mocks::MockTypedNotificationSubscriber<model::ModifyMetadataV1FieldNotification<1>> sub;
             auto pPlugin = TTraits::CreatePlugin();
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({
-                test::CreateModification(model::MetadataModificationType::Add, 1, 2).get(),
-                test::CreateModification(model::MetadataModificationType::Del, 3, 4).get()
+                test::CreateModification(model::MetadataV1ModificationType::Add, 1, 2).get(),
+                test::CreateModification(model::MetadataV1ModificationType::Del, 3, 4).get()
             });
 
             // Act:
@@ -187,8 +187,8 @@ namespace catapult { namespace plugins {
             auto pPlugin = TTraits::CreatePlugin();
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({
-                test::CreateModification(model::MetadataModificationType::Add, 1, 2).get(),
-                test::CreateModification(model::MetadataModificationType::Del, 3, 4).get()
+                test::CreateModification(model::MetadataV1ModificationType::Add, 1, 2).get(),
+                test::CreateModification(model::MetadataV1ModificationType::Del, 3, 4).get()
             });
 
             // Act:

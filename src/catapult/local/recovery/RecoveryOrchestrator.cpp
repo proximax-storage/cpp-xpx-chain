@@ -83,13 +83,13 @@ namespace catapult { namespace local {
 			serializer.moveTo(dataDirectory.dir("state"));
 		}
 
-		void MoveBlockFiles(const config::CatapultDirectory& stagingDirectory, io::BlockStorage& destinationStorage) {
+		void MoveBlockFiles(const config::CatapultDirectory& stagingDirectory, io::BlockStorage& destinationStorage, Height nemesisHeight) {
 			io::FileBlockStorage staging(stagingDirectory.str());
 			if (Height(0) == staging.chainHeight())
 				return;
 
 			// mind that startHeight will be > 1, so there is no additional check
-			auto startHeight = FindStartHeight(staging);
+			auto startHeight = FindStartHeight(staging, nemesisHeight);
 			CATAPULT_LOG(debug) << "moving blocks: " << startHeight << "-" << staging.chainHeight();
 			io::MoveBlockFiles(staging, destinationStorage, startHeight);
 		}
@@ -204,7 +204,7 @@ namespace catapult { namespace local {
 
 				CATAPULT_LOG(debug) << " - moving supplemental data and block files";
 				MoveSupplementalDataFiles(m_dataDirectory);
-				MoveBlockFiles(m_dataDirectory.spoolDir("block_sync"), *m_pBlockStorage);
+				MoveBlockFiles(m_dataDirectory.spoolDir("block_sync"), *m_pBlockStorage, config.Immutable.NemesisHeight);
 			}
 
 		public:

@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/state/PropertyUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/utils/MemoryUtils.h"
 
 namespace catapult { namespace state {
 
@@ -27,7 +27,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanConvertPrimitiveTypeToVector) {
 		// Act:
-		auto vector = ToVector(static_cast<uint16_t>(0x1234));
+		auto vector = utils::ToVector(static_cast<uint16_t>(0x1234));
 
 		// Assert:
 		auto expectedVector = std::vector<uint8_t>{ 0x34, 0x12 };
@@ -36,7 +36,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanConvertBaseTypeToVector) {
 		// Act:
-		auto vector = ToVector(Amount(0x9A78563412));
+		auto vector = utils::ToVector(Amount(0x9A78563412));
 
 		// Assert:
 		auto expectedVector = std::vector<uint8_t>{ 0x12, 0x34, 0x56, 0x78, 0x9A, 0x00, 0x00, 0x00 };
@@ -45,7 +45,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanConvertEmptyArrayToVector) {
 		// Act:
-		auto vector = ToVector(std::array<uint8_t, 0>{});
+		auto vector = utils::ToVector(std::array<uint8_t, 0>{});
 
 		// Assert:
 		auto expectedVector = std::vector<uint8_t>{};
@@ -54,7 +54,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanConvertNonEmptyArrayToVector) {
 		// Act:
-		auto vector = ToVector(std::array<uint8_t, 5>{ { 0x12, 0x34, 0x56, 0x78, 0x9A } });
+		auto vector = utils::ToVector(std::array<uint8_t, 5>{ { 0x12, 0x34, 0x56, 0x78, 0x9A } });
 
 		// Assert:
 		auto expectedVector = std::vector<uint8_t>{ 0x12, 0x34, 0x56, 0x78, 0x9A };

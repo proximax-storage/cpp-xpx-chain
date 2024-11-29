@@ -7,5 +7,5 @@
 #include "Validators.h"
 
 namespace catapult { namespace validators {
-	DEFINE_PLUGIN_CONFIG_VALIDATOR(metadata, Metadata, 1)
+	DEFINE_PLUGIN_CONFIG_VALIDATOR_WITH_FAILURE(metadata, MetadataV1, Failure_Metadata_Plugin_Config_Malformed, 1)
 }}

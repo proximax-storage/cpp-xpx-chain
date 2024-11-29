@@ -86,6 +86,8 @@ namespace catapult { namespace model {
 		/// Queue facility code.
 		Queue = 0x67,
 		/// Priority queue facility code.
-		PriorityQueue = 0x68
+		PriorityQueue = 0x68,
+		/// State modifier facility code.
+		ModifyState = 0x69
 	};
 }}

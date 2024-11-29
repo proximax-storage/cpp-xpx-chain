@@ -69,7 +69,7 @@ namespace catapult { namespace test {
 		auto& accountProperties = propertyCacheDelta.find(address).get();
 		auto& accountProperty = accountProperties.property(TPropertyValueTraits::Property_Type);
 		for (const auto& value : values)
-			TOperationTraits::Add(accountProperty, state::ToVector(value));
+			TOperationTraits::Add(accountProperty, utils::ToVector(value));
 	}
 
 	/// Populates \a cache with \a key and \a values.

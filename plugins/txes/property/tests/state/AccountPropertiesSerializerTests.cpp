@@ -123,7 +123,7 @@ namespace catapult { namespace state {
 			static void AddKeys(AccountProperties& accountProperties, const std::vector<Address>& addresses) {
 				auto& accountProperty = accountProperties.property(model::PropertyType::Address);
 				for (const auto& address : addresses)
-					accountProperty.allow({ model::PropertyModificationType::Add, state::ToVector(address) });
+					accountProperty.allow({ model::PropertyModificationType::Add, utils::ToVector(address) });
 			}
 
 			static constexpr size_t GetKeyStartBufferOffset() {

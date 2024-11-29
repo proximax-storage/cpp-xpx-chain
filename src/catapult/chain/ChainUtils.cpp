@@ -72,7 +72,7 @@ namespace catapult { namespace chain {
 			const auto& config = (remoteConfigs.end() != iter) ? iter->second : pConfigHolder->Config(pBlock->Height).Network;
 			if (difficulties.size() < config.MaxDifficultyBlocks) {
 				auto startHeight = difficulties.empty() ? blocks[0]->Height : difficulties.begin()->BlockHeight;
-				if (startHeight > Height(1))
+				if (startHeight > pConfigHolder->Config().Immutable.NemesisHeight)
 					LoadDifficulties(difficulties, cache, startHeight - Height(1), config.MaxDifficultyBlocks - difficulties.size());
 			}
 

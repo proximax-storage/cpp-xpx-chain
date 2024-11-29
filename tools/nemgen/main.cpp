@@ -25,13 +25,79 @@
 #include "NemesisExecutionHasher.h"
 #include "tools/ToolConfigurationUtils.h"
 #include "catapult/io/RawFile.h"
+#include "catapult/crypto/KeyPair.h"
+#include "catapult/plugins/PluginModule.h"
+#include "catapult/extensions/LocalNodeStateFileStorage.h"
+#include "catapult/io/BufferedFileStream.h"
+#include "catapult/extensions/LocalNodeStateFileStorage.h"
+#include "catapult/cache/SupplementalDataStorage.h"
+#include "catapult/extensions/PluginUtils.h"
+#include "catapult/plugins/PluginLoader.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 
 	namespace {
+
+		constexpr size_t Default_Loader_Batch_Size = 100'000;
+		constexpr auto Supplemental_Data_Filename = "supplemental.dat";
+
+		std::unique_ptr<utils::LogFilter> CreateLogFilter(const config::BasicLoggerConfiguration& config) {
+			auto pFilter = std::make_unique<utils::LogFilter>(config.Level);
+			for (const auto& pair : config.ComponentLevels)
+				pFilter->setLevel(pair.first.c_str(), pair.second);
+
+			return pFilter;
+		}
+
+		std::shared_ptr<void> SetupLogging(const config::LoggingConfiguration& config) {
+			auto pBootstrapper = std::make_shared<utils::LoggingBootstrapper>();
+			pBootstrapper->addConsoleLogger(config::GetConsoleLoggerOptions(config.Console), *CreateLogFilter(config.Console));
+			pBootstrapper->addFileLogger(config::GetFileLoggerOptions(config.File), *CreateLogFilter(config.File));
+			return std::move(pBootstrapper);
+		}
+
+		std::string GetStorageFilename(const cache::CacheStorage& storage) {
+			return storage.name() + ".dat";
+		}
+
 		void WriteToFile(const std::string& filePath, const std::string& content) {
 			io::RawFile file(filePath, io::OpenMode::Read_Write);
 			file.write({ reinterpret_cast<const uint8_t*>(content.data()), content.size() });
+		}
+
+		io::BufferedInputFileStream OpenInputStream(const config::CatapultDirectory& directory, const std::string& filename) {
+			// TODO: remove this temporary workaround after mainnet upgrade to 0.8.0
+			auto filepath = directory.file(filename);
+			if (!boost::filesystem::exists(filepath))
+				return io::BufferedInputFileStream(io::RawFile(filepath, io::OpenMode::Read_Write));
+
+			return io::BufferedInputFileStream(io::RawFile(filepath, io::OpenMode::Read_Only));
+		}
+
+		bool LoadStateFromDirectory(
+				const config::CatapultDirectory& directory,
+				cache::CatapultCache& cache,
+				cache::SupplementalData& supplementalData) {
+			if (!extensions::HasSerializedState(directory))
+				return false;
+
+			// 1. load cache data
+			for (const auto& pStorage : cache.storages()) {
+				auto inputStream = OpenInputStream(directory, GetStorageFilename(*pStorage));
+				pStorage->loadAll(inputStream, Default_Loader_Batch_Size);
+			}
+
+			// 2. load supplemental data
+			Height chainHeight;
+			{
+				auto inputStream = OpenInputStream(directory, Supplemental_Data_Filename);
+				cache::LoadSupplementalData(inputStream, supplementalData, chainHeight);
+			}
+
+			// 3. commit changes
+			auto cacheDelta = cache.createDelta();
+			cache.commit(chainHeight);
+			return true;
 		}
 
 		class NemGenTool : public Tool {
@@ -60,23 +126,87 @@ namespace catapult { namespace tools { namespace nemgen {
 				optionsBuilder("useTemporaryCacheDatabase,t",
 						OptionsSwitch(),
 						"true if a temporary cache database should be created and destroyed");
+
+				optionsBuilder("reconstructor,rn",
+							   OptionsSwitch(),
+							   "true if nemesis block should be based on the existing chain state");
 			}
 
 			int run(const Options& options) override {
+
 				// 1. load config
-				auto config = LoadConfiguration(m_resourcesPath);
-				auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
 				auto nemesisConfig = LoadNemesisConfiguration(m_nemesisPropertiesFilePath);
 				if (!LogAndValidateNemesisConfiguration(nemesisConfig))
 					return -1;
 
-				// 2. create the nemesis block element
+				auto signer = crypto::KeyPair::FromString(nemesisConfig.NemesisSignerPrivateKey);
+				auto config = LoadConfiguration(m_resourcesPath);
+				auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
+
 				auto databaseCleanupMode = options["useTemporaryCacheDatabase"].as<bool>()
-						? CacheDatabaseCleanupMode::Purge
-						: CacheDatabaseCleanupMode::None;
+												   ? CacheDatabaseCleanupMode::Purge
+												   : CacheDatabaseCleanupMode::None;
+
+				if(options["reconstructor"].as<bool>()) {
+					// 1. load and validate the configuration
+					auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
+
+					auto dataDirectory = config::CatapultDataDirectoryPreparer::Prepare(config.User.DataDirectory);
+					auto pLoggingGuard = SetupLogging(config.Logging);
+					auto pluginManager = plugins::PluginManager(pConfigHolder, extensions::CreateStorageConfiguration(pConfigHolder->Config()));
+					auto keyPair = crypto::KeyPair::FromString(pConfigHolder->Config().User.BootKey);
+					std::vector<plugins::PluginModule>  pluginModules;
+					std::string prefix = "catapult.";
+					for (const auto& name : { "coresystem", "plugins.signature" })
+						plugins::LoadPluginByName(pluginManager, pluginModules, pluginManager.configHolder()->Config().User.PluginsDirectory, name);
+
+					for (const auto& pair : pluginManager.config().Plugins)
+						plugins::LoadPluginByName(pluginManager, pluginModules, pluginManager.configHolder()->Config().User.PluginsDirectory, pair.first);
+
+					auto cache =  pluginManager.createCache();
+					pluginManager.configHolder()->SetCache(&cache);
+
+					if (pluginManager.isStorageStateSet())
+						pluginManager.storageState().setCache(&cache);
+
+					auto initializers = pluginManager.createPluginInitializer();
+					initializers(const_cast<model::NetworkConfiguration&>(pluginManager.configHolder()->Config().Network));
+					pluginManager.configHolder()->SetPluginInitializer(std::move(initializers));
+
+					cache::SupplementalData supplementalData;
+
+					auto cacheDelta = cache.createDelta();
+					auto broker = StateBroker(cacheDelta, pluginManager.configHolder(), &signer);
+
+					if (!LoadStateFromDirectory(dataDirectory.dir("state"), cache, supplementalData))
+						CATAPULT_THROW_RUNTIME_ERROR("State cannot be loaded.");
+					NemesisTransactions transactions(signer, nemesisConfig);
+					auto pBlock = ReconstructNemesisBlock(nemesisConfig, transactions, cache, pluginManager, pConfigHolder, broker);
+					auto blockElement = ReconstructNemesisBlockElement(nemesisConfig, *pBlock, transactions);// block element without transactions
+					auto executionHashesDescriptor = CalculateAndLogNemesisExecutionHashes(nemesisConfig, blockElement, pConfigHolder, databaseCleanupMode, &transactions);
+
+					if (!options["no-summary"].as<bool>()) {
+						if (m_summaryFilePath.empty())
+							m_summaryFilePath = nemesisConfig.BinDirectory + "/summary.txt";
+
+						WriteToFile(m_summaryFilePath, executionHashesDescriptor.Summary);
+					}
+
+					blockElement.EntityHash = UpdateNemesisBlock(nemesisConfig, *pBlock, executionHashesDescriptor);
+
+					SaveNemesisBlockElementWithSpooling(blockElement, nemesisConfig, transactions);
+
+					broker.Dump(nemesisConfig.AccountEquivalenceFile);
+
+					return 0;
+				}
+
+
+				// 2. create the nemesis block element
+
 				auto pBlock = CreateNemesisBlock(nemesisConfig, m_resourcesPath);
 				auto blockElement = CreateNemesisBlockElement(nemesisConfig, *pBlock);
-				auto executionHashesDescriptor = CalculateAndLogNemesisExecutionHashes(blockElement, pConfigHolder, databaseCleanupMode);
+				auto executionHashesDescriptor = CalculateAndLogNemesisExecutionHashes(nemesisConfig, blockElement, pConfigHolder, databaseCleanupMode, nullptr);
 				if (!options["no-summary"].as<bool>()) {
 					if (m_summaryFilePath.empty())
 						m_summaryFilePath = nemesisConfig.BinDirectory + "/summary.txt";

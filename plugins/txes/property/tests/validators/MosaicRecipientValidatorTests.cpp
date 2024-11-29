@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 			auto& accountProperties = propertyCacheDelta.find(accountAddress).get();
 			auto& accountProperty = accountProperties.property(model::PropertyType::MosaicId);
 			for (auto mosaicId : mosaicIds)
-				TOperationTraits::Add(accountProperty, state::ToVector(mosaicId));
+				TOperationTraits::Add(accountProperty, utils::ToVector(mosaicId));
 
 			cache.commit(Height(1));
 		}

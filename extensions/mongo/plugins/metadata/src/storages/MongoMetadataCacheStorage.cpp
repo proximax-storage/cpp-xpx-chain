@@ -7,7 +7,7 @@
 #include "MongoMetadataCacheStorage.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
 #include "src/mappers/MetadataEntryMapper.h"
-#include "plugins/txes/metadata/src/cache/MetadataCache.h"
+#include "plugins/txes/metadata/src/cache/MetadataV1Cache.h"
 
 using namespace bsoncxx::builder::stream;
 
@@ -18,10 +18,10 @@ namespace catapult { namespace mongo { namespace plugins {
 			static constexpr auto Collection_Name = "metadatas";
 			static constexpr auto Id_Property_Name = "metadata.metadataId";
 
-			using CacheType = cache::MetadataCacheDescriptor::CacheType;
-			using CacheDeltaType = cache::MetadataCacheDescriptor::CacheDeltaType;
+			using CacheType = cache::MetadataV1CacheDescriptor::CacheType;
+			using CacheDeltaType = cache::MetadataV1CacheDescriptor::CacheDeltaType;
 			using KeyType = std::vector<uint8_t>;
-			using ModelType = cache::MetadataCacheDescriptor::ValueType;
+			using ModelType = cache::MetadataV1CacheDescriptor::ValueType;
 
 			static auto GetId(const ModelType& metadata) {
 				return metadata.raw();
