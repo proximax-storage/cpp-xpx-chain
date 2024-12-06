@@ -64,5 +64,7 @@ go build
 cd ~/Proj/cpp-xpx-chain/cmake-build-debug/data
 find . -type f -name "config-storage.properties" -exec sed -i '' 's/useRpcReplicator = true/useRpcReplicator = false/g' {} +
 
-
+docker compose down
+docker rmi -f <e13eba077c50>
+aws ecr get-login-password --region ap-southeast-1 |docker login --username AWS --password-stdin 249767383774.dkr.ecr.ap-southeast-1.amazonaws.com/proximax-catapult-server && rm -rf /opt/catapult-config/replicator_service_logs/* && rm -f /opt/catapult-config/data/server.lock && docker compose up -d
 
