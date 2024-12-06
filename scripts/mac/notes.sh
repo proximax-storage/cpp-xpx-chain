@@ -60,5 +60,9 @@ go build
 #### User Key
 3C7C91E82BF69B206A523E64DB21B07598834970065ABCFA2BB4212138637E0B
 
+#### useRpcReplicator = false
+cd ~/Proj/cpp-xpx-chain/cmake-build-debug/data
+find . -type f -name "config-storage.properties" -exec sed -i '' 's/useRpcReplicator = true/useRpcReplicator = false/g' {} +
+
 
 
