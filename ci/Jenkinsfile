@@ -101,6 +101,7 @@ pipeline {
             when {
                 anyOf {
                     branch 'develop';
+                    branch pattern: 'develop-.*', comparator: 'REGEXP';
                     branch 'release-candidate-*'
                 }
             }
