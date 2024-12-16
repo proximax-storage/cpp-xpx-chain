@@ -22,6 +22,7 @@ namespace catapult { namespace config {
 
 	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const model::NetworkConfiguration& networkConfig)
 			: BlockchainConfigurationHolder(GetMockNetworkConfig(networkConfig)) {
+		const_cast<config::ImmutableConfiguration*>(&m_configs.begin()->second.Immutable)->NemesisHeight = Height(1);
 	}
 
 	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const BlockchainConfiguration& config)

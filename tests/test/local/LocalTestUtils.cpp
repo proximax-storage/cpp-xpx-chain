@@ -171,6 +171,7 @@ namespace catapult { namespace test {
 			config.GenerationHash = GetNemesisGenerationHash();
 			config.CurrencyMosaicId = Default_Currency_Mosaic_Id;
 			config.HarvestingMosaicId = Default_Harvesting_Mosaic_Id;
+			config.NemesisHeight = Height(1);
 			config.InitialCurrencyAtomicUnits = Amount(8'999'999'998'000'000);
 			return config;
 		}

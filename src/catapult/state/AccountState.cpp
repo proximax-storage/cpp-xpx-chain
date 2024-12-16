@@ -62,4 +62,14 @@ namespace catapult { namespace state {
 				<< model::AddressToString(mainAccountState.Address) << " is improper";
 		CATAPULT_THROW_RUNTIME_ERROR(out.str().c_str());
 	}
+	AccountState& AccountState::operator=(const AccountState& accountState) {
+		Address = accountState.Address;
+		AddressHeight = accountState.AddressHeight;
+		PublicKey = accountState.PublicKey;
+		PublicKeyHeight = accountState.PublicKeyHeight;
+		AccountType = accountState.AccountType;
+		LinkedAccountKey = accountState.LinkedAccountKey;
+		Balances = AccountBalances(this);
+		Balances = accountState.Balances;
+	}
 }}

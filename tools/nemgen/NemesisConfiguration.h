@@ -73,6 +73,9 @@ namespace catapult { namespace tools { namespace nemgen {
 		/// Binary destination directory.
 		std::string BinDirectory;
 
+		/// Binary destination directory.
+		std::string DataDirectory;
+
 		/// Map containing all namespace names.
 		NamespaceIdToNameMap NamespaceNames;
 
@@ -95,7 +98,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		std::string TransactionsPath;
 
 		/// Maximum in memory buffer size of transactions
-		uint8_t TxBufferSize;
+		uint32_t TxBufferSize;
 
 		std::string AccountEquivalenceFile;
 	public:

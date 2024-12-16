@@ -134,30 +134,30 @@ namespace catapult { namespace tools { namespace nemgen {
 
 			int run(const Options& options) override {
 
-				// 1. load config
+				bool is_reconstructor = options.find("reconstructor") != options.end() ;
+										// 1. load config
 				auto nemesisConfig = LoadNemesisConfiguration(m_nemesisPropertiesFilePath);
 				if (!LogAndValidateNemesisConfiguration(nemesisConfig))
 					return -1;
 
 				auto signer = crypto::KeyPair::FromString(nemesisConfig.NemesisSignerPrivateKey);
 				auto config = LoadConfiguration(m_resourcesPath);
+				if(is_reconstructor) const_cast<config::UserConfiguration*>(&config.User)->DataDirectory = nemesisConfig.DataDirectory;
 				auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
 
 				auto databaseCleanupMode = options["useTemporaryCacheDatabase"].as<bool>()
 												   ? CacheDatabaseCleanupMode::Purge
 												   : CacheDatabaseCleanupMode::None;
 
-				if(options["reconstructor"].as<bool>()) {
+				if(is_reconstructor) {
 					// 1. load and validate the configuration
-					auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
-
-					auto dataDirectory = config::CatapultDataDirectoryPreparer::Prepare(config.User.DataDirectory);
+					auto dataDirectory = config::CatapultDataDirectoryPreparer::Prepare(nemesisConfig.DataDirectory);
 					auto pLoggingGuard = SetupLogging(config.Logging);
 					auto pluginManager = plugins::PluginManager(pConfigHolder, extensions::CreateStorageConfiguration(pConfigHolder->Config()));
 					auto keyPair = crypto::KeyPair::FromString(pConfigHolder->Config().User.BootKey);
 					std::vector<plugins::PluginModule>  pluginModules;
 					std::string prefix = "catapult.";
-					for (const auto& name : { "coresystem", "plugins.signature" })
+					for (const auto& name : { "catapult.coresystem", PLUGIN_NAME(signature) })
 						plugins::LoadPluginByName(pluginManager, pluginModules, pluginManager.configHolder()->Config().User.PluginsDirectory, name);
 
 					for (const auto& pair : pluginManager.config().Plugins)
@@ -175,11 +175,11 @@ namespace catapult { namespace tools { namespace nemgen {
 
 					cache::SupplementalData supplementalData;
 
-					auto cacheDelta = cache.createDelta();
-					auto broker = StateBroker(cacheDelta, pluginManager.configHolder(), &signer);
-
 					if (!LoadStateFromDirectory(dataDirectory.dir("state"), cache, supplementalData))
 						CATAPULT_THROW_RUNTIME_ERROR("State cannot be loaded.");
+
+					auto cacheDelta = cache.createDelta();
+					auto broker = StateBroker(cacheDelta, pluginManager.configHolder(), &signer);
 					NemesisTransactions transactions(signer, nemesisConfig);
 					auto pBlock = ReconstructNemesisBlock(nemesisConfig, transactions, cache, pluginManager, pConfigHolder, broker);
 					auto blockElement = ReconstructNemesisBlockElement(nemesisConfig, *pBlock, transactions);// block element without transactions

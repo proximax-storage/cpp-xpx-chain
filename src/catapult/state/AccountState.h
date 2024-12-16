@@ -53,7 +53,7 @@ namespace catapult { namespace state {
 				, LinkedAccountKey()
 				, Balances(this)
 		{}
-
+		AccountState& operator=(const AccountState& accountState);
 		/// Copy constructor that makes a deep copy of \a accountState.
 		AccountState(const AccountState& accountState)
 		: Balances(this) {

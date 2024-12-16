@@ -141,6 +141,7 @@ namespace catapult { namespace extensions {
 			config.Immutable.NetworkIdentifier = Network_Identifier;
 			test::FillWithRandomData(config.Immutable.GenerationHash);
 			config.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
+			config.Immutable.NemesisHeight = Height(1);
 			config.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			config.Immutable.InitialCurrencyAtomicUnits = nemesisOptions.InitialCurrencyAtomicUnits;
 			config.Network.ImportanceGrouping = 123;

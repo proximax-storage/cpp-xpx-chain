@@ -203,6 +203,8 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		LOAD_OUTPUT_PROPERTY(CppFile);
 		LOAD_OUTPUT_PROPERTY(BinDirectory);
+		LOAD_OUTPUT_PROPERTY(DataDirectory);
+		LOAD_OUTPUT_PROPERTY(AccountEquivalenceFile);
 
 #undef LOAD_OUTPUT_PROPERTY
 
@@ -211,7 +213,6 @@ namespace catapult { namespace tools { namespace nemgen {
 		LOAD_OUTPUT_PROPERTY(TxBufferSize);
 		LOAD_OUTPUT_PROPERTY(TransactionsPath);
 		LOAD_OUTPUT_PROPERTY(EnableSpool);
-		LOAD_OUTPUT_PROPERTY(AccountEquivalenceFile);
 
 #undef LOAD_OUTPUT_PROPERTY
 

@@ -62,26 +62,26 @@ namespace catapult { namespace plugins {
 
             static std::vector<std::string> GetStatelessValidatorNames() {
                 return {
-					"MetadataTypeValidator",
-					"MetadataPluginConfigValidator",
+					"MetadataV1TypeValidator",
+					"MetadataV1PluginConfigValidator",
                 };
             }
 
             static std::vector<std::string> GetStatefulValidatorNames() {
                 return {
-					"MetadataFieldModificationValidator",
-					"MetadataModificationsValidator",
-					"ModifyAddressMetadataValidator",
-					"ModifyMosaicMetadataValidator",
-					"ModifyNamespaceMetadataValidator",
+					"MetadataV1FieldModificationValidator",
+					"MetadataV1ModificationsValidator",
+					"ModifyAddressMetadataV1Validator",
+					"ModifyMosaicMetadataV1Validator",
+					"ModifyNamespaceMetadataV1Validator",
                 };
             }
 
             static std::vector<std::string> GetObserverNames() {
                 return {
-					"AddressMetadataValueModificationObserver",
-					"MosaicMetadataValueModificationObserver",
-					"NamespaceMetadataValueModificationObserver",
+					"AddressMetadataV1ValueModificationObserver",
+					"MosaicMetadataV1ValueModificationObserver",
+					"NamespaceMetadataV1ValueModificationObserver",
 					"MetadataPruningObserver"
                 };
             }
