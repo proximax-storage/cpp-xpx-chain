@@ -60,5 +60,24 @@ go build
 #### User Key
 3C7C91E82BF69B206A523E64DB21B07598834970065ABCFA2BB4212138637E0B
 
+#### cut file
+sed -n '<start>,<end>p' filename
+
+#### useRpcReplicator = false
+cd ~/Proj/cpp-xpx-chain/cmake-build-debug/data
+find . -type f -name "config-storage.properties" -exec sed -i '' 's/useRpcReplicator = true/useRpcReplicator = false/g' {} +
+cd ~/Proj/cpp-xpx-chain/cmake-build-debug/data
+find . -type f -name "config-storage.properties" -exec sed -i '' 's/useRpcReplicator = false/useRpcReplicator = true/g' {} +
+
+docker compose down
+docker rmi -f dccc92f597d1
+rm -rf replicator_service_logs/*
+aws ecr get-login-password --region ap-southeast-1 |docker login --username AWS --password-stdin 249767383774.dkr.ecr.ap-southeast-1.amazonaws.com/proximax-catapult-server && rm -rf /opt/catapult-config/replicator_service_logs/* && rm -f /opt/catapult-config/data/server.lock && docker compose up -d
+
+docker compose down
+rm -rf /opt/catapult-config/replicator_service_logs/* && rm -f /opt/catapult-config/data/server.lock
+docker compose up -d
 
 
+void session_impl::send_udp_packet(std::weak_ptr<utp_socket_interface> sock
+m_socket.send_to(boost::asio::buffer(p.data(), static_cast<std::size_t>(p.size())), ep, 0, ec);
