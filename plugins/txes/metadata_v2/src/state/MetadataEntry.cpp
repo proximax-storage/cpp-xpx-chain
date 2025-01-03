@@ -23,8 +23,18 @@
 
 namespace catapult { namespace state {
 
-	MetadataEntry::MetadataEntry(const MetadataKey& key) : m_key(key)
+	MetadataEntry::MetadataEntry(const MetadataKey& key, VersionType version)
+		: m_key(key)
+		, m_version(version)
 	{}
+
+	VersionType MetadataEntry::version() const {
+		return m_version;
+	}
+
+	void MetadataEntry::setVersion(VersionType version) {
+		m_version = version;
+	}
 
 	const MetadataKey& MetadataEntry::key() const {
 		return m_key;
@@ -36,5 +46,15 @@ namespace catapult { namespace state {
 
 	MetadataValue& MetadataEntry::value() {
 		return m_value;
+	}
+
+	bool MetadataEntry::isImmutable() const
+	{
+		return m_immutable;
+	}
+
+	void MetadataEntry::setImmutable(bool isImmutable)
+	{
+		m_immutable = isImmutable;
 	}
 }}

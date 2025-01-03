@@ -21,6 +21,7 @@
 
 #include "MetadataPlugin.h"
 #include "MetadataTransactionPlugin.h"
+#include "ExtendedMetadataTransactionPlugin.h"
 #include "src/cache/MetadataCache.h"
 #include "src/cache/MetadataCacheStorage.h"
 #include "src/observers/Observers.h"
@@ -35,8 +36,13 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.addTransactionSupport(CreateAccountMetadataTransactionPlugin(manager.configHolder()));
+		manager.addTransactionSupport(CreateAccountExtendedMetadataTransactionPlugin(manager.configHolder()));
+
 		manager.addTransactionSupport(CreateMosaicMetadataTransactionPlugin(manager.configHolder()));
+		manager.addTransactionSupport(CreateMosaicExtendedMetadataTransactionPlugin(manager.configHolder()));
+
 		manager.addTransactionSupport(CreateNamespaceMetadataTransactionPlugin(manager.configHolder()));
+		manager.addTransactionSupport(CreateNamespaceExtendedMetadataTransactionPlugin(manager.configHolder()));
 
         const auto& pConfigHolder = manager.configHolder();
 		manager.addCacheSupport<cache::MetadataCacheStorage>(std::make_unique<cache::MetadataCache>(
@@ -53,12 +59,15 @@ namespace catapult { namespace plugins {
 
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateMetadataValueValidator())
+				.add(validators::CreateMetadataValueV1Validator())
+				.add(validators::CreateMetadataValueV2Validator())
+				.add(validators::CreateExtendedMetadataValueValidator())
 				.add(validators::CreateMetadataSizesValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
 			builder.add(observers::CreateMetadataValueObserver());
+			builder.add(observers::CreateExtendedMetadataValueObserver());
 		});
 	}
 }}
