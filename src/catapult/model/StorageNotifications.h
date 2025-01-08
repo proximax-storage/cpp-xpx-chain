@@ -103,6 +103,9 @@ namespace catapult { namespace model {
 	/// Defines a replicator onboarding notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x0020);
 
+	/// Defines a drives update notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Drives_Update_v1, 0x0021);
+
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
 		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)

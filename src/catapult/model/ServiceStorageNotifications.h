@@ -103,6 +103,9 @@ namespace catapult { namespace model {
 	/// Defines a replicator onboarding notification type.
 	DEFINE_NOTIFICATION_TYPE(All, ReplicatorService, Replicator_Onboarding_v2, 0x0020);
 
+	/// Defines a drives update notification type.
+	DEFINE_NOTIFICATION_TYPE(All, ReplicatorService, Drives_Update_v1, 0x0021);
+
 	/// Notification about a data modification approval.
 	template<VersionType version>
 	struct DataModificationApprovalServiceNotification;
@@ -391,7 +394,7 @@ namespace catapult { namespace model {
 	struct DrivesUpdateServiceNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = ReplicatorService_Finish_Download_v1_Notification;
+		static constexpr auto Notification_Type = ReplicatorService_Drives_Update_v1_Notification;
 
 	public:
 		explicit DrivesUpdateServiceNotification(
