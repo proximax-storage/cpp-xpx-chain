@@ -25,11 +25,12 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MetadataValueNotification<1>;
+	using NotificationV1 = model::MetadataValueNotification<1>;
+	using NotificationV2 = model::MetadataValueNotification<2>;
 
-	DEFINE_STATEFUL_VALIDATOR(MetadataValue, ([](const Notification& notification, const ValidatorContext& context) {
+	template<typename NotificationType>
+	ValidationResult MetadataValueValidator(const NotificationType& notification, const ValidatorContext& context) {
 		auto& cache = context.Cache.sub<cache::MetadataCache>();
-
 		auto metadataKey = state::ResolveMetadataKey(notification.PartialMetadataKey, notification.MetadataTarget, context.Resolvers);
 		auto metadataIter = cache.find(metadataKey.uniqueKey());
 		if (!metadataIter.tryGet()) {
@@ -51,7 +52,10 @@ namespace catapult { namespace validators {
 
 		auto requiredTrimCount = static_cast<uint16_t>(-notification.ValueSizeDelta);
 		return metadataValue.canTrim({ notification.ValuePtr, notification.ValueSize }, requiredTrimCount)
-				? ValidationResult::Success
-				: Failure_Metadata_v2_Value_Change_Irreversible;
-	}))
+					   ? ValidationResult::Success
+					   : Failure_Metadata_v2_Value_Change_Irreversible;
+	}
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(MetadataValueV1, NotificationV1, MetadataValueValidator<NotificationV1>)
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(MetadataValueV2, NotificationV2, MetadataValueValidator<NotificationV2>)
 }}
