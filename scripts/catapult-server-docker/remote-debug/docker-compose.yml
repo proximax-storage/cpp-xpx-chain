@@ -1,0 +1,35 @@
+version: '3.6'
+
+services:
+    catapult:
+        # Downloads Catapult Server from specified Docker repo
+        image: "catapult-remote-dbg:v1.0.3-bookworm"
+        cap_add:
+        - SYS_PTRACE
+        security_opt:
+        - seccomp=unconfined # allow attaching to sirius process
+        ports:
+        - "7900:7900"
+        - "7901:7901"
+        - "7902:7902"
+        - "7903:7903"
+        - "7904:7904/tcp"
+        - "7904:7904/udp"
+        - "7905:7905/tcp"
+        - "7905:7905/udp"
+        - "25401:25401/tcp"
+        - "25401:25401/udp"
+        - "6881-6889:6881-6889/tcp"
+        - "6881-6889:6881-6889/udp"
+        - "2222:2222" # ssh
+        - "1234:1234" # gdbserver
+
+        volumes:
+        - "/opt/catapult-config:/chainconfig"
+        - "/opt/catapult-config/data:/data:rw"
+        - "/opt/catapult-config/logs:/logs:rw"
+        - "/opt/catapult-config/replicator_service_logs:/tmp/replicator_service_logs:rw"
+
+        entrypoint: ["/bin/bash"]
+        tty: true
+        stdin_open: true

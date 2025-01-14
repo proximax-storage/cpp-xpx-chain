@@ -147,8 +147,8 @@ namespace catapult { namespace fastfinality {
 				return false;
 			}
 
-			if (block.Signer != committee.BlockProposer) {
-				CATAPULT_LOG(warning) << "rejecting block (signer invalid " << block.Signer << ", expected " << committee.BlockProposer << ")";
+			if (!committee.validateBlockProposer(block.Signer)) {
+				CATAPULT_LOG(warning) << "rejecting block (signer invalid " << block.Signer << ")";
 				return false;
 			}
 

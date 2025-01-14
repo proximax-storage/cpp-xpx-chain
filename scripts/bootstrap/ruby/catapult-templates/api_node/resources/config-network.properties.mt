@@ -58,6 +58,8 @@ enableDbrbFastFinality = true
 checkNetworkHeightInterval = 10
 
 blockTimeUpdateStrategy = increase-coefficient
+enableCommitteeManagerImprovement = true
+harvestersQueueSize = 3
 
 [bootstrap.harvesters]
 

@@ -172,7 +172,12 @@ namespace catapult { namespace chain {
 
 	void WeightedVotingCommitteeManagerV2::decreaseActivities(const config::CommitteeConfiguration& config) {
 		CATAPULT_LOG(trace) << "decreasing activities of previous committee accounts";
-		decreaseActivity(m_committee.BlockProposer, m_accounts, config);
+		if (m_committee.BlockProposers.empty()) {
+			decreaseActivity(m_committee.BlockProposer, m_accounts, config);
+		} else {
+			for (const auto& blockProposer : m_committee.BlockProposers)
+				decreaseActivity(blockProposer, m_accounts, config);
+		}
 		for (const auto& cosigner : m_committee.Cosigners) {
 			decreaseActivity(cosigner, m_accounts, config);
 		}
@@ -209,15 +214,24 @@ namespace catapult { namespace chain {
 			m_timestamp = pLastBlockElement->Block.Timestamp;
 		} else {
 			if (previousRound > 0) {
-				IncreasePhaseTime(m_phaseTime, networkConfig);
+				if (networkConfig.BlockTimeUpdateStrategy == model::BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient ||
+					networkConfig.BlockTimeUpdateStrategy == model::BlockTimeUpdateStrategy::Increase_Coefficient ||
+					!networkConfig.EnableCommitteeManagerImprovement) {
+					IncreasePhaseTime(m_phaseTime, networkConfig);
+				}
 			} else {
-				DecreasePhaseTime(m_phaseTime, networkConfig);
+				if (networkConfig.BlockTimeUpdateStrategy == model::BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient || !networkConfig.EnableCommitteeManagerImprovement) {
+					DecreasePhaseTime(m_phaseTime, networkConfig);
+				} else if (networkConfig.BlockTimeUpdateStrategy == model::BlockTimeUpdateStrategy::Increase_Coefficient) {
+					m_phaseTime = networkConfig.MinCommitteePhaseTime.millis();
+				}
 			}
 			decreaseActivities(config);
 		}
 		m_timestamp = m_timestamp + Timestamp(CommitteePhaseCount * m_phaseTime);
 
 		m_committee = Committee(previousRound + 1);
+		m_committee.RoundStart = m_timestamp;
 
 		// Compute account rates and sort them in descending order.
 		std::multimap<int64_t, Key, std::greater<>> rates;
