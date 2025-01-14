@@ -51,8 +51,11 @@ namespace catapult { namespace fastfinality {
 				sml::state<RoundDetection> + sml::event<RoundDetectionCompleted> = sml::state<ConnectionChecking>,
 
 				sml::state<ConnectionChecking> + sml::on_entry<sml::_> / ACTION(CheckConnections),
-				sml::state<ConnectionChecking> + sml::event<ConnectionNumberSufficient> = sml::state<BlockProducerSelection>,
+				sml::state<ConnectionChecking> + sml::event<ConnectionNumberSufficient> = sml::state<RoundStart>,
 				sml::state<ConnectionChecking> + sml::event<ConnectionNumberInsufficient> = sml::state<LocalChainCheck>,
+
+				sml::state<RoundStart> + sml::on_entry<sml::_> / ACTION(StartRound),
+				sml::state<RoundStart> + sml::event<RoundStarted> = sml::state<BlockProducerSelection>,
 
 				sml::state<BlockProducerSelection> + sml::on_entry<sml::_> / ACTION(SelectBlockProducer),
 				sml::state<BlockProducerSelection> + sml::event<GenerateBlock> = sml::state<BlockGeneration>,
@@ -66,6 +69,7 @@ namespace catapult { namespace fastfinality {
 
 				sml::state<BlockWaiting> + sml::on_entry<sml::_> / ACTION(WaitForBlock),
 				sml::state<BlockWaiting> + sml::event<UnexpectedBlockHeight> = sml::state<LocalChainCheck>,
+				sml::state<BlockWaiting> + sml::event<SelectNextBlockProducer> = sml::state<BlockProducerSelection>,
 				sml::state<BlockWaiting> + sml::event<BlockNotReceived> [ syncWithNetwork ] = sml::state<LocalChainCheck>,
 				sml::state<BlockWaiting> + sml::event<BlockNotReceived> [ startNextRound ] / ACTION(IncrementRound) = sml::state<ConnectionChecking>,
 				sml::state<BlockWaiting> + sml::event<BlockReceived> = sml::state<Commit>,

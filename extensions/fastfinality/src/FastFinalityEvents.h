@@ -24,6 +24,7 @@ namespace catapult { namespace fastfinality {
 	struct ConnectionNumberSufficient{};
 	struct ConnectionNumberInsufficient{};
 
+	struct RoundStarted{};
 	struct GenerateBlock{};
 	struct WaitForBlock{};
 	struct NotRegisteredInDbrbSystem{};
@@ -34,6 +35,7 @@ namespace catapult { namespace fastfinality {
 	struct BlockGenerationFailed{};
 	struct BlockGenerationSucceeded{};
 
+	struct SelectNextBlockProducer{};
 	struct BlockNotReceived{
 		bool SyncWithNetwork = false;
 	};

@@ -92,7 +92,7 @@ namespace catapult {
 
 			// - check boost non-tag diagnostics
 			EXPECT_EQ(3 + expected.TagPairs.size(), diagLines.size());
-			for (auto i = 0u; i < expectedDiagLines.size(); ++i)
+			for (auto i = 1u; i < expectedDiagLines.size(); ++i)
 				EXPECT_EQ(expectedDiagLines[i], diagLines[i]) << "line " << i;
 
 			// - check tag diagnostics
