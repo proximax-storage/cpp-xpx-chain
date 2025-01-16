@@ -105,6 +105,11 @@ namespace catapult { namespace process {
 		// 3. check instance
 		boost::filesystem::path lockFilePath = pConfigHolder->Config().User.DataDirectory;
 		lockFilePath /= host + ".lock";
+		if ( boost::filesystem::exists(boost::filesystem::path( pConfigHolder->Config().User.DataDirectory ) / "../../../../../autoremove-server-lock") ) {
+			if ( boost::filesystem::exists(lockFilePath) ) {
+				boost::filesystem::remove(lockFilePath);
+			}
+		}
 		io::FileLock instanceLock(lockFilePath.generic_string());
 		if (!instanceLock.try_lock()) {
 			CATAPULT_LOG(fatal) << "could not acquire instance lock " << lockFilePath;

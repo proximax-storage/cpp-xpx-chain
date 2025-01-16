@@ -1,7 +1,7 @@
 set -x
 
-CHAIN_SDK=~/Proj/cpp-xpx-chain-configuration/go-xpx-chain-sdk
-#CHAIN_SDK=~/CLionProjects/go-xpx-chain-sdk
+#CHAIN_SDK=~/Proj/cpp-xpx-chain-configuration/go-xpx-chain-sdk
+CHAIN_SDK=~/Proj/go-xpx-chain-sdk
 
 cd $CHAIN_SDK/tools/liquidity_provider
 
@@ -84,7 +84,6 @@ cd $CHAIN_SDK/tools/replicator_onboarding
 
 ./replicator_onboarding -url=http://127.0.0.1:3000 \
 -feeStrategy=middle \
--capacity=2048 \
 -replicatorPrivateKey=2F985E4EC55D60C957C973BD1BEE2C0B3BA313A841D3EE4C74810805E6936053 \
 -nodeBootPrivateKey=2F985E4EC55D60C957C973BD1BEE2C0B3BA313A841D3EE4C74810805E6936053
 

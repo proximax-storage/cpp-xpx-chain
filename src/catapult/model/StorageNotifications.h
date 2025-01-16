@@ -94,8 +94,17 @@ namespace catapult { namespace model {
 
 	DEFINE_NOTIFICATION_TYPE(All, Storage, ReplicatorsCleanup_v1, 0x001D);
 
+	/// Defines a download reward notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Reward_v1, 0x001E);
+
+	/// Defines a download channel remove notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Channel_Remove_v1, 0x001F);
+
 	/// Defines a replicator onboarding notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x001E);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x0020);
+
+	/// Defines a drives update notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Drives_Update_v1, 0x0021);
 
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:

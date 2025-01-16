@@ -1,0 +1,240 @@
+# For running nodes locally
+
+FROM debian:bookworm AS basic
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  software-properties-common \
+  curl \
+  git \
+  build-essential \
+  cmake \
+  pkg-config \
+  libgtest-dev \
+  libbenchmark-dev \
+  librocksdb-dev \
+  libczmq-dev \
+  libsasl2-dev \
+  libssl-dev \
+  libboost-dev \
+  libboost-atomic-dev \
+  libboost-date-time-dev \
+  libboost-regex-dev \
+  libboost-system-dev \
+  libboost-timer-dev \
+  libboost-chrono-dev \
+  libboost-log-dev \
+  libboost-thread-dev \
+  libboost-filesystem-dev \
+  libboost-program-options-dev \
+  libboost-stacktrace-dev \
+  libboost-random-dev \
+  libmongoc-1.0-0 \
+  libmongoc-dev \
+  libzstd-dev \
+  googletest \
+  libzmq3-dev \
+  cppzmq-dev
+
+# Install mongo-cxx
+RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.7/mongo-cxx-driver-r3.6.7.tar.gz && \
+  tar -xzf mongo-cxx-driver-r3.6.7.tar.gz && \
+  cd mongo-cxx-driver-r3.6.7/build && \
+  cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBSONCXX_POLY_USE_BOOST=1 .. && \
+  make -j $(nproc) && \
+  make install
+
+# Clean Downloads
+RUN rm mongo-cxx-driver-r3.6.7.tar.gz
+
+WORKDIR /catapult
+COPY . /catapult
+
+# Build Catapult Server
+RUN cd /catapult \
+    && rm -rf _build \
+    && mkdir _build && cd _build \
+    && cmake -DCMAKE_BUILD_TYPE=Debug  \
+    -DCMAKE_CXX_FLAGS="-pthread -g" \
+    .. \
+    && make publish \
+    && make \
+# Required extensions
+    catapult.mongo.plugins.accountlink \
+    catapult.mongo.plugins.aggregate \
+    catapult.mongo.plugins.committee \
+    catapult.mongo.plugins.config \
+    catapult.mongo.plugins.contract \
+    catapult.mongo.plugins.dbrb \
+    catapult.mongo.plugins.exchange \
+    catapult.mongo.plugins.exchangesda \
+    catapult.mongo.plugins.liquidityprovider \
+    catapult.mongo.plugins.lockhash \
+    catapult.mongo.plugins.locksecret \
+    catapult.mongo.plugins.metadata \
+    catapult.mongo.plugins.metadata_v2 \
+    catapult.mongo.plugins.mosaic \
+    catapult.mongo.plugins.multisig \
+    catapult.mongo.plugins.namespace \
+    catapult.mongo.plugins.operation \
+    catapult.mongo.plugins.property \
+    catapult.mongo.plugins.service \
+    catapult.mongo.plugins.storage \
+    catapult.mongo.plugins.streaming \
+    catapult.mongo.plugins.supercontract \
+    catapult.mongo.plugins.transfer \
+    catapult.mongo.plugins.upgrade \
+    catapult.plugins.accountlink \
+    catapult.plugins.aggregate \
+    catapult.plugins.committee \
+    catapult.plugins.config \
+    catapult.plugins.contract \
+    catapult.plugins.dbrb \
+    catapult.plugins.exchange \
+    catapult.plugins.exchangesda \
+    catapult.plugins.hashcache \
+    catapult.plugins.hashcache.cache \
+    catapult.plugins.liquidityprovider \
+    catapult.plugins.lockhash \
+    catapult.plugins.locksecret \
+    catapult.plugins.metadata \
+    catapult.plugins.metadata_v2 \
+    catapult.plugins.mosaic \
+    catapult.plugins.multisig \
+    catapult.plugins.namespace \
+    catapult.plugins.operation \
+    catapult.plugins.property \
+    catapult.plugins.service \
+    catapult.plugins.signature \
+    catapult.plugins.storage \
+    catapult.plugins.streaming \
+    catapult.plugins.supercontract \
+    catapult.plugins.transfer \
+    catapult.plugins.upgrade \
+    extension.addressextraction \
+    extension.diagnostics \
+    extension.eventsource \
+    extension.fastfinality \
+    extension.filespooling \
+    extension.harvesting \
+    extension.hashcache \
+    extension.mongo \
+    extension.networkheight \
+    extension.nodediscovery \
+    extension.packetserver \
+    extension.partialtransaction \
+    extension.pluginhandlers \
+    extension.storage \
+    extension.sync \
+    extension.syncsource \
+    extension.timesync \
+    extension.transactionsink \
+    extension.unbondedpruning \
+    extension.zeromq \
+    torrent-sirius \
+    replicator-service \
+    api \
+    connection \
+    drive \
+    ionet \
+    model \
+    net \
+    nodediscovery \
+    sdk_external \
+    storage-crypto \
+    torrent-sirius \
+    utils \
+    sirius.bc \
+    catapult.broker \
+    catapult.recovery \
+    catapult.tools.address \
+    catapult.tools.benchmark \
+    catapult.tools.health \
+    catapult.tools.nemgen \
+    catapult.tools.nemgen.blockhashes \
+    catapult.tools.network \
+    catapult.tools.statusgen \
+    -j $(nproc)
+
+RUN rm -r _build/inc \
+    && rm -r _build/resources \
+    && rm -r _build/spammer \
+    && rm -r _build/tests \
+    && rm -r _build/tools \
+    && rm -r _build/cpp-xpx-storage-sdk \
+    && rm -r _build/extensions \
+    && rm -r _build/external \
+    && rm -r _build/plugins \
+    && rm -r _build/sdk \
+    && rm -r _build/src
+
+
+#------------------------
+# Actual target image which only contains the required binaries
+#------------------------
+FROM debian:bookworm
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  software-properties-common \
+  curl \
+  build-essential \
+  pkg-config \
+  libgtest-dev \
+  libbenchmark-dev \
+  librocksdb-dev \
+  libczmq-dev \
+  libsasl2-dev \
+  libssl-dev \
+  libboost-dev \
+  libboost-atomic-dev \
+  libboost-date-time-dev \
+  libboost-regex-dev \
+  libboost-system-dev \
+  libboost-timer-dev \
+  libboost-chrono-dev \
+  libboost-log-dev \
+  libboost-thread-dev \
+  libboost-filesystem-dev \
+  libboost-program-options-dev \
+  libboost-stacktrace-dev \
+  libboost-random-dev \
+  libmongoc-1.0-0 \
+  libmongoc-dev \
+  libzstd-dev \
+  googletest \
+  libzmq3-dev \
+  cppzmq-dev \
+  openssh-server \
+  gdbserver \
+  nano \
+  apt-utils \
+  gcc \
+  g++ \
+  cmake \
+  gdb \
+  rsync
+
+WORKDIR /catapult
+
+# copy required libs && executables
+COPY --from=basic /catapult /catapult
+
+RUN mkdir /var/run/sshd
+
+RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config && \
+    echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config && \
+    echo 'Port 2222' >> /etc/ssh/sshd_config && \
+    echo 'ListenAddress 0.0.0.0' >> /etc/ssh/sshd_config
+
+RUN echo 'root:1234' | chpasswd
+
+# ssh
+EXPOSE 2222
+
+# gdb server
+EXPOSE 1234
+
+# sirius.bc as the entry point and ssh as a daemon
+CMD ["/catapult/_build/bin/sirius.bc"]
+
+# set the config directory by default
+CMD ["/chainconfig"]
