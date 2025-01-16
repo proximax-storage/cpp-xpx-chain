@@ -47,4 +47,13 @@ namespace catapult { namespace chain {
 
 		return m_lastBlockElementSupplier;
 	}
+
+	bool Committee::validateBlockProposer(const Key& key) const {
+		if (BlockProposers.size() < 2)
+			return (key == BlockProposer);
+
+		return std::any_of(BlockProposers.cbegin(), BlockProposers.cend(), [&key](const Key& blockProposer) {
+			return (key == blockProposer);
+		});
+	}
 }}

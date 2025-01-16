@@ -91,6 +91,7 @@ namespace catapult { namespace fastfinality {
 		void shutdown() {
 			std::lock_guard<std::mutex> guard(m_mutex);
 			m_stopped = true;
+			resetFastFinalityData();
 			m_timer.cancel();
 			processEvent(Stop{});
 			m_actions = FastFinalityActions{};

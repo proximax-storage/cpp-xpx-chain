@@ -20,7 +20,7 @@ namespace catapult { namespace chain {
 
 	public:
 		void selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) override;
-		std::map<dbrb::ProcessId, BlockDuration> babPeriods() const override;
+		std::map<dbrb::ProcessId, BlockDuration> banPeriods() const override;
 
 	private:
 		utils::KeySet m_failedBlockProposers;

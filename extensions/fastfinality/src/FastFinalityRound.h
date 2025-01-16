@@ -15,6 +15,10 @@ namespace catapult { namespace fastfinality {
 		int64_t Round = -1;
 		utils::TimePoint RoundStart = utils::ToTimePoint(utils::NetworkTime());
 		uint64_t RoundTimeMillis = 0u;
+		utils::TimePoint TimeSliceStart = RoundStart;
+		uint64_t TimeSliceMillis = 0u;
+		uint64_t TimeSliceIndex = 0u;
+		uint64_t TimeSliceCount = 0u;
 	};
 
 #pragma pack(pop)

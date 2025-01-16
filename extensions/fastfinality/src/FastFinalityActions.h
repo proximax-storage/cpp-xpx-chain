@@ -22,6 +22,7 @@ namespace catapult { namespace fastfinality {
 		action DownloadBlocks = [] {};
 		action DetectRound = [] {};
 		action CheckConnections = [] {};
+		action StartRound = [] {};
 		action SelectBlockProducer = [] {};
 		action GenerateBlock = [] {};
 		action WaitForBlock = [] {};
@@ -55,6 +56,10 @@ namespace catapult { namespace fastfinality {
 		const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
 		extensions::ServiceState& state);
 
+	action CreateFastFinalityStartRoundAction(
+		const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
+		extensions::ServiceState& state);
+
 	action CreateFastFinalitySelectBlockProducerAction(
 		const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
 		extensions::ServiceState& state);
@@ -77,7 +82,7 @@ namespace catapult { namespace fastfinality {
 
 	action CreateFastFinalityIncrementRoundAction(
 		const std::weak_ptr<FastFinalityFsm>& pFsmWeak,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+		extensions::ServiceState& state);
 
 	action CreateFastFinalityResetRoundAction(
 		const std::weak_ptr<FastFinalityFsm>& pFsmWeak,

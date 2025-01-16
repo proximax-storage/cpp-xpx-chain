@@ -131,6 +131,10 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(CheckNetworkHeightInterval);
 		config.BlockTimeUpdateStrategy = BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient;
 		TRY_LOAD_CHAIN_PROPERTY(BlockTimeUpdateStrategy);
+		config.HarvestersQueueSize = 1;
+		TRY_LOAD_CHAIN_PROPERTY(HarvestersQueueSize);
+		config.EnableCommitteeManagerImprovement = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableCommitteeManagerImprovement);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 
