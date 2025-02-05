@@ -27,7 +27,8 @@ namespace catapult { namespace observers {
 			return;
 
 		auto bootKeyReplicatorIter = bootKeyReplicatorCache.find(processId);
-		const auto& replicatorKey = bootKeyReplicatorIter.get().replicatorKey();
+		const auto& bootKeyReplicatorEntry = bootKeyReplicatorIter.get();
+		const auto& replicatorKey = bootKeyReplicatorEntry.replicatorKey();
 
 		if (!replicatorCache.contains(replicatorKey))
 			return;

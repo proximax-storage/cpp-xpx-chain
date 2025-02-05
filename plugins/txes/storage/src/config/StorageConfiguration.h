@@ -67,6 +67,9 @@ namespace catapult { namespace config {
 		/// Whether binding replicators to boot keys enabled.
 		bool EnableReplicatorBootKeyBinding;
 
+		/// Enables cache bug fixes.
+		bool EnableCacheImprovement;
+
 	private:
 		StorageConfiguration() = default;
 
