@@ -123,13 +123,13 @@ namespace catapult { namespace observers {
             // Assert: check the cache
 			EXPECT_FALSE(bcDriveCache.find(driveToRemove).tryGet());
 
-//          for (const auto& entry : values.ExpectedReplicatorEntries) {
-//				auto replicatorIter = replicatorCache.find(entry.key());
-//				const auto &actualEntry = replicatorIter.get();
-//				test::AssertEqualReplicatorData(entry, actualEntry);
-//				EXPECT_EQ(accountStateCache.find(entry.key()).get().Balances.get(Currency_Mosaic_Id), Expected_Replicator_Balance);
-//			}
-//			EXPECT_EQ(accountStateCache.find(Owner_Key).get().Balances.get(Currency_Mosaic_Id), Expected_Owner_Balance);
+          	for (const auto& entry : values.ExpectedReplicatorEntries) {
+				auto replicatorIter = replicatorCache.find(entry.key());
+				const auto &actualEntry = replicatorIter.get();
+				test::AssertEqualReplicatorData(entry, actualEntry);
+				EXPECT_TRUE(actualEntry.drives().find(driveToRemove) == actualEntry.drives().end());
+				EXPECT_EQ(accountStateCache.find(entry.key()).get().Balances.get(Currency_Mosaic_Id), Expected_Replicator_Balance);
+			}
 
             auto& queueCacheEntry = queueStateCache.find(state::DrivePaymentQueueKey).get();
             auto driveKey = queueCacheEntry.getFirst();
