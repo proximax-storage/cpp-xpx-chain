@@ -9,6 +9,7 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "catapult/model/StorageNotifications.h"
+#include "catapult/model/StreamingNotifications.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "src/model/InternalStorageNotifications.h"
 #include "src/cache/DownloadChannelCache.h"
@@ -178,4 +179,11 @@ namespace catapult { namespace validators {
 	/// - replicators are registered
 	/// - replicators are not bound with boot keys
 	DECLARE_STATEFUL_VALIDATOR(ReplicatorsCleanup, model::ReplicatorsCleanupNotification<1>)();
+
+	/// A validator implementation that applies to update drive size notifications and validates that:
+	/// - respective drive exists
+	/// - signer is the drive owner
+	/// - new drive size < current size
+	/// - new drive size >= minDriveSize
+	DECLARE_STATEFUL_VALIDATOR(UpdateDriveSize, model::UpdateDriveSizeNotification<1>)();
 }}

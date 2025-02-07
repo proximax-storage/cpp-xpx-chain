@@ -23,7 +23,7 @@
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 #include <src/config/StreamingConfiguration.h>
-#include "plugins/txes/streaming/src/model/StreamingNotifications.h"
+#include "catapult/model/StreamingNotifications.h"
 
 namespace catapult { namespace validators {
 

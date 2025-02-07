@@ -7,7 +7,7 @@
 #pragma once
 #include "catapult/observers/ObserverTypes.h"
 #include "src/config/StreamingConfiguration.h"
-//#include "catapult/model/StorageNotifications.h"
+//#include "catapult/model/StreamingNotifications.h"
 #include "catapult/cache_core/AccountStateCache.h"
 
 namespace catapult { namespace observers {

@@ -227,7 +227,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateServiceUnitTransferValidator())
 				.add(validators::CreateOwnerManagementProhibitionValidator())
 				.add(validators::CreateReplicatorNodeBootKeyValidator())
-				.add(validators::CreateReplicatorsCleanupValidator());
+				.add(validators::CreateReplicatorsCleanupValidator())
+				.add(validators::CreateUpdateDriveSizeValidator());
 		});
 
 		const auto& storageUpdatesListeners = manager.storageUpdatesListeners();

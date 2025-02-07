@@ -21,6 +21,9 @@ namespace catapult { namespace model {
 	/// Stream Payment transaction.
 	DEFINE_TRANSACTION_TYPE(Streaming, StreamPayment, 0x3);
 
+	/// Update Drive Size transaction.
+	DEFINE_TRANSACTION_TYPE(Streaming, UpdateDriveSize, 0x4);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

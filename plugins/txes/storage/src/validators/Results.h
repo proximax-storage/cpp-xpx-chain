@@ -202,6 +202,9 @@ namespace catapult { namespace validators {
 	/// Replicator is bound with a boot key
 	DEFINE_STORAGE_RESULT(Replicator_Is_Bound_With_Boot_Key, 62);
 
+	/// Drive size update failed because the new size is not less than the current size.
+	DEFINE_STORAGE_RESULT(Drive_Size_Is_Not_Decreased, 63);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -10,7 +10,7 @@
 #include "src/plugins/StreamFinishTransactionPlugin.h"
 #include "src/model/StreamFinishTransaction.h"
 #include "src/catapult/model/StorageNotifications.h"
-#include "plugins/txes/streaming/src/model/StreamingNotifications.h"
+#include "catapult/model/StreamingNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/StreamingTestUtils.h"

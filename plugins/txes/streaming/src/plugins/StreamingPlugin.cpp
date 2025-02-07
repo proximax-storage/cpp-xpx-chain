@@ -10,6 +10,7 @@
 #include "src/plugins/StreamStartTransactionPlugin.h"
 #include "src/plugins/StreamFinishTransactionPlugin.h"
 #include "src/plugins/StreamPaymentTransactionPlugin.h"
+#include "src/plugins/UpdateDriveSizeTransactionPlugin.h"
 #include "catapult/plugins/CacheHandlers.h"
 
 namespace catapult { namespace plugins {
@@ -38,6 +39,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateStreamStartTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateStreamFinishTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateStreamPaymentTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateUpdateDriveSizeTransactionPlugin(immutableConfig));
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 			builder

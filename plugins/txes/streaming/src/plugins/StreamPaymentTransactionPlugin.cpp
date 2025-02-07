@@ -9,7 +9,7 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "StreamPaymentTransactionPlugin.h"
 #include "catapult/model/StorageNotifications.h"
-#include "plugins/txes/streaming/src/model/StreamingNotifications.h"
+#include "catapult/model/StreamingNotifications.h"
 #include "src/model/StreamPaymentTransaction.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/EntityHasher.h"

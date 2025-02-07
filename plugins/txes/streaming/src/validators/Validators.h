@@ -8,7 +8,7 @@
 #include "Results.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
-#include "plugins/txes/streaming/src/model/StreamingNotifications.h"
+#include "catapult/model/StreamingNotifications.h"
 #include "catapult/cache_core/AccountStateCache.h"
 
 namespace catapult { namespace validators {
