@@ -239,6 +239,7 @@ verificationExpirationCoefficient = 0.24
 verificationExpirationConstant = 10
 
 enableReplicatorBootKeyBinding = true
+enableCacheImprovement = true
 
 [plugin:catapult.plugins.streaming]
 
