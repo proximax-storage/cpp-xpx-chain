@@ -23,7 +23,6 @@
 #include "Node.h"
 #include "WorkingBuffer.h"
 #include "catapult/thread/StrandOwnerLifetimeExtender.h"
-#include "catapult/utils/Casting.h"
 #include "catapult/utils/Logging.h"
 #include <deque>
 #include <memory>

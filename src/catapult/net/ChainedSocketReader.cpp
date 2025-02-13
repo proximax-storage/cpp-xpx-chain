@@ -79,10 +79,11 @@ namespace catapult { namespace net {
 
 	std::shared_ptr<ChainedSocketReader> CreateChainedSocketReader(
 			const std::shared_ptr<ionet::PacketSocket>& pPacketSocket,
+			const std::shared_ptr<ionet::PacketIo>& pBufferedIo,
 			const ionet::ServerPacketHandlers& serverHandlers,
 			const ionet::ReaderIdentity& identity,
 			const ChainedSocketReader::CompletionHandler& completionHandler) {
-		return std::make_shared<DefaultChainedSocketReader<ionet::PacketSocket>>(pPacketSocket, pPacketSocket->buffered(), serverHandlers, identity, completionHandler);
+		return std::make_shared<DefaultChainedSocketReader<ionet::PacketSocket>>(pPacketSocket, pBufferedIo, serverHandlers, identity, completionHandler);
 	}
 
 	std::shared_ptr<ChainedSocketReader> CreateChainedSocketReader(

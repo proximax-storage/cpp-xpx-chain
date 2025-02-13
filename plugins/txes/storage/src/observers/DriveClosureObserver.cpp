@@ -44,7 +44,9 @@ namespace catapult { namespace observers {
 
 			// Removing replicators from tree before must be performed before refunding
 			auto replicatorKeyExtractor = [&storageMosaicId, &accountStateCache](const Key& key) {
-				return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+				auto iter = accountStateCache.find(key);
+				const auto& accountState = iter.get();
+				return std::make_pair(accountState.Balances.get(storageMosaicId), key);
 			};
 
 			utils::AVLTreeAdapter<std::pair<Amount, Key>> replicatorTreeAdapter(
@@ -52,10 +54,14 @@ namespace catapult { namespace observers {
 							state::ReplicatorsSetTree,
 							replicatorKeyExtractor,
 							[&replicatorCache](const Key& key) -> state::AVLTreeNode {
-						return replicatorCache.find(key).get().replicatorsSetNode();
+						auto iter = replicatorCache.find(key);
+						const auto& replicatorEntry = iter.get();
+						return replicatorEntry.replicatorsSetNode();
 						},
 						[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
-						replicatorCache.find(key).get().replicatorsSetNode() = node;
+						auto iter = replicatorCache.find(key);
+						auto& replicatorEntry = iter.get();
+						replicatorEntry.replicatorsSetNode() = node;
 					});
 
 			for (const auto& replicatorKey : replicators)
@@ -131,10 +137,14 @@ namespace catapult { namespace observers {
 					state::DriveVerificationsTree,
 					[](const Key& key) { return key; },
 					[&driveCache](const Key& key) -> state::AVLTreeNode {
-						return driveCache.find(key).get().verificationNode();
+						auto iter = driveCache.find(key);
+						const auto& driveEntry = iter.get();
+						return driveEntry.verificationNode();
 					},
 					[&driveCache](const Key& key, const state::AVLTreeNode& node) {
-						driveCache.find(key).get().verificationNode() = node;
+						auto iter = driveCache.find(key);
+						auto& driveEntry = iter.get();
+						driveEntry.verificationNode() = node;
 					});
 		  	driveTreeAdapter.remove(notification.DriveKey);
 

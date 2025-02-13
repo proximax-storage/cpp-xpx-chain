@@ -103,7 +103,9 @@ namespace catapult { namespace observers {
 					const auto replicators = driveEntry.replicators();
 
 					auto keyExtractor = [=, &accountStateCache](const Key& key) {
-						return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+						auto iter = accountStateCache.find(key);
+						const auto& accountState = iter.get();
+						return std::make_pair(accountState.Balances.get(storageMosaicId), key);
 					};
 
 					// Removing replicators from tree before must be performed before refunding
@@ -112,10 +114,14 @@ namespace catapult { namespace observers {
 									state::ReplicatorsSetTree,
 									keyExtractor,
 									[&replicatorCache](const Key& key) -> state::AVLTreeNode {
-								return replicatorCache.find(key).get().replicatorsSetNode();
+								auto iter = replicatorCache.find(key);
+								const auto& replicatorEntry = iter.get();
+								return replicatorEntry.replicatorsSetNode();
 								},
 								[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
-								replicatorCache.find(key).get().replicatorsSetNode() = node;
+								auto iter = replicatorCache.find(key);
+								auto& replicatorEntry = iter.get();
+								replicatorEntry.replicatorsSetNode() = node;
 							});
 
 					for (const auto& replicatorKey: replicators) {
@@ -209,8 +215,13 @@ namespace catapult { namespace observers {
 					// Removing the drive from caches
 					for (const auto& replicatorKey : replicators) {
 						auto replicatorIter = replicatorCache.find(replicatorKey);
-						auto replicatorEntry = replicatorIter.get();
-						replicatorEntry.drives().erase(driveEntry.key());
+						if (pluginConfig.EnableCacheImprovement) {
+							auto& replicatorEntry = replicatorIter.get();
+							replicatorEntry.drives().erase(driveEntry.key());
+						} else {
+							auto replicatorEntry = replicatorIter.get();
+							replicatorEntry.drives().erase(driveEntry.key());
+						}
 					}
 
 					// The Drive is Removed, so we should make removal from verification tree
@@ -219,10 +230,14 @@ namespace catapult { namespace observers {
 							state::DriveVerificationsTree,
 							[](const Key& key) { return key; },
 							[&driveCache](const Key& key) -> state::AVLTreeNode {
-								return driveCache.find(key).get().verificationNode();
+								auto iter = driveCache.find(key);
+								const auto& driveEntry = iter.get();
+								return driveEntry.verificationNode();
 							},
 							[&driveCache](const Key& key, const state::AVLTreeNode& node) {
-								driveCache.find(key).get().verificationNode() = node;
+								auto iter = driveCache.find(key);
+								auto& driveEntry = iter.get();
+								driveEntry.verificationNode() = node;
 							});
 					treeAdapter.remove(driveEntry.key());
 

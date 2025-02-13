@@ -38,17 +38,36 @@ namespace catapult { namespace observers {
 		  	queueAdapter.pushBack(driveEntry.entryKey());
 
 			// Insert the Drive into the Verification Queue
-			utils::AVLTreeAdapter<Key> treeAdapter(
-				queueCache,
-				state::DriveVerificationsTree,
-				[](const Key& key) { return key; },
-				[&driveCache](const Key& key) -> state::AVLTreeNode& {
-					return driveCache.find(key).get().verificationNode();
-				},
-				[&driveCache](const Key& key, const state::AVLTreeNode& node) {
-					return driveCache.find(key).get().verificationNode() = node;
-				});
-			treeAdapter.insert(driveEntry.key());
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			if (pluginConfig.EnableCacheImprovement) {
+				utils::AVLTreeAdapter<Key> treeAdapter(
+					queueCache,
+					state::DriveVerificationsTree,
+					[](const Key& key) { return key; },
+					[&driveCache](const Key& key) -> state::AVLTreeNode {
+						auto iter = driveCache.find(key);
+						const auto& driveEntry = iter.get();
+						return driveEntry.verificationNode();
+					},
+					[&driveCache](const Key& key, const state::AVLTreeNode& node) {
+						auto iter = driveCache.find(key);
+						auto& driveEntry = iter.get();
+						return driveEntry.verificationNode() = node;
+					});
+				treeAdapter.insert(driveEntry.key());
+			} else {
+				utils::AVLTreeAdapter<Key> treeAdapter(
+					queueCache,
+					state::DriveVerificationsTree,
+					[](const Key& key) { return key; },
+					[&driveCache](const Key& key) -> state::AVLTreeNode& {
+						return driveCache.find(key).get().verificationNode();
+					},
+					[&driveCache](const Key& key, const state::AVLTreeNode& node) {
+						return driveCache.find(key).get().verificationNode() = node;
+					});
+				treeAdapter.insert(driveEntry.key());
+			}
 
 			const auto& replicators = driveEntry.replicators();
 			if (replicators.find(pStorageState->replicatorKey()) == replicators.end())

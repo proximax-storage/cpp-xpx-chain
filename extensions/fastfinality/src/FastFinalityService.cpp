@@ -151,8 +151,8 @@ namespace catapult { namespace fastfinality {
 				pFsmShared->dbrbProcess().registerDbrbPullNodesHandler(pFsmShared->packetHandlers());
 
 				auto connectionSettings = extensions::GetSslConnectionSettings(config);
-				auto pWriters = pServiceGroup->pushService(net::CreatePacketReadersWriters, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, state);
-				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, [&acceptor = *pWriters](
+				auto pWriters = pServiceGroup->pushService(net::CreatePacketReadersWriters, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, state, false);
+				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, 0, [&acceptor = *pWriters](
 					const auto& socketInfo,
 					const auto& callback) {
 					acceptor.accept(socketInfo, callback);

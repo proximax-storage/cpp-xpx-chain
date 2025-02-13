@@ -189,10 +189,10 @@ rocks
 ```sh
 git clone https://github.com/facebook/rocksdb.git
 cd rocksdb.git
-git checkout v6.6.4
+git checkout v9.10.0
 
 mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DWITH_TESTS=OFF -DWITH_BENCHMARK_TOOLS=OFF -DWITH_TOOLS=OFF -DFAIL_ON_WARNINGS=OFF -DWITH_RUNTIME_DEBUG=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
+cmake -DCMAKE_BUILD_TYPE=Release -DWITH_TESTS=OFF -DWITH_BENCHMARK_TOOLS=OFF -DWITH_TOOLS=OFF -DFAIL_ON_WARNINGS=OFF -DWITH_RUNTIME_DEBUG=OFF -DUSE_RTTI=ON -DWITH_SNAPPY=ON -DCMAKE_INSTALL_PREFIX=/usr/local ..
 make
 sudo make install
 ```

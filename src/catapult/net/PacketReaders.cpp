@@ -213,7 +213,7 @@ namespace catapult { namespace net {
 					const ionet::ReaderIdentity& identity,
 					uint32_t id) {
 				const auto& identityKey = identity.PublicKey;
-				return CreateChainedSocketReader(pSocket, m_handlers, identity, [pThis = shared_from_this(), identityKey, id](auto code) {
+				return CreateChainedSocketReader(pSocket, pSocket->buffered(), m_handlers, identity, [pThis = shared_from_this(), identityKey, id](auto code) {
 					// if the socket is closed cleanly, just remove the closed socket
 					// if the socket errored, remove all sockets with the same identity
 					if (ionet::SocketOperationCode::Closed == code)
