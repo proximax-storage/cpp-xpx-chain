@@ -1,9 +1,7 @@
 #!/bin/bash
 
-name="en0"
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-  name="$(ip link | awk -F: '$0 ~ "eth*"{print $2;getline}')"
-elif [ -z "$name" ];
+name=$(ip link | awk -F: '$0 ~ "eth*"{print $2;getline}')
+if [ -z "$var" ];
 then
 	name=$(ip link | awk -F: '$0 ~ "wl"{print $2;getline}')
 fi
