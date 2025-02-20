@@ -30,7 +30,7 @@ namespace catapult { namespace state {
 
 	void MetadataEntrySerializer::Save(const MetadataEntry& entry, io::OutputStream& output) {
 		// write version
-		io::Write32(output, 1);
+		io::Write32(output, 2);
 
 		const auto& key = entry.key();
 		output.write(key.sourceAddress());
@@ -42,6 +42,8 @@ namespace catapult { namespace state {
 		const auto& value = entry.value();
 		io::Write16(output, static_cast<uint16_t>(value.size()));
 		output.write(value);
+
+		io::Write8(output, entry.isImmutable());
 	}
 
 	// endregion
@@ -51,7 +53,7 @@ namespace catapult { namespace state {
 	MetadataEntry MetadataEntrySerializer::Load(io::InputStream& input) {
 		// read version
 		VersionType version = io::Read32(input);
-		if (version > 1)
+		if (version > 2)
 			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MetadataEntry", version);
 
 		// 1. read partial key
@@ -70,6 +72,11 @@ namespace catapult { namespace state {
 		std::vector<uint8_t> valueBuffer(valueSize);
 		input.read(valueBuffer);
 		entry.value().update(valueBuffer);
+
+		if (version == 2) {
+			bool isImmutable = static_cast<bool>(io::Read8(input));
+			entry.setImmutable(isImmutable);
+		}
 
 		return entry;
 	}

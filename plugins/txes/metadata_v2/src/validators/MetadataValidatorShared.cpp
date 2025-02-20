@@ -19,38 +19,27 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
-#include "MetadataKey.h"
-#include "MetadataValue.h"
-#include "catapult/plugins.h"
+#include "Validators.h"
+#include "MetadataValidatorShared.h"
+#include "catapult/validators/ValidatorContext.h"
 
-namespace catapult { namespace state {
+namespace catapult { namespace validators {
 
-	/// Metadata entry.
-	class MetadataEntry {
-	public:
-		/// Creates an entry around \a key.
-		explicit MetadataEntry(const MetadataKey& key);
+	ValidationResult validateCommonData(uint16_t valueSize, int16_t valueSizeDelta, const state::MetadataValue& metadataValue, const uint8_t* valuePtr)
+	{
+		auto expectedCacheValueSize = valueSize;
+		if (valueSizeDelta > 0)
+			expectedCacheValueSize = static_cast<uint16_t>(expectedCacheValueSize - valueSizeDelta);
 
-	public:
-		/// Gets the metadata key.
-		const MetadataKey& key() const;
+		if (expectedCacheValueSize != metadataValue.size())
+			return Failure_Metadata_v2_Value_Size_Delta_Mismatch;
 
-		/// Gets the (const) metadata value.
-		const MetadataValue& value() const;
+		if (valueSizeDelta >= 0)
+			return ValidationResult::Success;
 
-		/// Gets the metadata value.
-		MetadataValue& value();
-
-		/// Gets the flag state
-		bool isImmutable() const;
-
-		/// Sets the flag state
-		void setImmutable(bool isImmutable);
-
-	private:
-		MetadataKey m_key;
-		MetadataValue m_value;
-		bool m_immutable;
-	};
+		auto requiredTrimCount = static_cast<uint16_t>(-valueSizeDelta);
+		return metadataValue.canTrim({ valuePtr, valueSize }, requiredTrimCount)
+					   ? ValidationResult::Success
+					   : Failure_Metadata_v2_Value_Change_Irreversible;
+	}
 }}

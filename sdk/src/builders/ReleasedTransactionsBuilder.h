@@ -1,6 +1,7 @@
 /**
-*** Copyright (c) 2016-present,
-*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
+*** Copyright (c) 2016-2019, Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp.
+*** Copyright (c) 2020-present, Jaguar0625, gimre, BloodyRookie.
+*** All rights reserved.
 ***
 *** This file is part of Catapult.
 ***
@@ -25,19 +26,17 @@
 
 namespace catapult { namespace builders {
 
-	class ReleasedTransactionsBuilder : public TransactionBuilder {
-	public:
+		class ReleasedTransactionsBuilder : public TransactionBuilder {
+		public:
+			ReleasedTransactionsBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer);
 
-		ReleasedTransactionsBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer);
+		public:
+			void addTransaction(const std::vector<uint8_t>& payload);
 
-	public:
+		public:
+			model::UniqueEntityPtr<model::AggregateTransaction> build() const;
 
-		void addTransaction(const std::vector<uint8_t>& payload);
-
-	public:
-		model::UniqueEntityPtr<model::AggregateTransaction> build() const;
-
-	private:
-		std::vector<std::vector<uint8_t>> m_transactions;
-	};
-}}
+		private:
+			std::vector<std::vector<uint8_t>> m_transactions;
+		};
+	}}

@@ -258,6 +258,7 @@ enabled = true
 
 # 1 week = 7 days = 168 hours
 dbrbProcessLifetimeAfterExpiration = 168h
+enableDbrbProcessBanning = true
 
 [plugin:catapult.plugins.supercontract_v2]
 

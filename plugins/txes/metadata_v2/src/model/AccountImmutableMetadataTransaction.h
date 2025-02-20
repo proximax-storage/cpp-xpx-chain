@@ -20,31 +20,29 @@
 **/
 
 #pragma once
-#ifndef CUSTOM_ENTITY_TYPE_DEFINITION
-#include "catapult/model/EntityType.h"
+#include "MetadataEntityType.h"
+#include "ImmutableMetadataSharedTransaction.h"
+#include "catapult/model/ContainerTypes.h"
+#include "catapult/utils/ArraySet.h"
+#include "catapult/config/BlockchainConfiguration.h"
 
 namespace catapult { namespace model {
 
-#endif
+#pragma pack(push, 1)
 
-	/// Account metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_v2, Account_Metadata, 0x1);
+	/// Binary layout for an account immutable metadata transaction body.
+	template<typename THeader>
+	struct AccountImmutableMetadataTransactionBody
+			: public BasicImmutableMetadataTransactionBody<ImmutableMetadataTransactionHeader<THeader>, Entity_Type_Account_Immutable_Metadata>
+	{};
 
-	/// Mosaic metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_v2, Mosaic_Metadata, 0x2);
+	DEFINE_EMBEDDABLE_TRANSACTION(AccountImmutableMetadata)
 
-	/// Namespace metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_v2, Namespace_Metadata, 0x3);
+#pragma pack(pop)
 
-	/// Account immutable metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_v2, Account_Immutable_Metadata, 0x4);
-
-	/// Mosaic immutable metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_v2, Mosaic_Immutable_Metadata, 0x5);
-
-	/// Namespace immutable metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_v2, Namespace_Immutable_Metadata, 0x6);
-
-#ifndef CUSTOM_ENTITY_TYPE_DEFINITION
+	/// Extracts addresses of additional accounts that must approve \a transaction.
+	inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedAccountImmutableMetadataTransaction& transaction, const config::BlockchainConfiguration&) {
+		return { transaction.TargetKey };
+	}
 }}
-#endif
+
