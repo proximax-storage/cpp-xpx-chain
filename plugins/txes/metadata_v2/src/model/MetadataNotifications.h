@@ -36,7 +36,7 @@ namespace catapult { namespace model {
 	/// Metadata value was received.
 	DEFINE_METADATA_NOTIFICATION(Value, 0x0002, All);
 
-	/// Immutable metadata value was received.
+	/// Extended metadata value was received.
 	DEFINE_METADATA_NOTIFICATION(Value_v2, 0x0003, All);
 
 #undef DEFINE_METADATA_NOTIFICATION

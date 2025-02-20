@@ -36,14 +36,14 @@ namespace catapult { namespace model {
 	/// Namespace metadata transaction.
 	DEFINE_TRANSACTION_TYPE(Metadata_v2, Namespace_Metadata, 0x3);
 
-	/// Account immutable metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_v2, Account_Immutable_Metadata, 0x4);
+	/// Account extended metadata transaction.
+	DEFINE_TRANSACTION_TYPE(Metadata_v2, Account_Extended_Metadata, 0x4);
 
-	/// Mosaic immutable metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_v2, Mosaic_Immutable_Metadata, 0x5);
+	/// Mosaic extended metadata transaction.
+	DEFINE_TRANSACTION_TYPE(Metadata_v2, Mosaic_Extended_Metadata, 0x5);
 
-	/// Namespace immutable metadata transaction.
-	DEFINE_TRANSACTION_TYPE(Metadata_v2, Namespace_Immutable_Metadata, 0x6);
+	/// Namespace extended metadata transaction.
+	DEFINE_TRANSACTION_TYPE(Metadata_v2, Namespace_Extended_Metadata, 0x6);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
