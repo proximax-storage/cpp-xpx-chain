@@ -37,6 +37,9 @@ namespace catapult { namespace test {
 	/// Generates a uint16_t random number.
 	uint16_t Random16();
 
+	/// Generates a uint16_t random number.
+	uint32_t Random32();
+
 	/// Generates a random number in range from \a lower to \a upper (both included).
 	template<typename T>
 	T RandomInRange(T lower, T upper) {

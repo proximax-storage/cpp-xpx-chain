@@ -32,6 +32,12 @@ namespace catapult { namespace validators {
 	/// Validation failed because the harvester account is already disabled.
 	DEFINE_CATAPULT_COMMITTEE_RESULT(Harvester_Already_Disabled, 6);
 
+	/// Validation failed because block signer is invalid.
+	DEFINE_CATAPULT_COMMITTEE_RESULT(Invalid_Block_Signer, 7);
+
+	/// Validation failed because committee round is invalid.
+	DEFINE_CATAPULT_COMMITTEE_RESULT(Invalid_Committee_Round, 8);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

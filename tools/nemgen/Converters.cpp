@@ -21,25 +21,62 @@
 #include "Converters.h"
 #include "catapult/utils/HexParser.h"
 #include "catapult/config/ModifyStateConfiguration.h"
+#include "catapult/model/ModifyStateEntityType.h"
+#include "catapult/config/SupportedEntityVersions.h"
+#include <iostream>
+#include <sstream>
+#include <string>
 #include <regex>
 
 namespace catapult { namespace tools { namespace nemgen {
 
-	state::NetworkConfigEntry Convert(utils::AccountMigrationManager& accountMigrationManager, const state::NetworkConfigEntry& value, bool is_future) {
+	namespace {
+		std::string replaceOrAddBlockInINIString(const std::string& iniContent, const std::string& blockHeader, const std::string& newBlockContent) {
+			// Regular expression to match the block starting with the given header
+			std::regex blockRegex("\\[" + blockHeader + "](.*?)(?=(\\[.*\\])|\\z)", std::regex_constants::ECMAScript);
+
+			if (std::regex_search(iniContent, blockRegex)) {
+				// Replace the matched block with the new content
+				return std::regex_replace(iniContent, blockRegex, "[" + blockHeader + "]\n" + newBlockContent + "\n");
+			} else {
+				// Append the new block at the end if it doesn't exist
+				return iniContent + "\n[" + blockHeader + "]\n" + newBlockContent + "\n";
+			}
+		}
+	}
+	state::NetworkConfigEntry Convert(utils::AccountMigrationManager& accountMigrationManager, const state::NetworkConfigEntry& value, bool isFuture) {
 		std::istringstream inputBlock(value.networkConfig());
 		auto networkConfig = model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
+		accountMigrationManager.AssociateNemesis(networkConfig.Info.PublicKey);
 		auto nemesisKey = accountMigrationManager.GetKeyPair(networkConfig.Info.PublicKey)->publicKey();
-		std::string newKey;
-		std::string oldKey;
-		utils::ParseHexStringIntoContainer(
-				reinterpret_cast<char* >(nemesisKey.data()), Key_Size, newKey);
-		utils::ParseHexStringIntoContainer(
-				reinterpret_cast<char* >(networkConfig.Info.PublicKey.data()), Key_Size, oldKey);
-		auto newConfig = std::regex_replace(value.networkConfig(), std::regex(oldKey), newKey);
-		if(!networkConfig.GetPluginConfiguration<config::ModifyStateConfiguration>().Enabled) {
-			//TODO update future configurations with proper plugin section
+		std::ostringstream sNewKey;
+		std::ostringstream sOldKey;
+		sNewKey << nemesisKey;
+		sOldKey << networkConfig.Info.PublicKey;
+
+		auto newConfig = std::regex_replace(value.networkConfig(), std::regex(sOldKey.str()), sNewKey.str());
+		auto newSupportedEntities = value.supportedEntityVersions();
+		/// If is current or future network config, force enable modify state plugin
+		if(isFuture) {
+			std::string stateBlock = ""; // Your INI string
+			stateBlock += "[plugin:catapult.plugins.modifystate]\n";
+			stateBlock += "enabled=true\n";
+			newConfig = replaceOrAddBlockInINIString(newConfig, "plugin:catapult.plugins.modifystate", stateBlock);
+			auto stream = std::istringstream(newSupportedEntities);
+			auto supportedEntities = config::LoadSupportedEntityVersions(stream);
+			auto iter = supportedEntities.find(model::Entity_Type_ModifyState);
+			if(iter == supportedEntities.end()) {
+				supportedEntities.insert(std::make_pair(model::Entity_Type_ModifyState, std::unordered_set<VersionType>({1})));
+			}
+			else {
+				if(iter->second.find(1) == iter->second.end()) {
+					iter->second.insert(1);
+				}
+			}
+			newSupportedEntities = config::SaveSupportedEntityVersionsToString(supportedEntities);
+
 		}
-		return state::NetworkConfigEntry(value.height(), newConfig, value.supportedEntityVersions());
+		return state::NetworkConfigEntry(value.height(), newConfig, newSupportedEntities);
 	}
 
 	state::AccountState Convert(utils::AccountMigrationManager& accountMigrationManager, const state::AccountState& value) {
@@ -165,7 +202,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		}
 
 		for(auto offReplicator : value.offboardingReplicators()) {
-			bcEntry.offboardingReplicators().insert(accountMigrationManager.GetKeyPair(offReplicator)->publicKey());
+			bcEntry.offboardingReplicators().push_back(accountMigrationManager.GetKeyPair(offReplicator)->publicKey());
 		}
 
 		bcEntry.setSize(value.size());
@@ -176,6 +213,7 @@ namespace catapult { namespace tools { namespace nemgen {
 	}
 
 	state::CommitteeEntry Convert(utils::AccountMigrationManager& accountMigrationManager, const state::CommitteeEntry& value) {
+
 		return state::CommitteeEntry(
 						accountMigrationManager.GetKeyPair(value.key())->publicKey(),
 						accountMigrationManager.GetKeyPair(value.owner())->publicKey(),
@@ -183,7 +221,15 @@ namespace catapult { namespace tools { namespace nemgen {
 						value.effectiveBalance(),
 						value.canHarvest(),
 						value.activity(),
-						value.greed(),
-						value.disabledHeight());
+						value.greedObsolete(),
+						value.disabledHeight(),
+						value.version(),
+						value.expirationTime(),
+						value.activity(),
+						value.feeInterest(),
+						value.feeInterestDenominator(),
+						value.bootKey(),
+						value.blockchainVersion(),
+						value.banPeriod());
 	}
 }}}

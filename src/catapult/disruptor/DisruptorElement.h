@@ -20,7 +20,6 @@
 
 #pragma once
 #include "ConsumerInput.h"
-#include "catapult/utils/SpinLock.h"
 
 namespace catapult { namespace disruptor {
 
@@ -31,7 +30,7 @@ namespace catapult { namespace disruptor {
 		DisruptorElement()
 				: m_id(static_cast<uint64_t>(-1))
 				, m_processingComplete([](auto, auto) {})
-				, m_pSpinLock(std::make_unique<utils::SpinLock>())
+				, m_pMutex(std::make_unique<std::shared_mutex>())
 		{}
 
 		/// Creates a disruptor element around \a input with \a id and a completion handler \a processingComplete.
@@ -39,7 +38,7 @@ namespace catapult { namespace disruptor {
 				: m_input(std::move(input))
 				, m_id(id)
 				, m_processingComplete(processingComplete)
-				, m_pSpinLock(std::make_unique<utils::SpinLock>())
+				, m_pMutex(std::make_unique<std::shared_mutex>())
 		{}
 
 	public:
@@ -60,20 +59,20 @@ namespace catapult { namespace disruptor {
 
 		/// Returns \c true if the element is skipped.
 		bool isSkipped() const {
-			utils::SpinLockGuard guard(*m_pSpinLock);
+			std::shared_lock lock(*m_pMutex);
 			return CompletionStatus::Aborted == m_result.CompletionStatus;
 		}
 
 		/// Gets the current element completion result.
 		ConsumerCompletionResult completionResult() const {
-			utils::SpinLockGuard guard(*m_pSpinLock);
+			std::shared_lock lock(*m_pMutex);
 			return m_result;
 		}
 
 	public:
 		/// Marks the element as skipped at \a position with \a code.
 		void markSkipped(PositionType position, CompletionCode code) {
-			utils::SpinLockGuard guard(*m_pSpinLock);
+			std::unique_lock lock(*m_pMutex);
 			m_result.CompletionStatus = CompletionStatus::Aborted;
 			m_result.CompletionCode = code;
 			m_result.FinalConsumerPosition = position;
@@ -89,7 +88,7 @@ namespace catapult { namespace disruptor {
 		DisruptorElementId m_id;
 		ProcessingCompleteFunc m_processingComplete;
 		ConsumerCompletionResult m_result;
-		std::unique_ptr<utils::SpinLock> m_pSpinLock; // unique_ptr to allow moving of element
+		std::unique_ptr<std::shared_mutex> m_pMutex; // unique_ptr to allow moving of element
 	};
 
 	/// Insertion operator for outputting \a element to \a out.

@@ -94,7 +94,7 @@ private:
 		return std::max(leftHeight, rightHeight) + 1;
 	}
 
-	Key setRoot(const Key& root) {
+	void setRoot(const Key& root) {
 		if (!m_queueCache.contains(m_queueKey)) {
 			state::QueueEntry entry(m_queueKey);
 			m_queueCache.insert(entry);
@@ -109,6 +109,10 @@ private:
 	Key insert(const Key& nodePointer, const Key& insertedNodePointer) {
 		if (isNull(nodePointer)) {
 			return insertedNodePointer;
+		}
+
+		if (nodePointer == insertedNodePointer) {
+			return nodePointer;
 		}
 
 		state::AVLTreeNode node = m_nodeExtractor(nodePointer);
@@ -186,11 +190,9 @@ private:
 
 		if (index < leftSize) {
 			return orderStatistics(node.Left, index);
-		}
-		if (index == leftSize) {
+		} else if (index == leftSize) {
 			return nodePointer;
-		}
-		else {
+		} else {
 			return orderStatistics(node.Right, index - leftSize - 1);
 		}
 	}

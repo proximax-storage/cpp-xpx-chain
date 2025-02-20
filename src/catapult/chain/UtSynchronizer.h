@@ -38,5 +38,6 @@ namespace catapult { namespace chain {
 	RemoteNodeSynchronizer<api::RemoteTransactionApi> CreateUtSynchronizer(
 		const MinFeeMultiplierSupplier& minFeeMultiplierSupplier,
 		const ShortHashesSupplier& shortHashesSupplier,
-		const handlers::TransactionRangeHandler& transactionRangeConsumer);
+		const handlers::TransactionRangeHandler& transactionRangeConsumer,
+		size_t batchSize);
 }}

@@ -4,4 +4,5 @@ bootKey = {{bootkey}}
 [storage]
 
 dataDirectory = /data
-pluginsDirectory = 
+certificateDirectory = /certificate
+pluginsDirectory = {{work_dir}}/bin

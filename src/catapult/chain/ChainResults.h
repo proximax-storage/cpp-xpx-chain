@@ -43,6 +43,9 @@ namespace catapult { namespace chain {
 	/// Validation failed because the unconfirmed cache is too full.
 	DEFINE_CHAIN_RESULT(Unconfirmed_Cache_Too_Full, 201);
 
+	/// Validation failed because the transaction is expired.
+	DEFINE_CHAIN_RESULT(Transaction_Expired, 202);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

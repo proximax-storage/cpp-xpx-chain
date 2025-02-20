@@ -8,19 +8,23 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ReplicatorOnboardingNotification<1>;
+	namespace {
+		template<VersionType version>
+		ValidationResult ReplicatorOnboardingValidator(const model::ReplicatorOnboardingNotification<version>& notification, const ValidatorContext& context) {
+			const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 
-	DEFINE_STATEFUL_VALIDATOR(ReplicatorOnboarding, [](const Notification& notification, const ValidatorContext& context) {
-	  	const auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
-		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+			if (replicatorCache.contains(notification.PublicKey))
+				return Failure_Storage_Replicator_Already_Registered;
 
-		if (replicatorCache.contains(notification.PublicKey))
-			return Failure_Storage_Replicator_Already_Registered;
+			if (utils::FileSize::FromMegabytes(notification.Capacity.unwrap()) < pluginConfig.MinCapacity)
+				return Failure_Storage_Replicator_Capacity_Insufficient;
 
-		if (utils::FileSize::FromMegabytes(notification.Capacity.unwrap()) < pluginConfig.MinCapacity)
-			return Failure_Storage_Replicator_Capacity_Insufficient;
+			return ValidationResult::Success;
+		}
+	}
 
-		return ValidationResult::Success;
-	});
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(ReplicatorOnboardingV1, model::ReplicatorOnboardingNotification<1>, ReplicatorOnboardingValidator<1>)
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(ReplicatorOnboardingV2, model::ReplicatorOnboardingNotification<2>, ReplicatorOnboardingValidator<2>)
 
 }}

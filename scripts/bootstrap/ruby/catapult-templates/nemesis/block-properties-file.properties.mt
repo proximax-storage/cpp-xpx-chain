@@ -13,8 +13,18 @@ nemesisSignerPrivateKey = {{nemesis_signer_private_key}}
 cppFileHeader = ../HEADER.inc
 
 [output]
+
 cppFile =
 binDirectory = ../seed/mijin-test
+accountEquivalenceFile = ../seed/mijin-test/accountEquivalence.txt
+reconstructionResourcesPath = {{work_dir}}/resources.rc
+resourcesPath = ../resources
+
+[spooling]
+
+enableSpool = false
+txBufferSize = 512'000
+transactionsPath = ./spool
 
 [namespaces]
 prx = true

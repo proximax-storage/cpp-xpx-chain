@@ -23,17 +23,18 @@ module Catapult
       CONFIG_SUBDIR    = 'userconfig'
       RESOURCES_SUBDIR = 'resources'
 
-      def initialize(input_attributes)
+      def initialize(input_attributes, work_dir)
         type            = self.class.type
         all_peers       = Peer.all_peers(input_attributes)
 
+        @work_dir = work_dir
         @component_keys = Keys::Component.new(input_attributes)
         @json_peers     = JsonPeers.new(@component_keys, all_peers)
-        super(type, input_attributes, TemplateAttributes.new(type, @component_keys, input_attributes))
+        super(type, input_attributes, TemplateAttributes.new(type, @component_keys, input_attributes), work_dir)
       end
       private :initialize
 
-      attr_reader :component_keys
+      attr_reader :component_keys, :work_dir
       
       def self.json_peers_dir
         "#{self.base_config_source_dir}/common_fragments/json_peers"

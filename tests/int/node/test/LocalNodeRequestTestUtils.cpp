@@ -19,6 +19,9 @@
 **/
 
 #include "LocalNodeRequestTestUtils.h"
+#include "catapult/cache_core/BlockDifficultyCacheTypes.h"
+#include "catapult/chain/BlockDifficultyScorer.h"
+#include "catapult/extensions/NemesisBlockLoader.h"
 #include "sdk/src/extensions/BlockExtensions.h"
 #include "plugins/txes/committee/src/plugins/AddHarvesterTransactionPlugin.h"
 #include "plugins/txes/config/src/plugins/NetworkConfigTransactionPlugin.h"
@@ -69,6 +72,8 @@ namespace catapult { namespace test {
 	}
 
 	namespace {
+		using DifficultySet = cache::BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType::SetType::MemorySetType;
+
 		crypto::KeyPair GetNemesisAccountKeyPair() {
 			return crypto::KeyPair::FromString(Mijin_Test_Private_Keys[0]); // use a nemesis account
 		}
@@ -83,7 +88,9 @@ namespace catapult { namespace test {
 			model::PreviousBlockContext context(*pNemesisBlockElement);
 			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
 			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
-			pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
+			DifficultySet blockDifficulties{ state::BlockDifficultyInfo(pNemesisBlockElement->Block) };
+			auto [config, _] = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+			pBlock->Difficulty = chain::CalculateDifficulty(cache::DifficultyInfoRange(blockDifficulties.cbegin(), blockDifficulties.cend()), state::BlockDifficultyInfo(*pBlock), config);
 			pBlock->Version = MakeVersion(Network_Identifier, model::BlockHeader::Current_Version);
 			pBlock->FeeInterest = 1;
 			pBlock->FeeInterestDenominator = 2;

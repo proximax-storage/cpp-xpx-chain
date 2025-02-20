@@ -3,6 +3,7 @@ include(cmake/sanitizers.cmake)
 
 ### enable testing
 enable_testing()
+configure_file(cmake/CTestCustom.cmake ${CMAKE_BINARY_DIR})
 
 ### enable ccache if available
 find_program(CCACHE_FOUND ccache)
@@ -111,7 +112,7 @@ if(("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU") OR ("${CMAKE_CXX_COMPILER_ID}" MAT
 
 	# $origin - to load plugins when running the server
 	# $origin/boost - same, use our boost libs
-	set(CMAKE_INSTALL_RPATH "$ORIGIN:$ORIGIN/deps${CMAKE_INSTALL_RPATH}")
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:$ORIGIN:$ORIGIN/deps:$ORIGIN/../lib")
 	set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 

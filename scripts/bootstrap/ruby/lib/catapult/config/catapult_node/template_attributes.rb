@@ -23,8 +23,8 @@ module Catapult
         
       attr_reader :type, :component_keys
       
-      def hash(index)
-        PerIndex.new(self, index).hash
+      def hash(index, work_dir)
+        PerIndex.new(self, index, work_dir).hash
       end
       
       def harvest_keys

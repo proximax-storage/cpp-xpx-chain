@@ -58,6 +58,39 @@ namespace catapult { namespace model {
 
 		/// Operation receipt.
 		Operation = 0x7,
+
+		/// Offer creation.
+		OfferCreation = 0xA,
+
+		/// Offer exchange.
+		OfferExchange = 0xB,
+
+		/// Offer removal.
+		OfferRemoval = 0xC,
+
+		/// Data modification approval.
+		Data_Modification_Approval = 0xD,
+
+		/// Data modification cancel.
+		Data_Modification_Cancel = 0xE,
+
+		/// Download approval.
+		Download_Approval = 0xF,
+
+		/// Download channel refund.
+		Download_Channel_Refund = 0x10,
+
+		/// Drive closure.
+		Drive_Closure = 0x11,
+
+		/// End drive verification.
+		End_Drive_Verification = 0x12,
+
+		/// Periodic payment.
+		Periodic_Payment = 0x13,
+
+		/// Replicator deposit.
+		Replicator_Deposit = 0x14,
 	};
 
 	/// Enumeration of receipt types.

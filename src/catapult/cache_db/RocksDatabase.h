@@ -155,6 +155,9 @@ namespace catapult { namespace cache {
 		/// Gets the iterator for the first result in the column family identified by \a columnId.
 		void getIteratorAtStart(size_t columnId, RdbDataIterator& result);
 
+		/// Gets all data \a result from \a columnId.
+		void getAll(size_t columnId, std::vector<std::string>& result);
+
 		/// Puts \a value with \a key in \a columnId.
 		void put(size_t columnId, const rocksdb::Slice& key, const std::string& value);
 

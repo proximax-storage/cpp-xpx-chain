@@ -55,14 +55,17 @@ namespace catapult { namespace mocks {
 	public:
 		/// Returns the configured unconfirmed transactions and throws if the error entry point is set to Unconfirmed_Transactions.
 		/// \note The \a minFeeMultiplier and \a knownShortHashes parameters are captured.
-		thread::future<model::TransactionRange> unconfirmedTransactions(
+		thread::future<std::vector<model::TransactionRange>> unconfirmedTransactions(
 				BlockFeeMultiplier minFeeMultiplier,
-				model::ShortHashRange&& knownShortHashes) const override {
+				model::ShortHashRange&& knownShortHashes,
+				size_t batchSize) const override {
 			m_utRequests.push_back(std::make_pair(minFeeMultiplier, std::move(knownShortHashes)));
 			if (shouldRaiseException(EntryPoint::Unconfirmed_Transactions))
-				return CreateFutureException<model::TransactionRange>("unconfirmed transactions error has been set");
+				return CreateFutureException<std::vector<model::TransactionRange>>("unconfirmed transactions error has been set");
 
-			return thread::make_ready_future(model::TransactionRange::CopyRange(m_transactions));
+			std::vector<model::TransactionRange> ranges;
+			ranges.push_back(model::TransactionRange::CopyRange(m_transactions));
+			return thread::make_ready_future(std::move(ranges));
 		}
 
 	private:

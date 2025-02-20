@@ -26,6 +26,40 @@ namespace catapult { namespace config {
 
 			return supportedEntityVersions;
 		}
+
+		boost::property_tree::ptree SaveSupportedEntityVersions(const SupportedEntityVersions& supportedEntityVersions) {
+			boost::property_tree::ptree root;
+			boost::property_tree::ptree entitiesArray;
+
+			for (const auto& entityPair : supportedEntityVersions) {
+				boost::property_tree::ptree entityNode;
+				boost::property_tree::ptree versionsArray;
+
+				entityNode.put("type", static_cast<uint16_t>(entityPair.first));
+
+				for (const auto& version : entityPair.second) {
+					boost::property_tree::ptree versionNode;
+					versionNode.put_value(version);
+					versionsArray.push_back(std::make_pair("", versionNode));
+				}
+
+				entityNode.add_child("supportedVersions", versionsArray);
+				entitiesArray.push_back(std::make_pair("", entityNode));
+			}
+
+			root.add_child("entities", entitiesArray);
+			return root;
+		}
+	}
+
+	void SaveSupportedEntityVersions(const SupportedEntityVersions& supportedEntityVersions, const boost::filesystem::path& path) {
+		boost::property_tree::ptree root = SaveSupportedEntityVersions(supportedEntityVersions);
+		boost::property_tree::write_json(path.generic_string(), root);
+	}
+
+	void SaveSupportedEntityVersions(const SupportedEntityVersions& supportedEntityVersions, std::ostream& outputStream) {
+		boost::property_tree::ptree root = SaveSupportedEntityVersions(supportedEntityVersions);
+		boost::property_tree::write_json(outputStream, root);
 	}
 
 	SupportedEntityVersions LoadSupportedEntityVersions(const boost::filesystem::path& path) {
@@ -46,5 +80,12 @@ namespace catapult { namespace config {
 		boost::property_tree::read_json(inputStream, root);
 
 		return LoadSupportedEntityVersions(root);
+	}
+
+	std::string SaveSupportedEntityVersionsToString(const SupportedEntityVersions& supportedEntityVersions) {
+		boost::property_tree::ptree root = SaveSupportedEntityVersions(supportedEntityVersions);
+		std::ostringstream outputStream;
+		boost::property_tree::write_json(outputStream, root);
+		return outputStream.str();
 	}
 }}

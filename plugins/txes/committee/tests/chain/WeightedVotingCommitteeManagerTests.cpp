@@ -15,12 +15,16 @@ namespace catapult { namespace chain {
 		constexpr uint8_t Committee_Size = 21u;
 		constexpr uint8_t Account_Number = 50u;
 
+		auto CreateCommitteeConfig() {
+			auto pluginConfig = config::CommitteeConfiguration::Uninitialized();
+			pluginConfig.MinGreed = test::Min_Greed;
+			return pluginConfig;
+		}
+
 		auto CreateConfig() {
 			test::MutableBlockchainConfiguration config;
 			config.Network.CommitteeSize = Committee_Size;
-			auto pluginConfig = config::CommitteeConfiguration::Uninitialized();
-			pluginConfig.MinGreed = test::Min_Greed;
-			config.Network.SetPluginConfiguration(pluginConfig);
+			config.Network.SetPluginConfiguration(CreateCommitteeConfig());
 			return config.ToConst().Network;
 		}
 
@@ -60,7 +64,8 @@ namespace catapult { namespace chain {
 			pCommitteeManager->setLastBlockElementSupplier([pBlockElement]() { return pBlockElement; });
 
 			// Act:
-			auto actualCommittee = pCommitteeManager->selectCommittee(CreateConfig());
+			pCommitteeManager->selectCommittee(CreateConfig(), BlockchainVersion(0));
+			auto actualCommittee = pCommitteeManager->committee();
 
 			// Assert:
 			EXPECT_EQ(expectedCommittee.BlockProposer, actualCommittee.BlockProposer);
@@ -83,7 +88,7 @@ namespace catapult { namespace chain {
 		for (uint8_t i = 1u; i <= Committee_Size / 2; ++i) {
 			auto key = test::GenerateRandomByteArray<Key>();
 			expectedCommittee.Cosigners.insert(key);
-			pAccountCollector->addAccount(state::CommitteeEntry(key, Key(), test::CreateAccountData(Height(), Importance(1))));
+			pAccountCollector->addAccount(state::CommitteeEntry(key, Key(), test::CreateAccountData(Height(), Importance(1))), CreateCommitteeConfig());
 			auto hit = *reinterpret_cast<const uint64_t*>(key.data());
 			if (hit < minHit) {
 				minHit = hit;
@@ -111,20 +116,24 @@ namespace catapult { namespace chain {
 		// it has the lowest key.
 		expectedCommittee.BlockProposer = Key{ { 1 } };
 		pAccountCollector->addAccount(state::CommitteeEntry(
-			expectedCommittee.BlockProposer,
-			Key(),
-			test::CreateAccountData(Height(), Importance(Committee_Size), true, test::Initial_Activity, 0.8)));
+				expectedCommittee.BlockProposer,
+				Key(),
+				test::CreateAccountData(Height(), Importance(Committee_Size), true, test::Initial_Activity, 0.8)),
+			CreateCommitteeConfig());
 		for (uint8_t i = 2u; i <= Committee_Size; ++i) {
 			auto key = Key{ { i } };
 			expectedCommittee.Cosigners.insert(key);
 			pAccountCollector->addAccount(state::CommitteeEntry(
-				key, Key(), test::CreateAccountData(Height(), Importance(Committee_Size), true, test::Initial_Activity, 0.8 / i)));
+					key,
+					Key(),
+					test::CreateAccountData(Height(), Importance(Committee_Size), true, test::Initial_Activity, 0.8 / i)),
+				CreateCommitteeConfig());
 		}
 
 		// The next accounts have rates equal to the rate of the 21st account. The 21st account is selected to the
 		// committee because it has the lowest key.
 		for (uint8_t i = Committee_Size + 1u; i <= Account_Number; ++i)
-			pAccountCollector->addAccount(state::CommitteeEntry(Key{ { i } }, Key(), test::CreateAccountData(Height(), Importance(i))));
+			pAccountCollector->addAccount(state::CommitteeEntry(Key{ { i } }, Key(), test::CreateAccountData(Height(), Importance(i))), CreateCommitteeConfig());
 
 		RunTest(pAccountCollector, expectedCommittee);
 	}

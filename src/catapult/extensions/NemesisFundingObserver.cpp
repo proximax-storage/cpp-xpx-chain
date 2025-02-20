@@ -30,7 +30,7 @@ namespace catapult { namespace extensions {
 				const auto& notification,
 				const auto& context) {
 			// since this is only used by NemesisBlockLoader, it only needs to support commit because nemesis can't be rolled back
-			if (observers::NotifyMode::Commit != context.Mode || Height(1) != context.Height)
+			if (observers::NotifyMode::Commit != context.Mode || context.Config.Immutable.NemesisHeight != context.Height)
 				CATAPULT_THROW_INVALID_ARGUMENT("NemesisFundingObserver only supports commit mode for nemesis block");
 
 			if (nemesisPublicKey != notification.Sender)

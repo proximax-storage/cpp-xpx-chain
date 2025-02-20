@@ -18,7 +18,7 @@ module Catapult
         XPX_TOTAL_SUPPLY   = "8'999'999'998'000'000"
         XPX_ACCOUNT_SUPPLY = "409'090'909'000'000"
         XPX_NUM_OF_ACCOUNTS = 22 # this has to equal ration XPX_TOTAL_SUPPLY/XPX_ACCOUNT_SUPPLY
-        def self.template_bindings(nemesis_keys_info)
+        def self.template_bindings(nemesis_keys_info, work_directory)
           key_info_array = nemesis_keys_info.key_info_array
           generation_info = nemesis_keys_info.generation_info
           {
@@ -26,7 +26,8 @@ module Catapult
             nemesis_generation_hash: generation_info.generation_hash,
             nemesis_signer_private_key: generation_info.signer_private_key,
             xpx: xpx(key_info_array),
-            harvester_keys: key_info_array[0..4].map { |key_info| harvesters(key_info) }
+            harvester_keys: key_info_array[0..4].map { |key_info| harvesters(key_info) },
+            work_dir: work_directory
           }
         end
 

@@ -29,11 +29,14 @@ namespace catapult {
 	}
 }
 
+namespace catapult::model{ class TransactionFeeCalculator; }
+
 namespace catapult { namespace mongo {
 
 	/// Creates a mongodb block storage around \a context, \a transactionRegistry and \a receiptRegistry.
 	std::unique_ptr<io::LightBlockStorage> CreateMongoBlockStorage(
 			MongoStorageContext& context,
 			const MongoTransactionRegistry& transactionRegistry,
-			const MongoReceiptRegistry& receiptRegistry);
+			const MongoReceiptRegistry& receiptRegistry,
+			const model::TransactionFeeCalculator& transactionFeeCalculator);
 }}

@@ -86,6 +86,10 @@ namespace catapult { namespace cache {
 		m_database.getIteratorAtStart(m_columnId, iterator);
 	}
 
+	void RdbColumnContainer::getAll(std::vector<std::string>& result) const {
+		m_database.getAll(m_columnId, result);
+	}
+
 	void RdbColumnContainer::insert(const RawBuffer& key, const std::string& value) {
 		m_database.put(m_columnId, ToSlice(key), value);
 	}

@@ -6,12 +6,13 @@ generationHash = {{network_generation_hash}}
 shouldEnableVerifiableState = true
 shouldEnableVerifiableReceipts = true
 
-currencyMosaicId = 0x0DC6'7FBE'1CAD'29E3
-harvestingMosaicId = 0x0DC6'7FBE'1CAD'29E3
-storageMosaicId = 0x2651'4E2A'1EF3'3824
-streamingMosaicId = 0x6C5D'6875'08AC'9D75
-superContractMosaicId = 0x6EE9'5526'8A1C'33D9
-reviewMosaicId = 0x19C1'CD86'7406'54DC
-xarMosaicId = 0x77E4'90CC'9B2A'F6F6
+nemesisHeight = 6812897
+currencyMosaicId = 0x402B'2F57'9FAE'BC59
+harvestingMosaicId = 0x402B'2F57'9FAE'BC59
+storageMosaicId = 0x42F1'1DF7'3D00'296A
+streamingMosaicId = 0x7E33'2C41'B04E'4E05
+reviewMosaicId = 0x69AB'D515'3C51'5B61
+superContractMosaicId = 0x3732'15BB'26B0'DB2C
+xarMosaicId = 0x0C1A'223C'F4E9'E72B
 
-initialCurrencyAtomicUnits = 8'999'999'998'000'000
+initialCurrencyAtomicUnits = 9'000'000'000'000'000

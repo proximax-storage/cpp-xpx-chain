@@ -10,6 +10,18 @@
 
 namespace catapult { namespace chain {
 
+	constexpr auto CommitteePhaseCount = 4u;
+
+	void IncreasePhaseTime(uint64_t& phaseTimeMillis, const model::NetworkConfiguration& config);
+	void DecreasePhaseTime(uint64_t& phaseTimeMillis, const model::NetworkConfiguration& config);
+
+	struct HarvesterWeight {
+		union {
+			double d;
+			int64_t n;
+		};
+	};
+
 	struct Committee {
 	public:
 		explicit Committee(int64_t round = -1)
@@ -34,15 +46,21 @@ namespace catapult { namespace chain {
 
 	public:
 		/// Selects new committee and increments round.
-		virtual const Committee& selectCommittee(const model::NetworkConfiguration& config) = 0;
+		virtual void selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) = 0;
+
+		/// Selects new committee and increments round.
+		virtual Key getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const = 0;
 
 		/// Resets committee manager to start a new block generation cycle.
 		virtual void reset() = 0;
 
 		/// Returns the committee selected by the last call of selectCommittee()
 		/// or empty committee after reset().
-		const Committee& committee() const {
-			return m_committee;
+		virtual Committee committee() const = 0;
+
+		/// Returns mapping of DBRB process identifiers (boot keys) to ban periods.
+		virtual std::map<dbrb::ProcessId, BlockDuration> babPeriods() const {
+			return {};
 		}
 
 		/// Sets last block element \a supplier.
@@ -51,8 +69,28 @@ namespace catapult { namespace chain {
 		/// Gets last block element supplier.
 		const model::BlockElementSupplier& lastBlockElementSupplier();
 
-		/// Returns the weight of the account by \a accountKey.
-		virtual double weight(const Key& accountKey) const = 0;
+		/// Returns the weight of the account by \a accountKey using \a config.
+		virtual HarvesterWeight weight(const Key& accountKey, const model::NetworkConfiguration& config) const = 0;
+
+		/// Adds \a delta to \a weight.
+		virtual HarvesterWeight zeroWeight() const = 0;
+
+		/// Adds \a delta to \a weight.
+		virtual void add(HarvesterWeight& weight, const chain::HarvesterWeight& delta) const = 0;
+
+		/// Multiplies \a weight by \a multiplier.
+		virtual void mul(HarvesterWeight& weight, double multiplier) const = 0;
+
+		/// Returns true if \a weight1 is greater or equals \a weight2, otherwise false.
+		virtual bool ge(const HarvesterWeight& weight1, const chain::HarvesterWeight& weight2) const = 0;
+
+		/// Returns true if \a weight1 equals \a weight2, otherwise false.
+		virtual bool eq(const HarvesterWeight& weight1, const chain::HarvesterWeight& weight2) const = 0;
+
+		/// Returns printable presentation of \a weight2.
+		virtual std::string str(const HarvesterWeight& weight) const = 0;
+
+		virtual void logCommittee() const = 0;
 
 	protected:
 		model::BlockElementSupplier m_lastBlockElementSupplier;

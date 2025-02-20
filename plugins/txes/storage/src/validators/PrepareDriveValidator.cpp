@@ -27,6 +27,9 @@ namespace catapult { namespace validators {
 			if (notification.ReplicatorCount < pluginConfig.MinReplicatorCount)
 				return Failure_Storage_Replicator_Count_Insufficient;
 
+			if (notification.ReplicatorCount > pluginConfig.MaxReplicatorCount)
+				return Failure_Storage_Replicator_Count_Exceeded;
+
 			// Check if the drive already exists
 			if (driveCache.contains(notification.DriveKey))
 				return Failure_Storage_Drive_Already_Exists;

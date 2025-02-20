@@ -193,7 +193,7 @@ namespace catapult { namespace net {
 				}
 
 			private:
-				ionet::socket m_socket;
+				ionet::NetworkSocket m_socket;
 				size_t m_id;
 				boost::asio::steady_timer m_deadline;
 				std::atomic<ConnectionStatus> m_status;
@@ -205,8 +205,8 @@ namespace catapult { namespace net {
 				for (auto i = 0u; i < numAttempts; ++i) {
 					auto pContext = std::make_shared<SpawnContext>(m_ioContext, i);
 					boost::asio::post(m_ioContext, [this, pContext{std::move(pContext)}]() {
-						// set a 50ms deadline on the async_connect
-						pContext->setDeadline(50);
+						// set a 100ms deadline on the async_connect
+						pContext->setDeadline(100);
 						pContext->connect([this](auto status) {
 							switch (status) {
 							case ConnectionStatus::Success:
@@ -373,7 +373,7 @@ namespace catapult { namespace net {
 		// Act: connect to the server
 		boost::system::error_code connectEc;
 		boost::asio::io_context ioContext;
-		ionet::socket socket(ioContext);
+		ionet::NetworkSocket socket(ioContext);
 		socket.async_connect(test::CreateLocalHostEndpoint(), [&connectEc](const auto& ec) {
 			connectEc = ec;
 		});

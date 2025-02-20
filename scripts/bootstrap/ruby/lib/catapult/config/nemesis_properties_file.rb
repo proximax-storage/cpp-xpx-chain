@@ -18,15 +18,16 @@ module Catapult
 
       CONFIG_FILENAME = 'block-properties-file.properties'
 
-      def initialize(keys, nemesis_dir)
+      def initialize(keys, nemesis_dir, work_dir)
         @input_attributes =  { keys: keys }
         @nemesis_dir      = nemesis_dir
+        @work_dir = work_dir
       end
 
       private :initialize
 
-      def self.generate_and_write_nemesis_properties_file(keys, nemesis_dir)
-        new(keys, nemesis_dir).generate_file
+      def self.generate_and_write_nemesis_properties_file(keys, nemesis_dir, work_dir)
+        new(keys, nemesis_dir, work_dir).generate_file
       end
       def generate_file
         config_file = ret_nemesis_config
@@ -39,7 +40,7 @@ module Catapult
 
       protected
 
-      attr_reader :input_attributes, :nemesis_dir
+      attr_reader :input_attributes, :nemesis_dir, :work_dir
 
       def template
         @template ||= File.open(self.template_file).read
@@ -57,7 +58,7 @@ module Catapult
 
       def ret_nemesis_config
         nemesis_keys_info = Keys::Nemesis.get_nemesis_keys_info(self.input_attributes)
-        template_bindings = TemplateBindings.template_bindings(nemesis_keys_info)
+        template_bindings = TemplateBindings.template_bindings(nemesis_keys_info, self.work_dir)
         Catapult.bind_mustache_variables(self.template, template_bindings)
       end
 

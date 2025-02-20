@@ -5,7 +5,10 @@ include_directories(${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/src)
 
 function(catapult_define_extension EXTENSION_NAME)
 	add_subdirectory(src)
-	add_subdirectory(tests)
+	if(DO_NOT_SKIP_BUILD_TESTS)
+		add_subdirectory(tests)
+	endif()
+
 
 	catapult_shared_library_target(extension.${EXTENSION_NAME})
 	target_link_libraries(extension.${EXTENSION_NAME} catapult.${EXTENSION_NAME})

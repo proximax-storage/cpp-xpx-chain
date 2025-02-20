@@ -30,12 +30,20 @@ namespace catapult { namespace test {
 		return { "127.0.0.1", port };
 	}
 
+	ionet::NodeEndpoint CreateLocalHostNodeEndpoint(unsigned short port, unsigned short dbrbPort) {
+		return { "127.0.0.1", port, dbrbPort };
+	}
+
 	ionet::Node CreateLocalHostNode(const Key& publicKey) {
 		return CreateLocalHostNode(publicKey, GetLocalHostPort());
 	}
 
 	ionet::Node CreateLocalHostNode(const Key& publicKey, unsigned short port) {
 		return { publicKey, CreateLocalHostNodeEndpoint(port), ionet::NodeMetadata() };
+	}
+
+	ionet::Node CreateLocalHostNode(const Key& publicKey, unsigned short port, unsigned short dbrbPort) {
+		return { publicKey, CreateLocalHostNodeEndpoint(port, dbrbPort), ionet::NodeMetadata() };
 	}
 
 	ionet::Node CreateNamedNode(const Key& identityKey, const std::string& name, ionet::NodeRoles roles) {

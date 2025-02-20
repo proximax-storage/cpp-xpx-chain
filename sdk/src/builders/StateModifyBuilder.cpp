@@ -50,7 +50,7 @@ namespace catapult { namespace builders {
 		pTransaction->CacheNameSize = utils::checked_cast<size_t, uint8_t>(cacheName.size());
 		pTransaction->SubCacheId = m_subCacheId;
 		pTransaction->KeySize = utils::checked_cast<size_t, uint16_t>(m_key.size());
-		pTransaction->ContentSize = utils::checked_cast<size_t, uint16_t>(m_data.size());
+		pTransaction->ContentSize = utils::checked_cast<size_t, uint32_t>(m_data.size());
 
 		// 3. set transaction attachments
 		std::copy(cacheName.cbegin(), cacheName.cend(), pTransaction->CacheNamePtr());

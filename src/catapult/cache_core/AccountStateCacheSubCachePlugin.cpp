@@ -31,7 +31,7 @@ namespace catapult { namespace cache {
 		io::Write32(output, 1);
 
 		const auto& delta = cacheDelta.sub<AccountStateCache>();
-		const auto& highValueAddresses = delta.highValueAddresses();
+		auto highValueAddresses = delta.highValueAddresses();
 		io::Write64(output, highValueAddresses.size());
 		for (const auto& address : highValueAddresses)
 			output.write(address);

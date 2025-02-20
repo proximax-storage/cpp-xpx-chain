@@ -94,6 +94,10 @@ namespace catapult { namespace chain {
 				m_hashRangeConsumer(model::AnnotatedEntityRange<Hash256>(std::move(range), sourcePublicKey));
 			}
 
+			static size_t size(const model::HashRange& range) {
+				return range.size();
+			}
+
 		private:
 			HashesSupplier m_hashesSupplier;
 			HashRangeConsumerFunc m_hashRangeConsumer;

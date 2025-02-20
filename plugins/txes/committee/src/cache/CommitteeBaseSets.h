@@ -15,14 +15,14 @@
 namespace catapult { namespace cache {
 
 	using BasicCommitteePatriciaTree = tree::BasePatriciaTree<
-		SerializerHashedKeyEncoder<CommitteeCacheDescriptor::Serializer>,
+		SerializerHashedKeyEncoder<CommitteeEntryPatriciaTreeSerializer>,
 		PatriciaTreeRdbDataSource,
 		utils::ArrayHasher<Key>>;
 
 	class CommitteePatriciaTree : public BasicCommitteePatriciaTree {
 	public:
 		using BasicCommitteePatriciaTree::BasicCommitteePatriciaTree;
-		using Serializer = CommitteeCacheDescriptor::Serializer;
+		using Serializer = CommitteeEntryPatriciaTreeSerializer;
 	};
 
 	struct CommitteeBaseSetDeltaPointers {

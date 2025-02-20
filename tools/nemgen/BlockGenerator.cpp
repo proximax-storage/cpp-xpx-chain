@@ -43,7 +43,8 @@ namespace catapult { namespace tools { namespace nemgen {
 	}
 	model::UniqueEntityPtr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config, const std::string& resourcesPath) {
 		auto signer = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey);
-		NemesisTransactions transactions(signer, config);
+		auto registry = CreateTransactionRegistry();
+		NemesisTransactions transactions(signer, config, registry);
 
 		// - namespace creation
 		for (const auto& rootPair : config.RootNamespaces) {
@@ -104,7 +105,17 @@ namespace catapult { namespace tools { namespace nemgen {
 		}
 
 		model::PreviousBlockContext context;
-		auto pBlock = model::CreateBlock(context, config.NetworkIdentifier, signer.publicKey(), transactions.transactions());
+		std::vector<std::shared_ptr<const model::Transaction>> txs;
+
+		std::transform(
+				transactions.transactions().begin(),
+				transactions.transactions().end(),
+				std::back_inserter(txs),
+				[](const TransactionHashContainer& container) {
+					return container.transaction;
+				}
+		);
+		auto pBlock = model::CreateBlock(context, config.NetworkIdentifier, signer.publicKey(), txs);
 		pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
 		pBlock->Type = model::Entity_Type_Nemesis_Block;
 		pBlock->FeeInterest = 1;
@@ -141,8 +152,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		blockElement.GenerationHash = config.NemesisGenerationHash;
 		if(!config.EnableSpool)
 		{
-			auto transactionsView = nemesisTransactions.createView();
-			for (const auto& transaction : transactionsView) {
+			for (const auto& transaction : nemesisTransactions.transactions()) {
 				blockElement.Transactions.push_back(model::TransactionElement(*transaction.transaction));
 				auto& transactionElement = blockElement.Transactions.back();
 				transactionElement.EntityHash = transaction.entityHash;
@@ -156,7 +166,9 @@ namespace catapult { namespace tools { namespace nemgen {
 			model::NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
 			const uint64_t transactionPayloadSize,
+			NemesisTransactions* copyTransactions,
 			VersionType version) {
+
 		auto headerSize = (version > 3) ? sizeof(model::BlockHeaderV4) : sizeof(model::BlockHeader);
 		auto size = headerSize + transactionPayloadSize;
 		auto pBlock = utils::MakeUniqueWithSize<model::Block>(size);
@@ -171,8 +183,15 @@ namespace catapult { namespace tools { namespace nemgen {
 		pBlock->Height = context.BlockHeight + Height(1);
 		pBlock->Difficulty = Difficulty();
 		pBlock->PreviousBlockHash = context.BlockHash;
+		if(copyTransactions != nullptr) {
+			auto pDestination = reinterpret_cast<uint8_t*>(pBlock->TransactionsPtr());
+			auto transactions = copyTransactions->transactions();
+			for (const auto& pTransaction : transactions) {
+				std::memcpy(pDestination, &(*pTransaction.transaction), pTransaction.transaction->Size);
+				pDestination += pTransaction.transaction->Size;
+			}
+		}
 
-		// we skip transaction copying as transactions are kept in temporary files at this point
 		return pBlock;
 	}
 
@@ -193,7 +212,8 @@ namespace catapult { namespace tools { namespace nemgen {
 		transactions.finalize();
 
 		model::PreviousBlockContext context;
-		auto pBlock = CreateNemesisBlock(context, config.NetworkIdentifier, signer.publicKey(), transactions.Size());
+		auto pBlock = CreateNemesisBlock(context, config.NetworkIdentifier, signer.publicKey(), transactions.Size(), config.EnableSpool ? nullptr : &transactions);
+		pBlock->Height = cache.height();
 		pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
 		pBlock->Type = model::Entity_Type_Nemesis_Block;
 		pBlock->FeeInterest = 1;

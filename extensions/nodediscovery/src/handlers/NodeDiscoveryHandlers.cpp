@@ -46,7 +46,7 @@ namespace catapult { namespace handlers {
 			}
 
 			if (node.endpoint().Host.empty()) {
-				auto endpoint = ionet::NodeEndpoint{ context.host(), node.endpoint().Port };
+				auto endpoint = ionet::NodeEndpoint{ context.host(), node.endpoint().Port, node.endpoint().DbrbPort };
 				CATAPULT_LOG(debug) << "auto detected host '" << endpoint.Host << "' for " << node.identityKey();
 				node = ionet::Node(node.identityKey(), endpoint, node.metadata());
 			}

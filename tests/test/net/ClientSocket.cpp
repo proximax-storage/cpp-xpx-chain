@@ -178,12 +178,12 @@ namespace catapult { namespace test {
 
 			void shutdown() override {
 				CATAPULT_LOG(debug) << "shutting down client socket";
-				m_socket.shutdown(ionet::socket::shutdown_both);
+				m_socket.shutdown(ionet::NetworkSocket::shutdown_both);
 				m_socket.close();
 			}
 
 		private:
-			ionet::socket m_socket;
+			ionet::NetworkSocket m_socket;
 			boost::asio::steady_timer m_timer;
 		};
 	}

@@ -49,8 +49,8 @@ namespace catapult { namespace io {
 			boost::filesystem::create_directory(stagingDirectory);
 
 			BlockStorageCache storage(
-					std::make_unique<FileBlockStorage>(tempDir.name()),
-					std::make_unique<FileBlockStorage>(stagingDirectory.generic_string(), FileBlockStorageMode::None));
+					std::make_unique<FileBlockStorage>(tempDir.name(), Height(1)),
+					std::make_unique<FileBlockStorage>(stagingDirectory.generic_string(), Height(1), FileBlockStorageMode::None));
 
 			// - note that there can only ever be a single writer at a time since only one modifier can be outstanding at once
 			std::vector<Height> heights(numReaders);

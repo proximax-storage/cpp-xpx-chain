@@ -53,10 +53,10 @@ namespace catapult { namespace observers {
 					stateApplicator.ApplyRecord<cache::NamespaceCache>(notification.KeyPtr, notification.ContentPtr);
 					break;
 				case static_cast<int>(cache::GeneralSubCache::Secondary):
-					stateApplicator.ApplyRecord<cache::NamespaceCache, cache::NamespaceFlatMapTypesSerializer>(notification.KeyPtr, notification.ContentPtr);
+					stateApplicator.ApplyRecord<cache::NamespaceCache, cache::NamespaceCacheTypes::FlatMapTypesDescriptor>(notification.KeyPtr, notification.ContentPtr);
 					break;
 				case static_cast<int>(cache::GeneralSubCache::Height):
-					stateApplicator.ApplyRecord<cache::NamespaceCache, cache::NamespaceHeightGroupingSerializer>(notification.KeyPtr, notification.ContentPtr);
+					stateApplicator.ApplyRecord<cache::NamespaceCache, cache::NamespaceCacheTypes::HeightGroupingTypesDescriptor>(notification.KeyPtr, notification.ContentPtr);
 					break;
 				}
 				break;
@@ -64,7 +64,14 @@ namespace catapult { namespace observers {
 				stateApplicator.ApplyRecord<cache::MetadataV1Cache>(notification.KeyPtr, notification.ContentPtr);
 				break;
 			case cache::CacheId::Mosaic:
-				stateApplicator.ApplyRecord<cache::MosaicCache>(notification.KeyPtr, notification.ContentPtr);
+				switch(static_cast<int>(notification.SubCacheId)) {
+				case static_cast<int>(cache::GeneralSubCache::Main):
+					stateApplicator.ApplyRecord<cache::MosaicCache>(notification.KeyPtr, notification.ContentPtr);
+					break;
+				case static_cast<int>(cache::GeneralSubCache::Height):
+					//stateApplicator.ApplyRecord<cache::MosaicCache, cache::MosaicCacheTypes::HeightGroupingTypesDescriptor>(notification.KeyPtr, notification.ContentPtr);
+					break;
+				}
 				break;
 			case cache::CacheId::Multisig:
 				stateApplicator.ApplyRecord<cache::MultisigCache>(notification.KeyPtr, notification.ContentPtr);

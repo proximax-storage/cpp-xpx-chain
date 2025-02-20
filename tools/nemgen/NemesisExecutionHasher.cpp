@@ -74,8 +74,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			const model::BlockElement& blockElement,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			CacheDatabaseCleanupMode databaseCleanupMode,
-			NemesisTransactions* transactions,
-			plugins::PluginManager* manager) {
+			NemesisTransactions* transactions) {
 		if (!pConfigHolder->Config().Node.ShouldUseCacheDatabaseStorage || !pConfigHolder->Config().Immutable.ShouldEnableVerifiableState)
 			CATAPULT_LOG(warning) << "cache database storage and verifiable state must both be enabled to calculate state hash";
 
@@ -91,8 +90,18 @@ namespace catapult { namespace tools { namespace nemgen {
 		}
 
 		CATAPULT_LOG(info) << "calculating nemesis state hash";
-
-		auto blockExecutionHashesInfo = CalculateNemesisBlockExecutionHashes(nemesisConfig, blockElement, pConfigHolder, transactions, manager);
+		BlockExecutionHashesInfo blockExecutionHashesInfo;
+		if(!nemesisConfig.EnableSpool)
+			blockExecutionHashesInfo = CalculateNemesisBlockExecutionHashes(blockElement, pConfigHolder);
+		else
+			blockExecutionHashesInfo = CalculateNemesisBlockExecutionHashes(blockElement, pConfigHolder,
+				[&transactions](const model::BlockElement& blockElement, observers::NotificationObserverAdapter& entityObserver, model::ResolverContext& resolverContext, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, observers::ObserverState& observerState) {
+					auto transactionView = transactions->createView();
+					auto baseEntityProvider = BaseEntityProvider(transactionView, blockElement);
+					ExecuteBlock(blockElement, { entityObserver, resolverContext, pConfigHolder, observerState }, baseEntityProvider, [&blockElement](const auto& transaction){
+						return transaction;
+					});
+				});
 		std::ostringstream out;
 		out
 				<< "           Height: " << blockElement.Block.Height << std::endl

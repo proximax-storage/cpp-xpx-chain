@@ -19,12 +19,17 @@
 **/
 
 #pragma once
+#include "catapult/validators/LiquidityProviderExchangeValidator.h"
+#include "catapult/observers/LiquidityProviderExchangeObserver.h"
+#include "catapult/observers/StorageUpdatesListener.h"
+#include "catapult/observers/DbrbProcessUpdateListener.h"
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/chain/CommitteeManager.h"
 #include "catapult/config/InflationConfiguration.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
+#include "catapult/dbrb/DbrbViewFetcher.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/model/ExtractorContext.h"
 #include "catapult/model/NotificationPublisher.h"
@@ -35,6 +40,7 @@
 #include "catapult/utils/DiagnosticCounter.h"
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/validators/ValidatorTypes.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "catapult/plugins.h"
 #include "catapult/types.h"
 #include "PluginUtils.h"
@@ -110,8 +116,6 @@ namespace catapult { namespace plugins {
 		/// Gets the cache configuration for cache with \a name.
 		cache::CacheConfiguration cacheConfig(const std::string& name) const;
 
-		/// Gets the inflation configuration.
-		const config::InflationConfiguration& inflationConfig() const;
 
 		/// Gets the immutable network configuration.
 		const config::ImmutableConfiguration& immutableConfig() const;
@@ -255,10 +259,20 @@ namespace catapult { namespace plugins {
 		// region committee
 
 		/// Sets a committee manager.
-		void setCommitteeManager(const std::shared_ptr<chain::CommitteeManager>& pManager);
+		void setCommitteeManager(VersionType blockVersion, const std::shared_ptr<chain::CommitteeManager>& pManager);
 
 		/// Gets committee manager.
-		chain::CommitteeManager& getCommitteeManager() const;
+		chain::CommitteeManager& getCommitteeManager(VersionType blockVersion) const;
+
+		// endregion
+
+		// region dbrb
+
+		/// Sets a DBRB view fetcher.
+		void setDbrbViewFetcher(const std::shared_ptr<dbrb::DbrbViewFetcher>& pFetcher);
+
+		/// Gets DBRB view fetcher.
+		dbrb::DbrbViewFetcher& dbrbViewFetcher() const;
 
 		// endregion
 
@@ -268,10 +282,46 @@ namespace catapult { namespace plugins {
 		void setStorageState(const std::shared_ptr<state::StorageState>& pState);
 
 		/// Returns whether the storage state set or not.
-		bool isStorageStateSet();
+		bool isStorageStateSet() const;
 
 		/// Gets storage state.
 		state::StorageState& storageState() const;
+
+		// endregion
+
+		// region storage
+
+		void setLiquidityProviderExchangeValidator(std::unique_ptr<validators::LiquidityProviderExchangeValidator>&&);
+		const std::unique_ptr<validators::LiquidityProviderExchangeValidator>& liquidityProviderExchangeValidator() const;
+
+		void setLiquidityProviderExchangeObserver(std::unique_ptr<observers::LiquidityProviderExchangeObserver>&&);
+		const std::unique_ptr<observers::LiquidityProviderExchangeObserver>& liquidityProviderExchangeObserver() const;
+
+		// endregion
+
+		// region storage updates listeners
+
+		const std::vector<std::unique_ptr<observers::StorageUpdatesListener>>& storageUpdatesListeners() const;
+		void addStorageUpdateListener(std::unique_ptr<observers::StorageUpdatesListener>&& storageUpdatesListener);
+
+		// endregion
+
+		// region transaction fee limiter
+
+		std::shared_ptr<model::TransactionFeeCalculator> transactionFeeCalculator() const;
+
+		// endregion
+
+		// region configure plugin manager
+
+		void reset();
+
+		// endregion
+
+		// region DBRB process update listeners
+
+		const std::vector<std::unique_ptr<observers::DbrbProcessUpdateListener>>& dbrbProcessUpdateListeners() const;
+		void addDbrbProcessUpdateListener(std::unique_ptr<observers::DbrbProcessUpdateListener>&& listener);
 
 		// endregion
 
@@ -299,8 +349,18 @@ namespace catapult { namespace plugins {
 
 		bool m_shouldEnableVerifiableState;
 
-		std::shared_ptr<chain::CommitteeManager> m_pCommitteeManager;
+		std::map<VersionType, std::shared_ptr<chain::CommitteeManager>> m_committeeManagers;
+		std::shared_ptr<dbrb::DbrbViewFetcher> m_pDbrbViewFetcher;
 		std::shared_ptr<state::StorageState> m_pStorageState;
+
+		std::unique_ptr<validators::LiquidityProviderExchangeValidator> m_pLiquidityProviderExchangeValidator;
+		std::unique_ptr<observers::LiquidityProviderExchangeObserver> m_pLiquidityProviderExchangeObserver;
+
+		std::vector<std::unique_ptr<observers::StorageUpdatesListener>> m_storageUpdatesListeners;
+
+		std::shared_ptr<model::TransactionFeeCalculator> m_pTransactionFeeCalculator;
+
+		std::vector<std::unique_ptr<observers::DbrbProcessUpdateListener>> m_dbrbProcessUpdateListeners;
 	};
 }}
 

@@ -5,6 +5,8 @@
 **/
 
 #include "StorageTestUtils.h"
+
+#include <utility>
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -36,7 +38,7 @@ namespace catapult { namespace test {
                 EXPECT_EQ(expectedCompletedDataModification.ExpectedUploadSizeMegabytes, completedDataModification.ExpectedUploadSizeMegabytes);
 				EXPECT_EQ(expectedCompletedDataModification.ActualUploadSizeMegabytes, completedDataModification.ActualUploadSizeMegabytes);
 				EXPECT_EQ(expectedCompletedDataModification.FolderName, completedDataModification.FolderName);
-                EXPECT_EQ(expectedCompletedDataModification.State, completedDataModification.State);
+                EXPECT_EQ(expectedCompletedDataModification.ApprovalState, completedDataModification.ApprovalState);
                 EXPECT_EQ(expectedCompletedDataModification.ReadyForApproval, expectedCompletedDataModification.ReadyForApproval);
             }
         }
@@ -64,7 +66,6 @@ namespace catapult { namespace test {
 				const auto expIter = expectedDriveInfos.find(pair.first);
 				ASSERT_NE(expIter, expectedDriveInfos.end());
 				EXPECT_EQ(expIter->second.LastApprovedDataModificationId, pair.second.LastApprovedDataModificationId);
-				EXPECT_EQ(expIter->second.DataModificationIdIsValid, pair.second.DataModificationIdIsValid);
 				EXPECT_EQ(expIter->second.InitialDownloadWorkMegabytes, pair.second.InitialDownloadWorkMegabytes);
 			}
 		}
@@ -107,6 +108,7 @@ namespace catapult { namespace test {
 			auto folderNameBytes = test::GenerateRandomVector(512);
 			auto uploadSize = test::Random();
 			bool readyForApproval = test::RandomByte();
+			bool isStream = test::RandomByte();
 			entry.activeDataModifications().emplace_back(state::ActiveDataModification(
                 test::GenerateRandomByteArray<Hash256>(),   					/// Id of data modification.
 				key,                                        					/// Public key of the drive owner.
@@ -114,14 +116,15 @@ namespace catapult { namespace test {
 				uploadSize,                             						/// ExpectedUpload size of data.
 				uploadSize,														/// ActualUpload size of data.
 				std::string(folderNameBytes.begin(), folderNameBytes.end()),	/// FolderName (for stream)
-				readyForApproval												/// Flag whether modification can be approved
+				readyForApproval,												/// Flag whether modification can be approved
+				isStream
 			));
         }
 
         entry.completedDataModifications().reserve(completedDataModificationsCount);
         for (auto cDMC = 0u; cDMC < completedDataModificationsCount; ++cDMC){
             entry.completedDataModifications().emplace_back(state::CompletedDataModification{
-                entry.activeDataModifications()[cDMC], static_cast<state::DataModificationState>(test::RandomByte())
+            	entry.activeDataModifications()[cDMC], static_cast<state::DataModificationApprovalState>(test::RandomByte()), test::RandomByte()
             });
         }
 
@@ -187,9 +190,9 @@ namespace catapult { namespace test {
     }
 
     state::DownloadChannelEntry CreateDownloadChannelEntry(
-            Hash256 id,
-            Key consumer,
-			Key drive,
+            const Hash256& id,
+            const Key& consumer,
+			const Key& drive,
 			uint64_t downloadSize,
 			uint16_t downloadApprovalCount,
 			std::vector<Key> listOfPublicKeys,
@@ -199,8 +202,8 @@ namespace catapult { namespace test {
 		entry.setDrive(drive);
 		entry.setDownloadSize(downloadSize);
 		entry.setDownloadApprovalCountLeft(downloadApprovalCount);
-		entry.listOfPublicKeys() = listOfPublicKeys;
-		entry.cumulativePayments() = cumulativePayments;
+		entry.listOfPublicKeys() = std::move(listOfPublicKeys);
+		entry.cumulativePayments() = std::move(cumulativePayments);
 		entry.setQueuePrevious(GenerateRandomByteArray<Key>());
 		entry.setQueueNext(GenerateRandomByteArray<Key>());
 		entry.setLastDownloadApprovalInitiated(Timestamp(Random16()));
@@ -219,12 +222,21 @@ namespace catapult { namespace test {
 		}
 	}
 
+	void AssertEqualShardReplicators(const utils::SortedKeySet& expected, const utils::SortedKeySet& actual) {
+		EXPECT_EQ(expected.size(), actual.size());
+		auto itExpected = expected.begin();
+		auto itActual = actual.begin();
+		for(; itExpected != expected.end(); itExpected++, itActual++) {
+			EXPECT_EQ(*itExpected, *itActual);
+		}
+	}
+
 	void AssertEqualCumulativePayments(const std::map<Key, Amount>& expected,
 									   const std::map<Key, Amount>& actual) {
 		EXPECT_EQ(expected.size(), actual.size());
 		auto itExpected = expected.begin();
 		auto itActual = actual.begin();
-		for(; itExpected != expected.end(); itExpected++) {
+		for(; itExpected != expected.end(); itExpected++, itActual++) {
 			EXPECT_EQ(itExpected->first, itActual->first);
 			EXPECT_EQ(itExpected->second, itActual->second);
 		}
@@ -241,15 +253,20 @@ namespace catapult { namespace test {
 		EXPECT_EQ(expectedEntry.getLastDownloadApprovalInitiated(), entry.getLastDownloadApprovalInitiated());
 
 		AssertEqualListOfPublicKeys(expectedEntry.listOfPublicKeys(), entry.listOfPublicKeys());
+		AssertEqualShardReplicators(expectedEntry.shardReplicators(), entry.shardReplicators());
 		AssertEqualCumulativePayments(expectedEntry.cumulativePayments(), entry.cumulativePayments());
     }
 
     state::ReplicatorEntry CreateReplicatorEntry(
-            Key key,
-            Amount capacity,
+            const Key& key,
+			VersionType version,
             uint16_t drivesCount,
-			uint16_t downloadChannelCount) {
+			uint16_t downloadChannelCount,
+			const Key& nodeBootKey) {
         state::ReplicatorEntry entry(key);
+		entry.setVersion(version);
+		if (version > 1)
+			entry.setNodeBootKey(nodeBootKey);
         for (auto dC = 0u; dC < drivesCount; ++dC)
             entry.drives().emplace(test::GenerateRandomByteArray<Key>(), state::DriveInfo());
         for (auto i = 0u; i < downloadChannelCount; ++i)
@@ -258,13 +275,25 @@ namespace catapult { namespace test {
         return entry;
     }
 
-    void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry) {
-        EXPECT_EQ(expectedEntry.key(), entry.key());
+    void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& actualEntry) {
+        EXPECT_EQ(expectedEntry.key(), actualEntry.key());
+        EXPECT_EQ(expectedEntry.version(), actualEntry.version());
+        EXPECT_EQ(expectedEntry.nodeBootKey(), actualEntry.nodeBootKey());
 
-		AssertEqualDriveInfos(expectedEntry.drives(), entry.drives());
+		AssertEqualDriveInfos(expectedEntry.drives(), actualEntry.drives());
     }
 
-	void AddReplicators(cache::CatapultCache& cache, std::vector<crypto::KeyPair>& replicatorKeyPairs, const uint8_t count, const Height height) {
+    state::BootKeyReplicatorEntry CreateBootKeyReplicatorEntry(const Key& nodeBootKey, const Key& replicatorKey) {
+        return state::BootKeyReplicatorEntry(nodeBootKey, replicatorKey);
+    }
+
+    void AssertEqualBootKeyReplicatorData(const state::BootKeyReplicatorEntry& expectedEntry, const state::BootKeyReplicatorEntry& actualEntry) {
+		EXPECT_EQ(expectedEntry.version(), actualEntry.version());
+        EXPECT_EQ(expectedEntry.nodeBootKey(), actualEntry.nodeBootKey());
+        EXPECT_EQ(expectedEntry.replicatorKey(), actualEntry.replicatorKey());
+    }
+
+	void AddReplicators(cache::CatapultCache& cache, std::vector<crypto::KeyPair>& replicatorKeyPairs, const uint8_t count, const Height& height) {
 		auto delta = cache.createDelta();
 		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
 		const auto newSize = replicatorKeyPairs.size() + count;
@@ -282,7 +311,7 @@ namespace catapult { namespace test {
 		auto* const pCommonData = new uint8_t[size];
 		MutableRawBuffer mutableBuffer(pCommonData, size);
 		test::FillWithRandomData(mutableBuffer);
-		return RawBuffer(mutableBuffer.pData, mutableBuffer.Size);
+		return { mutableBuffer.pData, mutableBuffer.Size };
 	}
 
 	void PopulateReplicatorKeyPairs(std::vector<crypto::KeyPair>& replicatorKeyPairs, uint16_t replicatorCount) {
@@ -301,6 +330,64 @@ namespace catapult { namespace test {
 		auto& accountState = accountStateIter.get();
 		for (auto& mosaic : mosaics)
 			accountState.Balances.credit(mosaic.MosaicId, mosaic.Amount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::creditMosaics(
+			observers::ObserverContext& context,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		creditMosaics(context, currencyDebtor, mosaicCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::debitMosaics(
+			observers::ObserverContext& context,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
+			const UnresolvedMosaicId& unresolvedMosaicId,
+			const UnresolvedAmount& unresolvedMosaicAmount) const {
+		auto resolvedAmount = context.Resolvers.resolve(unresolvedMosaicAmount);
+		debitMosaics(context, mosaicDebtor, currencyCreditor, unresolvedMosaicId, resolvedAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::creditMosaics(
+			observers::ObserverContext& context,
+			const Key& currencyDebtor,
+			const Key& mosaicCreditor,
+			const UnresolvedMosaicId& mosaicId,
+			const Amount& mosaicAmount) const {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto debtorAccountIter = accountStateCache.find(currencyDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
+		auto creditorAccountIter = accountStateCache.find(mosaicCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
+
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto resolvedMosaicId = MosaicId(mosaicId.unwrap());
+
+		debtorAccount.Balances.debit(currencyMosaicId, mosaicAmount);
+		creditorAccount.Balances.credit(resolvedMosaicId, mosaicAmount);
+	}
+
+	void LiquidityProviderExchangeObserverImpl::debitMosaics(
+			observers::ObserverContext& context,
+			const Key& mosaicDebtor,
+			const Key& currencyCreditor,
+			const UnresolvedMosaicId& mosaicId,
+			const Amount& mosaicAmount) const {
+		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		auto debtorAccountIter = accountStateCache.find(mosaicDebtor);
+		auto& debtorAccount = debtorAccountIter.get();
+		auto creditorAccountIter = accountStateCache.find(currencyCreditor);
+		auto& creditorAccount = creditorAccountIter.get();
+
+		const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto resolvedMosaicId = MosaicId(mosaicId.unwrap());
+
+		debtorAccount.Balances.debit(resolvedMosaicId, mosaicAmount);
+		creditorAccount.Balances.credit(currencyMosaicId, mosaicAmount);
 	}
 }}
 

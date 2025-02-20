@@ -88,6 +88,27 @@ namespace catapult { namespace mongo {
 			auto dbUri = mongocxx::uri(dbConfig.DatabaseUri);
 			const auto& dbName = dbConfig.DatabaseName;
 
+			bootstrapper.addConfigValidator([dbConfig](const config::BlockchainConfiguration& config) {
+				const auto& networkConfigMap = config.Network.Plugins;
+				const auto& dbConfigSet = dbConfig.Plugins;
+				const std::string networkPrefix = "catapult.plugins.";
+				const std::string dbPrefix = "catapult.mongo.plugins.";
+				for (const auto& [networkPluginName, bag] : networkConfigMap) {
+					bool enabled = true;
+					bag.tryGet<bool>(utils::ConfigurationKey("", "enabled"), enabled);
+
+					const auto pluginName = networkPluginName.substr(networkPrefix.length());
+					const auto dbPluginName = dbPrefix + pluginName;
+					auto iter = dbConfigSet.find(dbPluginName);
+
+					if (enabled && iter == dbConfigSet.end())
+						CATAPULT_THROW_RUNTIME_ERROR_1("mongo plugin must be enabled", pluginName);
+
+					if (!enabled && iter != dbConfigSet.end())
+						CATAPULT_THROW_RUNTIME_ERROR_1("mongo plugin must not be enabled", pluginName);
+				}
+			});
+
 			// create mongo writer
 			// keep the minimum high enough in order to avoid deadlock while waiting for mongo operations due to blocking io threads
 			auto numWriterThreads = std::max(4u, std::min(std::thread::hardware_concurrency(), dbConfig.MaxWriterThreads));
@@ -104,7 +125,9 @@ namespace catapult { namespace mongo {
 					? MongoErrorPolicy::Mode::Idempotent
 					: MongoErrorPolicy::Mode::Strict;
 			auto pMongoContext = std::make_shared<MongoStorageContext>(dbUri, dbName, pMongoBulkWriter, mongoErrorPolicyMode);
-			auto pPluginManager = std::make_shared<MongoPluginManager>(*pMongoContext, bootstrapper.configHolder());
+			auto pPluginManager = std::make_shared<MongoPluginManager>(*pMongoContext,
+																	   bootstrapper.configHolder(),
+																	   bootstrapper.pluginManager().transactionFeeCalculator());
 			auto pTransactionRegistry = CreateTransactionRegistry(pPluginManager, config.User.PluginsDirectory, dbConfig.Plugins);
 
 			// create mongo chain score provider and mongo (cache) storage
@@ -119,7 +142,10 @@ namespace catapult { namespace mongo {
 
 			// add a pre load handler for initializing (nemesis) storage
 			// (pPluginManager is kept alive by pTransactionRegistry)
-			auto pMongoBlockStorage = CreateMongoBlockStorage(*pMongoContext, *pTransactionRegistry, pPluginManager->receiptRegistry());
+			auto pMongoBlockStorage = CreateMongoBlockStorage(*pMongoContext,
+															  *pTransactionRegistry,
+															  pPluginManager->receiptRegistry(),
+															  pPluginManager->transactionFeeCalculator());
 
 			// empty unconfirmed and partial transactions collections
 			EmptyCollection(*pMongoContext, Ut_Collection_Name);

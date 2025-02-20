@@ -73,6 +73,7 @@ module Catapult
               peer_publickey: peer_publickey(peer),
               peer_host: peer.host_address,
               peer_port: peer.port,
+              dbrb_port: peer.dbrb_port,
               peer_name: peer.name,
               peer_role: peer.type == :peer_node ? 'Peer' : 'Api'
             }

@@ -24,13 +24,14 @@ namespace catapult { namespace config {
 							{ "minCapacity", "1MB" },
 							{ "maxModificationSize", "10TB" },
 							{ "minReplicatorCount", "1" },
+							{ "maxReplicatorCount", "20"},
 							{ "maxFreeDownloadSize", "1MB" },
 							{ "maxDownloadSize", "10TB" },
-							{ "storageBillingPeriod", "168h" },
+							{ "storageBillingPeriod", "672h" },
 							{ "downloadBillingPeriod", "24h" },
 							{ "verificationInterval", "4h" },
 							{ "shardSize", "20" },
-							{ "verificationExpirationCoefficient", "0.06" },
+							{ "verificationExpirationCoefficient", "0.24" },
 							{ "verificationExpirationConstant", "10" },
 						}
 					}
@@ -48,6 +49,7 @@ namespace catapult { namespace config {
 					"minCapacity",
 					"maxModificationSize",
 					"minReplicatorCount",
+					"maxReplicatorCount",
 					"maxFreeDownloadSize",
 					"maxDownloadSize",
 					"storageBillingPeriod",
@@ -70,6 +72,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(utils::FileSize::FromMegabytes(0u), config.MinCapacity);
 				EXPECT_EQ(utils::FileSize::FromTerabytes(0u), config.MaxModificationSize);
 				EXPECT_EQ(0, config.MinReplicatorCount);
+				EXPECT_EQ(0, config.MaxReplicatorCount);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(0u), config.MaxFreeDownloadSize);
 				EXPECT_EQ(utils::FileSize::FromTerabytes(0u), config.MaxDownloadSize);
 				EXPECT_EQ(utils::TimeSpan::FromHours(0), config.StorageBillingPeriod);
@@ -86,9 +89,10 @@ namespace catapult { namespace config {
 				EXPECT_EQ(utils::FileSize::FromMegabytes(1u), config.MinCapacity);
 				EXPECT_EQ(utils::FileSize::FromTerabytes(10u), config.MaxModificationSize);
 				EXPECT_EQ(1, config.MinReplicatorCount);
+				EXPECT_EQ(20, config.MaxReplicatorCount);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(1u), config.MaxFreeDownloadSize);
 				EXPECT_EQ(utils::FileSize::FromTerabytes(10u), config.MaxDownloadSize);
-				EXPECT_EQ(utils::TimeSpan::FromHours(24 * 7), config.StorageBillingPeriod);
+				EXPECT_EQ(utils::TimeSpan::FromHours(4 * 7 * 24), config.StorageBillingPeriod);
 				EXPECT_EQ(utils::TimeSpan::FromHours(24), config.DownloadBillingPeriod);
 				EXPECT_EQ(utils::TimeSpan::FromHours(4), config.VerificationInterval);
 				EXPECT_EQ(20, config.ShardSize);

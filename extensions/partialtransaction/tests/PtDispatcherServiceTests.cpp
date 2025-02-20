@@ -24,6 +24,7 @@
 #include "plugins/txes/aggregate/src/validators/Results.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
 #include "catapult/consumers/ConsumerResults.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/ionet/BroadcastUtils.h"
 #include "catapult/model/EntityHasher.h"
@@ -133,7 +134,8 @@ namespace catapult { namespace partialtransaction {
 					: m_numCompletedTransactions(0)
 					, m_pWriters(std::make_shared<mocks::BroadcastAwareMockPacketWriters>()) {
 				auto pBootstrapperRegistrar = CreatePtBootstrapperServiceRegistrar([]() {
-					return std::make_unique<cache::MemoryPtCacheProxy>(cache::MemoryCacheOptions(1024, 1024));
+					return std::make_unique<cache::MemoryPtCacheProxy>(cache::MemoryCacheOptions(1024, 1024),
+																	   std::make_shared<model::TransactionFeeCalculator>());
 				});
 				pBootstrapperRegistrar->registerServices(locator(), testState().state());
 

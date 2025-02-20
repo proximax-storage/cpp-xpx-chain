@@ -75,24 +75,22 @@ namespace catapult { namespace ionet {
 	/* A precommit message has been pushed by a peer. */ \
 	ENUM_VALUE(Push_Precommit_Messages, 15) \
 	\
-	/* A block confirmed by committee has been pushed by a peer. */ \
-	ENUM_VALUE(Push_Confirmed_Block, 16) \
+	/* A block confirmed by committee has been requested by a peer. */ \
+	ENUM_VALUE(Pull_Confirmed_Block, 16) \
 	\
     /* A remote node state has been requested by a peer. */ \
     ENUM_VALUE(Pull_Remote_Node_State, 17) \
-    \
-	/* A block proposed by committee has been requested by a peer. */ \
-	ENUM_VALUE(Pull_Proposed_Block, 18) \
 	\
-	/* Prevote messages has been requested by a peer. */ \
-	ENUM_VALUE(Pull_Prevote_Messages, 19) \
+	/* A block confirmed by committee has been pushed by a peer. */ \
+	ENUM_VALUE(Push_Confirmed_Block, 18) \
 	\
-	/* Precommit messages has been requested by a peer. */ \
-	ENUM_VALUE(Pull_Precommit_Messages, 20) \
+	/* Blocks have been pushed by a peer. */ \
+	ENUM_VALUE(Pull_Blocks_Response, 19) \
 	\
-	/* A block confirmed by committee has been requested by a peer. */ \
-	ENUM_VALUE(Pull_Confirmed_Block, 21) \
-	/* api only packets have types [500, 600) */ \
+    /* A remote node state has been pushed by a peer. */ \
+    ENUM_VALUE(Pull_Remote_Node_State_Response, 20) \
+	\
+	/* api only packets have types [500, 550) */ \
 	\
 	/* Partial aggregate transactions have been pushed by an api-node. */ \
 	ENUM_VALUE(Push_Partial_Transactions, 500) \
@@ -102,6 +100,50 @@ namespace catapult { namespace ionet {
 	\
 	/* Partial transaction infos have been requested by an api-node. */ \
 	ENUM_VALUE(Pull_Partial_Transaction_Infos, 502) \
+	\
+	/* DBRB only packets have types [550, 600) */ \
+	\
+	ENUM_VALUE(Dbrb_Reconfig_Message, 550) \
+	\
+	ENUM_VALUE(Dbrb_Reconfig_Confirm_Message, 551) \
+	\
+	ENUM_VALUE(Dbrb_Propose_Message, 552) \
+	\
+	ENUM_VALUE(Dbrb_Converged_Message, 553) \
+	\
+	ENUM_VALUE(Dbrb_Install_Message, 554) \
+	\
+	ENUM_VALUE(Dbrb_Prepare_Message, 555) \
+	\
+	ENUM_VALUE(Dbrb_State_Update_Message, 556) \
+	\
+	ENUM_VALUE(Dbrb_Acknowledged_Message, 557) \
+	\
+	ENUM_VALUE(Dbrb_Commit_Message, 558) \
+	\
+	ENUM_VALUE(Dbrb_Deliver_Message, 559) \
+	\
+	ENUM_VALUE(Dbrb_Push_Nodes, 560) \
+	\
+	ENUM_VALUE(Dbrb_Pull_Nodes, 561) \
+	\
+	ENUM_VALUE(Dbrb_Remove_Node_Request, 562) \
+	\
+	ENUM_VALUE(Dbrb_Remove_Node_Response, 563) \
+	\
+	ENUM_VALUE(Dbrb_Shard_Prepare_Message, 564) \
+	\
+	ENUM_VALUE(Dbrb_Shard_Acknowledged_Message, 565) \
+	\
+	ENUM_VALUE(Dbrb_Shard_Commit_Message, 566) \
+	\
+	ENUM_VALUE(Dbrb_Shard_Deliver_Message, 567) \
+	\
+	ENUM_VALUE(Dbrb_Confirm_Deliver_Message, 568) \
+	\
+	ENUM_VALUE(Dbrb_Shard_Confirm_Deliver_Message, 569) \
+	\
+	ENUM_VALUE(Dbrb_Acknowledged_Declined_Message, 570) \
 	\
 	/* node discovery packets have types [600, 700) */ \
 	\
@@ -194,7 +236,19 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(Queue_State_Path, FACILITY_BASED_CODE(800, Queue)) \
 	\
     /* Priority queue state path has been requested by a client. */ \
-	ENUM_VALUE(Priority_Queue_State_Path, FACILITY_BASED_CODE(800, PriorityQueue)) \
+	ENUM_VALUE(PriorityQueue_State_Path, FACILITY_BASED_CODE(800, PriorityQueue)) \
+	\
+	/* Liquidity provider state path has been requested by a client. */ \
+	ENUM_VALUE(LiquidityProvider_State_Path, FACILITY_BASED_CODE(800, LiquidityProvider)) \
+	\
+	/* SDA-SDA Exchange state path has been requested by a client. */ \
+	ENUM_VALUE(SdaExchange_State_Path, FACILITY_BASED_CODE(800, ExchangeSda)) \
+	\
+    /* SDA-SDA Offer Group state path has been requested by a client. */ \
+    ENUM_VALUE(SdaOfferGroup_State_Path, FACILITY_BASED_CODE(800, SdaOfferGroup)) \
+	\
+    /* Boot key / replicator state path has been requested by a client. */ \
+    ENUM_VALUE(BootKeyReplicator_State_Path, FACILITY_BASED_CODE(800, BootKeyReplicator)) \
 	\
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
@@ -280,7 +334,19 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(Queue_Infos, FACILITY_BASED_CODE(1200, Queue)) \
 	\
 	/* Priority queue infos have been requested by a client. */ \
-	ENUM_VALUE(Priority_Queue_Infos, FACILITY_BASED_CODE(1200, PriorityQueue)) \
+	ENUM_VALUE(PriorityQueue_Infos, FACILITY_BASED_CODE(1200, PriorityQueue)) \
+    \
+	/* Liquidity provider infos have been requested by a client. */ \
+	ENUM_VALUE(LiquidityProvider_Infos, FACILITY_BASED_CODE(1200, LiquidityProvider)) \
+	\
+	/* SDA-SDA Exchange infos have been requested by a client. */ \
+	ENUM_VALUE(SdaExchange_Infos, FACILITY_BASED_CODE(1200, ExchangeSda)) \
+	\
+	/* SDA-SDA Offer Group infos have been requested by a client. */ \
+	ENUM_VALUE(SdaOfferGroup_Infos, FACILITY_BASED_CODE(1200, SdaOfferGroup))  \
+	\
+	/* Boot key / replicator infos have been requested by a client. */ \
+	ENUM_VALUE(BootKeyReplicator_Infos, FACILITY_BASED_CODE(1200, BootKeyReplicator))  \
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

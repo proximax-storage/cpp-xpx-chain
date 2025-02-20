@@ -8,6 +8,8 @@
 #include "CommitteePlugin.h"
 #include "src/cache/CommitteeCacheSubCachePlugin.h"
 #include "src/chain/WeightedVotingCommitteeManager.h"
+#include "src/chain/WeightedVotingCommitteeManagerV2.h"
+#include "src/chain/WeightedVotingCommitteeManagerV3.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/AddHarvesterTransactionPlugin.h"
 #include "src/plugins/RemoveHarvesterTransactionPlugin.h"
@@ -34,24 +36,39 @@ namespace catapult { namespace plugins {
 		});
 
 		auto pCommitteeManager = std::make_shared<chain::WeightedVotingCommitteeManager>(pAccountCollector);
-		manager.setCommitteeManager(pCommitteeManager);
+		manager.setCommitteeManager(4, pCommitteeManager);
+		auto pCommitteeManagerV2 = std::make_shared<chain::WeightedVotingCommitteeManagerV2>(pAccountCollector);
+		manager.setCommitteeManager(5, pCommitteeManagerV2);
+		auto pCommitteeManagerV3 = std::make_shared<chain::WeightedVotingCommitteeManagerV3>(pAccountCollector);
+		manager.setCommitteeManager(6, pCommitteeManagerV3);
+		manager.setCommitteeManager(7, pCommitteeManagerV3);
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateCommitteePluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([](auto& builder) {
+		manager.addStatefulValidatorHook([pCommitteeManagerV3](auto& builder) {
 			builder
 				.add(validators::CreateAddHarvesterValidator())
-				.add(validators::CreateRemoveHarvesterValidator());
+				.add(validators::CreateRemoveHarvesterValidator())
+				.add(validators::CreateCommitteeValidator(pCommitteeManagerV3));
 		});
 
-		manager.addObserverHook([pCommitteeManager, pAccountCollector](auto& builder) {
+		manager.addObserverHook([pCommitteeManager, pCommitteeManagerV2, pCommitteeManagerV3, pAccountCollector](auto& builder) {
 			builder
 				.add(observers::CreateAddHarvesterObserver())
 				.add(observers::CreateRemoveHarvesterObserver())
-				.add(observers::CreateUpdateHarvestersObserver(pCommitteeManager, pAccountCollector));
+				.add(observers::CreateUpdateHarvestersV1Observer(pCommitteeManager, pAccountCollector))
+				.add(observers::CreateUpdateHarvestersV2Observer(pCommitteeManagerV2, pAccountCollector))
+				.add(observers::CreateUpdateHarvestersV3Observer(pCommitteeManagerV3, pAccountCollector))
+				.add(observers::CreateUpdateHarvestersV4Observer(pCommitteeManagerV3, pAccountCollector))
+				.add(observers::CreateActiveHarvestersV1Observer())
+				.add(observers::CreateActiveHarvestersV2Observer())
+				.add(observers::CreateActiveHarvestersV3Observer())
+				.add(observers::CreateActiveHarvestersV4Observer())
+				.add(observers::CreateInactiveHarvestersObserver())
+				.add(observers::CreateRemoveDbrbProcessByNetworkObserver(pAccountCollector));
 		});
 	}
 }}

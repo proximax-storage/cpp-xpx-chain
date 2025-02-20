@@ -64,7 +64,8 @@ namespace catapult { namespace consumers {
 				}
 
 				// 4. call the sink
-				m_newTransactionsSink(std::move(transactionInfos));
+				if (!transactionInfos.empty())
+					m_newTransactionsSink(std::move(transactionInfos));
 
 				// 5. indicate input was consumed and processing is complete
 				return numFailures > 0

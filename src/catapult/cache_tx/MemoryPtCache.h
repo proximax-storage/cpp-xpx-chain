@@ -72,7 +72,8 @@ namespace catapult { namespace cache {
 	class MemoryPtCache : public PtCache {
 	public:
 		/// Creates a partial transactions cache around \a options.
-		explicit MemoryPtCache(const MemoryCacheOptions& options);
+		explicit MemoryPtCache(const MemoryCacheOptions& options,
+							   std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator);
 
 		/// Destroys a partial transactions cache.
 		~MemoryPtCache() override;
@@ -89,6 +90,7 @@ namespace catapult { namespace cache {
 
 	private:
 		MemoryCacheOptions m_options;
+		std::shared_ptr<model::TransactionFeeCalculator> m_pTransactionFeeCalculator;
 		std::unique_ptr<Impl> m_pImpl;
 		mutable utils::SpinReaderWriterLock m_lock;
 	};

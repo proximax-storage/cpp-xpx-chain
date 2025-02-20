@@ -23,7 +23,7 @@
 #include "catapult/cache_tx/MemoryPtCache.h"
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/thread/FutureUtils.h"
-#include "catapult/utils/SpinLock.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
@@ -204,7 +204,7 @@ namespace catapult { namespace chain {
 
 		public:
 			Result<bool> validatePartial(const model::WeakEntityInfoT<model::Transaction>& transactionInfo) const override {
-				utils::SpinLockGuard guard(m_lock);
+				std::unique_lock lock(m_mutex);
 				++m_numValidatePartialCalls;
 				m_transactions.push_back(test::CopyEntity(transactionInfo.entity()));
 				m_transactionHashes.push_back(transactionInfo.hash());
@@ -214,7 +214,7 @@ namespace catapult { namespace chain {
 			Result<CosignersValidationResult> validateCosigners(const model::WeakCosignedTransactionInfo& transactionInfo) const override {
 				test::CosignaturesMap cosignaturesMap;
 				{
-					utils::SpinLockGuard guard(m_lock);
+					std::unique_lock lock(m_mutex);
 					++m_numValidateCosignersCalls;
 					m_transactions.push_back(test::CopyEntity(transactionInfo.transaction()));
 
@@ -301,7 +301,7 @@ namespace catapult { namespace chain {
 			bool m_shouldSleepInValidateCosigners;
 			std::vector<std::pair<ValidateCosignersResultTrigger, CosignersValidationResult>> m_validateCosignersResultTriggers;
 
-			mutable utils::SpinLock m_lock;
+			mutable std::shared_mutex m_mutex;
 			mutable size_t m_numValidatePartialCalls;
 			mutable std::atomic<size_t> m_numValidateCosignersCalls;
 			mutable size_t m_numLastCosigners;
@@ -316,7 +316,8 @@ namespace catapult { namespace chain {
 		class UpdaterTestContext {
 		public:
 			UpdaterTestContext()
-					: m_transactionsCache(cache::MemoryCacheOptions(1024, 1000))
+					: m_transactionsCache(cache::MemoryCacheOptions(1024, 1000),
+									  std::make_shared<model::TransactionFeeCalculator>())
 					, m_pUniqueValidator(std::make_unique<MockPtValidator>())
 					, m_pValidator(m_pUniqueValidator.get())
 					, m_pPool(test::CreateStartedIoThreadPool())

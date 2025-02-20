@@ -14,7 +14,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS UpdateHarvestersObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(UpdateHarvesters, nullptr, nullptr)
+	DEFINE_COMMON_OBSERVER_TESTS(UpdateHarvestersV1, nullptr, nullptr)
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::CommitteeCacheFactory>;
@@ -81,7 +81,7 @@ namespace catapult { namespace observers {
 
 		auto notification = Notification(1, Fee_Interest, Fee_Interest_Denominator);
 
-		auto pObserver = CreateUpdateHarvestersObserver(pCommitteeManager, pAccountCollector);
+		auto pObserver = CreateUpdateHarvestersV1Observer(pCommitteeManager, pAccountCollector);
 		auto& committeeCache = context.cache().sub<cache::CommitteeCache>();
 		auto& accountCache = context.cache().sub<cache::AccountStateCache>();
 
@@ -97,7 +97,7 @@ namespace catapult { namespace observers {
 		size_t count = 0;
 		for (const auto& entry : initialEntries) {
 			committeeCache.insert(entry);
-			pAccountCollector->addAccount(entry);
+			pAccountCollector->addAccount(entry, config::CommitteeConfiguration::Uninitialized());
 
 			accountCache.addAccount(entry.key(), Initial_Height);
 			auto iter = accountCache.find(entry.key());
@@ -131,7 +131,7 @@ namespace catapult { namespace observers {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Rollback, Current_Height, CreateConfig());
 		auto notification = Notification(0, Fee_Interest, Fee_Interest_Denominator);
-		auto pObserver = CreateUpdateHarvestersObserver(nullptr, nullptr);
+		auto pObserver = CreateUpdateHarvestersV1Observer(nullptr, nullptr);
 
 		// Act:
 		EXPECT_THROW(test::ObserveNotification(*pObserver, notification, context), catapult_runtime_error);

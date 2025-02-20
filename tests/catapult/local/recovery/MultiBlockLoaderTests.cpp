@@ -303,6 +303,8 @@ namespace catapult { namespace local {
 			auto localNodeConfig = test::CreatePrototypicalBlockchainConfiguration(std::move(networkConfig), tempDataDirectory.name());
 
 			auto cache = pPluginManager->createCache();
+			auto initializers = pPluginManager->createPluginInitializer();
+			pPluginManager->configHolder()->SetPluginInitializer(std::move(initializers));
 			state::CatapultState state;
 			extensions::LocalNodeChainScore score;
 			extensions::LocalNodeStateRef stateRef(pPluginManager->configHolder(), state, cache, storage, score);

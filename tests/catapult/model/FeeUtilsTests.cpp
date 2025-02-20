@@ -21,6 +21,7 @@
 #include "catapult/model/FeeUtils.h"
 #include "catapult/model/Transaction.h"
 #include "tests/TestHarness.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace model {
 
@@ -35,7 +36,8 @@ namespace catapult { namespace model {
 			transaction.Size = size;
 
 			// Act:
-			auto fee = CalculateTransactionFee(multiplier, transaction, 1, 1);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto fee = transactionFeeCalculator.calculateTransactionFee(multiplier, transaction, 1, 1, Height(-1));
 
 			// Assert:
 			EXPECT_EQ(expectedFee, fee) << "size = " << size << ", multiplier = " << multiplier;

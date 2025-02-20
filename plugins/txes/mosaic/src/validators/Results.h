@@ -123,6 +123,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because the mosaic is not transferable.
 	DEFINE_MOSAIC_RESULT(Non_Transferable, 164);
 
+	/// Validation failed because the offer duration exceeds the mosaic duration.
+	DEFINE_MOSAIC_RESULT(Offer_Duration_Exceeds_Mosaic_Duration, 165);
+
 	/// Validation failed because the credit of the mosaic would exceed the maximum of different mosaics an account is allowed to own.
 	DEFINE_MOSAIC_RESULT(Max_Mosaics_Exceeded, 170);
 

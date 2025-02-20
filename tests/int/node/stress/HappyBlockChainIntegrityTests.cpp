@@ -20,6 +20,7 @@
 
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/config/ValidateConfiguration.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/int/node/stress/test/BlockChainBuilder.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
@@ -80,6 +81,7 @@ namespace catapult { namespace local {
 			nodeConfig.ApiPort = port + 1;
 			nodeConfig.FeeInterest = 1;
 			nodeConfig.FeeInterestDenominator = 2;
+			nodeConfig.TransactionBatchSize = 50;
 
 			// 2. specify custom network settings
 			UpdateBlockChainConfiguration(const_cast<model::NetworkConfiguration&>(config.Network));
@@ -230,7 +232,8 @@ namespace catapult { namespace local {
 		public:
 			Hash256 calculateReceiptsHash(const model::Block& block) const {
 				// happy block chain tests send transfers, so only harvest fee receipt needs to be added
-				auto totalFee = model::CalculateBlockTransactionsInfo(block).TotalFee;
+				model::TransactionFeeCalculator transactionFeeCalculator;
+				auto totalFee = model::CalculateBlockTransactionsInfo(block, transactionFeeCalculator).TotalFee;
 
 				model::BlockStatementBuilder blockStatementBuilder;
 				auto currencyMosaicId = test::Default_Currency_Mosaic_Id;
@@ -285,7 +288,7 @@ namespace catapult { namespace local {
 				stateHashDirectory /= std::to_string(id);
 				boost::filesystem::create_directories(stateHashDirectory);
 
-				return test::StateHashCalculator(context.prepareFreshDataDirectory(stateHashDirectory.generic_string()));
+				return test::StateHashCalculator(context.prepareFreshDataDirectory(stateHashDirectory.generic_string(), "../seed/mijin-test"));
 			}
 
 		private:
@@ -309,6 +312,7 @@ namespace catapult { namespace local {
 			std::vector<ChainStatistics> chainStatsPerNode;
 			chainStatsPerNode.resize(networkSize);
 			ChainStatistics bestChainStats;
+			std::set<uint8_t> heights;
 			for (auto i = 0u; i < networkSize; ++i) {
 				// - give each node a separate directory
 				auto nodeFlag = test::NodeFlag::Require_Explicit_Boot | TVerifyTraits::Node_Flag;
@@ -318,7 +322,7 @@ namespace catapult { namespace local {
 					const_cast<config::NodeConfiguration&>(config.Node).OutgoingConnections.MaxConnections = 20;
 				};
 				auto postfix = "_" + std::to_string(i);
-				contexts.push_back(std::make_unique<NodeTestContext>(nodeFlag, peers, configTransform, postfix));
+				contexts.push_back(std::make_unique<NodeTestContext>(nodeFlag, peers, configTransform, postfix, "../seed/mijin-test"));
 
 				// - (re)schedule a few tasks and boot the node
 				auto& context = *contexts[i];
@@ -327,7 +331,10 @@ namespace catapult { namespace local {
 
 				// - push a random number of different (valid) blocks to each node
 				// - vary time spacing so that all chains will have different scores
-				auto numBlocks = RandomByteClamped(Max_Rollback_Blocks - 1) + 1u; // always generate at least one block
+				auto numBlocks = 0;
+				do {
+					numBlocks = RandomByteClamped(Max_Rollback_Blocks - 1) + 1u; // always generate at least one block
+				} while (!heights.insert(numBlocks).second);
 
 				// - when stateHashCalculator data directory is empty, there is no cache lock so node resources can be used directly
 				CATAPULT_LOG(debug) << "pushing initial chain to node " << i;

@@ -153,22 +153,8 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		signAndAdd(builder.build(), signer);
 	}
-	const model::Transactions& NemesisTransactions::transactions() const {
-		std::vector<std::shared_ptr<const model::Transaction>> transactions;
-
-		// Reserve space to improve performance
-		transactions.reserve(m_transactions.size());
-
-		// Use std::transform to project the vector
-		std::transform(
-				m_transactions.begin(),
-				m_transactions.end(),
-				std::back_inserter(transactions),
-				[](const TransactionHashContainer& container) {
-					return std::shared_ptr<const model::Transaction>(container.transaction);
-				}
-		);
-		return transactions;
+	const std::vector<TransactionHashContainer>& NemesisTransactions::transactions() const {
+		return m_transactions;
 	}
 	void NemesisTransactions::signAndAdd(model::UniqueEntityPtr<model::Transaction>&& pTransaction) {
 		signAndAdd(std::move(pTransaction), m_signer);
@@ -187,11 +173,10 @@ namespace catapult { namespace tools { namespace nemgen {
 		TransactionHashContainer container;
 		container.transaction = std::move(pTransaction);
 
-		if(m_Config->EnableSpool) {
-			const auto& plugin = *m_Registry.findPlugin(pTransaction->Type);
-			container.entityHash = model::CalculateHash(*container.transaction, m_Config->NemesisGenerationHash, plugin.dataBuffer(*container.transaction));
-			container.merkleHash = model::CalculateMerkleComponentHash(*container.transaction, container.entityHash, m_Registry);
-		}
+		const auto& plugin = *m_Registry.findPlugin(container.transaction->Type);
+		container.entityHash = model::CalculateHash(*container.transaction, m_Config->NemesisGenerationHash, plugin.dataBuffer(*container.transaction));
+		container.merkleHash = model::CalculateMerkleComponentHash(*container.transaction, container.entityHash, m_Registry);
+
 		m_transactions.push_back(container);
 		trySpool();
 	}
@@ -219,26 +204,33 @@ namespace catapult { namespace tools { namespace nemgen {
 		if(!m_spoolFile)
 			return;
 		for(auto tx : m_transactions) {
-			m_spoolFile->write({ reinterpret_cast<const uint8_t*>(tx.transaction.get()), tx.transaction.get()->Size });
+			m_spoolFile->write({ reinterpret_cast<const uint8_t*>(tx.transaction.get()), tx.transaction->Size });
 			m_spoolFile->write({ reinterpret_cast<const uint8_t*>(tx.entityHash.data()), Hash256_Size });
 			m_spoolFile->write({ reinterpret_cast<const uint8_t*>(tx.merkleHash.data()), Hash256_Size });
 		}
+		m_transactions.clear();
 		m_spoolFile->flush();
 		m_BufferSize = 0;
 	}
 
 	NemesisTransactions::NemesisTransactions(
 			const crypto::KeyPair& signer,
-			const NemesisConfiguration& config)
+			const NemesisConfiguration& config,
+			const model::TransactionRegistry& registry)
 		: m_signer(signer)
 		, m_Config(&config)
-		, m_Registry(CreateTransactionRegistry())
+		, m_Registry(registry)
+		, m_totalSize(0)
+		, m_TotalTransactions(0)
 	{
 		if(config.EnableSpool){
 			boost::filesystem::path path = m_Config->TransactionsPath;
 			if (!boost::filesystem::exists(path))
 				boost::filesystem::create_directory(path);
 			path /= "txspool.dat";
+			if(boost::filesystem::exists(path)) {
+				boost::filesystem::remove(path);
+			}
 			m_spoolFile = std::make_unique<io::BufferedOutputFileStream>(io::RawFile(path.generic_string(), io::OpenMode::Read_Write));
 		}
 	}

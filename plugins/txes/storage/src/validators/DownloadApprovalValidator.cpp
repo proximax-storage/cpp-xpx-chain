@@ -31,7 +31,9 @@ namespace catapult { namespace validators {
 		}
 
 	  	// Check if there are enough cosigners
-	  	if (totalJudgingKeysCount < pDownloadChannelEntry->shardReplicators().size()*2 / 3 + 1)
+	  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+		const auto& shardReplicators = pDownloadChannelEntry->shardReplicators();
+	  	if (totalJudgingKeysCount < (std::max<size_t>(shardReplicators.size(), pluginConfig.MinReplicatorCount) * 2) / 3 + 1)
 		  	return Failure_Storage_Signature_Count_Insufficient;
 
 	  	// Check if every replicator has provided an opinion on itself
@@ -44,7 +46,6 @@ namespace catapult { namespace validators {
 				return Failure_Storage_No_Opinion_Provided_On_Self;
 
 	  	// Check if all judging keys belong to the download channel's shard
-	  	const auto& shardReplicators = pDownloadChannelEntry->shardReplicators();
 	  	for (auto i = 0; i < totalJudgingKeysCount; ++i)
 		  	if (!shardReplicators.count(notification.PublicKeysPtr[i]))
 			  	return Failure_Storage_Opinion_Invalid_Key;

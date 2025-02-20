@@ -6,12 +6,15 @@
 
 #pragma once
 #include "SwapOperation.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/config/ImmutableConfiguration.h"
 #include "catapult/model/Mosaic.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/observers/ObserverContext.h"
 #include "src/cache/PriorityQueueCache.h"
+#include "src/model/StorageReceiptType.h"
 #include "src/state/BcDriveEntry.h"
+#include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
 #include <queue>
 #include <random>
 
@@ -52,17 +55,28 @@ namespace catapult { namespace utils {
 
 	/// Gets priority queue entry with given \a queueKey from \a priorityQueueCache.
 	/// If no entry was found, first creates one with an empty underlying priority queue.
-	state::PriorityQueueEntry& getPriorityQueueEntry(cache::PriorityQueueCache::CacheDeltaType&, const Key&);
+	auto getPriorityQueueIter(cache::PriorityQueueCache::CacheDeltaType& cache, const Key& key) -> decltype(cache.find(key));
 
 	/// Calculates priority value of \a driveEntry. Used for the queue of drives with missing replicators.
 	double CalculateDrivePriority(const state::BcDriveEntry&, const uint16_t&);
 
-	/// Calculates amounts of storage and streaming deposit refunds of \a replicators
+	/// Gets void (zero key) account state. If necessary, creates it.
+	auto getVoidState(const observers::ObserverContext& context) -> decltype(context.Cache.sub<cache::AccountStateCache>().find(Key()));
+
+	/// Calculates amounts of deposit refunds of \a replicators in case of drive closure
 	/// with respect to the drive with \a driveKey, and transfers them to replicators' accounts.
-	void RefundDepositsToReplicators(
+	void RefundDepositsOnDriveClosure(
 			const Key&,
 			const std::set<Key>&,
-			const observers::ObserverContext&);
+			observers::ObserverContext&);
+
+	/// Calculates amounts of deposit refunds of \a replicators in case of replicator offboarding
+	/// with respect to the drive with \a driveKey, and transfers them to replicators' accounts.
+	void RefundDepositsOnOffboarding(
+			const Key&,
+			const std::set<Key>&,
+			observers::ObserverContext&,
+			const std::unique_ptr<observers::LiquidityProviderExchangeObserver>&);
 
 	/// Performs actual offboarding of \a offboardingReplicators from the drive with \a driveKey;
 	/// updates drive's data modification and download shards to keep them valid.
@@ -83,12 +97,12 @@ namespace catapult { namespace utils {
 	/// Assigns acceptable replicators from \a pKeyCollector to the drive with \a driveKey.
 	void PopulateDriveWithReplicators(
 			const Key&,
-			const observers::ObserverContext&,
+			observers::ObserverContext&,
 			std::mt19937&);
 
 	/// Assigns each replicator from \a replicatorKeys to drives according to the drive priority queue.
 	void AssignReplicatorsToQueuedDrives(
 			const std::set<Key>&,
-			const observers::ObserverContext&,
+			observers::ObserverContext&,
 			std::mt19937&);
 }}

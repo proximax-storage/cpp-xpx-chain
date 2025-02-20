@@ -21,18 +21,21 @@ namespace catapult { namespace model {
 			// Arrange:
 			auto expectedSize =
 					baseSize // base
-					+ sizeof(uint64_t); // replicator capacity
+					+ sizeof(uint64_t) // replicator capacity
+					+ Key_Size // node boot key
+					+ Hash256_Size // message
+					+ Signature_Size; // message signature
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 8u, sizeof(T));
+			EXPECT_EQ(baseSize + 136u, sizeof(T));
 		}
 
 		template<typename T>
 		void AssertTransactionHasExpectedProperties() {
 			// Assert:
 			EXPECT_EQ(Entity_Type_ReplicatorOnboarding, T::Entity_Type);
-			EXPECT_EQ(1u, T::Current_Version);
+			EXPECT_EQ(2u, T::Current_Version);
 		}
 	}
 

@@ -21,7 +21,7 @@ namespace catapult { namespace config {
 
 		explicit BlockchainConfigurationHolder(cache::CatapultCache* pCache = nullptr);
 		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config);
-
+		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config, cache::CatapultCache* pCache, const Height& height);
 		virtual ~BlockchainConfigurationHolder() = default;
 
 	public:
@@ -35,6 +35,11 @@ namespace catapult { namespace config {
 		/// Get latest available config
 		virtual const BlockchainConfiguration& Config() const;
 
+		/// Initialize init configuration
+
+		/// Removes all plugin configs in all network configs.
+		void ClearPluginConfigurations() const;
+
 		/// Get config at \a height or latest available config
 		virtual const BlockchainConfiguration& ConfigAtHeightOrLatest(const Height& height) const;
 
@@ -42,17 +47,34 @@ namespace catapult { namespace config {
 			m_pCache = pCache;
 		}
 
+		void InitializeNetworkConfiguration(const model::NetworkConfiguration& networkConfiguration);
 		void SetPluginInitializer(PluginInitializer&& initializer) {
 			m_pluginInitializer = std::move(initializer);
 		}
 
 		void InsertConfig(const Height& height, const std::string& strConfig, const std::string& supportedVersion);
+
+		void InsertConfig(const Height& height, const model::NetworkConfiguration& networkConfig, const config::SupportedEntityVersions& supportedEntities);
 		void RemoveConfig(const Height& height);
+
+		const model::InflationCalculator& InflationCalculator();
+	private:
+		/// Must be used with a locked m_mutex
+		const BlockchainConfiguration* LastConfigOrNull(const Height& height) const;
+
+	public:
+		void InsertBlockchainVersion(const Height& height, const BlockchainVersion& version);
+		void RemoveBlockchainVersion(const Height& height);
+		BlockchainVersion Version(const Height& height);
 
 	protected:
 		std::map<Height, BlockchainConfiguration> m_configs;
 		cache::CatapultCache* m_pCache;
 		PluginInitializer m_pluginInitializer;
+		model::InflationCalculator m_InflationCalculator;
 		mutable std::shared_mutex m_mutex;
+
+		std::map<Height, BlockchainVersion> m_versions;
+		mutable std::shared_mutex m_versionMutex;
 	};
 }}

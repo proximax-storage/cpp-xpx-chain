@@ -6,7 +6,6 @@
 
 #include "Observers.h"
 #include "src/state/StorageStateImpl.h"
-#include <random>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <catapult/utils/StorageUtils.h>
 #include "src/utils/Queue.h"
@@ -41,7 +40,8 @@ namespace catapult { namespace observers {
 
 			auto maxIterations = queueAdapter.size();
 			for (int i = 0; i < maxIterations; i++) {
-				auto& downloadEntry = downloadCache.find(queueAdapter.front().array()).get();
+				auto downloadIt = downloadCache.find(queueAdapter.front().array());
+				auto& downloadEntry = downloadIt.get();
 
 				auto timeSinceLastPayment = (notification.Timestamp - downloadEntry.getLastDownloadApprovalInitiated()).unwrap() / 1000;
 				if (timeSinceLastPayment < paymentInterval) {
@@ -52,6 +52,7 @@ namespace catapult { namespace observers {
 				queueAdapter.popFront();
 
 				if (downloadEntry.isCloseInitiated()) {
+					CATAPULT_LOG(error) << "Close initiated channel in payment queue";
 					continue;
 				}
 				downloadEntry.decrementDownloadApprovalCount();

@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/model/NotificationPublisher.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
@@ -40,7 +41,8 @@ namespace catapult { namespace model {
 			mocks::MockNotificationSubscriber sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, mode);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, transactionFeeCalculator, mode);
 
 			// Act:
 			auto hash = test::GenerateRandomByteArray<Hash256>();
@@ -61,7 +63,8 @@ namespace catapult { namespace model {
 			mocks::MockTypedNotificationSubscriber<TNotification> sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, transactionFeeCalculator);
 
 			// Act:
 			auto hash = test::GenerateRandomByteArray<Hash256>();
@@ -77,7 +80,8 @@ namespace catapult { namespace model {
 			mocks::MockTypedNotificationSubscriber<TNotification> sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id);
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, transactionFeeCalculator);
 
 			// Act:
 			pPub->publish(entityInfo, sub);
@@ -161,7 +165,7 @@ namespace catapult { namespace model {
 			// Assert:
 			EXPECT_EQ(static_cast<NetworkIdentifier>(0x90), notification.NetworkIdentifier);
 			EXPECT_EQ(pBlock->Type, notification.EntityType);
-			EXPECT_EQ(0x04u, notification.EntityVersion);
+			EXPECT_EQ(0x07u, notification.EntityVersion);
 		});
 	}
 
@@ -295,7 +299,7 @@ namespace catapult { namespace model {
 		pBlock->setTransactionPayloadSize(0u);
 
 		// Act:
-		PublishOne<BlockCommitteeNotification<1>>(*pBlock, [&block = *pBlock, numCosignatures](const auto& notification) {
+		PublishOne<BlockCommitteeNotification<4>>(*pBlock, [&block = *pBlock, numCosignatures](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(10, notification.Round);
 			EXPECT_EQ(2, notification.FeeInterest);
@@ -336,7 +340,7 @@ namespace catapult { namespace model {
 			auto i = 0u;
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[i++]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
-			EXPECT_EQ(Core_Block_Committee_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Core_Block_Committee_v4_Notification, sub.notificationTypes()[i++]);
 			for (auto k = 0u; k < numCosignatures; ++k)
 				EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[i++]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);

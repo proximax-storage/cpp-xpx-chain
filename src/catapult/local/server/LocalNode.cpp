@@ -23,6 +23,7 @@
 #include "MemoryCounters.h"
 #include "NemesisBlockNotifier.h"
 #include "NodeUtils.h"
+#include "catapult/crypto/CertificateDirectoryGenerator.h"
 #include "catapult/extensions/ConfigurationUtils.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateFileStorage.h"
@@ -35,16 +36,12 @@
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/local/HostUtils.h"
 #include "catapult/utils/StackLogger.h"
+#include "catapult/extensions/NemesisBlockLoader.h"
+#include <filesystem>
 
 namespace catapult { namespace local {
 
 	namespace {
-		std::unique_ptr<io::PrunableBlockStorage> CreateStagingBlockStorage(const config::CatapultDataDirectory& dataDirectory) {
-			auto stagingDirectory = dataDirectory.spoolDir("block_sync").str();
-			boost::filesystem::create_directory(stagingDirectory);
-			return std::make_unique<io::FileBlockStorage>(stagingDirectory, io::FileBlockStorageMode::None);
-		}
-
 		std::unique_ptr<subscribers::StateChangeSubscriber> CreateStateChangeSubscriber(
 				subscribers::SubscriptionManager& subscriptionManager,
 				const extensions::CacheHolder& cacheHolder,
@@ -72,8 +69,10 @@ namespace catapult { namespace local {
 					, m_cacheHolder(m_pBootstrapper->cacheHolder()) // note that sub caches are added in boot
 					, m_storage(
 							m_pBootstrapper->subscriptionManager().createBlockStorage(m_pBlockChangeSubscriber),
-							CreateStagingBlockStorage(m_dataDirectory))
-					, m_pUtCache(m_pBootstrapper->subscriptionManager().createUtCache(extensions::GetUtCacheOptions(m_pBootstrapper->config().Node)))
+							CreateStagingBlockStorage(m_dataDirectory, m_pBootstrapper->config().Immutable.NemesisHeight))
+					, m_pUtCache(m_pBootstrapper->subscriptionManager().createUtCache(
+							extensions::GetUtCacheOptions(m_pBootstrapper->config().Node),
+						    m_pBootstrapper->pluginManager().transactionFeeCalculator()))
 					, m_pTransactionStatusSubscriber(m_pBootstrapper->subscriptionManager().createTransactionStatusSubscriber())
 					, m_pStateChangeSubscriber(CreateStateChangeSubscriber(
 							m_pBootstrapper->subscriptionManager(),
@@ -91,23 +90,81 @@ namespace catapult { namespace local {
 
 		public:
 			void boot() {
-				CATAPULT_LOG(info) << "registering system plugins";
-				m_pluginModules = LoadAllPlugins(*m_pBootstrapper);
+				auto pConfigHolder = m_pluginManager.configHolder();
 
-				CATAPULT_LOG(debug) << "initializing cache";
+				/// Initially we start by loading system requirements
+				CATAPULT_LOG(info) << "registering system plugins";
+				m_pluginModules = LoadSystemPlugins(*m_pBootstrapper);
+
+				/// First we must determine if this is the first boot. If it is we must load nemesis block
+				auto isFirstBoot = IsStatePresent(m_dataDirectory);
+				if (isFirstBoot) {
+					// This is the first boot, so we must load the nemesis block network configuration.
+					CATAPULT_LOG(debug) << "loading network configuration from nemesis";
+					auto storageView = m_storage.view();
+					const auto pNemesisBlockElement = storageView.loadBlockElement(pConfigHolder->Config().Immutable.NemesisHeight);
+					auto bundleConfig = extensions::NemesisBlockLoader::ReadNetworkConfiguration(pNemesisBlockElement);
+					m_pBootstrapper->configHolder()->InitializeNetworkConfiguration(std::get<0>(bundleConfig));
+				}
+				else {
+					auto stateDir = m_dataDirectory.dir("state");
+					/// We must retrieve the configuration from the active config file if available
+					/// At this point the configurations for the plugins are still uninitialized
+					if(extensions::HasActiveNetworkConfig(stateDir)) {
+						CATAPULT_LOG(debug) << "loading network configuration from dump";
+						auto config = extensions::LoadActiveNetworkConfig(stateDir);
+						m_pBootstrapper->configHolder()->InitializeNetworkConfiguration(config);
+					} else {
+						/// Load the configuration from the cache.
+						CATAPULT_LOG(debug) << "loading network configuration from cache";
+						m_cacheHolder.cache() = m_pluginManager.createCache();
+						pConfigHolder->SetCache(&m_cacheHolder.cache());
+
+						loadStateFromDisk();
+
+						auto configHeight = m_cacheHolder.cache().configHeight() + Height(1);
+						pConfigHolder->SetCache(nullptr);
+						const auto& config = pConfigHolder->Config(configHeight);
+						pConfigHolder->InsertConfig(Height(0), config.Network, config.SupportedEntityVersions);
+						m_cacheHolder.cache() = m_pluginManager.createCache();
+						m_pluginManager.reset();
+						m_pluginModules.clear();
+
+						m_pluginModules = LoadSystemPlugins(*m_pBootstrapper);
+					}
+				}
+
+				const auto& config = pConfigHolder->Config(Height(0));
+				m_pBootstrapper->validateConfig(config);
+
+				/// Generate certificates
+				crypto::GenerateCertificateDirectory(m_serviceLocator.keyPair(), config.User.CertificateDirectory);
+
+				/// Load non system plugins
+				CATAPULT_LOG(debug) << "registering addon plugins";
+				auto addonPlugins = LoadConfigurablePlugins(*m_pBootstrapper, config.Network);
+				m_pluginModules.insert(m_pluginModules.cend(), addonPlugins.begin(), addonPlugins.end());
+
+				/// We can now create the cache with all available plugins.
+
+				CATAPULT_LOG(debug) << "initializing addon plugins cache";
+				CATAPULT_LOG(debug) << "initializing system cache";
 				m_cacheHolder.cache() = m_pluginManager.createCache();
-				m_pluginManager.configHolder()->SetCache(&m_cacheHolder.cache());
+				pConfigHolder->SetCache(&m_cacheHolder.cache());
 				if (m_pluginManager.isStorageStateSet())
 					m_pluginManager.storageState().setCache(&m_cacheHolder.cache());
+
+				/// Finally we can build and run the plugin initializers to manipulate the config.
+
 				auto initializers = m_pluginManager.createPluginInitializer();
-				initializers(const_cast<model::NetworkConfiguration&>(m_pluginManager.configHolder()->Config().Network));
-				m_pluginManager.configHolder()->SetPluginInitializer(std::move(initializers));
+				initializers(const_cast<model::NetworkConfiguration&>(config.Network));
+				pConfigHolder->SetPluginInitializer(std::move(initializers));
 
 				CATAPULT_LOG(debug) << "registering counters";
 				registerCounters();
 
 				utils::StackLogger stackLogger("booting local node", utils::LogLevel::Info);
-				auto isFirstBoot = executeAndNotifyNemesis();
+				if(isFirstBoot) executeAndNotifyNemesis();
 				loadStateFromDisk();
 
 				CATAPULT_LOG(debug) << "adding static nodes";
@@ -162,9 +219,6 @@ namespace catapult { namespace local {
 			}
 
 			bool executeAndNotifyNemesis() {
-				// only execute nemesis during first boot
-				if (extensions::HasSerializedState(m_dataDirectory.dir("state")))
-					return false;
 
 				NemesisBlockNotifier notifier(m_cacheHolder.cache(), m_storage, m_pluginManager);
 
@@ -200,6 +254,7 @@ namespace catapult { namespace local {
 				m_pBootstrapper->pool().shutdown();
 				saveStateToDisk();
 				m_pBootstrapper->configHolder()->SetPluginInitializer(nullptr);
+				m_pBootstrapper->configHolder()->ClearPluginConfigurations();
 			}
 
 		private:
@@ -232,6 +287,10 @@ namespace catapult { namespace local {
 
 			ionet::NodeContainerView nodes() const override {
 				return m_nodes.view();
+			}
+
+			extensions::ServiceState& state() {
+				return *m_pServiceState;
 			}
 
 		private:

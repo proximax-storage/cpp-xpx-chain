@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 
 			auto& lastCompletedModification = driveEntry.completedDataModifications().back();
 			lastCompletedModification.Id = dataModificationId;
-			lastCompletedModification.State = state::DataModificationState::Succeeded;
+			lastCompletedModification.ApprovalState = state::DataModificationApprovalState::Approved;
 
 			if (ownerIndex != -1) {
 				driveEntry.setOwner(publicKeys.at(ownerIndex));
@@ -42,6 +42,13 @@ namespace catapult { namespace validators {
 			for (auto i = 0u; i < publicKeys.size(); ++i)
 				if (i != ownerIndex)
 					driveEntry.replicators().insert(publicKeys.at(i));
+		}
+
+		void PrepareReplicatorEntry(
+				state::ReplicatorEntry& replicatorEntry,
+				const Key& driveKey,
+				const state::DriveInfo& driveInfo = {}) {
+			replicatorEntry.drives().emplace(driveKey, driveInfo);
 		}
 
         void AssertValidationResult(
@@ -89,6 +96,12 @@ namespace catapult { namespace validators {
 		PrepareDriveEntry(driveEntry, signer, dataModificationId, ownerIndex, publicKeys);
 
 		driveDelta.insert(driveEntry);
+
+		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
+		auto replicatorEntry = test::CreateReplicatorEntry(signer);
+		PrepareReplicatorEntry(replicatorEntry, driveEntry.key());
+		replicatorDelta.insert(replicatorEntry);
+
 		cache.commit(Current_Height);
 
 		// Assert:
@@ -101,9 +114,32 @@ namespace catapult { namespace validators {
 				publicKeys);
 	}
 
+	TEST(TEST_CLASS, FailureWhenReplicatorNotFound) {
+		// Arrange:
+		auto cache = test::StorageCacheFactory::Create();
+		auto driveEntry = test::CreateBcDriveEntry();
+		// No need to create deltas.
+
+		const auto signer = test::GenerateRandomByteArray<Key>();
+		const auto dataModificationId = test::GenerateRandomByteArray<Hash256>();
+		const auto publicKeys = test::GenerateUniqueRandomDataVector<Key>(Public_Keys_Count);
+
+		// Not inserting driveEntry into BcDriveCache.
+
+		// Assert:
+		AssertValidationResult(
+				Failure_Storage_Replicator_Not_Found,
+				cache,
+				signer,
+				driveEntry.key(),
+				dataModificationId,
+				publicKeys);
+	}
+
     TEST(TEST_CLASS, FailureWhenDriveNotFound) {
     	// Arrange:
 		auto cache = test::StorageCacheFactory::Create();
+		auto delta = cache.createDelta();
 		auto driveEntry = test::CreateBcDriveEntry();
 		// No need to create drive delta.
 
@@ -112,6 +148,13 @@ namespace catapult { namespace validators {
 		const auto publicKeys = test::GenerateUniqueRandomDataVector<Key>(Public_Keys_Count);
 
 		// Not inserting driveEntry into BcDriveCache.
+
+		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
+		auto replicatorEntry = test::CreateReplicatorEntry(signer);
+		PrepareReplicatorEntry(replicatorEntry, driveEntry.key());
+		replicatorDelta.insert(replicatorEntry);
+
+		cache.commit(Current_Height);
 
 		// Assert:
 		AssertValidationResult(
@@ -135,6 +178,11 @@ namespace catapult { namespace validators {
 		const auto ownerIndex = test::RandomInRange(-1, Public_Keys_Count-1);
 		const auto publicKeys = test::GenerateUniqueRandomDataVector<Key>(Public_Keys_Count);
 		PrepareDriveEntry(driveEntry, signer, dataModificationId, ownerIndex, publicKeys);
+
+		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
+		auto replicatorEntry = test::CreateReplicatorEntry(signer);
+		PrepareReplicatorEntry(replicatorEntry, driveEntry.key());
+		replicatorDelta.insert(replicatorEntry);
 
 		// Act:
 		driveEntry.replicators().erase(signer);
@@ -166,6 +214,12 @@ namespace catapult { namespace validators {
 		PrepareDriveEntry(driveEntry, signer, dataModificationId, ownerIndex, publicKeys);
 
 		driveDelta.insert(driveEntry);
+
+		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
+		auto replicatorEntry = test::CreateReplicatorEntry(signer);
+		PrepareReplicatorEntry(replicatorEntry, driveEntry.key());
+		replicatorDelta.insert(replicatorEntry);
+
 		cache.commit(Current_Height);
 
 		// Act:
@@ -198,6 +252,12 @@ namespace catapult { namespace validators {
 		PrepareDriveEntry(driveEntry, signer, dataModificationId, ownerIndex, publicKeys);
 
 		driveDelta.insert(driveEntry);
+
+		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
+		auto replicatorEntry = test::CreateReplicatorEntry(signer);
+		PrepareReplicatorEntry(replicatorEntry, driveEntry.key());
+		replicatorDelta.insert(replicatorEntry);
+
 		cache.commit(Current_Height);
 
 		// Act:
@@ -228,6 +288,12 @@ namespace catapult { namespace validators {
 		PrepareDriveEntry(driveEntry, signer, dataModificationId, ownerIndex, publicKeys);
 
 		driveDelta.insert(driveEntry);
+
+		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
+		auto replicatorEntry = test::CreateReplicatorEntry(signer);
+		PrepareReplicatorEntry(replicatorEntry, driveEntry.key());
+		replicatorDelta.insert(replicatorEntry);
+
 		cache.commit(Current_Height);
 
 		// Act:
@@ -256,6 +322,11 @@ namespace catapult { namespace validators {
 		const auto ownerIndex = test::RandomInRange(-1, Public_Keys_Count-1);
 		const auto publicKeys = test::GenerateUniqueRandomDataVector<Key>(Public_Keys_Count);
 		PrepareDriveEntry(driveEntry, signer, dataModificationId, ownerIndex, publicKeys);
+
+		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
+		auto replicatorEntry = test::CreateReplicatorEntry(signer);
+		PrepareReplicatorEntry(replicatorEntry, driveEntry.key());
+		replicatorDelta.insert(replicatorEntry);
 
 		// Act:
 		driveEntry.completedDataModifications().clear();
@@ -287,6 +358,12 @@ namespace catapult { namespace validators {
 		PrepareDriveEntry(driveEntry, signer, dataModificationId, ownerIndex, publicKeys);
 
 		driveDelta.insert(driveEntry);
+
+		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
+		auto replicatorEntry = test::CreateReplicatorEntry(signer);
+		PrepareReplicatorEntry(replicatorEntry, driveEntry.key());
+		replicatorDelta.insert(replicatorEntry);
+
 		cache.commit(Current_Height);
 
 		// Assert:
@@ -298,6 +375,38 @@ namespace catapult { namespace validators {
 				test::GenerateRandomByteArray<Hash256>(),	// Pass random hash as a DataModificationId.
 				publicKeys);
     }
+
+	TEST(TEST_CLASS, FailureWhenInvalidDataModificationAlreadyApproved) {
+		// Arrange:
+		auto cache = test::StorageCacheFactory::Create();
+		auto delta = cache.createDelta();
+		auto& driveDelta = delta.sub<cache::BcDriveCache>();
+		auto driveEntry = test::CreateBcDriveEntry();
+
+		const auto signer = test::GenerateRandomByteArray<Key>();
+		const auto dataModificationId = test::GenerateRandomByteArray<Hash256>();
+		const auto ownerIndex = test::RandomInRange(-1, Public_Keys_Count-1);
+		const auto publicKeys = test::GenerateUniqueRandomDataVector<Key>(Public_Keys_Count);
+		PrepareDriveEntry(driveEntry, signer, dataModificationId, ownerIndex, publicKeys);
+
+		driveDelta.insert(driveEntry);
+
+		auto& replicatorDelta = delta.sub<cache::ReplicatorCache>();
+		auto replicatorEntry = test::CreateReplicatorEntry(signer);
+		PrepareReplicatorEntry(replicatorEntry, driveEntry.key(), {dataModificationId, 0, 0});
+		replicatorDelta.insert(replicatorEntry);
+
+		cache.commit(Current_Height);
+
+		// Assert:
+		AssertValidationResult(
+				Failure_Storage_Transaction_Already_Approved,
+				cache,
+				signer,
+				driveEntry.key(),
+				dataModificationId,
+				publicKeys);
+	}
 
 	// TODO: Add test case when singer's key is not present in drive's confirmedUsedSizes?
 }}

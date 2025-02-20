@@ -33,7 +33,7 @@ namespace catapult { namespace io {
 			using StorageType = FileBlockStorage;
 
 			static std::unique_ptr<StorageType> OpenStorage(const std::string& destination) {
-				return std::make_unique<StorageType>(destination);
+				return std::make_unique<StorageType>(destination, Height(1));
 			}
 
 			static std::unique_ptr<StorageType> PrepareStorage(const std::string& destination, Height height = Height()) {
@@ -57,7 +57,7 @@ namespace catapult { namespace io {
 		FileTraits::PrepareStorage(tempDir.name());
 
 		// - purge the nemesis block
-		FileBlockStorage storage(tempDir.name(), FileBlockStorageMode::Hash_Index);
+		FileBlockStorage storage(tempDir.name(), Height(1), FileBlockStorageMode::Hash_Index);
 		storage.dropBlocksAfter(Height());
 
 		// - save a block
@@ -78,7 +78,7 @@ namespace catapult { namespace io {
 	TEST(TEST_CLASS, HashIndexCanBeDisabled) {
 		// Arrange: prepare a directory without a hashes file
 		test::TempDirectoryGuard tempDir;
-		FileBlockStorage storage(tempDir.name(), FileBlockStorageMode::None);
+		FileBlockStorage storage(tempDir.name(), Height(1), FileBlockStorageMode::None);
 
 		// - save a block
 		auto pBlock = test::GenerateBlockWithTransactions(5, Height(1));
@@ -100,7 +100,7 @@ namespace catapult { namespace io {
 	TEST(TEST_CLASS, PurgeDoesNotDeleteDataDirectory) {
 		// Arrange:
 		test::TempDirectoryGuard tempDir;
-		FileBlockStorage storage(tempDir.name());
+		FileBlockStorage storage(tempDir.name(), Height(1));
 
 		// Sanity:
 		EXPECT_TRUE(boost::filesystem::exists(tempDir.name()));
@@ -135,7 +135,7 @@ namespace catapult { namespace io {
 		}
 
 		// Act + Assert
-		FileBlockStorage storage(tempDir.name());
+		FileBlockStorage storage(tempDir.name(), Height(1));
 		EXPECT_THROW(storage.loadBlockElement(Height(2)), catapult_runtime_error);
 	}
 
@@ -157,7 +157,7 @@ namespace catapult { namespace io {
 		}
 
 		// Act:
-		FileBlockStorage storage(tempDir.name());
+		FileBlockStorage storage(tempDir.name(), Height(1));
 		auto pBlockElement = storage.loadBlockElement(Height(2));
 
 		// Assert:
@@ -178,7 +178,7 @@ namespace catapult { namespace io {
 		}
 
 		// Act:
-		FileBlockStorage storage(tempDir.name());
+		FileBlockStorage storage(tempDir.name(), Height(1));
 		auto pBlockElement1 = storage.loadBlockElement(Height(2));
 		auto pBlockElement2 = storage.loadBlockElement(Height(3));
 

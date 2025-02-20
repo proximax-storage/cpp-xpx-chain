@@ -16,12 +16,23 @@ namespace catapult { namespace state {
         constexpr auto Drives_Count = 5;
         constexpr auto DownloadChannels_Count = 3;
 
-        constexpr auto Entry_Size =
+        constexpr auto Entry_Size_v1 =
             sizeof(VersionType) + // version
-            Key_Size + // drive key
-            sizeof(Amount) + // capacity
+            Key_Size + // replicator key
+		   	Key_Size + Key_Size + sizeof(uint16_t) + sizeof(uint32_t) + // replicator set node
             sizeof(uint16_t) + // drive count
-            Drives_Count * (Key_Size + Hash256_Size + sizeof(bool) + sizeof(uint64_t) + sizeof(uint64_t)) + // drives
+            Drives_Count * (Key_Size + Hash256_Size + sizeof(uint64_t) + sizeof(uint64_t)) + // drives
+		 	sizeof(uint16_t) + // download channel count
+			DownloadChannels_Count * Hash256_Size; // download channels
+
+        constexpr auto Entry_Size_v2 =
+            sizeof(VersionType) + // version
+            Key_Size + // replicator key
+            Key_Size + // node boot key
+		   	Key_Size + Key_Size + sizeof(uint16_t) + sizeof(uint32_t) + // replicator set node
+            sizeof(uint16_t) + // drive count
+            Drives_Count * (Key_Size + Hash256_Size + sizeof(uint64_t) + sizeof(uint64_t)) + // drives
+		 	sizeof(uint16_t) + // download channel count
 			DownloadChannels_Count * Hash256_Size; // download channels
 
         class TestContext {
@@ -44,10 +55,10 @@ namespace catapult { namespace state {
             mocks::MockMemoryStream m_stream;
         };
 
-        auto CreateReplicatorEntry() {
+        auto CreateReplicatorEntry(VersionType version) {
             return test::CreateReplicatorEntry(
                 test::GenerateRandomByteArray<Key>(),
-                test::GenerateRandomValue<Amount>(),
+				version,
                 Drives_Count,
 				DownloadChannels_Count);
         }
@@ -59,6 +70,15 @@ namespace catapult { namespace state {
             EXPECT_EQ_MEMORY(entry.key().data(), pData, Key_Size);
             pData += Key_Size;
 
+			EXPECT_EQ_MEMORY(entry.replicatorsSetNode().Left.data(), pData, Key_Size);
+			pData += Key_Size;
+			EXPECT_EQ_MEMORY(entry.replicatorsSetNode().Right.data(), pData, Key_Size);
+			pData += Key_Size;
+			EXPECT_EQ(entry.replicatorsSetNode().Height, *reinterpret_cast<const uint16_t*>(pData));
+			pData += sizeof(uint16_t);
+			EXPECT_EQ(entry.replicatorsSetNode().Size, *reinterpret_cast<const uint32_t*>(pData));
+			pData += sizeof(uint32_t);
+
             EXPECT_EQ(entry.drives().size(), *reinterpret_cast<const uint16_t*>(pData));
             pData += sizeof(uint16_t);
             for (const auto& pair : entry.drives()) {
@@ -67,8 +87,6 @@ namespace catapult { namespace state {
 				const auto& info = pair.second;
 				EXPECT_EQ_MEMORY(info.LastApprovedDataModificationId.data(), pData, Hash256_Size);
 				pData += Hash256_Size;
-				EXPECT_EQ(info.DataModificationIdIsValid, *reinterpret_cast<const bool*>(pData));
-				pData += sizeof(bool);
 				EXPECT_EQ(info.InitialDownloadWorkMegabytes, *reinterpret_cast<const uint64_t*>(pData));
 				pData += sizeof(uint64_t);
                 EXPECT_EQ(info.LastCompletedCumulativeDownloadWorkBytes, *reinterpret_cast<const uint64_t*>(pData));
@@ -82,43 +100,50 @@ namespace catapult { namespace state {
                 pData += Hash256_Size;
             }
 
+			if (version > 1) {
+                EXPECT_EQ_MEMORY(entry.nodeBootKey().data(), pData, Key_Size);
+                pData += Key_Size;
+			}
+
             EXPECT_EQ(pExpectedEnd, pData);
         }
 
         void AssertCanSaveSingleEntry(VersionType version) {
             // Arrange:
             TestContext context;
-            auto entry = CreateReplicatorEntry();
+            auto entry = CreateReplicatorEntry(version);
+			auto expectedSize = (version > 1 ? Entry_Size_v2 : Entry_Size_v1);
 
             // Act:
             ReplicatorEntrySerializer::Save(entry, context.outputStream());
 
             // Assert:
-            ASSERT_EQ(Entry_Size, context.buffer().size());
-            AssertEntryBuffer(entry, context.buffer().data(), Entry_Size, version);
+            ASSERT_EQ(expectedSize, context.buffer().size());
+            AssertEntryBuffer(entry, context.buffer().data(), expectedSize, version);
         }
 
         void AssertCanSaveMultipleEntries(VersionType version) {
             // Arrange:
             TestContext context;
-            auto entry1 = CreateReplicatorEntry();
-            auto entry2 = CreateReplicatorEntry();
+            auto entry1 = CreateReplicatorEntry(version);
+            auto entry2 = CreateReplicatorEntry(version);
+			auto expectedSize = (version > 1 ? Entry_Size_v2 : Entry_Size_v1);
 
             // Act:
             ReplicatorEntrySerializer::Save(entry1, context.outputStream());
             ReplicatorEntrySerializer::Save(entry2, context.outputStream());
 
             // Assert:
-            ASSERT_EQ(2 * Entry_Size, context.buffer().size());
+            ASSERT_EQ(2 * expectedSize, context.buffer().size());
             const auto* pBuffer1 = context.buffer().data();
-            const auto* pBuffer2 = pBuffer1 + Entry_Size;
-            AssertEntryBuffer(entry1, pBuffer1, Entry_Size, version);
-            AssertEntryBuffer(entry2, pBuffer2, Entry_Size, version);
+            const auto* pBuffer2 = pBuffer1 + expectedSize;
+            AssertEntryBuffer(entry1, pBuffer1, expectedSize, version);
+            AssertEntryBuffer(entry2, pBuffer2, expectedSize, version);
         }
     }
 
     // region Save
-/*
+
     TEST(TEST_CLASS, CanSaveSingleEntry_v1) {
         AssertCanSaveSingleEntry(1);
     }
@@ -126,20 +151,37 @@ namespace catapult { namespace state {
     TEST(TEST_CLASS, CanSaveMultipleEntries_v1) {
         AssertCanSaveMultipleEntries(1);
     }
-*/
+
+    TEST(TEST_CLASS, CanSaveSingleEntry_v2) {
+        AssertCanSaveSingleEntry(2);
+    }
+
+    TEST(TEST_CLASS, CanSaveMultipleEntries_v2) {
+        AssertCanSaveMultipleEntries(2);
+    }
+
     // endregion
 
     // region Load
 
     namespace {
         std::vector<uint8_t> CreateEntryBuffer(const state::ReplicatorEntry& entry, VersionType version) {
-            std::vector<uint8_t> buffer(Entry_Size);
+            std::vector<uint8_t> buffer(version > 1 ? Entry_Size_v2 : Entry_Size_v1);
 
             auto* pData = buffer.data();
             memcpy(pData, &version, sizeof(VersionType));
             pData += sizeof(VersionType);
             memcpy(pData, entry.key().data(), Key_Size);
             pData += Key_Size;
+
+			memcpy(pData, entry.replicatorsSetNode().Left.data(), Key_Size);
+			pData += Key_Size;
+			memcpy(pData, entry.replicatorsSetNode().Right.data(), Key_Size);
+			pData += Key_Size;
+			memcpy(pData, &entry.replicatorsSetNode().Height, sizeof(uint16_t));
+			pData += sizeof(uint16_t);
+			memcpy(pData, &entry.replicatorsSetNode().Size, sizeof(uint32_t));
+			pData += sizeof(uint32_t);
 
             uint16_t drivesCount = utils::checked_cast<size_t, uint16_t>(entry.drives().size());
             memcpy(pData, &drivesCount, sizeof(uint16_t));
@@ -150,8 +192,6 @@ namespace catapult { namespace state {
 				const auto& info = pair.second;
 				memcpy(pData, info.LastApprovedDataModificationId.data(), Hash256_Size);
 				pData += Hash256_Size;
-				memcpy(pData, &info.DataModificationIdIsValid, sizeof(bool));
-				pData += sizeof(bool);
 				memcpy(pData, &info.InitialDownloadWorkMegabytes, sizeof(uint64_t));
 				pData += sizeof(uint64_t);
                 memcpy(pData, &info.LastCompletedCumulativeDownloadWorkBytes, sizeof(uint64_t));
@@ -166,13 +206,18 @@ namespace catapult { namespace state {
                 pData += Hash256_Size;
             }
 
+			if (version > 1) {
+				memcpy(pData, entry.nodeBootKey().data(), Key_Size);
+				pData += Key_Size;
+			}
+
             return buffer;
         }
 
         void AssertCanLoadSingleEntry(VersionType version) {
             // Arrange:
             TestContext context;
-            auto originalEntry = CreateReplicatorEntry();
+            auto originalEntry = CreateReplicatorEntry(version);
             auto buffer = CreateEntryBuffer(originalEntry, version);
 
             // Act:
@@ -183,11 +228,15 @@ namespace catapult { namespace state {
             test::AssertEqualReplicatorData(originalEntry, result);
         }
     }
-/*
+
     TEST(TEST_CLASS, CanLoadSingleEntry_v1) {
         AssertCanLoadSingleEntry(1);
     }
-*/
+
+    TEST(TEST_CLASS, CanLoadSingleEntry_v2) {
+        AssertCanLoadSingleEntry(2);
+    }
+
     // endregion
 
 }}

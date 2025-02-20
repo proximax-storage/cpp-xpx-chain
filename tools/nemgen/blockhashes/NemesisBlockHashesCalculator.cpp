@@ -22,64 +22,9 @@
 #include "PluginLoader.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
-#include "NemesisExecutionHasher.h"
+#include "../NemesisExecutionHasher.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 
-	BlockExecutionHashesInfo CalculateNemesisBlockExecutionHashes(
-			const NemesisConfiguration& nemesisConfig,
-			const model::BlockElement& blockElement,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			NemesisTransactions* transactions,
-			plugins::PluginManager* manager) {
-		// 1. load all plugins
-		PluginLoader pluginLoader(pConfigHolder);
-		pluginLoader.loadAll();
-		plugins::PluginManager* pluginManager;
-		if(manager != nullptr)
-			pluginManager = manager;
-		else {
-			pluginManager = &pluginLoader.manager();
-		}
 
-		auto initializers = pluginManager->createPluginInitializer();
-		initializers(const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network));
-
-		// 2. prepare observer
-		observers::NotificationObserverAdapter entityObserver(pluginManager->createObserver(), pluginManager->createNotificationPublisher());
-
-		// 3. prepare observer state
-		auto cache = pluginManager->createCache();
-		pConfigHolder->SetCache(&cache);
-		auto cacheDetachableDelta = cache.createDetachableDelta();
-		auto cacheDetachedDelta = cacheDetachableDelta.detach();
-		auto pCacheDelta = cacheDetachedDelta.tryLock();
-		auto catapultState = state::CatapultState();
-		auto blockStatementBuilder = model::BlockStatementBuilder();
-		auto observerState = observers::ObserverState(*pCacheDelta, catapultState, blockStatementBuilder);
-
-		// 4. prepare resolvers
-		auto readOnlyCache = pCacheDelta->toReadOnly();
-		auto resolverContext = pluginManager->createResolverContext(readOnlyCache);
-
-		// 5. execute block
-		if(nemesisConfig.EnableSpool)
-		{
-			auto transactionView = transactions->createView();
-			ExecuteBlock(blockElement, { entityObserver, resolverContext, pConfigHolder, observerState }, transactionView, [&blockElement](const auto& transaction){
-				return model::WeakEntityInfo(*transaction.transaction, transaction.entityHash, blockElement.Block);
-			});
-		}
-		else chain::ExecuteBlock(blockElement, { entityObserver, resolverContext, pConfigHolder, observerState });
-
-		auto cacheStateHashInfo = pCacheDelta->calculateStateHash(blockElement.Block.Height);
-		auto blockReceiptsHash = pluginManager->immutableConfig().ShouldEnableVerifiableReceipts
-				? model::CalculateMerkleHash(*blockStatementBuilder.build())
-				: Hash256();
-
-		// 6. Clear plugin configs before unloading modules.
-		pConfigHolder->Config().Network.ClearPluginConfigurations();
-
-		return { blockReceiptsHash, cacheStateHashInfo.StateHash, cacheStateHashInfo.SubCacheMerkleRoots };
-	}
 }}}

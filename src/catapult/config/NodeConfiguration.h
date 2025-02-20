@@ -38,6 +38,9 @@ namespace catapult { namespace config {
 		/// Server api port.
 		unsigned short ApiPort;
 
+		/// DBRB server port.
+		unsigned short DbrbPort;
+
 		/// \c true if the server should reuse ports already in use.
 		bool ShouldAllowAddressReuse;
 
@@ -143,6 +146,9 @@ namespace catapult { namespace config {
 
 		/// Maximum number of nodes to track in memory.
 		uint32_t MaxTrackedNodes;
+
+		/// Maximum number of transactions put into transaction range consumer at a time.
+		uint16_t TransactionBatchSize;
 
 	public:
 		/// Local node configuration.

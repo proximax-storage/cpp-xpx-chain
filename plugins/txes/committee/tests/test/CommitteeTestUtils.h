@@ -26,15 +26,15 @@ namespace catapult { namespace test {
 		const Height& lastSigningBlockHeight = test::GenerateRandomValue<Height>(),
 		const Importance& effectiveBalance = test::GenerateRandomValue<Importance>(),
 		bool canHarvest = test::RandomByte(),
-		double activity = Initial_Activity,
-		double greed = Min_Greed);
+		double activityObsolete = Initial_Activity,
+		double greedObsolete = Min_Greed);
 
 	state::AccountData CreateAccountData(
 		const Height& lastSigningBlockHeight = test::GenerateRandomValue<Height>(),
 		const Importance& effectiveBalance = test::GenerateRandomValue<Importance>(),
 		bool canHarvest = true,
-		double activity = Initial_Activity,
-		double greed = Min_Greed);
+		double activityObsolete = Initial_Activity,
+		double greedObsolete = Min_Greed);
 
 	void AssertEqualAccountData(const state::AccountData& data1, const state::AccountData& data2);
 	void AssertEqualCommitteeEntry(const state::CommitteeEntry& entry1, const state::CommitteeEntry& entry2);
@@ -44,6 +44,7 @@ namespace catapult { namespace test {
 		static auto CreateSubCachesWithCommitteeCache(const config::BlockchainConfiguration& config) {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cache::CommitteeCache::Id + 1);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).SetPluginConfiguration(config::CommitteeConfiguration::Uninitialized());
 			auto pAccountCollector = std::make_shared<cache::CommitteeAccountCollector>();
 			subCaches[cache::CommitteeCache::Id] =
 				test::MakeSubCachePlugin<cache::CommitteeCache, cache::CommitteeCacheStorage>(pAccountCollector, pConfigHolder);
@@ -87,13 +88,12 @@ namespace catapult { namespace test {
 		{}
 
 	public:
-		const chain::Committee& selectCommittee(const model::NetworkConfiguration& networkConfig) override {
+		void selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) override {
 			if (m_round >= 0)
 				decreaseActivities(networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>());
 
 			m_round++;
 			m_committee = m_committees.at(m_round);
-			return m_committee;
 		}
 
 		void reset() override {

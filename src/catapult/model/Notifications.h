@@ -287,27 +287,18 @@ namespace catapult { namespace model {
 		uint32_t FeeInterestDenominator;
 	};
 
-	/// Notifies the cosignatures of a block.
-	template<VersionType version>
-	struct BlockCommitteeNotification;
-
-	template<>
-	struct BlockCommitteeNotification<1> : public Notification {
+	/// Notifies of the round of a block.
+	template<typename TDerivedNotification>
+	struct BasicBlockCommitteeNotification : public Notification {
 	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Block_Committee_v1_Notification;
-
-	public:
-		/// Creates a block notification around \a signer, \a numCosignatures, \a pCosignatures,
-		/// \a feeInterest and \a feeInterestDenominator.
-		 BlockCommitteeNotification(
-			int64_t round,
-			uint32_t feeInterest,
-			uint32_t feeInterestDenominator)
-				: Notification(Notification_Type, sizeof(BlockCommitteeNotification<1>))
-				, Round(round)
-				, FeeInterest(feeInterest)
-				, FeeInterestDenominator(feeInterestDenominator)
+		BasicBlockCommitteeNotification(
+				int64_t round,
+				uint32_t feeInterest,
+				uint32_t feeInterestDenominator)
+			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
+			, Round(round)
+			, FeeInterest(feeInterest)
+			, FeeInterestDenominator(feeInterestDenominator)
 		{}
 
 	public:
@@ -319,6 +310,62 @@ namespace catapult { namespace model {
 
 		/// Denominator of the transaction fee.
 		uint32_t FeeInterestDenominator;
+	};
+
+	template<VersionType version>
+	struct BlockCommitteeNotification;
+
+	template<>
+	struct BlockCommitteeNotification<1> : public BasicBlockCommitteeNotification<BlockCommitteeNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Committee_v1_Notification;
+
+	public:
+		 BlockCommitteeNotification(int64_t round, uint32_t feeInterest, uint32_t feeInterestDenominator)
+			: BasicBlockCommitteeNotification(round, feeInterest, feeInterestDenominator)
+		{}
+	};
+
+	template<>
+	struct BlockCommitteeNotification<2> : public BasicBlockCommitteeNotification<BlockCommitteeNotification<2>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Committee_v2_Notification;
+
+	public:
+		 BlockCommitteeNotification(int64_t round, uint32_t feeInterest, uint32_t feeInterestDenominator)
+			: BasicBlockCommitteeNotification(round, feeInterest, feeInterestDenominator)
+		{}
+	};
+
+	template<>
+	struct BlockCommitteeNotification<3> : public BasicBlockCommitteeNotification<BlockCommitteeNotification<3>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Committee_v3_Notification;
+
+	public:
+		 BlockCommitteeNotification(int64_t round, uint32_t feeInterest, uint32_t feeInterestDenominator)
+			: BasicBlockCommitteeNotification(round, feeInterest, feeInterestDenominator)
+		{}
+	};
+
+	template<>
+	struct BlockCommitteeNotification<4> : public BasicBlockCommitteeNotification<BlockCommitteeNotification<4>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Committee_v4_Notification;
+
+	public:
+		 BlockCommitteeNotification(int64_t round, uint32_t feeInterest, uint32_t feeInterestDenominator, const Key& blockSigner)
+			: BasicBlockCommitteeNotification(round, feeInterest, feeInterestDenominator)
+			, BlockSigner(blockSigner)
+		{}
+
+	public:
+		/// Block signer.
+		Key BlockSigner;
 	};
 
 	// endregion
@@ -633,6 +680,178 @@ namespace catapult { namespace model {
 
 		/// Plugin configuration bag.
 		const utils::ConfigurationBag& Bag;
+	};
+
+	// endregion
+
+	// region active
+
+	/// Notification of whether a mosaic is active.
+	template<VersionType version>
+	struct MosaicActiveNotification;
+	template<>
+	struct MosaicActiveNotification<1> :  public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Mosaic_Active_v1_Notification;
+	
+	public:
+		explicit MosaicActiveNotification(UnresolvedMosaicId mosaicId, const Height expirationHeight)
+			: Notification(Notification_Type, sizeof(MosaicActiveNotification<1>))
+			, MosaicId(mosaicId)
+			, OfferExpirationHeight(expirationHeight)
+		{}
+	
+	public:
+		
+		/// Id of the mosaic.
+		UnresolvedMosaicId MosaicId;
+		
+		/// Offer expiration height
+		Height OfferExpirationHeight;
+	};
+
+	// endregion
+
+	// region harvesters
+
+	template<typename TDerivedNotification>
+	struct BasicHarvestersNotification : public Notification {
+	public:
+		BasicHarvestersNotification(const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
+			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
+			, HarvesterKeysPtr(pHarvesterKeys)
+			, HarvesterKeysCount(harvesterKeysCount)
+		{}
+
+	public:
+		/// Active harvester keys.
+		const Key* HarvesterKeysPtr;
+
+		/// Harvester key count.
+		uint16_t HarvesterKeysCount;
+	};
+
+	/// Notification of active harvesters.
+	template<VersionType version>
+	struct ActiveHarvestersNotification;
+
+	template<>
+	struct ActiveHarvestersNotification<1> :  public BasicHarvestersNotification<ActiveHarvestersNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Active_Harvesters_v1_Notification;
+
+	public:
+		ActiveHarvestersNotification(const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
+			: BasicHarvestersNotification(pHarvesterKeys, harvesterKeysCount)
+		{}
+	};
+
+	template<>
+	struct ActiveHarvestersNotification<2> :  public BasicHarvestersNotification<ActiveHarvestersNotification<2>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Active_Harvesters_v2_Notification;
+
+	public:
+		ActiveHarvestersNotification(const Key& bootKey, const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
+			: BasicHarvestersNotification(pHarvesterKeys, harvesterKeysCount)
+			, BootKey(bootKey)
+		{}
+
+	public:
+		/// Boot key of the node where the harvesters are set up.
+		Key BootKey;
+	};
+
+	template<>
+	struct ActiveHarvestersNotification<3> :  public BasicHarvestersNotification<ActiveHarvestersNotification<3>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Active_Harvesters_v3_Notification;
+
+	public:
+		ActiveHarvestersNotification(const Key& bootKey, const Key* pHarvesterKeys, uint16_t harvesterKeysCount, BlockchainVersion blockchainVersion)
+			: BasicHarvestersNotification(pHarvesterKeys, harvesterKeysCount)
+			, BootKey(bootKey)
+			, BlockchainVersion(std::move(blockchainVersion))
+		{}
+
+	public:
+		/// Boot key of the node where the harvesters are set up.
+		Key BootKey;
+
+		/// Current software version running on the node.
+		catapult::BlockchainVersion BlockchainVersion;
+	};
+
+	template<>
+	struct ActiveHarvestersNotification<4> :  public BasicHarvestersNotification<ActiveHarvestersNotification<4>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Active_Harvesters_v4_Notification;
+
+	public:
+		ActiveHarvestersNotification(const Key& bootKey, const Key* pHarvesterKeys, uint16_t harvesterKeysCount, BlockchainVersion blockchainVersion)
+			: BasicHarvestersNotification(pHarvesterKeys, harvesterKeysCount)
+			, BootKey(bootKey)
+			, BlockchainVersion(std::move(blockchainVersion))
+		{}
+
+	public:
+		/// Boot key of the node where the harvesters are set up.
+		Key BootKey;
+
+		/// Current software version running on the node.
+		catapult::BlockchainVersion BlockchainVersion;
+	};
+
+	/// Notification of active harvesters.
+	template<VersionType version>
+	struct InactiveHarvestersNotification;
+
+	template<>
+	struct InactiveHarvestersNotification<1> :  public BasicHarvestersNotification<InactiveHarvestersNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Inactive_Harvesters_v1_Notification;
+
+	public:
+		InactiveHarvestersNotification(const Key* pHarvesterKeys, uint16_t harvesterKeysCount)
+			: BasicHarvestersNotification(pHarvesterKeys, harvesterKeysCount)
+		{}
+	};
+
+	template<VersionType version>
+	struct RemoveDbrbProcessByNetworkNotification;
+
+	template<>
+	struct RemoveDbrbProcessByNetworkNotification<1> : public Notification {
+	public:
+		static constexpr auto Notification_Type = Core_RemoveDbrbProcessByNetwork_v1_Notification;
+
+	public:
+		explicit RemoveDbrbProcessByNetworkNotification(const Key& processId, Timestamp timestamp, const Cosignature* votesPtr, uint16_t voteCount)
+			: Notification(Notification_Type, sizeof(RemoveDbrbProcessByNetworkNotification<1>))
+			, ProcessId(processId)
+			, Timestamp(std::move(timestamp))
+			, VotesPtr(votesPtr)
+			, VoteCount(voteCount)
+		{}
+
+	public:
+		/// The ID of the process to remove.
+		Key ProcessId;
+
+		/// The start time of vote collecting.
+		catapult::Timestamp Timestamp;
+
+		/// Votes.
+		const Cosignature* VotesPtr;
+
+		/// Vote count.
+		uint16_t VoteCount;
 	};
 
 	// endregion

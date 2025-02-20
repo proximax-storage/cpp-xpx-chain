@@ -21,7 +21,6 @@ Makefile
 build.sh
 compile_commands.json
 __pycache__
-data*/
 npm-*.log*
 .vscode/
 /build/
@@ -29,6 +28,7 @@ npm-*.log*
 .project
 .settings
 internal
+cmake-build*
 
 # IntelliJ project files
 .idea

@@ -35,6 +35,8 @@ namespace catapult { namespace state {
 
 		std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) override;
 
+		std::vector<CompletedModification> getCompletedModifications(const Key& driveKey) override;
+
         uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) override;
 
         bool downloadChannelExists(const Hash256& id) override;

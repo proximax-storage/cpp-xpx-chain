@@ -18,7 +18,8 @@ namespace catapult { namespace validators {
 	DEFINE_STORAGE_RESULT(Drive_Size_Insufficient, 1);
 
 	/// Desired number of replicators is less than minimal,
-	/// or offboarding of the replicator is not possible as drive's actual replicator count will become less than minimal.
+	/// or offboarding of the replicator is not possible as drive's actual replicator count will become less than minimal,
+	/// or there are not enough replicators on the drive.
 	DEFINE_STORAGE_RESULT(Replicator_Count_Insufficient, 2);
 
 	/// Desired replicator capacity is less than minimal.
@@ -162,17 +163,44 @@ namespace catapult { namespace validators {
 	/// Desired download size is greater than maximal.
 	DEFINE_STORAGE_RESULT(Download_Size_Excessive, 49);
 
+	/// Desired download size is less than minimal.
+	DEFINE_STORAGE_RESULT(Download_Size_Insufficient, 50);
+
 	/// Number of signatures in opinion-based multisignature transaction is less than minimal.
-	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 50);
+	DEFINE_STORAGE_RESULT(Signature_Count_Insufficient, 51);
 
 	/// The replicator has already applied for offboarding from the drive.
-	DEFINE_STORAGE_RESULT(Already_Applied_For_Offboarding, 51);
+	DEFINE_STORAGE_RESULT(Already_Applied_For_Offboarding, 52);
 
 	/// The replicator has already applied for offboarding from the drive.
-	DEFINE_STORAGE_RESULT(Already_Initiated_Channel_Closure, 52);
+	DEFINE_STORAGE_RESULT(Already_Initiated_Channel_Closure, 53);
 
 	/// Download channels is finished
-	DEFINE_STORAGE_RESULT(Download_Channel_Is_Finished, 53);
+	DEFINE_STORAGE_RESULT(Download_Channel_Is_Finished, 54);
+
+	/// Attempting to transfer a service unit.
+	DEFINE_STORAGE_RESULT(Service_Unit_Transfer, 55);
+
+	/// Validation failed because supercontract is already deployed.
+	DEFINE_STORAGE_RESULT(Owner_Management_Is_Forbidden, 56);
+
+	/// Validation failed because too many replicators have been ordered
+	DEFINE_STORAGE_RESULT(Replicator_Count_Exceeded, 57);
+
+	/// Modification not ready for approval
+	DEFINE_STORAGE_RESULT(Modification_Not_Ready_For_Approval, 58);
+
+	/// Modification upload size is invalid
+	DEFINE_STORAGE_RESULT(Modification_Invalid_Upload_Size, 59);
+
+	/// Boot key is already registered with other replicator
+	DEFINE_STORAGE_RESULT(Boot_Key_Is_Registered_With_Other_Replicator, 60);
+
+	/// No replicators to remove
+	DEFINE_STORAGE_RESULT(No_Replicators_To_Remove, 61);
+
+	/// Replicator is bound with a boot key
+	DEFINE_STORAGE_RESULT(Replicator_Is_Bound_With_Boot_Key, 62);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

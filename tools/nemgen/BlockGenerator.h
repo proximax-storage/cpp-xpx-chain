@@ -49,6 +49,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			model::NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
 			const uint64_t transactionPayloadSize,
+			NemesisTransactions* copyTransactions = nullptr,
 			VersionType version = model::Block::Current_Version);
 
 	void SignNemesisBlock(const GenerationHash& hash, const crypto::KeyPair& signer, model::Block& block, const NemesisTransactions& transactions);

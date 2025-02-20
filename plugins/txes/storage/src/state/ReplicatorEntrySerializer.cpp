@@ -16,7 +16,6 @@ namespace catapult { namespace state {
 			for (const auto& drivePair : drives) {
 				io::Write(output, drivePair.first);
 				io::Write(output, drivePair.second.LastApprovedDataModificationId);
-				io::Write8(output, drivePair.second.DataModificationIdIsValid);
 				io::Write64(output, drivePair.second.InitialDownloadWorkMegabytes);
 				io::Write64(output, drivePair.second.LastCompletedCumulativeDownloadWorkBytes);
 			}
@@ -30,7 +29,6 @@ namespace catapult { namespace state {
 
 				DriveInfo info;
 				io::Read(input, info.LastApprovedDataModificationId);
-				info.DataModificationIdIsValid = io::Read8(input);
 				info.InitialDownloadWorkMegabytes = io::Read64(input);
 				info.LastCompletedCumulativeDownloadWorkBytes = io::Read64(input);
 
@@ -72,7 +70,6 @@ namespace catapult { namespace state {
 	}
 
 	void ReplicatorEntrySerializer::Save(const ReplicatorEntry& replicatorEntry, io::OutputStream& output) {
-
 		io::Write32(output, replicatorEntry.version());
 		io::Write(output, replicatorEntry.key());
 
@@ -80,13 +77,14 @@ namespace catapult { namespace state {
 
 		SaveDrives(output, replicatorEntry.drives());
 		SaveDownloadChannels(output, replicatorEntry.downloadChannels());
+
+		if (replicatorEntry.version() > 1)
+			io::Write(output, replicatorEntry.nodeBootKey());
 	}
 
 	ReplicatorEntry ReplicatorEntrySerializer::Load(io::InputStream& input) {
-
-		// read version
 		VersionType version = io::Read32(input);
-		if (version > 1)
+		if (version > 2)
 			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ReplicatorEntry", version);
 
 		Key key;
@@ -98,6 +96,12 @@ namespace catapult { namespace state {
 
 		LoadDrives(input, entry.drives());
 		LoadDownloadChannels(input, entry.downloadChannels());
+
+		if (version > 1) {
+			Key nodeBootKey;
+			input.read(nodeBootKey);
+			entry.setNodeBootKey(nodeBootKey);
+		}
 
 		return entry;
 	}

@@ -21,6 +21,11 @@
 #pragma once
 #include "catapult/extensions/LocalNodeStateRef.h"
 #include "catapult/config/BlockchainConfiguration.h"
+#include "catapult/state/CatapultState.h"
+#include "catapult/io/BlockStorageCache.h"
+#include "catapult/cache/CatapultCache.h"
+#include "catapult/extensions/LocalNodeChainScore.h"
+#include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include <memory>
 #include <string>
@@ -31,6 +36,28 @@ namespace catapult { namespace test {
 
 	/// Local node test state.
 	class LocalNodeTestState {
+	private:
+		struct Impl {
+		public:
+			explicit Impl(config::BlockchainConfiguration&& config, cache::CatapultCache&& cache);
+
+			template<typename TNemesisDataType>
+			explicit Impl(config::BlockchainConfiguration&& config, cache::CatapultCache&& cache, const TNemesisDataType& data)
+				: m_config(std::move(config))
+				, m_cache(std::move(cache))
+				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>([=](){return mocks::CreateNemesisBlockElement(data);}), std::make_unique<mocks::MockMemoryBlockStorage>([=](){return mocks::CreateNemesisBlockElement(data);}))
+			{}
+
+		public:
+			extensions::LocalNodeStateRef ref();
+
+		private:
+			config::BlockchainConfiguration m_config;
+			state::CatapultState m_state;
+			cache::CatapultCache m_cache;
+			io::BlockStorageCache m_storage;
+			extensions::LocalNodeChainScore m_score;
+		};
 	public:
 		/// Creates default state around \a config.
 		explicit LocalNodeTestState(const model::NetworkConfiguration& config);
@@ -53,6 +80,11 @@ namespace catapult { namespace test {
 		/// Creates default state around \a config and \a cache.
 		explicit LocalNodeTestState(const config::BlockchainConfiguration& config, cache::CatapultCache&& cache);
 
+		template<typename TNemesisDataType>
+		explicit LocalNodeTestState(const config::BlockchainConfiguration& config, cache::CatapultCache&& cache, const TNemesisDataType& data)
+			: m_pImpl(std::make_unique<Impl>(config::BlockchainConfiguration(config), std::move(cache), data))
+		{}
+
 		/// Destroys the state.
 		~LocalNodeTestState();
 
@@ -61,7 +93,6 @@ namespace catapult { namespace test {
 		extensions::LocalNodeStateRef ref();
 
 	private:
-		struct Impl;
 		std::unique_ptr<Impl> m_pImpl;
 	};
 }}

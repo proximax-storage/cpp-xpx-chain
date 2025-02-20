@@ -52,10 +52,10 @@ namespace catapult {
 		/// Move constructor.
 		RootNamespaceHistory(RootNamespaceHistory&& history) = default;
 
-		RootNamespace& operator=(const RootNamespace& rhs) = delete;
-	private:
-		RootNamespaceHistory& operator=(const RootNamespaceHistory& rhs) = default;
+	public:
+		RootNamespaceHistory& operator=(const RootNamespaceHistory& history);
 
+		RootNamespace& operator=(const RootNamespace& rhs) = delete;
 
 	public:
 		/// Gets a value indicating whether or not the history is empty.
@@ -79,7 +79,7 @@ namespace catapult {
 
 	public:
 		/// Adds a new root namespace around \a owner and \a lifetime at the end of the history.
-		void push_back(const Key& owner, const NamespaceLifetime& lifetime);
+		void push_back(const Key& owner, const NamespaceLifetime& lifetime, bool setAliasOnRenew = true);
 
 		/// Removes the last entry in the history.
 		void pop_back();

@@ -6,6 +6,10 @@ option(SANITIZE_ADDRESS "Enable address sanitizer" OFF)
 option(SANITIZE_THREAD "Enable thread sanitizer" OFF)
 option(SANITIZE_UNDEFINED "Enable undefined behavior sanitizer" OFF)
 option(SIRIUS_DRIVE_MULTI "changes for sirius drive-multi" ON)
+option(XPX_STORAGE_SDK_NOT_BUILD_EXAMPLES "Not Build XPX-STORAGE SDK examples." ON)
+
+set(CPP_XPX_CHAIN ON)
+set(SKIP_SUPERCONTRACT ON)
 
 if (SIRIUS_DRIVE_MULTI)
 	add_definitions(-DSIRIUS_DRIVE_MULTI)
@@ -36,6 +40,21 @@ endif()
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
+### setup openssl
+message("--- locating openssl dependencies ---")
+
+find_package(OpenSSL 3.0.2 REQUIRED)
+message("OpenSSL   ver: ${OPENSSL_VERSION}")
+message("OpenSSL  root: ${OPENSSL_ROOT_DIR}")
+message("OpenSSL   inc: ${OPENSSL_INCLUDE_DIR}")
+message("OpenSSL  libs: ${OPENSSL_LIBRARIES}")
+
+# used to add openssl dependencies to a target
+function(catapult_add_openssl_dependencies TARGET_NAME)
+	include_directories(${OPENSSL_INCLUDE_DIR})
+	target_link_libraries(${TARGET_NAME} OpenSSL::SSL)
+endfunction()
+
 ### setup rocksdb
 message("--- locating rocksdb dependencies ---")
 if (WIN32)
@@ -64,10 +83,15 @@ endfunction()
 ### add source directories
 add_subdirectory(external)
 
+if(NOT APPLE)
+	set(DO_NOT_SKIP_BUILD_TESTS TRUE)
+endif()
+
 # run catapult tests first
 add_subdirectory(src)
+if(DO_NOT_SKIP_BUILD_TESTS)
 add_subdirectory(tests)
-
+endif()
 # run other tests second
 add_subdirectory(sdk)
 add_subdirectory(plugins)
@@ -83,6 +107,8 @@ endif()
 add_subdirectory(tools)
 
 # Help programs
+if(DO_NOT_SKIP_BUILD_TESTS)
 add_subdirectory(spammer)
+endif()
 
 add_subdirectory(cpp-xpx-storage-sdk)

@@ -39,6 +39,7 @@ namespace catapult { namespace config {
 						"storage",
 						{
 							{ "dataDirectory", "./db" },
+							{ "certificateDirectory", "./certificate" },
 							{ "pluginsDirectory", "./ext" }
 						}
 					}
@@ -63,6 +64,7 @@ namespace catapult { namespace config {
 
 				EXPECT_EQ("", config.DataDirectory);
 				EXPECT_EQ("", config.PluginsDirectory);
+				EXPECT_EQ("", config.CertificateDirectory);
 			}
 
 			static void AssertCustom(const UserConfiguration& config) {
@@ -71,6 +73,7 @@ namespace catapult { namespace config {
 
 				EXPECT_EQ("./db", config.DataDirectory);
 				EXPECT_EQ("./ext", config.PluginsDirectory);
+				EXPECT_EQ("./certificate", config.CertificateDirectory);
 			}
 		};
 	}

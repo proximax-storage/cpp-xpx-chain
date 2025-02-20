@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 include_directories(. ${CMAKE_BINARY_DIR})
 add_subdirectory(blockhashes)
+add_subdirectory(resources.rc)
 
 set(TARGET_NAME catapult.tools.nemgen)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")

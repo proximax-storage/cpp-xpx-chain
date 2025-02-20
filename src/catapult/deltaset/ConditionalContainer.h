@@ -231,6 +231,18 @@ namespace catapult { namespace deltaset {
 			}
 		}
 
+		std::vector<typename TKeyTraits::ValueType> getAll() const {
+			if (m_pContainer1) {
+				return m_pContainer1->getAll();
+			} else {
+				std::vector<typename TKeyTraits::ValueType> result;
+				for (const auto& element : *m_pContainer2)
+					result.template emplace_back(TKeyTraits::ToValue(element));
+
+				return result;
+			}
+		}
+
 	public:
 		/// Applies all changes in \a deltas to the underlying container.
 		void update(const DeltaElements<MemorySetType>& deltas) {

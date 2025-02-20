@@ -7,25 +7,63 @@
 #pragma once
 #include "catapult/types.h"
 #include <cmath>
+#include <utility>
 
 namespace catapult { namespace state {
 
 	struct AccountData {
 	public:
-		// Creates a account data around \a lastSigningBlockHeight, \a effectiveBalance, \a canHarvest,
-		// \a activity and \a greed.
-		explicit AccountData(
-				const Height& lastSigningBlockHeight,
-				const Importance& effectiveBalance,
+		AccountData(
+				Height lastSigningBlockHeight,
+				Importance effectiveBalance,
 				bool canHarvest,
-				double activity,
-				double greed)
-			: LastSigningBlockHeight(lastSigningBlockHeight)
-			, EffectiveBalance(effectiveBalance)
+				double activityObsolete,
+				double greedObsolete,
+				Timestamp expirationTime,
+				int64_t activity,
+				uint32_t feeInterest,
+				uint32_t feeInterestDenominator,
+				const Key& bootKey,
+				const BlockchainVersion& blockchainVersion,
+				const BlockDuration& banPeriod)
+			: LastSigningBlockHeight(std::move(lastSigningBlockHeight))
+			, EffectiveBalance(std::move(effectiveBalance))
 			, CanHarvest(canHarvest)
+			, ActivityObsolete(activityObsolete)
+			, GreedObsolete(greedObsolete)
+			, ExpirationTime(std::move(expirationTime))
 			, Activity(activity)
-			, Greed(greed)
+			, FeeInterest(feeInterest)
+			, FeeInterestDenominator(feeInterestDenominator)
+			, BootKey(bootKey)
+			, BlockchainVersion(blockchainVersion)
+			, BanPeriod(banPeriod)
 		{}
+
+	public:
+		/// Safely increases the account activity by \a delta.
+		/// If data overflow is detected then activity is set to maximum value.
+		void increaseActivity(int64_t delta) {
+			if (delta < 0) {
+				decreaseActivity(-delta);
+			} else if (Activity > 0 && std::numeric_limits<int64_t>::max() - Activity < delta) {
+				Activity = std::numeric_limits<int64_t>::max();
+			} else {
+				Activity += delta;
+			}
+		}
+
+		/// Safely decreases the account activity by \a delta.
+		/// If data underflow is detected then activity is set to minimum value.
+		void decreaseActivity(int64_t delta) {
+			if (delta < 0) {
+				increaseActivity(-delta);
+			} else if (Activity < 0 && Activity - std::numeric_limits<int64_t>::min() < delta) {
+				Activity = std::numeric_limits<int64_t>::min();
+			} else {
+				Activity -= delta;
+			}
+		}
 
 	public:
 		/// The latest height of the account signing a block.
@@ -37,50 +75,92 @@ namespace catapult { namespace state {
 		/// Whether the account is eligible harvester.
 		bool CanHarvest;
 
-		/// Account activity. Account weight is 1 / (1 + exp(-Activity)).
-		double Activity;
+		/// Obsolete account activity due to switching from double to uint64.
+		double ActivityObsolete;
 
-		/// The account greed.
-		double Greed;
+		/// Obsolete account greed due to switching from double to uint64.
+		double GreedObsolete;
+
+		/// The time after which the harvester is considered inactive and is not selected into committee.
+		Timestamp ExpirationTime;
+
+		/// Account activity. Account weight is 1 / (1 + exp(-Activity)).
+		int64_t Activity;
+
+		/// The part of the transaction fee harvester is willing to get.
+		/// From 0 up to FeeInterestDenominator. The customer gets
+		/// (FeeInterest / FeeInterestDenominator)'th part of the maximum transaction fee.
+		uint32_t FeeInterest;
+
+		/// Denominator of the transaction fee.
+		uint32_t FeeInterestDenominator;
+
+		/// Boot key of the node where the harvesters are set up.
+		Key BootKey;
+
+		/// Current software version running on the node.
+		catapult::BlockchainVersion BlockchainVersion;
+
+		/// Harvester ban period in blocks. Zero ban period means harvester is not banned.
+		BlockDuration BanPeriod;
 	};
 
 	// Committee entry.
 	class CommitteeEntry {
 	public:
-		// Creates a committee entry around \a key, \a lastSigningBlockHeight, \a effectiveBalance, \a canHarvest
-		//	\a activity and \a greed.
-		explicit CommitteeEntry(
+		CommitteeEntry(
 				const Key& key,
 				const Key& owner,
 				const Height& lastSigningBlockHeight,
 				const Importance& effectiveBalance,
 				bool canHarvest,
-				double activity,
-				double greed,
-				const Height& disabledHeight = Height(0))
+				double activityObsolete,
+				double greedObsolete,
+				Height disabledHeight = Height(0),
+				VersionType version = 1,
+				Timestamp expirationTime = Timestamp(0),
+				int64_t activity = 0u,
+				uint32_t feeInterest = 0u,
+				uint32_t feeInterestDenominator = 0u,
+				const Key& bootKey = Key(),
+				const BlockchainVersion& blockchainVersion = BlockchainVersion(0),
+				const BlockDuration& banPeriod = BlockDuration(0))
 			: m_key(key)
 			, m_owner(owner)
-			, m_disabledHeight(disabledHeight)
-			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activity, greed)
+			, m_disabledHeight(std::move(disabledHeight))
+			, m_data(lastSigningBlockHeight, effectiveBalance, canHarvest, activityObsolete, greedObsolete, std::move(expirationTime), activity, feeInterest, feeInterestDenominator, bootKey, blockchainVersion, banPeriod)
+			, m_version(version)
 		{}
 
 		// Creates a committee entry around \a key and \a data.
-		explicit CommitteeEntry(const Key& key, const Key& owner, const AccountData& data, const Height& disabledHeight = Height(0))
+		CommitteeEntry(const Key& key, const Key& owner, const AccountData& data, const Height& disabledHeight = Height(0), VersionType version = 1)
 			: m_key(key)
 			, m_owner(owner)
 			, m_disabledHeight(disabledHeight)
 			, m_data(data)
+			, m_version(version)
 		{}
 
 		// Creates a committee entry around \a key and \a data.
-		explicit CommitteeEntry(const Key& key, const Key& owner, AccountData&& data, const Height& disabledHeight = Height(0))
+		CommitteeEntry(const Key& key, const Key& owner, AccountData&& data, const Height& disabledHeight = Height(0), VersionType version = 1)
 			: m_key(key)
 			, m_owner(owner)
 			, m_disabledHeight(disabledHeight)
 			, m_data(std::move(data))
+			, m_version(version)
 		{}
 
 	public:
+		/// Gets the entry version.
+		VersionType version() const {
+			return m_version;
+		}
+
+		/// Sets the entry version.
+		void setVersion(VersionType version) {
+			m_version = version;
+		}
+
 		/// Gets the harvester public key.
 		const Key& key() const {
 			return m_key;
@@ -134,24 +214,98 @@ namespace catapult { namespace state {
 			m_data.CanHarvest = canHarvest;
 		}
 
+		/// Gets the account activity (obsolete).
+		double activityObsolete() const {
+			return m_data.ActivityObsolete;
+		}
+
+		/// Sets the account \a activityObsolete.
+		void setActivityObsolete(double activityObsolete) {
+			m_data.ActivityObsolete = activityObsolete;
+		}
+
+		/// Gets the account greed (obsolete).
+		double greedObsolete() const {
+			return m_data.GreedObsolete;
+		}
+
+		/// Sets the account \a greedObsolete.
+		void setGreedObsolete(double greedObsolete) {
+			m_data.GreedObsolete = greedObsolete;
+		}
+
+		const Timestamp& expirationTime() const {
+			return m_data.ExpirationTime;
+		}
+
+		void setExpirationTime(const Timestamp& expirationTime) {
+			m_data.ExpirationTime = expirationTime;
+		}
+
 		/// Gets the account activity.
-		double activity() const {
+		int64_t activity() const {
 			return m_data.Activity;
 		}
 
 		/// Sets the account \a activity.
-		void setActivity(double activity) {
+		void setActivity(int64_t activity) {
 			m_data.Activity = activity;
 		}
 
-		/// Gets the account greed.
-		double greed() const {
-			return m_data.Greed;
+		/// Gets the fee interest.
+		uint32_t feeInterest() const {
+			return m_data.FeeInterest;
 		}
 
-		/// Sets the account \a greed.
-		void setGreed(double greed) {
-			m_data.Greed = greed;
+		/// Sets \a feeInterest.
+		void setFeeInterest(uint32_t feeInterest) {
+			m_data.FeeInterest = feeInterest;
+		}
+
+		/// Gets the fee interest denominator.
+		uint32_t feeInterestDenominator() const {
+			return m_data.FeeInterestDenominator;
+		}
+
+		/// Sets \a feeInterestDenominator.
+		void setFeeInterestDenominator(uint32_t feeInterestDenominator) {
+			m_data.FeeInterestDenominator = feeInterestDenominator;
+		}
+
+		/// Gets the boot key.
+		const Key& bootKey() const {
+			return m_data.BootKey;
+		}
+
+		/// Sets the boot key.
+		void setBootKey(const Key& bootKey) {
+			m_data.BootKey = bootKey;
+		}
+
+		/// Gets the blockchain version.
+		const BlockchainVersion& blockchainVersion() const {
+			return m_data.BlockchainVersion;
+		}
+
+		/// Sets the blockchain version.
+		void setBlockchainVersion(const BlockchainVersion& version) {
+			m_data.BlockchainVersion = version;
+		}
+
+		/// Sets the harvester ban period.
+		void setBanPeriod(const BlockDuration& banPeriod) {
+			m_data.BanPeriod = banPeriod;
+		}
+
+		/// Decrements the harvester ban period by one.
+		void decrementBanPeriod() {
+			if (m_data.BanPeriod > BlockDuration(0))
+				m_data.BanPeriod = m_data.BanPeriod - BlockDuration(1);
+		}
+
+		/// Gets the harvester ban period.
+		const BlockDuration& banPeriod() const {
+			return m_data.BanPeriod;
 		}
 
 	private:
@@ -159,5 +313,6 @@ namespace catapult { namespace state {
 		Key m_owner;
 		Height m_disabledHeight;
 		AccountData m_data;
+		VersionType m_version;
 	};
 }}

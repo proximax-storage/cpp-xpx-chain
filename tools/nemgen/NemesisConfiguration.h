@@ -64,17 +64,26 @@ namespace catapult { namespace tools { namespace nemgen {
 		/// Nemesis signer private key.
 		std::string NemesisSignerPrivateKey;
 
+		/// Version of the nemesis account
+		uint32_t NemesisAccountVersion;
+
 		/// Cpp file header.
 		std::string CppFileHeader;
 
 		/// Cpp file path.
 		std::string CppFile;
 
+		/// Cpp variable name.
+		std::string CppVariableName;
+
 		/// Binary destination directory.
 		std::string BinDirectory;
 
-		/// Binary destination directory.
-		std::string DataDirectory;
+		/// Default resources path.
+		std::string ResourcesPath;
+
+		/// Reconstruction resources path.
+		std::string ReconstructionResourcesPath;
 
 		/// Map containing all namespace names.
 		NamespaceIdToNameMap NamespaceNames;

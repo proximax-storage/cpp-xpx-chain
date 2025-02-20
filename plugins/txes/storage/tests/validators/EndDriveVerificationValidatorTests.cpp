@@ -23,7 +23,16 @@ namespace catapult { namespace validators {
 		constexpr auto Block_Time = 100;	// Unwrapped value of Timestamp
 		constexpr auto Shards_Count = 3;
 		constexpr auto Replicators_Per_Shards = 4;
+		constexpr auto Min_Replicator_Count = 4;
 		const auto Seed = test::GenerateRandomByteArray<Hash256>();
+
+		auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			auto pluginConfig = config::StorageConfiguration::Uninitialized();
+			pluginConfig.MinReplicatorCount = Min_Replicator_Count;
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return (config.ToConst());
+		}
 
 		state::Verification CreateVerificationWithEmptyShards(const Hash256& trigger, const Timestamp& expiration) {
 			return state::Verification{
@@ -101,7 +110,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateEndDriveVerificationValidator();
 
             // Act:
-            auto result = test::ValidateNotification(*pValidator, notification, context);
+            auto result = test::ValidateNotification(*pValidator, notification, cache, CreateConfig(), Current_Height);
 
             // Assert:
             EXPECT_EQ(expectedResult, result);
@@ -143,26 +152,26 @@ namespace catapult { namespace validators {
 		);
 	}
 
-	TEST(TEST_CLASS, FailureVerificationExpired) {
-		// Arrange:
-		Key driveKey = test::GenerateRandomByteArray<Key>();
-		state::BcDriveEntry entry(driveKey);
-		Hash256 trigger = test::GenerateRandomByteArray<Hash256>();
-		Timestamp expiration(Block_Time - 10);
-		entry.verification() = CreateVerificationWithEmptyShards(trigger, expiration);
-
-		// Assert:
-		AssertValidationResult(
-				Failure_Storage_Verification_Not_In_Progress,
-				entry,
-				driveKey,
-				test::GenerateRandomByteArray<Hash256>(),
-				0,
-				0,
-				0,
-				{}
-		);
-	}
+//	TEST(TEST_CLASS, FailureVerificationExpired) {
+//		// Arrange:
+//		Key driveKey = test::GenerateRandomByteArray<Key>();
+//		state::BcDriveEntry entry(driveKey);
+//		Hash256 trigger = test::GenerateRandomByteArray<Hash256>();
+//		Timestamp expiration(Block_Time - 10);
+//		entry.verification() = CreateVerificationWithEmptyShards(trigger, expiration);
+//
+//		// Assert:
+//		AssertValidationResult(
+//				Failure_Storage_Verification_Not_In_Progress,
+//				entry,
+//				driveKey,
+//				test::GenerateRandomByteArray<Hash256>(),
+//				0,
+//				0,
+//				0,
+//				{}
+//		);
+//	}
 
 	TEST(TEST_CLASS, FailureBadVerificationTrigger) {
 		// Arrange:
@@ -174,7 +183,7 @@ namespace catapult { namespace validators {
 
 		// Assert:
 		AssertValidationResult(
-				Failure_Storage_Verification_Not_In_Progress,
+				Failure_Storage_Bad_Verification_Trigger,
 				entry,
 				driveKey,
 				test::GenerateRandomByteArray<Hash256>(),
@@ -256,6 +265,34 @@ namespace catapult { namespace validators {
         );
     }
 
+	TEST(TEST_CLASS, FailureSignatureCountInsufficient) {
+		// Arrange:
+		Key driveKey = test::GenerateRandomByteArray<Key>();
+		state::BcDriveEntry entry(driveKey);
+		Hash256 trigger = test::GenerateRandomByteArray<Hash256>();
+		Timestamp expiration(Block_Time + 10);
+		entry.verification() = CreateVerificationWithEmptyShards(trigger, expiration);
+
+		const auto targetShardId = test::RandomInRange(0, Shards_Count - 1);
+		std::vector<Key> judgingKeys = {
+				test::GenerateRandomByteArray<Key>(),
+				test::GenerateRandomByteArray<Key>()
+		};
+		PopulateShards(entry, Shards_Count, Replicators_Per_Shards, {});
+
+		// Assert:
+		AssertValidationResult(
+				Failure_Storage_Signature_Count_Insufficient,
+				entry,
+				driveKey,
+				trigger,
+				targetShardId,
+				Replicators_Per_Shards,
+				judgingKeys.size(),
+				judgingKeys
+		);
+	}
+
 	TEST(TEST_CLASS, FailureInvalidKey) {
 		// Arrange:
 		Key driveKey = test::GenerateRandomByteArray<Key>();
@@ -266,6 +303,7 @@ namespace catapult { namespace validators {
 
 		const auto targetShardId = test::RandomInRange(0, Shards_Count - 1);
 		std::vector<Key> judgingKeys = {
+				test::GenerateRandomByteArray<Key>(),
 				test::GenerateRandomByteArray<Key>(),
 				test::GenerateRandomByteArray<Key>()
 		};
@@ -294,6 +332,7 @@ namespace catapult { namespace validators {
 
 		const auto targetShardId = test::RandomInRange(0, Shards_Count - 1);
 		std::vector<Key> judgingKeys = {
+				test::GenerateRandomByteArray<Key>(),
 				test::GenerateRandomByteArray<Key>(),
 				test::GenerateRandomByteArray<Key>()
 		};

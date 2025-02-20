@@ -40,7 +40,7 @@ namespace catapult { namespace io {
 	public:
 		/// Creates a file-based block storage, where blocks will be stored inside \a dataDirectory
 		/// with specified storage \a mode.
-		explicit FileBlockStorage(const std::string& dataDirectory, FileBlockStorageMode mode = FileBlockStorageMode::Hash_Index);
+		explicit FileBlockStorage(const std::string& dataDirectory, Height nemesisHeight, FileBlockStorageMode mode = FileBlockStorageMode::Hash_Index);
 
 	public:
 		// LightBlockStorage
@@ -63,7 +63,7 @@ namespace catapult { namespace io {
 	protected:
 		class HashFile final {
 		public:
-			explicit HashFile(const std::string& dataDirectory);
+			explicit HashFile(const std::string& dataDirectory, Height nemesisHeight);
 
 			model::HashRange loadHashesFrom(Height height, size_t numHashes) const;
 			void save(Height height, const Hash256& hash);
@@ -74,12 +74,13 @@ namespace catapult { namespace io {
 
 			// used for caching inside save()
 			uint64_t m_cachedDirectoryId;
+			Height m_zeroHeight;
 			std::unique_ptr<RawFile> m_pCachedHashFile;
 		};
 
 		std::string m_dataDirectory;
 		FileBlockStorageMode m_mode;
-
+		Height m_zeroHeight;
 		HashFile m_hashFile;
 		IndexFile m_indexFile;
 	};

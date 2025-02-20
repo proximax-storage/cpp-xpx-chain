@@ -34,6 +34,9 @@ namespace catapult { namespace config {
 		/// Minimal number of replicators.
 		uint16_t MinReplicatorCount;
 
+		/// Maximal number of replicators
+		uint16_t MaxReplicatorCount;
+
 		/// Max size to download files for free
 		utils::FileSize MaxFreeDownloadSize;
 
@@ -60,6 +63,9 @@ namespace catapult { namespace config {
 
 		/// The verification expiration constant.
 		double VerificationExpirationConstant;
+
+		/// Whether binding replicators to boot keys enabled.
+		bool EnableReplicatorBootKeyBinding;
 
 	private:
 		StorageConfiguration() = default;

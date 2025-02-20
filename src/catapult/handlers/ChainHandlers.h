@@ -62,5 +62,6 @@ namespace catapult { namespace handlers {
 	void RegisterPullBlocksHandler(
 			ionet::ServerPacketHandlers& handlers,
 			const io::BlockStorageCache& storage,
-			const PullBlocksHandlerConfiguration& config);
+			const PullBlocksHandlerConfiguration& config,
+			ionet::PacketType responseType = ionet::PacketType::Pull_Blocks);
 }}

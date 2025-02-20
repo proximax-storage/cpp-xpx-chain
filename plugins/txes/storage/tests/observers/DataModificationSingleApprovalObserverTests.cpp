@@ -36,8 +36,7 @@ namespace catapult { namespace observers {
                 		test::GenerateRandomByteArray<Hash256>(), driveOwnerKey,
                 		test::GenerateRandomByteArray<Hash256>(), test::Random()
 					},
-					state::DataModificationState::Succeeded
-            });
+					state::DataModificationApprovalState::Approved, 0U});
 			entry.confirmedUsedSizes().emplace(
 					replicatorKey,
 					test::RandomInRange<uint64_t>(0, Used_Drive_Size-1)
@@ -67,7 +66,6 @@ namespace catapult { namespace observers {
 		state::ReplicatorEntry CreateExpectedReplicatorEntry(state::ReplicatorEntry entry, const Hash256& dataModificationId) {
 			auto& driveInfo = entry.drives().begin()->second;
 			driveInfo.LastApprovedDataModificationId = dataModificationId;
-			driveInfo.DataModificationIdIsValid = true;
 			driveInfo.InitialDownloadWorkMegabytes = 0;
 			return entry;
 		}

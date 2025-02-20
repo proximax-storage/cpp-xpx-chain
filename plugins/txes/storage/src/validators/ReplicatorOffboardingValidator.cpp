@@ -32,14 +32,9 @@ namespace catapult { namespace validators {
 			return Failure_Storage_Drive_Not_Assigned_To_Replicator;
 
 		// Check if the replicator hasn't applied for offboarding
-		if (pDriveEntry->offboardingReplicators().count(notification.PublicKey))
+		const auto& keys = pDriveEntry->offboardingReplicators();
+		if (std::find(keys.begin(), keys.end(), notification.PublicKey) != keys.end())
 		  	return Failure_Storage_Already_Applied_For_Offboarding;
-
-	  	// Check if the drive will be able to function after another replicator offboards
-		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
-		const auto nonOffboardingCount = pDriveEntry->replicators().size() - pDriveEntry->offboardingReplicators().size();
-	  	if (nonOffboardingCount - 1 < pluginConfig.MinReplicatorCount*2 / 3 + 1)
-		  	return Failure_Storage_Replicator_Count_Insufficient;
 
 		return ValidationResult::Success;
 	});

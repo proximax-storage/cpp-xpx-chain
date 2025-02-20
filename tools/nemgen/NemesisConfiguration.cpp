@@ -192,6 +192,10 @@ namespace catapult { namespace tools { namespace nemgen {
 		LOAD_NEMESIS_PROPERTY(NemesisSignerPrivateKey);
 
 #undef LOAD_NEMESIS_PROPERTY
+#define TRY_LOAD_NEMESIS_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "nemesis", #NAME, config.NAME)
+		config.NemesisAccountVersion = 1;
+		TRY_LOAD_NEMESIS_PROPERTY(NemesisAccountVersion);
+
 
 #define LOAD_CPP_PROPERTY(NAME) LOAD_PROPERTY("cpp", NAME)
 
@@ -203,7 +207,8 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		LOAD_OUTPUT_PROPERTY(CppFile);
 		LOAD_OUTPUT_PROPERTY(BinDirectory);
-		LOAD_OUTPUT_PROPERTY(DataDirectory);
+		LOAD_OUTPUT_PROPERTY(ResourcesPath);
+		LOAD_OUTPUT_PROPERTY(ReconstructionResourcesPath);
 		LOAD_OUTPUT_PROPERTY(AccountEquivalenceFile);
 
 #undef LOAD_OUTPUT_PROPERTY
@@ -215,7 +220,10 @@ namespace catapult { namespace tools { namespace nemgen {
 		LOAD_OUTPUT_PROPERTY(EnableSpool);
 
 #undef LOAD_OUTPUT_PROPERTY
-
+#define TRY_LOAD_OUTPUT_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "output", #NAME, config.NAME)
+		config.CppVariableName = "MemoryBlockStorage_NemesisBlockData";
+		TRY_LOAD_OUTPUT_PROPERTY(CppVariableName);
+#undef TRY_LOAD_OUTPUT_PROPERTY
 		// the nemesis account owns all namespaces and mosaic definitions in the configuration
 		auto owner = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey).publicKey();
 
@@ -227,7 +235,7 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		auto numHarvesters = LoadHarvesters(bag, config);
 
-		utils::VerifyBagSizeLte(bag, 6 + numNamespaceProperties + numMosaicProperties + numHarvesters);
+		utils::VerifyBagSizeLte(bag, 7 + numNamespaceProperties + numMosaicProperties + numHarvesters);
 		return config;
 	}
 }}}

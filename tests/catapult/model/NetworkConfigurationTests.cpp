@@ -85,7 +85,22 @@ namespace catapult { namespace model {
 							{ "committeeTimeAdjustment", "1.1" },
 							{ "committeeEndSyncApproval", "0.45" },
 							{ "committeeBaseTotalImportance", "100" },
-							{ "committeeNotRunningContribution", "0.5" }
+							{ "committeeNotRunningContribution", "0.5" },
+
+							{ "dbrbRegistrationDuration", "24h" },
+							{ "dbrbRegistrationGracePeriod", "1h" },
+
+							{ "enableHarvesterExpiration", "false" },
+							{ "enableRemovingDbrbProcessOnShutdown", "false" },
+
+							{ "enableDbrbSharding", "false" },
+							{ "dbrbShardSize", "6" },
+						}
+					},
+					{
+						"bootstrap.harvesters",
+						{
+							{ "E8D4B7BEB2A531ECA8CC7FD93F79A4C828C24BE33F99CF7C5609FF5CE14605F4", "E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21, A384FBAAADBFF0405DDA0212D8A6C85F9164A08C24AFD15425927BCB274A45D4" },
 						}
 					},
 					{
@@ -129,7 +144,14 @@ namespace catapult { namespace model {
 					"committeeTimeAdjustment",
 					"committeeEndSyncApproval",
 					"committeeBaseTotalImportance",
-					"committeeNotRunningContribution"
+					"committeeNotRunningContribution",
+
+					"dbrbRegistrationDuration",
+					"dbrbRegistrationGracePeriod",
+					"enableHarvesterExpiration",
+					"enableRemovingDbrbProcessOnShutdown",
+					"enableDbrbSharding",
+					"dbrbShardSize"
 				}.count(name);
 			}
 
@@ -170,6 +192,18 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteeRequestInterval);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteeChainHeightRequestInterval);
 				EXPECT_EQ(0.0, config.CommitteeTimeAdjustment);
+				EXPECT_EQ(0.0, config.CommitteeEndSyncApproval);
+				EXPECT_EQ(0, config.CommitteeBaseTotalImportance);
+				EXPECT_EQ(0.0, config.CommitteeNotRunningContribution);
+
+				EXPECT_EQ(utils::TimeSpan::FromHours(0), config.DbrbRegistrationDuration);
+				EXPECT_EQ(utils::TimeSpan::FromHours(0), config.DbrbRegistrationGracePeriod);
+
+				EXPECT_EQ(false, config.EnableHarvesterExpiration);
+				EXPECT_EQ(false, config.EnableRemovingDbrbProcessOnShutdown);
+
+				EXPECT_EQ(false, config.EnableDbrbSharding);
+				EXPECT_EQ(0, config.DbrbShardSize);
 
 				EXPECT_TRUE(config.Plugins.empty());
 			}
@@ -211,6 +245,18 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(500), config.CommitteeRequestInterval);
 				EXPECT_EQ(utils::TimeSpan::FromSeconds(30), config.CommitteeChainHeightRequestInterval);
 				EXPECT_EQ(1.1, config.CommitteeTimeAdjustment);
+				EXPECT_EQ(0.45, config.CommitteeEndSyncApproval);
+				EXPECT_EQ(100, config.CommitteeBaseTotalImportance);
+				EXPECT_EQ(0.5, config.CommitteeNotRunningContribution);
+
+				EXPECT_EQ(utils::TimeSpan::FromHours(24), config.DbrbRegistrationDuration);
+				EXPECT_EQ(utils::TimeSpan::FromHours(1), config.DbrbRegistrationGracePeriod);
+
+				EXPECT_EQ(false, config.EnableHarvesterExpiration);
+				EXPECT_EQ(false, config.EnableRemovingDbrbProcessOnShutdown);
+
+				EXPECT_EQ(false, config.EnableDbrbSharding);
+				EXPECT_EQ(6, config.DbrbShardSize);
 
 				EXPECT_EQ(2u, config.Plugins.size());
 				const auto& pluginAlphaBag = config.Plugins.find("alpha")->second;

@@ -19,7 +19,7 @@ namespace catapult { namespace observers {
 		auto& completedDataModifications = driveEntry.completedDataModifications();
 		auto& activeDataModifications = driveEntry.activeDataModifications();
 
-		completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationState::Succeeded);
+		completedDataModifications.emplace_back(*activeDataModifications.begin(), state::DataModificationApprovalState::Approved, notification.ModificationStatus);
 		activeDataModifications.erase(activeDataModifications.begin());
 
 		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
@@ -31,16 +31,15 @@ namespace catapult { namespace observers {
 		}
 
 		for (auto& [key, info]: driveEntry.confirmedStorageInfos()) {
-			if (info.m_confirmedStorageSince) {
-				info.m_timeInConfirmedStorage = info.m_timeInConfirmedStorage
-												+ context.Timestamp - *info.m_confirmedStorageSince;
+			if (info.ConfirmedStorageSince) {
+				info.TimeInConfirmedStorage = info.TimeInConfirmedStorage + context.Timestamp - *info.ConfirmedStorageSince;
 			}
-			info.m_confirmedStorageSince.reset();
+			info.ConfirmedStorageSince.reset();
 		}
 
 		for(int i = 0; i < notification.JudgingKeysCount + notification.OverlappingKeysCount; i++) {
 			const auto& key = notification.PublicKeysPtr[i];
-			driveEntry.confirmedStorageInfos()[key].m_confirmedStorageSince = context.Timestamp;
+			driveEntry.confirmedStorageInfos()[key].ConfirmedStorageSince = context.Timestamp;
 		}
 
 		const auto totalJudgingKeysCount = notification.JudgingKeysCount + notification.OverlappingKeysCount;
@@ -48,6 +47,7 @@ namespace catapult { namespace observers {
 			driveEntry.confirmedUsedSizes()[notification.PublicKeysPtr[i]] = notification.UsedDriveSize;
 
 		driveEntry.setRootHash(notification.FileStructureCdi);
+		driveEntry.setLastModificationId(completedDataModifications.back().Id);
 		driveEntry.setUsedSizeBytes(notification.UsedDriveSize);
 		driveEntry.setMetaFilesSizeBytes(notification.MetaFilesSize);
 

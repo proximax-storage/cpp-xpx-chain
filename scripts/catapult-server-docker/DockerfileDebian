@@ -1,4 +1,4 @@
-FROM debian:bullseye-20210816
+FROM debian:bookworm AS basic
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
   software-properties-common \
@@ -26,33 +26,25 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libboost-program-options-dev \
   libboost-stacktrace-dev \
   libboost-random-dev \
+  libmongoc-1.0-0 \
   libmongoc-dev \
   libzstd-dev \
   googletest \
-  libzmq3-dev
+  libzmq3-dev \
+  cppzmq-dev
 
 WORKDIR /usr/local/src
 
-# Install cppzmq
-RUN curl -OL https://github.com/zeromq/cppzmq/archive/v4.7.1.tar.gz && \
-  tar xzf v4.7.1.tar.gz && \
-  cd cppzmq-4.7.1 && \
-  mkdir build && \
-  cd build && \
-  cmake -DCPPZMQ_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. && \
-  make -j4 && \
-  make install
-
 # Install mongo-cxx
-RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.2/mongo-cxx-driver-r3.6.2.tar.gz && \
-  tar -xzf mongo-cxx-driver-r3.6.2.tar.gz && \
-  cd mongo-cxx-driver-r3.6.2/build && \
+RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.7/mongo-cxx-driver-r3.6.7.tar.gz && \
+  tar -xzf mongo-cxx-driver-r3.6.7.tar.gz && \
+  cd mongo-cxx-driver-r3.6.7/build && \
   cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBSONCXX_POLY_USE_BOOST=1 .. && \
-  make -j4 && \
+  make -j$(nproc) && \
   make install
 
 # Clean Downloads
-RUN rm v4.7.1.tar.gz mongo-cxx-driver-r3.6.2.tar.gz
+RUN rm mongo-cxx-driver-r3.6.7.tar.gz
 
 # Copy local directory to image
 COPY . /catapult
@@ -72,17 +64,22 @@ RUN cd /catapult \
     catapult.mongo.plugins.committee \
     catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
+    catapult.mongo.plugins.dbrb \
     catapult.mongo.plugins.exchange \
+    catapult.mongo.plugins.exchangesda \
+    catapult.mongo.plugins.liquidityprovider \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
     catapult.mongo.plugins.metadata \
-    catapult.mongo.plugins.metadata_nem \
+    catapult.mongo.plugins.metadata_v2 \
     catapult.mongo.plugins.mosaic \
     catapult.mongo.plugins.multisig \
     catapult.mongo.plugins.namespace \
     catapult.mongo.plugins.operation \
     catapult.mongo.plugins.property \
     catapult.mongo.plugins.service \
+    catapult.mongo.plugins.storage \
+    catapult.mongo.plugins.streaming \
     catapult.mongo.plugins.supercontract \
     catapult.mongo.plugins.transfer \
     catapult.mongo.plugins.upgrade \
@@ -91,13 +88,16 @@ RUN cd /catapult \
     catapult.plugins.committee \
     catapult.plugins.config \
     catapult.plugins.contract \
+    catapult.plugins.dbrb \
     catapult.plugins.exchange \
+    catapult.plugins.exchangesda \
     catapult.plugins.hashcache \
     catapult.plugins.hashcache.cache \
+    catapult.plugins.liquidityprovider \
     catapult.plugins.lockhash \
     catapult.plugins.locksecret \
     catapult.plugins.metadata \
-    catapult.plugins.metadata_nem \
+    catapult.plugins.metadata_v2 \
     catapult.plugins.mosaic \
     catapult.plugins.multisig \
     catapult.plugins.namespace \
@@ -105,9 +105,11 @@ RUN cd /catapult \
     catapult.plugins.property \
     catapult.plugins.service \
     catapult.plugins.signature \
+    catapult.plugins.storage \
+    catapult.plugins.streaming \
     catapult.plugins.supercontract \
     catapult.plugins.transfer \
-    catapult.plugins.upgrade \    
+    catapult.plugins.upgrade \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
@@ -121,13 +123,27 @@ RUN cd /catapult \
     extension.packetserver \
     extension.partialtransaction \
     extension.pluginhandlers \
+    extension.storage \
     extension.sync \
     extension.syncsource \
     extension.timesync \
     extension.transactionsink \
     extension.unbondedpruning \
     extension.zeromq \
-    -j 4
+    torrent-sirius \
+    replicator-service \
+    api \
+    connection \
+    drive \
+    ionet \
+    model \
+    net \
+    nodediscovery \
+    sdk_external \
+    storage-crypto \
+    torrent-sirius \
+    utils \
+    -j$(nproc)
 
 RUN cd /catapult/_build && make \
 # Catapult
@@ -141,37 +157,26 @@ RUN cd /catapult/_build && make \
     catapult.tools.nemgen.blockhashes \
     catapult.tools.network \
     catapult.tools.statusgen \
-    -j 4
+    -j$(nproc)
 
 # script for copying required libs to temporary folder /deps
 RUN /catapult/scripts/release-script/copyDeps.sh /catapult/_build/bin/ /deps
+WORKDIR /deps/sirius
+RUN cp -r /catapult/_build/lib /deps/sirius/ && \
+    rm -rf /deps/home
 
 #------------------------
 # Actual target image which only contains the required binaries
 #------------------------
-FROM debian:bullseye-slim
+FROM debian:bookworm
 
 # copy required libs
-COPY --from=0 /deps /
-
-RUN apt-get update && apt-get install --no-install-recommends -y \
-  libboost-atomic-dev \
-  libboost-date-time-dev \
-  libboost-regex-dev \
-  libboost-system-dev \
-  libboost-timer-dev \
-  libboost-chrono-dev \
-  libboost-log-dev \
-  libboost-thread-dev \
-  libboost-filesystem-dev \
-  libboost-program-options-dev \
-  libboost-stacktrace-dev \
-  libboost-random-dev \
-  libzstd-dev \
-  librocksdb6.11 
+COPY --from=basic /deps/sirius/ /sirius/
+COPY --from=basic /deps/usr/ /usr/
+COPY --from=basic /deps/lib/ /lib/
 
 # copy executables
-COPY --from=0 /catapult/_build/bin /sirius/bin
+COPY --from=basic /catapult/_build/bin /sirius/bin
 
 # sirius.bc as the entry point
 ENTRYPOINT ["/sirius/bin/sirius.bc"]

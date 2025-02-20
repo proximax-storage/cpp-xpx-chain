@@ -13,12 +13,16 @@ namespace catapult { namespace notification_handlers {
 	DECLARE_HANDLER(DataModification, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
 		return MAKE_HANDLER(DataModification, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
-			if (!pReplicatorService)
+			if (!pReplicatorService) {
 				return;
+			}
 
 			// If we do not perform this check, we will try to read from database non-existing information
 			if (!pReplicatorService->driveExists(notification.DriveKey)) {
+				// During the modification Replicator could be assigned
+				// to some download channels of the already non-existing drive
 				pReplicatorService->updateReplicatorDownloadChannels();
+				pReplicatorService->maybeRestart();
 				return;
 			}
 
@@ -54,8 +58,9 @@ namespace catapult { namespace notification_handlers {
 				// We were deleted from the Drive with the transaction
 				pReplicatorService->removeDrive(notification.DriveKey);
 				pReplicatorService->updateDriveDownloadChannels(notification.DriveKey);
-				// In order to increase efficiency maybe it is needed to removed all channels and not update
+				// In order to increase efficiency maybe it is needed to remove all channels and not update
 			}
+			pReplicatorService->maybeRestart();
 		});
 	}
 }}

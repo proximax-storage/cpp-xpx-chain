@@ -27,6 +27,7 @@
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PeersConnectionTasks.h"
 #include "catapult/extensions/SynchronizerTaskCallbacks.h"
+#include "catapult/io/BlockStorageCache.h"
 
 namespace catapult { namespace sync {
 
@@ -69,7 +70,9 @@ namespace catapult { namespace sync {
 					state,
 					task.Name);
 			task.Callback = [&state, synchronizerTaskCallback]() {
-				if (state.config().Network.EnableBlockSync)
+				const auto& config = state.config();
+				const auto& nextConfig = state.config(state.storage().view().chainHeight() + Height(1));
+				if (config.Network.EnableBlockSync && nextConfig.Network.EnableBlockSync)
 					return synchronizerTaskCallback();
 
 				return thread::make_ready_future(thread::TaskResult::Continue);
@@ -83,7 +86,8 @@ namespace catapult { namespace sync {
 						return config::GetMinFeeMultiplier(pConfigHolder->Config());
 					},
 					[&cache = state.utCache()]() { return cache.view().shortHashes(); },
-					state.hooks().transactionRangeConsumerFactory()(Sync_Source));
+					state.hooks().transactionRangeConsumerFactory()(Sync_Source),
+					state.config().Node.TransactionBatchSize);
 
 			thread::Task task;
 			task.Name = "pull unconfirmed transactions task";

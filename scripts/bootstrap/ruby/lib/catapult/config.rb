@@ -25,10 +25,11 @@ module Catapult
     include Paths::Mixin
     extend Paths::ClassMixin
 
-    def initialize(type, input_attributes, template_attributes)
+    def initialize(type, input_attributes, template_attributes, work_dir)
       @type                  = type
       @config_info_dir       = self.class.config_info_dir
       @template_attributes   = template_attributes
+      @work_dir = work_dir
       # gets dynamically updated
       @ndx_config_files = {} #@ndx_config_files is indexed by Global.component_name(node_type, index)
     end
@@ -41,17 +42,17 @@ module Catapult
       rest_gateway: 1
     }
 
-    def self.generate_and_write_configurations(keys, base_config_target_dir, nemesis_dir)
+    def self.generate_and_write_configurations(keys, base_config_target_dir, nemesis_dir, work_dir)
       ndx_config_files = {}
-      ndx_config_files.merge!(CatapultNode::PeerNode.generate(keys: keys))
-      ndx_config_files.merge!(CatapultNode::ApiNode.generate(keys: keys))
-      ndx_config_files.merge!(RestGateway.generate(keys: keys))
+      ndx_config_files.merge!(CatapultNode::PeerNode.generate({keys: keys}, work_dir))
+      ndx_config_files.merge!(CatapultNode::ApiNode.generate({keys: keys}, work_dir))
+      ndx_config_files.merge!(RestGateway.generate({keys: keys}, work_dir))
       write_out_config_files(ndx_config_files, base_config_target_dir)
-      NemesisPropertiesFile.generate_and_write_nemesis_properties_file(keys, nemesis_dir)
+      NemesisPropertiesFile.generate_and_write_nemesis_properties_file(keys, nemesis_dir, work_dir)
     end
 
-    def self.generate(input_attributes)
-      new(input_attributes).generate
+    def self.generate(input_attributes, work_dir)
+      new(input_attributes, work_dir).generate
     end
 
     def generate
@@ -74,7 +75,7 @@ module Catapult
 
     protected
 
-    attr_reader :type, :input_attributes, :config_info_dir, :template_attributes, :ndx_config_files
+    attr_reader :type, :input_attributes, :config_info_dir, :template_attributes, :ndx_config_files, :work_dir
 
     def cardinality
       @cardinality ||= self.class.cardinality(self.type)
@@ -105,7 +106,7 @@ module Catapult
         template_path = pair.source_path
         template      = File.open(template_path).read
         self.component_indexes.each do |index|
-          instantiated_template = Catapult.bind_mustache_variables(template, self.template_attributes.hash(index))
+          instantiated_template = Catapult.bind_mustache_variables(template, self.template_attributes.hash(index, self.work_dir))
           path = relative_path(:config_file, pair.filename)
           add_config_file!(index, path, instantiated_template)
         end

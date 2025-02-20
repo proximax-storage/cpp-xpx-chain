@@ -23,6 +23,9 @@ namespace catapult { namespace state {
 		Hash256 DownloadDataCdi;
 		uint64_t ExpectedUploadSize;
 		uint64_t ActualUploadSize;
+		std::string FolderName;
+		bool ReadyForApproval;
+		bool IsStream;
 	};
 
 	struct ApprovedDataModification : DataModification {
@@ -53,7 +56,7 @@ namespace catapult { namespace state {
 		uint32_t Duration;
 		bool Expired;
 		Hash256 VerificationTrigger;
-		Hash256 RootHash;
+		Hash256 ModificationId;
 		std::vector<std::set<Key>> Shards;
 	};
 
@@ -61,6 +64,16 @@ namespace catapult { namespace state {
 		std::map<Key, uint64_t> m_actualShardMembers;
 		std::map<Key, uint64_t> m_formerShardMembers;
 		uint64_t m_ownerUpload = 0;
+	};
+
+	struct CompletedModification {
+
+		enum class CompletionStatus {
+			APPROVED, CANCELLED
+		};
+
+		Hash256 			ModificationId;
+		CompletionStatus    Status;
 	};
 
 	/// Interface for storage state.
@@ -107,6 +120,8 @@ namespace catapult { namespace state {
 //		virtual SizeMap getCumulativeUploadSizesBytes(const Key& driveKey, const Key& replicatorKey) = 0;
 
         virtual std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) = 0;
+
+		virtual std::vector<CompletedModification> getCompletedModifications(const Key& driveKey) = 0;
 
 		virtual uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) = 0;
 

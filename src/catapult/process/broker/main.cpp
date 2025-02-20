@@ -21,6 +21,7 @@
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "catapult/local/broker/Broker.h"
 #include "catapult/process/ProcessMain.h"
+#include "catapult/config/ValidateConfiguration.h"
 
 namespace {
 	constexpr auto Process_Name = "broker";
@@ -36,7 +37,13 @@ namespace {
 
 int main(int argc, const char** argv) {
 	using namespace catapult;
-	return process::ProcessMain(argc, argv, Process_Name, [argc, argv](const auto& pConfigHolder, const auto&) {
+	return process::ProcessMain(argc, argv, Process_Name, [](const boost::filesystem::path& path, const std::string& host){
+				auto config = config::BlockchainConfiguration::LoadFromPath(path, host);
+				auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
+				config::ValidateConfiguration(config);
+				return pConfigHolder;
+			},
+			[argc, argv](const auto& pConfigHolder, const auto&) {
 		// create bootstrapper
 		OptimizeConfigurationForBroker(pConfigHolder->Config());
 		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(argc, argv).generic_string();

@@ -10,11 +10,12 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "src/cache/NamespaceCache.h"
 #include "src/cache/MetadataV1Cache.h"
+#include "src/cache/MosaicCache.h"
 
 namespace catapult { namespace utils {
 
 	namespace detail {
-		template<typename TCache, typename TSerializer>
+		template<typename TCache, typename TDescriptor>
 		struct CacheConversionFunctions {
 			static void Insert(typename TCache::CacheDeltaType& delta, const typename TCache::CacheValueType& value) {
 				delta.insert(value);
@@ -24,8 +25,8 @@ namespace catapult { namespace utils {
 					const boost::span<const uint8_t>& key,
 					const boost::span<const uint8_t>& value) {
 				auto& localCacheDelta = cacheDelta.sub<TCache>();
-				auto stateObject = TCache::Descriptor::Serializer::DeserializeValue(value);
-				auto iterator = localCacheDelta.find(TCache::Descriptor::GetKeyFromValue(stateObject));
+				auto stateObject = TDescriptor::Serializer::DeserializeValue(value);
+				auto iterator = localCacheDelta.find(TDescriptor::GetKeyFromValue(stateObject));
 				if (iterator.tryGet() != nullptr) {
 					iterator.get() = stateObject;
 				} else {
@@ -35,14 +36,14 @@ namespace catapult { namespace utils {
 		};
 
 		template<>
-		void CacheConversionFunctions<cache::AccountStateCache>::Insert(
+		void CacheConversionFunctions<cache::AccountStateCache, cache::AccountStateCacheDescriptor>::Insert(
 				cache::AccountStateCacheDelta& delta,
 				const state::AccountState& value) {
-			delta.addAccount(value);
+			delta.addAccount(value, false);
 		}
 
 		template<>
-		void CacheConversionFunctions<cache::NamespaceCache, cache::RootNamespaceHistoryPrimarySerializer>::ApplyRecord(
+		void CacheConversionFunctions<cache::NamespaceCache, cache::NamespaceCacheDescriptor>::ApplyRecord(
 				cache::CatapultCacheDelta& cacheDelta,
 				const boost::span<const uint8_t>& key,
 				const boost::span<const uint8_t>& value) {
@@ -56,7 +57,7 @@ namespace catapult { namespace utils {
 			}
 		}
 		template<>
-		void CacheConversionFunctions<cache::NamespaceCache, cache::NamespaceFlatMapTypesSerializer>::ApplyRecord(
+		void CacheConversionFunctions<cache::NamespaceCache, cache::NamespaceCacheTypes::FlatMapTypesDescriptor>::ApplyRecord(
 				cache::CatapultCacheDelta& cacheDelta,
 				const boost::span<const uint8_t>& key,
 				const boost::span<const uint8_t>& value) {
@@ -70,7 +71,7 @@ namespace catapult { namespace utils {
 			}
 		}
 		template<>
-		void CacheConversionFunctions<cache::NamespaceCache, cache::NamespaceHeightGroupingSerializer>::ApplyRecord(
+		void CacheConversionFunctions<cache::NamespaceCache, cache::NamespaceCacheTypes::HeightGroupingTypesDescriptor>::ApplyRecord(
 				cache::CatapultCacheDelta& cacheDelta,
 				const boost::span<const uint8_t>& key,
 				const boost::span<const uint8_t>& value) {
@@ -84,6 +85,7 @@ namespace catapult { namespace utils {
 				localCacheDelta.insertRaw(stateObject);
 			}
 		}
+
 		template<>
 		void CacheConversionFunctions<cache::MetadataV1Cache, state::MetadataV1Serializer>::ApplyRecord(
 				cache::CatapultCacheDelta& cacheDelta,
@@ -105,9 +107,9 @@ namespace catapult { namespace utils {
 
 		}
 	public:
-		template<typename TCache, typename TSerializer = typename TCache::Descriptor::Serializer>
+		template<typename TCache, typename TDescriptor = typename TCache::Descriptor>
 		void ApplyRecord(const boost::span<const uint8_t>& key, const boost::span<const uint8_t>& value){
-			detail::CacheConversionFunctions<TCache, TSerializer>::ApplyRecord(cache, key, value);
+			detail::CacheConversionFunctions<TCache, TDescriptor>::ApplyRecord(cache, key, value);
 		}
 
 	private:

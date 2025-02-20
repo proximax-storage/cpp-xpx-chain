@@ -45,7 +45,7 @@ namespace catapult { namespace cache {
 			std::unique_ptr<AccountStateCacheViewMixins::KeyLookupAdapter>&& pKeyLookupAdapter)
 			: AccountStateCacheViewMixins::Size(accountStateSets.Primary)
 			, AccountStateCacheViewMixins::ContainsAddress(accountStateSets.Primary)
-			, AccountStateCacheViewMixins::ContainsKey(accountStateSets.KeyLookupMap)
+			, AccountStateCacheViewMixins::ContainsKey(accountStateSets.KeyLookupMap, accountStateSets.Primary)
 			, AccountStateCacheViewMixins::Iteration(accountStateSets.Primary)
 			, AccountStateCacheViewMixins::ConstAccessorAddress(accountStateSets.Primary)
 			, AccountStateCacheViewMixins::ConstAccessorKey(*pKeyLookupAdapter)

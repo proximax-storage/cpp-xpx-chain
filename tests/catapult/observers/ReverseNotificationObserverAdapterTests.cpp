@@ -24,6 +24,7 @@
 #include "tests/test/other/mocks/MockNotificationObserver.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace observers {
 
@@ -42,7 +43,8 @@ namespace catapult { namespace observers {
 			const auto& observer = *pObserver;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(mocks::PluginOptionFlags::Publish_Custom_Notifications);
-			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId());
+			model::TransactionFeeCalculator transactionFeeCalculator;
+			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId(), transactionFeeCalculator);
 			ReverseNotificationObserverAdapter adapter(std::move(pObserver), std::move(pPublisher));
 
 			// Act + Assert:

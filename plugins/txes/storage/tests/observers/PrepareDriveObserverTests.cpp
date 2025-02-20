@@ -99,7 +99,7 @@ namespace catapult { namespace observers {
 			// In fact, if there are more acceptable replicators than it was requested by the drive, then, obviously,
 			// some of them won't be assigned.
 			if (storageMosaics.unwrap() >= Drive_Size && streamingMosaics.unwrap() >= 2*Drive_Size) {
-				entry.drives().emplace(Drive_Key, state::DriveInfo{ Hash256(), false, 0, 0 });
+				entry.drives().emplace(Drive_Key, state::DriveInfo{ Hash256(), 0, 0 });
 				storageMosaics = Amount(storageMosaics.unwrap() - Drive_Size);
 				streamingMosaics = Amount(streamingMosaics.unwrap() - 2*Drive_Size);
 			}
@@ -140,6 +140,7 @@ namespace catapult { namespace observers {
 
             // Populate cache.
 			test::AddAccountState(accountStateCache, values.ExpectedBcDriveEntry.key(), Current_Height);
+			test::AddAccountState(accountStateCache, values.ExpectedBcDriveEntry.owner(), Current_Height);
 			for (const auto& tuple : values.InitialReplicatorsWithAmounts) {
 				const auto& entry = std::get<0>(tuple);
 				replicatorCache.insert(entry);
@@ -179,7 +180,8 @@ namespace catapult { namespace observers {
 			}
 
 			// EXPECT_NE(expectedDriveQueueSize, paymentQueueSize);
-			auto& driveQueueEntry = getPriorityQueueEntry(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto driveQueueIter = getPriorityQueueIter(priorityQueueCache, state::DrivePriorityQueueKey);
+			auto& driveQueueEntry = driveQueueIter.get();
 			EXPECT_EQ(expectedDriveQueueSize, driveQueueEntry.priorityQueue().size());
         }
     }

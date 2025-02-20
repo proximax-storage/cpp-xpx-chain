@@ -45,8 +45,9 @@ namespace catapult { namespace config {
 				UserConfiguration userConfig,
 				ExtensionsConfiguration extensionsConfig,
 				InflationConfiguration inflationConfig,
-				SupportedEntityVersions supportedEntityVersions = config::SupportedEntityVersions());
-
+				SupportedEntityVersions supportedEntityVersions = config::SupportedEntityVersions(),
+				Height activationHeight = Height(),
+				const BlockchainConfiguration* previousConfig = nullptr);
 
 	public:
 		/// Immutable network configuration.
@@ -72,6 +73,12 @@ namespace catapult { namespace config {
 
 		/// Supported entity versions.
 		const config::SupportedEntityVersions SupportedEntityVersions;
+
+		/// Activation Height
+		const Height ActivationHeight;
+
+		/// Previous active configuration
+		const BlockchainConfiguration* PreviousConfiguration;
 
 	public:
 		/// Creates an uninitialized blockchain configuration.

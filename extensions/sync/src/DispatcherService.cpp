@@ -302,7 +302,10 @@ namespace catapult { namespace sync {
 						[&utUpdater, newTransactionsSink = m_state.hooks().newTransactionsSink()](auto&& transactionInfos) {
 					  // only broadcast transactions that have passed stateful validation on this node
 					  auto utUpdateResults = utUpdater.update(transactionInfos);
-					  newTransactionsSink(SelectValid(std::move(transactionInfos), utUpdateResults));
+
+					  auto filteredTransactionInfos = SelectValid(std::move(transactionInfos), utUpdateResults);
+					  if (!filteredTransactionInfos.empty())
+						  newTransactionsSink(filteredTransactionInfos);
 				}));
 
 				return CreateConsumerDispatcher(

@@ -21,6 +21,7 @@
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "catapult/local/server/LocalNode.h"
 #include "catapult/process/ProcessMain.h"
+#include "catapult/config/ValidateConfiguration.h"
 
 namespace {
 	constexpr auto Process_Name = "server";
@@ -28,7 +29,13 @@ namespace {
 
 int main(int argc, const char** argv) {
 	using namespace catapult;
-	return process::ProcessMain(argc, argv, Process_Name, [argc, argv](const auto& pConfigHolder, const auto& keyPair) {
+	return process::ProcessMain(argc, argv, Process_Name,  [](const boost::filesystem::path& path, const std::string& host){
+				auto config = config::BlockchainConfiguration::LoadFromPath(path, host);
+				auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
+				config::ValidateLocalConfiguration(config);
+				return pConfigHolder;
+			},
+			[argc, argv](const auto& pConfigHolder, const auto& keyPair) {
 		// create bootstrapper
 		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(argc, argv).generic_string();
 		auto disposition = extensions::ProcessDisposition::Production;

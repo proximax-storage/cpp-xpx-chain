@@ -23,6 +23,7 @@
 #include "catapult/chain/ChainResults.h"
 #include "catapult/model/FeeUtils.h"
 #include "catapult/model/TransactionStatus.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
@@ -125,7 +126,8 @@ namespace catapult { namespace chain {
 					BlockFeeMultiplier minFeeMultiplier = BlockFeeMultiplier())
 					: m_executionConfig(CreateConfiguration(minFeeMultiplier))
 					, m_cache(CreateCacheWithDefaultHeight())
-					, m_transactionsCache(cache::MemoryCacheOptions(1024, 1000))
+					, m_transactionsCache(cache::MemoryCacheOptions(1024, 1000),
+									  std::make_shared<model::TransactionFeeCalculator>())
 					, m_updater(
 							m_transactionsCache,
 							m_cache,
@@ -363,10 +365,11 @@ namespace catapult { namespace chain {
 				ASSERT_EQ(failedIndexes.size(), m_failedTransactionStatuses.size());
 				for (auto i = 0u; i < failedIndexes.size(); ++i) {
 					auto failedIndex = failedIndexes[i].first;
+					auto timeOffset = Default_Time.unwrap() + 1;
 					auto message = "failed index " + std::to_string(failedIndex);
 					EXPECT_EQ(entityInfos[failedIndex].hash(), m_failedTransactionStatuses[i].Hash) << message;
 					EXPECT_EQ(failedIndexes[i].second, validators::ValidationResult(m_failedTransactionStatuses[i].Status)) << message;
-					EXPECT_EQ(Timestamp(failedIndex * failedIndex), m_failedTransactionStatuses[i].Deadline) << message;
+					EXPECT_EQ(Timestamp((timeOffset + failedIndex) * (timeOffset + failedIndex)), m_failedTransactionStatuses[i].Deadline) << message;
 				}
 			}
 
@@ -467,7 +470,8 @@ namespace catapult { namespace chain {
 
 		TransactionData CreateTransactionData(size_t count, size_t start = 0) {
 			TransactionData data;
-			data.UtInfos = test::CreateTransactionInfos(count, [start](auto i) { return Timestamp((i + start) * (i + start)); });
+			auto timeOffset = Default_Time.unwrap() + 1;
+			data.UtInfos = test::CreateTransactionInfos(count, [timeOffset, start](auto i) { return Timestamp((timeOffset + i + start) * (timeOffset + i + start)); });
 			data.Entities = test::ExtractEntities(data.UtInfos);
 			data.Hashes = test::ExtractHashes(data.UtInfos);
 			for (auto i = 0u; i < count; ++i)
@@ -562,9 +566,10 @@ namespace catapult { namespace chain {
 		// - set fee multiples
 		auto i = 0u;
 		std::array<uint32_t, 10> feeMultiples{ 10, 20, 19, 30, 21, 40, 30, 10, 10, 20 };
+		model::TransactionFeeCalculator transactionFeeCalculator;
 		for (auto& utInfo : transactionData.UtInfos) {
 			auto multiplier = BlockFeeMultiplier(feeMultiples[i++]);
-			const_cast<Amount&>(utInfo.pEntity->MaxFee) = model::CalculateTransactionFee(multiplier, *utInfo.pEntity, 1, 1);
+			const_cast<Amount&>(utInfo.pEntity->MaxFee) = transactionFeeCalculator.calculateTransactionFee(multiplier, *utInfo.pEntity, 1, 1, Height(-1));
 		}
 
 		// Sanity:

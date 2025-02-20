@@ -25,7 +25,32 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(ActivityCommitteeNotCosignedDelta);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 6);
+#define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
+		config.MinGreedFeeInterest = 1u;
+		TRY_LOAD_CHAIN_PROPERTY(MinGreedFeeInterest);
+		config.MinGreedFeeInterestDenominator = 10u;
+		TRY_LOAD_CHAIN_PROPERTY(MinGreedFeeInterestDenominator);
+		config.ActivityScaleFactor = 1'000'000'000.0;
+		TRY_LOAD_CHAIN_PROPERTY(ActivityScaleFactor);
+		config.WeightScaleFactor = 1'000'000'000'000'000'000.0;
+		TRY_LOAD_CHAIN_PROPERTY(WeightScaleFactor);
+		config.EnableEqualWeights = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableEqualWeights);
+		config.EnableBlockchainVersionValidation = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableBlockchainVersionValidation);
+		config.EnableHarvesterRotation = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableHarvesterRotation);
+		config.HarvesterBanPeriod = utils::TimeSpan();
+		TRY_LOAD_CHAIN_PROPERTY(HarvesterBanPeriod);
+		config.EnableBlockProducerValidation = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableBlockProducerValidation);
+#undef TRY_LOAD_CHAIN_PROPERTY
+
+		config.InitialActivityInt = static_cast<int64_t>(config.InitialActivity * config.ActivityScaleFactor);
+		config.ActivityDeltaInt = static_cast<int64_t>(config.ActivityDelta * config.ActivityScaleFactor);
+		config.ActivityCommitteeCosignedDeltaInt = static_cast<int64_t>(config.ActivityCommitteeCosignedDelta * config.ActivityScaleFactor);
+		config.ActivityCommitteeNotCosignedDeltaInt = static_cast<int64_t>(config.ActivityCommitteeNotCosignedDelta * config.ActivityScaleFactor);
+
 		return config;
 	}
 }}

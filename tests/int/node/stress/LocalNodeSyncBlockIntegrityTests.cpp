@@ -47,7 +47,7 @@ namespace catapult { namespace local {
 
 				auto stateHashCalculator = context.createStateHashCalculator();
 				BlockChainBuilder builder(accounts, stateHashCalculator);
-				builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
+				builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(15)); // better block time will yield better chain
 				pUnsignedBlock = builder.asSingleBlock(transactionsBuilder);
 				test::FillWithRandomData(pUnsignedBlock->Signature);
 			}
@@ -83,7 +83,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, BlockWithoutProperSignatureIsRejected) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunInvalidSignatureTest(context);
@@ -94,7 +96,9 @@ namespace catapult { namespace local {
 
 	NO_STRESS_TEST(TEST_CLASS, BlockWithoutProperSignatureIsRejectedWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunInvalidSignatureTest(context);

@@ -41,7 +41,7 @@ namespace catapult { namespace config {
 		config.NemesisHeight = Height(1);
 		TRY_LOAD_IMMUTABLE_PROPERTY(NemesisHeight);
 #undef TRY_LOAD_IMMUTABLE_PROPERTY
-		utils::VerifyBagSizeLte(bag, 12);
+		utils::VerifyBagSizeLte(bag, 13);
 		return config;
 	}
 

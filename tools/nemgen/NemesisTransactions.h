@@ -51,7 +51,8 @@ namespace catapult { namespace tools { namespace nemgen {
 	public:
 		NemesisTransactions(
 				const crypto::KeyPair& signer,
-				const NemesisConfiguration& config);
+				const NemesisConfiguration& config,
+				const model::TransactionRegistry& registry);
 
 
 	public:
@@ -100,9 +101,16 @@ namespace catapult { namespace tools { namespace nemgen {
 			private:
 
 				void loadNextTransaction() {
-					if (!m_End) {
+					if (m_End) {
 						return;
 					}
+
+					if (m_rSpoolFile.position() == m_rSpoolFile.size()) {
+						m_End = true;
+						m_rIteratorInUse = false; // Mark iterator as no longer in use
+						return;
+					}
+
 					std::vector<uint8_t> vsize(sizeof(uint32_t));
 					m_rSpoolFile.read(vsize);
 					auto size = *reinterpret_cast<uint32_t*>(vsize.data());
@@ -110,22 +118,16 @@ namespace catapult { namespace tools { namespace nemgen {
 					m_rSpoolFile.read(tx);
 
 					m_Transaction.transaction = utils::MakeSharedWithSize<model::Transaction>(size);
-					memcpy(m_Transaction.transaction.get(), vsize.data(), vsize.size());
-					memcpy(m_Transaction.transaction.get()+vsize.size(), tx.data(), tx.size());
+					memcpy(reinterpret_cast<uint8_t*>(m_Transaction.transaction.get()), vsize.data(), vsize.size());
+					memcpy(reinterpret_cast<uint8_t*>(m_Transaction.transaction.get())+vsize.size(), tx.data(), tx.size());
 
 					std::vector<uint8_t> hash(Hash256_Size);
 
 					m_rSpoolFile.read(hash);
-					memcpy(&m_Transaction.entityHash, hash.data(), Hash256_Size);
+					memcpy(reinterpret_cast<uint8_t*>(&m_Transaction.entityHash), hash.data(), Hash256_Size);
 
 					m_rSpoolFile.read(hash);
-					memcpy(&m_Transaction.merkleHash, hash.data(), Hash256_Size);
-
-					// End of the current file
-					if (m_rSpoolFile.position() == m_rSpoolFile.size()) {
-						m_End = true;
-						m_rIteratorInUse = false; // Mark iterator as no longer in use
-					}
+					memcpy(reinterpret_cast<uint8_t*>(&m_Transaction.merkleHash), hash.data(), Hash256_Size);
 				}
 
 			private:
@@ -136,7 +138,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			};
 
 			explicit NemesisTransactionsView(io::RawFile&& spoolFile)
-				: m_spoolFile(std::move(spoolFile)) {}
+				: m_spoolFile(std::move(spoolFile)), m_IteratorInUse(false) {}
 
 			Iterator begin() {
 				if (m_IteratorInUse) {
@@ -178,7 +180,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		void addHarvester(const std::string& harvesterPrivateKey);
 
 	public:
-		const model::Transactions& transactions() const;
+		const std::vector<TransactionHashContainer>& transactions() const;
 
 		void signAndAdd(model::UniqueEntityPtr<model::Transaction>&& pTransaction);
 
@@ -211,7 +213,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		uint32_t m_TotalTransactions;
 		std::unique_ptr<io::BufferedOutputFileStream> m_spoolFile;
 		uint32_t m_totalSize;
-		model::TransactionRegistry m_Registry;
+		const model::TransactionRegistry& m_Registry;
 		const NemesisConfiguration* m_Config;
 	};
 

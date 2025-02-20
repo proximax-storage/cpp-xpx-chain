@@ -34,6 +34,7 @@ namespace catapult { namespace notification_handlers {
 			}
 
 			pReplicatorService->removeDriveModification(notification.DriveKey, notification.DataModificationId);
+			pReplicatorService->maybeRestart();
 		});
 	}
 }}

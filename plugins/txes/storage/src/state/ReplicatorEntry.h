@@ -18,21 +18,15 @@ namespace catapult { namespace state {
 		/// Identifier of the most recent data modification of the drive approved by the replicator.
 		Hash256 LastApprovedDataModificationId;
 
-		/// Indicates if \p LastApprovedDataModificationId is an identifier of an existing data modification.
-		/// Can be \b false only if the drive had no approved data modifications when the replicator joined it.
-		/// Set to \b true after replicator’s first data modification approval.
-		bool DataModificationIdIsValid;
-
 		/// Used drive size at the time of the replicator’s onboarding excluding metafiles size in megabytes.
 		/// Set to \p 0 after replicator’s first data modification approval.
 		uint64_t InitialDownloadWorkMegabytes;
 
-		// Modfication hash and size of cumulative download work
+		//Size of cumulative download work
 		uint64_t LastCompletedCumulativeDownloadWorkBytes;
 
 		bool operator==(const DriveInfo& rhs) const {
 			return LastApprovedDataModificationId == rhs.LastApprovedDataModificationId &&
-				DataModificationIdIsValid == rhs.DataModificationIdIsValid &&
 				   InitialDownloadWorkMegabytes == rhs.InitialDownloadWorkMegabytes;
 		}
 	};
@@ -74,10 +68,20 @@ namespace catapult { namespace state {
 			return m_replicatorsSetNode;
 		}
 
+		// Gets the public boot key of the node the replicator is running on.
+		const Key& nodeBootKey() const {
+			return m_nodeBootKey;
+		}
+
+		void setNodeBootKey(const Key& nodeBootKey) {
+			m_nodeBootKey = nodeBootKey;
+		}
+
 	private:
 		DrivesMap m_drives;
 		std::set<Hash256> m_downloadChannels;
 		state::AVLTreeNode m_replicatorsSetNode;
+		Key m_nodeBootKey;
 	};
 
 	// Replicator entry.

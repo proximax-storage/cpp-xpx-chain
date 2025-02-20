@@ -18,9 +18,9 @@ module Catapult
 
       CONFIG_SUBDIR = 'userconfig'
       TYPE          = :rest_gateway
-      def initialize(input_attributes)
+      def initialize(input_attributes, work_dir)
         @component_keys = Keys::Component.new(input_attributes)
-        super(TYPE, input_attributes, TemplateAttributes.new(@component_keys, input_attributes))
+        super(TYPE, input_attributes, TemplateAttributes.new(@component_keys, input_attributes), work_dir)
       end
       private :initialize
 

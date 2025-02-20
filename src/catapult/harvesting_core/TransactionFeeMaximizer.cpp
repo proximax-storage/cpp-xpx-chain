@@ -20,6 +20,7 @@
 
 #include "TransactionFeeMaximizer.h"
 #include "catapult/model/FeeUtils.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 
 namespace catapult { namespace harvesting {
 
@@ -33,12 +34,14 @@ namespace catapult { namespace harvesting {
 		return m_best;
 	}
 
-	void TransactionFeeMaximizer::apply(const model::TransactionInfo& transactionInfo) {
+	void TransactionFeeMaximizer::apply(
+			const model::TransactionInfo& transactionInfo,
+			const model::TransactionFeeCalculator& transactionFeeCalculator) {
 		auto lastFeeMultiplier = m_current.FeeMultiplier;
 
 		const auto& transaction = *transactionInfo.pEntity;
 		m_current.FeeMultiplier = model::CalculateTransactionMaxFeeMultiplier(transaction);
-		m_current.BaseFee = m_current.BaseFee + model::CalculateTransactionFee(BlockFeeMultiplier(1), transaction, 1, 1);
+		m_current.BaseFee = m_current.BaseFee + transactionFeeCalculator.calculateTransactionFee(BlockFeeMultiplier(1), transaction, 1, 1, Height(-1));
 		++m_current.NumTransactions;
 
 		if (0 != m_best.NumTransactions && lastFeeMultiplier < m_current.FeeMultiplier)

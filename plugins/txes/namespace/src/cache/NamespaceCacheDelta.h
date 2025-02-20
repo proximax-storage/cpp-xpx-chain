@@ -129,9 +129,9 @@ namespace catapult { namespace cache {
 		NamespaceCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pRootNamespaceIdsByExpiryHeight;
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 
-		friend class utils::detail::CacheConversionFunctions<NamespaceCache, RootNamespaceHistoryPrimarySerializer>;
-		friend class utils::detail::CacheConversionFunctions<NamespaceCache, NamespaceFlatMapTypesSerializer>;
-		friend class utils::detail::CacheConversionFunctions<cache::NamespaceCache, cache::NamespaceHeightGroupingSerializer>;
+		friend class utils::detail::CacheConversionFunctions<NamespaceCache, cache::NamespaceCacheDescriptor>;
+		friend class utils::detail::CacheConversionFunctions<NamespaceCache, cache::NamespaceCacheTypes::FlatMapTypesDescriptor>;
+		friend class utils::detail::CacheConversionFunctions<cache::NamespaceCache, cache::NamespaceCacheTypes::HeightGroupingTypesDescriptor>;
 	};
 
 	/// Delta on top of the namespace cache.

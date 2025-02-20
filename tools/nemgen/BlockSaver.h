@@ -35,7 +35,7 @@ namespace catapult { namespace tools { namespace nemgen {
 	void SaveNemesisBlockElement(const model::BlockElement& blockElement, const NemesisConfiguration& config);
 
 	/// Writes \a blockElement into \a outputStream.
-	void WriteBlockElement(io::OutputStream& outputStream, const model::BlockElement& blockElement, NemesisTransactions& transactions);
+	void WriteBlockElement(io::OutputStream& outputStream, const model::BlockElement& blockElement, NemesisTransactions& transactions, bool enableSpool);
 
 	/// Saves nemesis \a blockElement according to \a config.
 	void SaveNemesisBlockElementWithSpooling(const model::BlockElement& blockElement, const NemesisConfiguration& config, NemesisTransactions& transactions);
@@ -43,9 +43,10 @@ namespace catapult { namespace tools { namespace nemgen {
 	class NemesisFileBlockStorage : public io::FileBlockStorage {
 	/// Creates a file-based block storage, where blocks will be stored inside \a dataDirectory
 	/// with specified storage \a mode.
-	explicit NemesisFileBlockStorage(const std::string& dataDirectory, io::FileBlockStorageMode mode = io::FileBlockStorageMode::Hash_Index) : FileBlockStorage(dataDirectory, mode) {
-		
+public:
+	explicit NemesisFileBlockStorage(const std::string& dataDirectory, const Height& nemesisHeight, io::FileBlockStorageMode mode = io::FileBlockStorageMode::Hash_Index) : FileBlockStorage(dataDirectory, nemesisHeight, mode) {
+
 	}
-	void saveBlock(const model::BlockElement& blockElement, NemesisTransactions& transactions);
+	void saveBlock(const model::BlockElement& blockElement, NemesisTransactions& transactions, bool enableSpool);
 };
 }}}

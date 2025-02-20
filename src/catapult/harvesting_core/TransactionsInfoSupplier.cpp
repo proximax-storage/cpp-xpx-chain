@@ -21,7 +21,6 @@
 #include "TransactionsInfoSupplier.h"
 #include "HarvestingUtFacadeFactory.h"
 #include "TransactionFeeMaximizer.h"
-#include "catapult/cache_tx/MemoryUtCacheUtils.h"
 #include "catapult/model/FeeUtils.h"
 
 namespace catapult { namespace harvesting {
@@ -31,15 +30,38 @@ namespace catapult { namespace harvesting {
 
 		enum class SortDirection { Ascending, Descending };
 
-		template<SortDirection Direction>
-		struct MaxFeeMultiplierComparer {
+		enum class LimitedTransactionsPlace { Left, Right };
+
+		template<SortDirection Direction, LimitedTransactionsPlace LimitedTransactionsPlace>
+		class MaxFeeMultiplierComparer {
+		public:
+			explicit MaxFeeMultiplierComparer(const model::TransactionFeeCalculator& transactionFeeCalculator)
+				: m_transactionFeeCalculator(transactionFeeCalculator)
+			{}
+
+		public:
 			bool operator()(const model::TransactionInfo* pLhs, const model::TransactionInfo* pRhs) const {
+				// Move limited fee transactions (that are actually without fees) to the required end, left or right.
+				bool isLeftLimitedFee = m_transactionFeeCalculator.isTransactionFeeLimited(pLhs->pEntity->Type, pLhs->pEntity->EntityVersion());
+				bool isRightLimitedFee = m_transactionFeeCalculator.isTransactionFeeLimited(pRhs->pEntity->Type, pRhs->pEntity->EntityVersion());
+				if (isLeftLimitedFee && isRightLimitedFee) {
+					return false;
+				} else if (isLeftLimitedFee) {
+					return (LimitedTransactionsPlace == LimitedTransactionsPlace::Left);
+				} else if (isRightLimitedFee) {
+					return (LimitedTransactionsPlace == LimitedTransactionsPlace::Right);
+				}
+
+				// Sort all others.
 				auto lhsMaxFeeMultiplier = model::CalculateTransactionMaxFeeMultiplier(*pLhs->pEntity);
 				auto rhsMaxFeeMultiplier = model::CalculateTransactionMaxFeeMultiplier(*pRhs->pEntity);
 				return SortDirection::Ascending == Direction
 						? lhsMaxFeeMultiplier < rhsMaxFeeMultiplier
 						: lhsMaxFeeMultiplier > rhsMaxFeeMultiplier;
 			}
+
+		private:
+			const model::TransactionFeeCalculator& m_transactionFeeCalculator;
 		};
 
 		TransactionsInfo ToTransactionsInfo(TransactionInfoPointers&& transactionInfoPointers, BlockFeeMultiplier feeMultiplier) {
@@ -51,16 +73,17 @@ namespace catapult { namespace harvesting {
 			return transactionsInfo;
 		}
 
-		TransactionsInfo SupplyOldest(const cache::MemoryUtCacheView& utCacheView, HarvestingUtFacade& utFacade, uint32_t count) {
+		TransactionsInfo SupplyOldest(const cache::MemoryUtCacheView& utCacheView, HarvestingUtFacade& utFacade, uint32_t count, const cache::StopTransactionFetchingFunc& stopCallback) {
 			// 1. get first transactions from the ut cache
 			auto candidates = cache::GetFirstTransactionInfoPointers(utCacheView, count, [&utFacade](const auto& transactionInfo) {
-				return utFacade.apply(transactionInfo);
-			});
+					return utFacade.apply(transactionInfo);
+				},
+				stopCallback);
 
 			// 2. pick the smallest multiplier so that all transactions pass validation
 			auto minFeeMultiplier = BlockFeeMultiplier();
 			if (!candidates.empty()) {
-				auto comparer = MaxFeeMultiplierComparer<SortDirection::Ascending>();
+				auto comparer = MaxFeeMultiplierComparer<SortDirection::Ascending, LimitedTransactionsPlace::Right>(utCacheView.transactionFeeCalculator());
 				auto minIter = std::min_element(candidates.cbegin(), candidates.cend(), comparer);
 				minFeeMultiplier = model::CalculateTransactionMaxFeeMultiplier(*(*minIter)->pEntity);
 			}
@@ -68,39 +91,54 @@ namespace catapult { namespace harvesting {
 			return ToTransactionsInfo(std::move(candidates), minFeeMultiplier);
 		}
 
-		TransactionsInfo SupplyMinimumFee(const cache::MemoryUtCacheView& utCacheView, HarvestingUtFacade& utFacade, uint32_t count) {
+		TransactionsInfo SupplyMinimumFee(const cache::MemoryUtCacheView& utCacheView, HarvestingUtFacade& utFacade, uint32_t count, const cache::StopTransactionFetchingFunc& stopCallback) {
 			// 1. get all transactions from the ut cache
-			auto comparer = MaxFeeMultiplierComparer<SortDirection::Ascending>();
-			auto candidates = cache::GetFirstTransactionInfoPointers(utCacheView, count, comparer, [&utFacade](
-					const auto& transactionInfo) {
-				return utFacade.apply(transactionInfo);
-			});
+			const auto& transactionFeeCalculator = utCacheView.transactionFeeCalculator();
+			auto comparer = MaxFeeMultiplierComparer<SortDirection::Ascending, LimitedTransactionsPlace::Left>(transactionFeeCalculator);
+			auto candidates = cache::GetFirstTransactionInfoPointers(utCacheView, count, comparer, [&utFacade](const auto& transactionInfo) {
+					return utFacade.apply(transactionInfo);
+				},
+				stopCallback);
 
 			// 2. pick the smallest multiplier so that all transactions pass validation
 			auto minFeeMultiplier = BlockFeeMultiplier();
-			if (!candidates.empty())
-				minFeeMultiplier = model::CalculateTransactionMaxFeeMultiplier(*candidates[0]->pEntity);
+			for (const auto& pTransactionInfo : candidates) {
+				const auto& pTransaction = pTransactionInfo->pEntity;
+				if (!transactionFeeCalculator.isTransactionFeeLimited(pTransaction->Type, pTransaction->EntityVersion())) {
+					minFeeMultiplier = model::CalculateTransactionMaxFeeMultiplier(*pTransaction);
+					break;
+				}
+			}
 
 			return ToTransactionsInfo(std::move(candidates), minFeeMultiplier);
 		}
 
-		TransactionsInfo SupplyMaximumFee(const cache::MemoryUtCacheView& utCacheView, HarvestingUtFacade& utFacade, uint32_t count) {
+		TransactionsInfo SupplyMaximumFee(const cache::MemoryUtCacheView& utCacheView, HarvestingUtFacade& utFacade, uint32_t count, const cache::StopTransactionFetchingFunc& stopCallback) {
 			// 1. get all transactions from the ut cache
-			auto comparer = MaxFeeMultiplierComparer<SortDirection::Descending>();
+			auto comparer = MaxFeeMultiplierComparer<SortDirection::Descending, LimitedTransactionsPlace::Left>(utCacheView.transactionFeeCalculator());
 			auto maximizer = TransactionFeeMaximizer();
-			auto candidates = cache::GetFirstTransactionInfoPointers(utCacheView, count, comparer, [&utFacade, &maximizer](
-					const auto& transactionInfo) {
-				if (!utFacade.apply(transactionInfo))
-					return false;
+			auto numLimitedFeeTransactions = 0u;
+			auto candidates = cache::GetFirstTransactionInfoPointers(utCacheView, count, comparer,
+						[&utFacade, &maximizer, &numLimitedFeeTransactions, &transactionFeeCalculator=utCacheView.transactionFeeCalculator()](const auto& transactionInfo) {
+					if (!utFacade.apply(transactionInfo))
+						return false;
 
-				maximizer.apply(transactionInfo);
-				return true;
-			});
+					auto pTransaction = transactionInfo.pEntity;
+					if (transactionFeeCalculator.isTransactionFeeLimited(pTransaction->Type, pTransaction->EntityVersion())) {
+						numLimitedFeeTransactions++;
+					} else {
+						maximizer.apply(transactionInfo, transactionFeeCalculator);
+					}
+
+					return true;
+				},
+				stopCallback);
 
 			// 2. pick the best fee policy and truncate the transactions and facade
 			const auto& bestFeePolicy = maximizer.best();
-			candidates.resize(bestFeePolicy.NumTransactions);
-			while (utFacade.size() > bestFeePolicy.NumTransactions)
+			auto numTransactions = bestFeePolicy.NumTransactions + numLimitedFeeTransactions;
+			candidates.resize(numTransactions);
+			while (utFacade.size() > numTransactions)
 				utFacade.unapply();
 
 			return ToTransactionsInfo(std::move(candidates), bestFeePolicy.FeeMultiplier);
@@ -109,19 +147,20 @@ namespace catapult { namespace harvesting {
 
 	TransactionsInfoSupplier CreateTransactionsInfoSupplier(
 			model::TransactionSelectionStrategy strategy,
-			const cache::MemoryUtCache& utCache) {
-		return [strategy, &utCache](auto& utFacade, auto count) {
+			const cache::MemoryUtCache& utCache,
+			const cache::StopTransactionFetchingFunc& stopCallback) {
+		return [strategy, &utCache, stopCallback](auto& utFacade, auto count) {
 			auto utCacheView = utCache.view();
 
 			switch (strategy) {
 			case model::TransactionSelectionStrategy::Minimize_Fee:
-				return SupplyMinimumFee(utCacheView, utFacade, count);
+				return SupplyMinimumFee(utCacheView, utFacade, count, stopCallback);
 
 			case model::TransactionSelectionStrategy::Maximize_Fee:
-				return SupplyMaximumFee(utCacheView, utFacade, count);
+				return SupplyMaximumFee(utCacheView, utFacade, count, stopCallback);
 
 			default:
-				return SupplyOldest(utCacheView, utFacade, count);
+				return SupplyOldest(utCacheView, utFacade, count, stopCallback);
 			};
 		};
 	}

@@ -17,12 +17,18 @@
 namespace catapult { namespace state {
 
 	/// Data modification state.
-	enum class DataModificationState : uint8_t {
+	enum class DataModificationApprovalState : uint8_t {
 		/// Data modification has been approved.
-		Succeeded,
+		Approved,
 
 		/// Data modification has been cancelled.
 		Cancelled
+	};
+
+	enum class OwnerManagement: uint8_t {
+		ALLOWED,
+		TEMPORARY_FORBIDDEN,
+		PERMANENTLY_FORBIDDEN
 	};
 
 	struct ActiveDataModification {
@@ -33,8 +39,15 @@ namespace catapult { namespace state {
 				const Key& owner,
 				const Hash256& downloadDataCdi,
 				const uint64_t& uploadSizeMegabytes)
-				: ActiveDataModification(id, owner, downloadDataCdi, uploadSizeMegabytes, uploadSizeMegabytes, "", true)
-		{}
+			: ActiveDataModification(
+					  id,
+					  owner,
+					  downloadDataCdi,
+					  uploadSizeMegabytes,
+					  uploadSizeMegabytes,
+					  "",
+					  true,
+					  false) {}
 
 		/// Constructor For Stream Start
 		ActiveDataModification(
@@ -44,17 +57,18 @@ namespace catapult { namespace state {
 				const std::string& folderName)
 			: ActiveDataModification(id, owner, Hash256(),
 					  expectedUploadSizeMegabytes,
-					  expectedUploadSizeMegabytes, folderName, false)
+					  expectedUploadSizeMegabytes, folderName, false, true)
 		{}
 
 		ActiveDataModification(
 				const Hash256& id,
 				const Key& owner,
 				const Hash256& downloadDataCdi,
-				const uint64_t& expectedUploadSizeMegabytes,
-				const uint64_t& actualUploadSizeMegabytes,
+				uint64_t expectedUploadSizeMegabytes,
+				uint64_t actualUploadSizeMegabytes,
 				const std::string& folderName,
-				const bool& readyForApproval)
+				bool readyForApproval,
+				bool isStream)
 			: Id(id)
 			, Owner(owner)
 			, DownloadDataCdi(downloadDataCdi)
@@ -62,6 +76,7 @@ namespace catapult { namespace state {
 			, ActualUploadSizeMegabytes(actualUploadSizeMegabytes)
 			, FolderName(folderName)
 			, ReadyForApproval(readyForApproval)
+			, IsStream(isStream)
 		{}
 
 		/// Id of data modification.
@@ -70,7 +85,7 @@ namespace catapult { namespace state {
 		/// Public key of the drive owner.
 		Key Owner;
 
-		/// CDI of download data. Zero for Stream
+		/// CDI of download data
 		Hash256 DownloadDataCdi;
 
 		/// Expected Upload size of data.
@@ -84,31 +99,39 @@ namespace catapult { namespace state {
 
 		/// Whether DataModification can be approved by Replicators
 		bool ReadyForApproval;
+
+		bool IsStream;
 	};
 
 	struct CompletedDataModification : ActiveDataModification {
-		CompletedDataModification(const ActiveDataModification& modification, DataModificationState state)
+		CompletedDataModification(const ActiveDataModification& modification,
+								  DataModificationApprovalState state,
+								  uint8_t successState)
 			: ActiveDataModification(modification)
-			, State(state)
+			, ApprovalState(state)
+			, SuccessState(successState)
 		{}
 
 		/// Completion state.
-		DataModificationState State;
+		DataModificationApprovalState ApprovalState;
+
+		// Success state, has sense only for approved modifications
+		uint8_t SuccessState;
 	};
 
 	struct ConfirmedStorageInfo {
-		Timestamp m_timeInConfirmedStorage = Timestamp(0);
-		std::optional<Timestamp> m_confirmedStorageSince;
+		Timestamp TimeInConfirmedStorage = Timestamp(0);
+		std::optional<Timestamp> ConfirmedStorageSince;
 	};
 
 	struct ModificationShardInfo {
-		std::map<Key, uint64_t> m_actualShardMembers;
-		std::map<Key, uint64_t> m_formerShardMembers;
-		uint64_t m_ownerUpload = 0;
+		std::map<Key, uint64_t> ActualShardMembers;
+		std::map<Key, uint64_t> FormerShardMembers;
+		uint64_t OwnerUpload = 0;
 
 		std::set<Key> getActualShardMembersKeys() {
 			std::set<Key> keys;
-			for (const auto& [key, _]: m_actualShardMembers) {
+			for (const auto& [key, _]: ActualShardMembers) {
 				keys.insert(key);
 			}
 		};
@@ -149,6 +172,7 @@ namespace catapult { namespace state {
 			, m_usedSizeBytes(0)
 			, m_metaFilesSizeBytes(0)
 			, m_replicatorCount(0)
+			, m_ownerManagement(OwnerManagement::ALLOWED)
 		{}
 
 	public:
@@ -170,6 +194,14 @@ namespace catapult { namespace state {
 		/// Gets root hash of drive.
 		const Hash256& rootHash() const {
 			return m_rootHash;
+		}
+
+		void setLastModificationId(const Hash256& modificationId) {
+			m_lastModificationId = modificationId;
+		}
+
+		const Hash256& lastModificationId() const {
+			return m_lastModificationId;
 		}
 
 		/// Sets total size of the drive.
@@ -252,15 +284,25 @@ namespace catapult { namespace state {
 			return m_replicators;
 		}
 
+		/// Gets former replicators.
+		const utils::SortedKeySet& formerReplicators() const {
+			return m_formerReplicators;
+		}
+
+		/// Gets former replicators.
+		utils::SortedKeySet& formerReplicators() {
+			return m_formerReplicators;
+		}
+
 		/// Gets replicators that applied for offboarding.
 		/// Must be a subset of \a m_replicators.
-		const utils::SortedKeySet& offboardingReplicators() const {
+		const std::vector<Key>& offboardingReplicators() const {
 			return m_offboardingReplicators;
 		}
 
 		/// Gets replicators that applied for offboarding.
 		/// Must be a subset of \a m_replicators.
-		utils::SortedKeySet& offboardingReplicators() {
+		std::vector<Key>& offboardingReplicators() {
 			return m_offboardingReplicators;
 		}
 
@@ -348,9 +390,18 @@ namespace catapult { namespace state {
 			return m_verificationNode;
 		}
 
+		OwnerManagement ownerManagement() const {
+			return m_ownerManagement;
+		}
+
+		void setOwnerManagement(OwnerManagement ownerManagement) {
+			m_ownerManagement = ownerManagement;
+		}
+
 	private:
 		Key m_owner;
 		Hash256 m_rootHash;
+		Hash256 m_lastModificationId;
 		uint64_t m_size;
 		uint64_t m_usedSizeBytes;
 		uint64_t m_metaFilesSizeBytes;
@@ -359,7 +410,8 @@ namespace catapult { namespace state {
 		CompletedDataModifications m_completedDataModifications;
 		SizeMap m_confirmedUsedSizeMap;
 		utils::SortedKeySet m_replicators;
-		utils::SortedKeySet m_offboardingReplicators;
+		utils::SortedKeySet m_formerReplicators;
+		std::vector<Key> m_offboardingReplicators;
 		std::optional<Verification> m_verification;
 		ConfirmedStates m_confirmedStates;
 		ConfirmedStorageInfos m_confirmedStoragePeriods;
@@ -370,6 +422,7 @@ namespace catapult { namespace state {
 		Timestamp m_lastPayment;
 
 		AVLTreeNode m_verificationNode;
+		OwnerManagement m_ownerManagement;
 	};
 
 	// Drive entry.

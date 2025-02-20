@@ -46,7 +46,7 @@ namespace catapult { namespace cache {
 			std::unique_ptr<AccountStateCacheDeltaMixins::KeyLookupAdapter>&& pKeyLookupAdapter)
 			: AccountStateCacheDeltaMixins::Size(*accountStateSets.pPrimary)
 			, AccountStateCacheDeltaMixins::ContainsAddress(*accountStateSets.pPrimary)
-			, AccountStateCacheDeltaMixins::ContainsKey(*accountStateSets.pKeyLookupMap)
+			, AccountStateCacheDeltaMixins::ContainsKey(*accountStateSets.pKeyLookupMap, *accountStateSets.pPrimary)
 			, AccountStateCacheDeltaMixins::ConstAccessorAddress(*accountStateSets.pPrimary)
 			, AccountStateCacheDeltaMixins::ConstAccessorKey(*pKeyLookupAdapter)
 			, AccountStateCacheDeltaMixins::MutableAccessorAddress(*accountStateSets.pPrimary)
@@ -112,7 +112,7 @@ namespace catapult { namespace cache {
 		accountState.PublicKeyHeight = height;
 	}
 
-	void BasicAccountStateCacheDelta::addAccount(const state::AccountState& accountState) {
+	void BasicAccountStateCacheDelta::addAccount(const state::AccountState& accountState, bool optimizeAndTrackBalances) {
 		if (contains(accountState.Address))
 			return;
 
@@ -120,8 +120,11 @@ namespace catapult { namespace cache {
 			m_pKeyToAddress->emplace(accountState.PublicKey, accountState.Address);
 
 		m_pStateByAddress->insert(accountState);
-		m_pStateByAddress->find(accountState.Address).get()->Balances.optimize(m_options.CurrencyMosaicId);
-		m_pStateByAddress->find(accountState.Address).get()->Balances.track(m_options.HarvestingMosaicId);
+		if(optimizeAndTrackBalances) {
+			m_pStateByAddress->find(accountState.Address).get()->Balances.optimize(m_options.CurrencyMosaicId);
+			m_pStateByAddress->find(accountState.Address).get()->Balances.track(m_options.HarvestingMosaicId);
+		}
+
 	}
 
 	void BasicAccountStateCacheDelta::remove(const Address& address, Height height) {
@@ -237,7 +240,7 @@ namespace catapult { namespace cache {
 		return highValueAddresses;
 	}
 
-	const model::AddressSet& BasicAccountStateCacheDelta::updatedAddresses() const{
+	const model::AddressSet& BasicAccountStateCacheDelta::updatedAddresses() const {
 		return m_addressesToUpdate;
 	}
 }}

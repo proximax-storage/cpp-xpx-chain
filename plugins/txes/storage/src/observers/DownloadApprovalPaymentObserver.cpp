@@ -1,17 +1,20 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 #include "Observers.h"
 
 namespace catapult { namespace observers {
 
 	using Notification = model::DownloadApprovalPaymentNotification<1>;
 
-	DEFINE_OBSERVER(DownloadApprovalPayment, Notification, ([](const Notification& notification, ObserverContext& context) {
+	using BigUint = boost::multiprecision::uint128_t;
+
+	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DownloadApprovalPayment, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadApprovalPayment)");
 
@@ -19,12 +22,13 @@ namespace catapult { namespace observers {
 	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
 	  	auto& downloadChannelEntry = downloadChannelIter.get();
 
-		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+		const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		auto senderIter = accountStateCache.find(Key(notification.DownloadChannelId.array()));
-	  	auto& senderState = senderIter.get();
+	  	const auto& senderState = senderIter.get();
 
-		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+		auto& statementBuilder = context.StatementBuilder();
 
 		// Maps each replicator key to a vector of opinions about that replicator.
 		std::map<Key, std::vector<uint64_t>> opinions;
@@ -41,42 +45,54 @@ namespace catapult { namespace observers {
 			for (auto j = 0; j < totalJudgedKeysCount; ++j) {
 				const auto& replicatorKey = notification.PublicKeysPtr[notification.JudgingKeysCount + j];
 				auto& opinionVector = opinions[replicatorKey];
+				const auto& cumulativePaidWorkBytes = downloadChannelEntry.cumulativePayments().at(replicatorKey).unwrap();
 				opinionVector.emplace_back(presentOpinions[i*totalJudgedKeysCount + j] ?
-			 			*pOpinionElement++ :
-					   	downloadChannelEntry.cumulativePayments().at(replicatorKey).unwrap());
+				                           *pOpinionElement++ :
+										   cumulativePaidWorkBytes);
 			}
 
-		// Calculating full payments to the replicators based on median opinions about them.
+		// Calculating full payments (in bytes equivalent) to the replicators based on median opinions about them.
 		std::map<Key, uint64_t> payments;
-		uint64_t totalPayment = 0;
-		for (auto& pair: opinions) {
-			auto& opinionVector = pair.second;
+		uint64_t totalFullPayment = 0;
+		for (auto& [replicatorKey, opinionVector]: opinions) {
 			std::sort(opinionVector.begin(), opinionVector.end());
 			const auto medianIndex = opinionVector.size() / 2;	// Corresponds to upper median index when the size is even
-			const auto medianOpinion = opinionVector.size() % 2 ?
-									   opinionVector.at(medianIndex) :
-									   (opinionVector.at(medianIndex-1) + opinionVector.at(medianIndex)) / 2;
-			const auto fullPayment = std::max(medianOpinion - downloadChannelEntry.cumulativePayments().at(pair.first).unwrap(), 0ul);
-			payments[pair.first] = fullPayment;
-			totalPayment += fullPayment;
+			const auto medianOpinionBytes = opinionVector.size() % 2 ?
+									   		opinionVector.at(medianIndex) :
+									   		(opinionVector.at(medianIndex-1) + opinionVector.at(medianIndex)) / 2;
+			const auto& cumulativePaidWorkBytes = downloadChannelEntry.cumulativePayments().at(replicatorKey).unwrap();
+			const uint64_t fullPayment = medianOpinionBytes > cumulativePaidWorkBytes ?
+									     medianOpinionBytes - cumulativePaidWorkBytes :
+			                             0;
+			payments[replicatorKey] = fullPayment;
+			totalFullPayment += fullPayment;
 		}
 
 		// Scaling down payments if there's not enough mosaics on the download channel for full payments to all of the replicators.
 		const auto& downloadChannelBalance = senderState.Balances.get(streamingMosaicId).unwrap();
-		if (downloadChannelBalance < totalPayment) {
-			const double scalingFactor = static_cast<double>(downloadChannelBalance) / totalPayment;
-			for (auto& pair: payments)
-				pair.second *= scalingFactor;	// Decimal part is truncated, so the new total payment is guaranteed to fit in download channel balance
+	  	const auto& downloadChannelBalanceBytes = utils::FileSize::FromMegabytes(downloadChannelBalance).bytes();	// 1 Streaming mosaic = 1 MB of work
+		if (downloadChannelBalanceBytes < totalFullPayment) {
+			for (auto& [_, payment]: payments) {
+				auto paymentLong = BigUint(payment);
+				payment = ((paymentLong * downloadChannelBalanceBytes) / totalFullPayment).convert_to<uint64_t>();
+			}
 		}
 
 		// Making mosaic transfers and updating cumulative payments.
-		for (const auto& pair: payments) {
-			auto recipientIter = accountStateCache.find(pair.first);
-			auto& recipientState = recipientIter.get();
-			senderState.Balances.debit(streamingMosaicId, Amount(pair.second), context.Height);
-			recipientState.Balances.credit(currencyMosaicId, Amount(pair.second), context.Height);
-			auto& cumulativePayment = downloadChannelEntry.cumulativePayments().at(pair.first);
-			cumulativePayment = cumulativePayment + Amount(pair.second);
+		for (const auto& [replicatorKey, payment]: payments) {
+			const auto paymentMegabytes = utils::FileSize::FromBytes(payment).megabytes();
+			liquidityProvider->debitMosaics(context, downloadChannelEntry.id().array(), replicatorKey,
+											config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
+											Amount(paymentMegabytes));
+
+			// Adding Download Approval receipt.
+			const auto receiptType = model::Receipt_Type_Download_Approval;
+			const model::StorageReceipt receipt(receiptType, downloadChannelEntry.id().array(), replicatorKey,
+												{ streamingMosaicId, currencyMosaicId }, Amount(paymentMegabytes));
+			statementBuilder.addTransactionReceipt(receipt);
+
+			auto& cumulativePaidWorkBytes = downloadChannelEntry.cumulativePayments().at(replicatorKey);
+			cumulativePaidWorkBytes = cumulativePaidWorkBytes + Amount(payment);
 		}
 	}))
 }}

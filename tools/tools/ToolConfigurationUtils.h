@@ -24,7 +24,7 @@
 namespace catapult { namespace tools {
 
 	/// Loads the configuration from \a resourcesPath.
-	config::BlockchainConfiguration LoadConfiguration(const std::string& resourcesPath);
+	config::BlockchainConfiguration LoadConfiguration(const std::string& resourcesPath, bool appendResourcesSegment = true);
 
 	/// Loads optional api peers configuration from \a resourcesPath for network \a networkIdentifier.
 	std::vector<ionet::Node> LoadOptionalApiPeers(const std::string& resourcesPath, model::NetworkIdentifier networkIdentifier);

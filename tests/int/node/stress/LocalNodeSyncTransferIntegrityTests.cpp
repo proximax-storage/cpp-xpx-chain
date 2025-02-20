@@ -120,7 +120,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanApplyTransactions) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunApplyTest<TTraits>(context);
@@ -131,7 +133,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanApplyTransactionsWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunApplyTest<TTraits>(context);
@@ -199,7 +203,7 @@ namespace catapult { namespace local {
 
 			auto stateHashCalculator = context.createStateHashCalculator();
 			BlockChainBuilder builder1(accounts, stateHashCalculator);
-			builder1.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
+			builder1.setBlockTimeInterval(utils::TimeSpan::FromSeconds(14)); // better block time will yield better chain
 			auto blocks = TTraits::GetBlocks(builder1, transactionsBuilder1);
 
 			// - prepare a transfer that can only attach to rollback case
@@ -233,7 +237,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanRollbackTransactions) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRollbackTest<TTraits>(context);
@@ -244,7 +250,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanRollbackTransactionsWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRollbackTest<TTraits>(context);
@@ -335,7 +343,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanRejectInvalidValidationApplyTransactions) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRejectInvalidValidationApplyTest<TTraits>(context);
@@ -346,7 +356,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanRejectInvalidValidationApplyTransactionsWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRejectInvalidValidationApplyTest<TTraits>(context);
@@ -382,7 +394,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanRejectInvalidStateHashApplyTransactions) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRejectInvalidStateHashApplyTest<TTraits>(context);
@@ -393,7 +407,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanRejectInvalidStateHashApplyTransactionsWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRejectInvalidStateHashApplyTest<TTraits>(context);
@@ -431,7 +447,7 @@ namespace catapult { namespace local {
 				BlockChainBuilder builder2(accounts, stateHashCalculator);
 
 				// - prepare invalid blocks
-				builder2.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58)); // better block time will yield better chain
+				builder2.setBlockTimeInterval(utils::TimeSpan::FromSeconds(14)); // better block time will yield better chain
 				invalidBlocks = generateInvalidBlocks(accounts, builder2);
 			}
 
@@ -487,7 +503,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanRejectInvalidValidationRollbackTransactions) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRejectInvalidValidationRollbackTest<TTraits>(context);
@@ -498,7 +516,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanRejectInvalidValidationRollbackTransactionsWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRejectInvalidValidationRollbackTest<TTraits>(context);
@@ -536,7 +556,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanRejectInvalidStateHashRollbackTransactions) {
 		// Arrange:
-		test::StateHashDisabledTestContext context;
+		test::StateHashDisabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRejectInvalidStateHashRollbackTest<TTraits>(context);
@@ -547,7 +569,9 @@ namespace catapult { namespace local {
 
 	SINGLE_MULTI_BASED_TEST(CanRejectInvalidStateHashRollbackTransactionsWithStateHashEnabled) {
 		// Arrange:
-		test::StateHashEnabledTestContext context;
+		test::StateHashEnabledTestContext context(test::NonNemesisTransactionPlugins::None, [](auto& config) {
+			const_cast<config::NodeConfiguration&>(config.Node).TransactionBatchSize = 50;
+		});
 
 		// Act + Assert:
 		auto stateHashes = RunRejectInvalidStateHashRollbackTest<TTraits>(context);

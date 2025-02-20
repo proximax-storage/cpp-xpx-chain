@@ -129,8 +129,38 @@ namespace catapult { namespace model {
 	/// Mosaic was credited to account.
 	DEFINE_CORE_NOTIFICATION(Balance_Credit_v1, 0x000E, All);
 
+	/// Mosaic is active.
+	DEFINE_CORE_NOTIFICATION(Mosaic_Active_v1, 0x0010, All);
+
 	/// Block cosignatures.
 	DEFINE_CORE_NOTIFICATION(Block_Committee_v1, 0x0011, All);
+
+	/// Active harvesters.
+	DEFINE_CORE_NOTIFICATION(Active_Harvesters_v1, 0x0012, All);
+
+	/// Block cosignatures.
+	DEFINE_CORE_NOTIFICATION(Block_Committee_v2, 0x0013, All);
+
+	/// Active harvesters.
+	DEFINE_CORE_NOTIFICATION(Active_Harvesters_v2, 0x0014, All);
+
+	/// Active harvesters.
+	DEFINE_CORE_NOTIFICATION(Inactive_Harvesters_v1, 0x0015, All);
+
+	/// Remove DBRB process by network.
+	DEFINE_CORE_NOTIFICATION(RemoveDbrbProcessByNetwork_v1, 0x0016, All);
+
+	/// Block cosignatures.
+	DEFINE_CORE_NOTIFICATION(Block_Committee_v3, 0x0017, All);
+
+	/// Active harvesters.
+	DEFINE_CORE_NOTIFICATION(Active_Harvesters_v3, 0x0018, All);
+
+	/// Block cosignatures.
+	DEFINE_CORE_NOTIFICATION(Block_Committee_v4, 0x0019, All);
+
+	/// Active harvesters.
+	DEFINE_CORE_NOTIFICATION(Active_Harvesters_v4, 0x001A, All);
 
 #undef DEFINE_CORE_NOTIFICATION
 

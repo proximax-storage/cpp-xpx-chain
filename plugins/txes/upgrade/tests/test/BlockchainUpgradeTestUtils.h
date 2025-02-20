@@ -8,6 +8,7 @@
 #include "src/cache/BlockchainUpgradeCache.h"
 #include "src/cache/BlockchainUpgradeCacheStorage.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache { class CatapultCacheDelta; } }
 
@@ -19,7 +20,7 @@ namespace catapult { namespace test {
 		static cache::CatapultCache Create() {
 			auto cacheId = cache::BlockchainUpgradeCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			subCaches[cacheId] = test::MakeSubCachePlugin<cache::BlockchainUpgradeCache, cache::BlockchainUpgradeCacheStorage>();
+			subCaches[cacheId] = test::MakeSubCachePlugin<cache::BlockchainUpgradeCache, cache::BlockchainUpgradeCacheStorage>(config::CreateMockConfigurationHolder());
 			return cache::CatapultCache(std::move(subCaches));
 		}
 	};

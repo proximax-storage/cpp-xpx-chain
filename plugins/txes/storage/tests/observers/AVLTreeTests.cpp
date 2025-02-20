@@ -177,5 +177,31 @@ namespace catapult { namespace observers {
 
 		ASSERT_TRUE(treeAdapter.checkTreeValidity());
 	}
+
+	TEST(TEST_CLASS, AVLTreeInsertSameValues) {
+		using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
+		ObserverTestContext context(NotifyMode::Commit, Current_Height, CreateConfig());
+		auto& queueCache = context.cache().sub<cache::QueueCache>();
+
+		std::map<Key, CacheValue> cache;
+
+		auto treeAdapter = utils::AVLTreeAdapter<Hash256>(
+				queueCache,
+				state::DriveVerificationsTree,
+				[&cache](const Key& key) { return cache[key].key; },
+				[&cache](const Key& key) -> state::AVLTreeNode { return cache[key].node; },
+				[&cache](const Key& key, const state::AVLTreeNode& node) { cache[key].node = node; });
+
+		auto key = Key{ { 1 } };
+		auto value = test::GenerateRandomByteArray<Hash256>();
+		cache[key].key = value;
+
+		for (int i = 0; i < 10000; i++) {
+			treeAdapter.insert(key);
+		}
+
+		ASSERT_EQ(treeAdapter.size(), 1);
+		ASSERT_TRUE(treeAdapter.checkTreeValidity());
+	}
 }
 }

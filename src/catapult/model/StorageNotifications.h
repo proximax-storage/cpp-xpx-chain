@@ -88,6 +88,15 @@ namespace catapult { namespace model {
 	/// Defines an start drive verification notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Storage, Start_Drive_Verification_v1, 0x001A);
 
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Owner_Management_Prohibition_v1, 0x001B);
+
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Node_Boot_Key_v1, 0x001C);
+
+	DEFINE_NOTIFICATION_TYPE(All, Storage, ReplicatorsCleanup_v1, 0x001D);
+
+	/// Defines a replicator onboarding notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x001E);
+
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
 		DownloadPayment(const Hash256& downloadChannelId, const uint64_t& downloadSize)
@@ -394,6 +403,7 @@ namespace catapult { namespace model {
 				const Key& driveKey,
 				const Hash256& dataModificationId,
 				const Hash256& fileStructureCdi,
+				const uint8_t modificationStatus,
 				const uint64_t fileStructureSize,
 				const uint64_t metaFilesSize,
 				const uint64_t usedDriveSize,
@@ -406,6 +416,7 @@ namespace catapult { namespace model {
 			, DriveKey(driveKey)
 			, DataModificationId(dataModificationId)
 			, FileStructureCdi(fileStructureCdi)
+			, ModificationStatus(modificationStatus)
 			, FileStructureSize(fileStructureSize)
 			, MetaFilesSize(metaFilesSize)
 			, UsedDriveSize(usedDriveSize)
@@ -425,6 +436,9 @@ namespace catapult { namespace model {
 
 		/// Content Download Information for the File Structure.
 		Hash256 FileStructureCdi;
+
+		// Status of the modification
+		uint8_t ModificationStatus;
 
 		/// Size of the File Structure.
 		uint64_t FileStructureSize;
@@ -612,22 +626,13 @@ namespace catapult { namespace model {
 		Hash256 DataModificationId;
 	};
 
-	/// Notification of a replicator onboarding.
-	template<VersionType version>
-	struct ReplicatorOnboardingNotification;
-
-	template<>
-	struct ReplicatorOnboardingNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Storage_Replicator_Onboarding_v1_Notification;
+	/// Base replicator onboarding notification.
+	template<typename TDerivedNotification>
+	struct BaseReplicatorOnboardingNotification : public Notification {
 
 	public:
-		explicit ReplicatorOnboardingNotification(
-				const Key& publicKey,
-				const Amount& capacity,
-				const Hash256& seed)
-			: Notification(Notification_Type, sizeof(ReplicatorOnboardingNotification<1>))
+		explicit BaseReplicatorOnboardingNotification(const Key& publicKey, const Amount& capacity, const Hash256& seed)
+			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 			, PublicKey(publicKey)
 			, Capacity(capacity)
 			, Seed(seed)
@@ -642,6 +647,59 @@ namespace catapult { namespace model {
 
 		/// Seed that is used for random number generator.
 		Hash256 Seed;
+	};
+
+	/// Notification of a replicator onboarding.
+	template<VersionType version>
+	struct ReplicatorOnboardingNotification;
+
+	template<>
+	struct ReplicatorOnboardingNotification<1> : public BaseReplicatorOnboardingNotification<ReplicatorOnboardingNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Replicator_Onboarding_v1_Notification;
+
+	public:
+		explicit ReplicatorOnboardingNotification(const Key& publicKey, const Amount& capacity, const Hash256& seed)
+			: BaseReplicatorOnboardingNotification(publicKey, capacity, seed)
+		{}
+	};
+
+	template<>
+	struct ReplicatorOnboardingNotification<2> : public BaseReplicatorOnboardingNotification<ReplicatorOnboardingNotification<2>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Replicator_Onboarding_v2_Notification;
+
+	public:
+		explicit ReplicatorOnboardingNotification(const Key& publicKey, const Amount& capacity, const Hash256& seed)
+			: BaseReplicatorOnboardingNotification(publicKey, capacity, seed)
+		{}
+	};
+
+	/// Notification of the node boot key where the replicator is running on.
+	template<VersionType version>
+	struct ReplicatorNodeBootKeyNotification;
+
+	template<>
+	struct ReplicatorNodeBootKeyNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Replicator_Node_Boot_Key_v1_Notification;
+
+	public:
+		explicit ReplicatorNodeBootKeyNotification(const Key& replicatorKey, const Key& nodeBootKey)
+			: Notification(Notification_Type, sizeof(ReplicatorNodeBootKeyNotification<1>))
+			, ReplicatorKey(replicatorKey)
+			, NodeBootKey(nodeBootKey)
+		{}
+
+	public:
+		/// Key of the replicator.
+		Key ReplicatorKey;
+
+		/// Key of the replicator.
+		Key NodeBootKey;
 	};
 
 	/// Notification of a drive closure.
@@ -1120,5 +1178,55 @@ namespace catapult { namespace model {
 
 		/// Array or signatures.
 		const uint8_t* OpinionsPtr;
+	};
+
+	template<VersionType version>
+	struct OwnerManagementProhibitionNotification;
+
+	template<>
+	struct OwnerManagementProhibitionNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_Owner_Management_Prohibition_v1_Notification;
+
+	public:
+		explicit OwnerManagementProhibitionNotification(
+				const Key& signer,
+				const Key& driveKey)
+				: Notification(Notification_Type, sizeof(OwnerManagementProhibitionNotification<1>))
+				, DriveKey(driveKey)
+				, Signer(signer)
+				{}
+
+	public:
+		/// Signer of the Deploy Transaction of Supercontract.
+		Key Signer;
+
+		/// Key of the drive.
+		Key DriveKey;
+	};
+
+	template<VersionType version>
+	struct ReplicatorsCleanupNotification;
+
+	template<>
+	struct ReplicatorsCleanupNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_ReplicatorsCleanup_v1_Notification;
+
+	public:
+		explicit ReplicatorsCleanupNotification(uint16_t replicatorCount, const Key* pReplicatorKeys)
+			: Notification(Notification_Type, sizeof(ReplicatorsCleanupNotification<1>))
+			, ReplicatorCount(replicatorCount)
+			, ReplicatorKeysPtr(pReplicatorKeys)
+		{}
+
+	public:
+		/// The number of replicators.
+		uint16_t ReplicatorCount;
+
+		/// Replicator keys.
+		const Key* ReplicatorKeysPtr;
 	};
 }}

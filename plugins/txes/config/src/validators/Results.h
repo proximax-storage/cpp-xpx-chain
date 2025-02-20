@@ -56,6 +56,30 @@ namespace catapult { namespace validators {
 	/// Validation failed because block generation time is zero in public network.
 	DEFINE_CATAPULT_CONFIG_RESULT(Block_Generation_Time_Zero_Public, 14);
 
+	/// Validation failed because AccountVersion is less than minimumAccountVersion.
+	DEFINE_CATAPULT_CONFIG_RESULT(AccountVersion_Less_Than_Minimum, 15);
+
+	/// Validation failed because minimum AccountVersion is less than cyrrent MinimumAccountVersion.
+	DEFINE_CATAPULT_CONFIG_RESULT(MinimumAccountVersion_Less_Than_Current, 16);
+
+	/// Validation failed because AccountVersion is less than current AccountVersion.
+	DEFINE_CATAPULT_CONFIG_RESULT(AccountVersion_Less_Than_Current, 17);
+
+	/// Validation failed because AccountVersion is less than minimumAccountVersion.
+	DEFINE_CATAPULT_CONFIG_RESULT(Interval_Must_Change_After_Reward_Tier, 18);
+
+	/// Validation failed because reward interval was set to zero.
+	DEFINE_CATAPULT_CONFIG_RESULT(Interval_Must_Not_Be_Zero, 19);
+
+	/// Validation failed because ApplyHeightDelta is zero.
+	DEFINE_CATAPULT_CONFIG_RESULT(ApplyHeight_In_The_Past, 20);
+
+	/// Validation failed because ApplyHeightDelta is zero.
+	DEFINE_CATAPULT_CONFIG_RESULT(Required_Plugins_Not_Matching, 21);
+
+	/// Validation failed because Weighted Voting and DBRB Fast Finality are both enabled.
+	DEFINE_CATAPULT_CONFIG_RESULT(Weighted_Voting_And_Dbrb_Fast_Finality_Both_Enabled, 22);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

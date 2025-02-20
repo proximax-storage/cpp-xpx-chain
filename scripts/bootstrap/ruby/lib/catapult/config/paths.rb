@@ -33,7 +33,7 @@ class Catapult::Config
       end
       
       def check_dir_exists(dir)
-        fail "Config dir '#{dir}' for type '#{self.type}' does not exist" unless Dir.exists?(dir)
+        fail "Config dir '#{dir}' for type '#{self.type}' does not exist" unless Dir.exist?(dir)
         dir
       end
       

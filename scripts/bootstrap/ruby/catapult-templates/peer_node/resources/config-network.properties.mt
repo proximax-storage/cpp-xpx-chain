@@ -1,11 +1,11 @@
 [network]
 
-publicKey = {{network_public_key}}
+publicKey = B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF
 
 [chain]
 
-blockGenerationTargetTime = 10s
-blockTimeSmoothingFactor = 1000
+blockGenerationTargetTime = 15s
+blockTimeSmoothingFactor = 3000
 
 greedDelta = 0.5
 greedExponent = 3.2
@@ -21,6 +21,7 @@ maxMosaicAtomicUnits = 9'000'000'000'000'000
 
 totalChainImportance = 8'999'999'998'000'000
 minHarvesterBalance = 100'000'000'000
+enableDeadlineValidation = true
 harvestBeneficiaryPercentage = 10
 
 blockPruneInterval = 360
@@ -28,24 +29,48 @@ maxTransactionsPerBlock = 200'000
 
 enableUnconfirmedTransactionMinFeeValidation = true
 
-enableUndoBlock = false
-enableBlockSync = false
+enableUndoBlock = true
+enableBlockSync = true
 
-enableWeightedVoting = true
-committeeSize = 3
-committeeApproval = 0.67
+enableWeightedVoting = false
+committeeSize = 21
+committeeApproval = 1
 committeePhaseTime = 5s
 minCommitteePhaseTime = 3750ms
 maxCommitteePhaseTime = 1m
-committeeSilenceInterval = 100ms
+committeeSilenceInterval = 500ms
 committeeRequestInterval = 500ms
-committeeChainHeightRequestInterval = 30s
+committeeChainHeightRequestInterval = 3s
 committeeTimeAdjustment = 1.1
-committeeEndSyncApproval = 0.45
+committeeEndSyncApproval = 0.0
 committeeBaseTotalImportance = 100
 committeeNotRunningContribution = 0.5
 
+dbrbRegistrationDuration = 24h
+dbrbRegistrationGracePeriod = 1h
+
+enableHarvesterExpiration = true
+enableRemovingDbrbProcessOnShutdown = true
+
+enableDbrbSharding = false
+dbrbShardSize = 6
+
+enableDbrbFastFinality = false
+checkNetworkHeightInterval = 10
+
+blockTimeUpdateStrategy = increase-coefficient
+
+[bootstrap.harvesters]
+
+10E8A1CCCFE02C4C22C12D42277520F1FC7D471E570C9FE2A2961ECB020BC596 =
+E8D4B7BEB2A531ECA8CC7FD93F79A4C828C24BE33F99CF7C5609FF5CE14605F4 = E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21
+7C756F2D5E9F21E7215851FC26C9F6819DB7992F0CDD22D822AFBE764404E976 = A384FBAAADBFF0405DDA0212D8A6C85F9164A08C24AFD15425927BCB274A45D4
+0A0EAC0E56FE4C052B66D070434621E74793FBF1D6F45286897240681A668BB1 = D2301C3F34280B1FC214A6580B1A3B24D48ACC8A2C4BF0B05B514E73D73B0BAC
+1AAD933111E340E74FE9A44C12CEB359744BC9F8A6630ECA7DEA8B5AECE5C1C5 = C198E0BBB2D1D04DD69C22C25BE0C93E4BB5046C34418726A141C3116AFF1A23
+71FA42E336DE2DD74CE864A7A5A747C23EAB41BC6235CBA4C28E96B1900565FC = 88FB179C1FD67A2FE77E3DA63617AAF24013FCF6B44F89E396BE4FEFDFB8ACA9
+
 [plugin:catapult.plugins.accountlink]
+
 dummy = to trigger plugin load
 
 [plugin:catapult.plugins.aggregate]
@@ -70,6 +95,19 @@ initialActivity = 0.367976785
 activityDelta = 0.00001
 activityCommitteeCosignedDelta = 0.01
 activityCommitteeNotCosignedDelta = 0.02
+
+minGreedFeeInterest = 1
+minGreedFeeInterestDenominator = 10
+
+activityScaleFactor = 1000000000
+weightScaleFactor = 1000000000000000000
+
+enableEqualWeights = true
+enableBlockchainVersionValidation = true
+enableHarvesterRotation = true
+enableBlockProducerValidation = true
+
+harvesterBanPeriod = 1h
 
 [plugin:catapult.plugins.config]
 
@@ -126,7 +164,7 @@ maxNameSize = 64
 
 # *approximate* days based on blockGenerationTargetTime
 maxNamespaceDuration = 365d
-namespaceGracePeriodDuration = 0d
+namespaceGracePeriodDuration = 1h
 reservedRootNamespaceNames = xem, nem, user, account, org, com, biz, net, edu, mil, gov, info, prx, xpx, xarcade, xar, proximax, prc, storage
 
 namespaceRentalFeeSinkPublicKey = 3E82E1C1E4A75ADAA3CBA8C101C3CD31D9817A2EB966EB3B511FB2ED45B8E262
@@ -137,7 +175,7 @@ maxChildNamespaces = 500
 
 [plugin:catapult.plugins.operation]
 
-enabled = true
+enabled = false
 
 maxOperationDuration = 2d
 
@@ -154,20 +192,9 @@ maxMosaicsSize = 512
 
 minUpgradePeriod = 360
 
-[plugin:catapult.plugins.service]
-
-enabled = true
-
-maxFilesOnDrive = 32768
-verificationFee = 10
-verificationDuration = 240
-downloadDuration = 40320
-
-downloadCacheEnabled = true
-
 [plugin:catapult.plugins.supercontract]
 
-enabled = true
+enabled = false
 maxSuperContractsOnDrive = 10
 
 [plugin:catapult.plugins.metadata_v2]
@@ -175,25 +202,30 @@ maxSuperContractsOnDrive = 10
 enabled = true
 maxValueSize = 1024
 
-[plugin:catapult.plugins.storage]
+[plugin:catapult.plugins.liquidityprovider]
+enabled = false
+managerPublicKeys = E92978122F00698856910664C480E8F3C2FDF0A733F42970FBD58A5145BD6F21
+maxWindowSize = 10
+percentsDigitsAfterDot = 2
+
+
+[plugin:catapult.plugins.exchangesda]
 
 enabled = true
-minDriveSize = 1MB
-maxDriveSize = 10TB
-minCapacity = 1MB
-maxModificationSize = 10TB
-minReplicatorCount = 1
-maxFreeDownloadSize = 1MB
-maxDownloadSize = 10TB
-# 4 weeks = 28 days = 672 hours
-storageBillingPeriod = 672h
-downloadBillingPeriod = 24h
-verificationInterval = 4h
-shardSize = 20
-verificationExpirationCoefficient = 0.06
-verificationExpirationConstant = 10
 
-[plugin:catapult.plugins.streaming]
+maxOfferDuration = 57600
+longOfferKey = CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE
+
+offerSortPolicy = 1
+
+[plugin:catapult.plugins.dbrb]
 
 enabled = true
-maxFolderNameSize = 512
+
+# 1 week = 7 days = 168 hours
+dbrbProcessLifetimeAfterExpiration = 168h
+enableDbrbProcessBanning = true
+
+[plugin:catapult.plugins.modifystate]
+
+enabled = true

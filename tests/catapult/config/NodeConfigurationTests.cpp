@@ -34,6 +34,7 @@ namespace catapult { namespace config {
 						{
 							{ "port", "1234" },
 							{ "apiPort", "8888" },
+							{ "dbrbPort", "4321" },
 							{ "shouldAllowAddressReuse", "true" },
 							{ "shouldUseSingleThreadPool", "true" },
 							{ "shouldUseCacheDatabaseStorage", "true" },
@@ -77,7 +78,9 @@ namespace catapult { namespace config {
 							{ "incomingSecurityModes", "None, Signed" },
 
 							{ "maxCacheDatabaseWriteBatchSize", "17KB" },
-							{ "maxTrackedNodes", "222" }
+							{ "maxTrackedNodes", "222" },
+
+							{ "transactionBatchSize", "50" },
 						}
 					},
 					{
@@ -127,6 +130,7 @@ namespace catapult { namespace config {
 				// Assert:
 				EXPECT_EQ(0u, config.Port);
 				EXPECT_EQ(0u, config.ApiPort);
+				EXPECT_EQ(0u, config.DbrbPort);
 				EXPECT_FALSE(config.ShouldAllowAddressReuse);
 				EXPECT_FALSE(config.ShouldUseSingleThreadPool);
 				EXPECT_FALSE(config.ShouldUseCacheDatabaseStorage);
@@ -172,6 +176,8 @@ namespace catapult { namespace config {
 				EXPECT_EQ(utils::FileSize::FromMegabytes(0), config.MaxCacheDatabaseWriteBatchSize);
 				EXPECT_EQ(0u, config.MaxTrackedNodes);
 
+				EXPECT_EQ(0u, config.TransactionBatchSize);
+
 				EXPECT_EQ("", config.Local.Host);
 				EXPECT_EQ("", config.Local.FriendlyName);
 				EXPECT_EQ(0u, config.Local.Version);
@@ -193,6 +199,7 @@ namespace catapult { namespace config {
 				// Assert:
 				EXPECT_EQ(1234u, config.Port);
 				EXPECT_EQ(8888u, config.ApiPort);
+				EXPECT_EQ(4321u, config.DbrbPort);
 				EXPECT_TRUE(config.ShouldAllowAddressReuse);
 				EXPECT_TRUE(config.ShouldUseSingleThreadPool);
 				EXPECT_TRUE(config.ShouldUseCacheDatabaseStorage);
@@ -237,6 +244,8 @@ namespace catapult { namespace config {
 
 				EXPECT_EQ(utils::FileSize::FromKilobytes(17), config.MaxCacheDatabaseWriteBatchSize);
 				EXPECT_EQ(222u, config.MaxTrackedNodes);
+
+				EXPECT_EQ(50u, config.TransactionBatchSize);
 
 				EXPECT_EQ("alice.com", config.Local.Host);
 				EXPECT_EQ("a GREAT node", config.Local.FriendlyName);

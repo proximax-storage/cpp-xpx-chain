@@ -65,7 +65,7 @@ namespace catapult { namespace harvesting {
 					, m_executionConfig(m_pConfigHolder->Config())
 					, m_utFacadeFactory(m_catapultCache, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(utCacheSize))
-					, m_supplier(CreateTransactionsInfoSupplier(strategy, *m_pUtCache))
+					, m_supplier(CreateTransactionsInfoSupplier(strategy, *m_pUtCache, [](){ return false; }))
 			{}
 
 		public:
@@ -88,6 +88,21 @@ namespace catapult { namespace harvesting {
 					{ 300, 420 }, { 350, 410 },
 					{ 325, 210 }, { 375, 200 },
 					{ 400, 810 }, { 450, 800 }
+				}));
+			}
+
+			void seedCacheForSelectionTestsWithLimitedFeeTransactions() {
+				// add 10 transaction infos to UT cache with varying sizes and multipliers + 5 transaction infos with zero fees
+				const_cast<model::TransactionFeeCalculator&>(m_pUtCache->view().transactionFeeCalculator()).addLimitedFeeTransaction(static_cast<model::EntityType>(0x5000), 1u);
+				test::AddAll(*m_pUtCache, test::CreateTransactionInfosFromSizeMultiplierPairsWithZeroFees({
+					{ 150,   0 }, { 175,  0 },
+					{ 200, 240 }, { 250, 230 },
+					{ 225, 820 }, { 275, 810 },
+					{ 240,   0 }, { 290,   0 },
+					{ 300, 420 }, { 350, 410 },
+					{ 325, 210 }, { 375, 200 },
+					{ 400, 810 }, { 450, 800 },
+					{ 425,   0 }, { 475,   0 },
 				}));
 			}
 
@@ -141,7 +156,7 @@ namespace catapult { namespace harvesting {
 
 		void AssertTransactionsInfo(
 				const TransactionsInfo& transactionsInfo,
-				BlockFeeMultiplier expectedFeeMultiplier,
+				const BlockFeeMultiplier& expectedFeeMultiplier,
 				const TransactionInfoPointers& expectedTransactionInfos) {
 			// Assert:
 			// - check multiplier
@@ -260,6 +275,82 @@ namespace catapult { namespace harvesting {
 		context.assertValidatorCalls(10);
 	}
 
+	TEST(TEST_CLASS, OldestStrategy_CanSelectTransactions_WithLimitedFeeTransactions) {
+		// Arrange:
+		TestContext context(TransactionSelectionStrategy::Oldest);
+		context.seedCacheForSelectionTestsWithLimitedFeeTransactions();
+
+		// Act:
+		auto transactionsInfo = context.supply(5);
+
+		// Assert:
+		// 1. first (oldest) five transactions are chosen
+		// 2. multiplier is min max multiplier of those (not counting limited fee transactions)
+		//     (150,  0)+ (175,  0)+ (200, 24)+ (250, 23)+ (225, 82)+ (275, 81) (240, 0) (290, 0)
+		//     (300, 42)+ (350, 41)  (325, 21)  (375, 20)  (400, 81)  (450, 80) (425, 0) (475, 0)
+		auto expectedTransactionInfos = context.extractUtInfos({ 0, 1, 2, 3, 4 });
+		AssertTransactionsInfo(transactionsInfo, BlockFeeMultiplier(23), expectedTransactionInfos);
+
+		context.assertValidatorCalls(10);
+	}
+
+	TEST(TEST_CLASS, OldestStrategy_CanSelectAllTransactions_WithLimitedFeeTransactions) {
+		// Arrange:
+		TestContext context(TransactionSelectionStrategy::Oldest);
+		context.seedCacheForSelectionTestsWithLimitedFeeTransactions();
+
+		// Act:
+		auto transactionsInfo = context.supply(50);
+
+		// Assert:
+		// 1. all 16 transactions are chosen
+		// 2. multiplier is min max multiplier of those (not counting limited fee transactions)
+		//     (150,  0)+ (175,  0)+ (200, 24)+ (250, 23)+ (225, 82)+ (275, 81) (240, 0) (290, 0)
+		//     (300, 42)+ (350, 41)  (325, 21)  (375, 20)  (400, 81)  (450, 80) (425, 0) (475, 0)
+		auto expectedTransactionInfos = context.extractUtInfos({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
+		AssertTransactionsInfo(transactionsInfo, BlockFeeMultiplier(20), expectedTransactionInfos);
+
+		context.assertValidatorCalls(32);
+	}
+
+	TEST(TEST_CLASS, OldestStrategy_CanSelectTransactionsWhereSomeFailValidation_WithLimitedFeeTransactions) {
+		// Arrange: trigger four transactions to fail
+		TestContext context(TransactionSelectionStrategy::Oldest);
+		context.seedCacheForSelectionTestsWithLimitedFeeTransactions();
+		context.setValidationFailureAt(1, 3);
+
+		// Act:
+		auto transactionsInfo = context.supply(4);
+
+		// Assert:
+		// 1. first three (oldest) transactions that pass validation are chosen
+		// 2. multiplier is min max multiplier of those (not counting limited fee transactions)
+		//     (150,  0)+ (175,  0) (200, 24) (250, 23) (225, 82)+ (275, 81)+ (240, 0)+ (290, 0)
+		//     (300, 42)  (350, 41) (325, 21) (375, 20) (400, 81)  (450, 80)  (425, 0)  (475, 0)
+		auto expectedTransactionInfos = context.extractUtInfos({ 0, 4, 5, 6 });
+		AssertTransactionsInfo(transactionsInfo, BlockFeeMultiplier(81), expectedTransactionInfos);
+
+		// - 4 transactions (2 success notifications each) + 3 transactions (1 failure notification each)
+		//   transactions are processed until 4 transactions are processed
+		context.assertValidatorCalls(4 * 2 + 3);
+	}
+
+	TEST(TEST_CLASS, OldestStrategy_CanSelectTransactionsWhereAllFailValidation_WithLimitedFeeTransactions) {
+		// Arrange:
+		TestContext context(TransactionSelectionStrategy::Oldest);
+		context.seedCacheForSelectionTestsWithLimitedFeeTransactions();
+		context.setValidationFailureAt(0);
+
+		// Act:
+		auto transactionsInfo = context.supply(5);
+
+		// Assert:
+		AssertTransactionsInfo(transactionsInfo, BlockFeeMultiplier(0), {});
+
+		// - 16 transactions (1 failure notification each)
+		context.assertValidatorCalls(16);
+	}
+
 	// endregion
 
 	// region minimize
@@ -273,7 +364,7 @@ namespace catapult { namespace harvesting {
 		auto transactionsInfo = context.supply(6);
 
 		// Assert:
-		// 1. six transactions with smallest multipliers are chosen
+		// 1. six transactions with the smallest multipliers are chosen
 		// 2. multiplier is min max multiplier of those
 		//     (200, 24)+ (250, 23)+ (225, 82)  (275, 81)  (300, 42)+
 		//     (350, 41)+ (325, 21)+ (375, 20)+ (400, 81)  (450, 80)
@@ -294,7 +385,7 @@ namespace catapult { namespace harvesting {
 		auto transactionsInfo = context.supply(3);
 
 		// Assert:
-		// 1. three transactions with smallest multipliers are chosen (of those that pass validation)
+		// 1. three transactions with the smallest multipliers are chosen (of those that pass validation)
 		// 2. multiplier is min max multiplier of those
 		//     (200, 24)+ (250, 23)+ (225, 82)  (275, 81)  (300, 42)+
 		auto expectedTransactionInfos = context.extractUtInfos({ 1, 0, 4 });
@@ -320,6 +411,65 @@ namespace catapult { namespace harvesting {
 		// - 10 transactions (1 failure notification each)
 		context.assertValidatorCalls(10);
 	}
+
+	TEST(TEST_CLASS, MinimizeStrategy_CanSelectTransactions_WithLimitedFeeTransactions) {
+		// Arrange:
+		TestContext context(TransactionSelectionStrategy::Minimize_Fee);
+		context.seedCacheForSelectionTestsWithLimitedFeeTransactions();
+
+		// Act:
+		auto transactionsInfo = context.supply(10);
+
+		// Assert:
+		// 1. six transactions with smallest multipliers are chosen
+		// 2. multiplier is min max multiplier of those (not counting limited fee transactions)
+		//     (150,  0)+ (175,  0)+ (200, 24)+ (250, 23)+ (225, 82) (275, 81) (240, 0)+ (290, 0)+
+		//     (300, 42)  (350, 41)  (325, 21)+ (375, 20)+ (400, 81) (450, 80) (425, 0)+ (475, 0)+
+		auto expectedTransactionInfos = context.extractUtInfos({ 0, 1, 6, 7, 14, 15, 11, 10, 3, 2 });
+		AssertTransactionsInfo(transactionsInfo, BlockFeeMultiplier(20), expectedTransactionInfos);
+
+		// - 10 transactions (2 success notifications each)
+		context.assertValidatorCalls(10 * 2);
+	}
+
+	TEST(TEST_CLASS, MinimizeStrategy_CanSelectTransactionsWhereSomeFailValidation_WithLimitedFeeTransactions) {
+		// Arrange: trigger the second half of transactions to fail
+		TestContext context(TransactionSelectionStrategy::Minimize_Fee);
+		context.seedCacheForSelectionTestsWithLimitedFeeTransactions();
+		context.setValidationFailureAt(8);
+
+		// Act:
+		auto transactionsInfo = context.supply(7);
+
+		// Assert:
+		// 1. seven transactions with the smallest multipliers are chosen (of those that pass validation)
+		// 2. multiplier is min max multiplier of those (not counting limited fee transactions)
+		//     (150,  0)+ (175,  0)+ (200, 24)+ (250, 23)+ (225, 82) (275, 81)+ (240, 0)+ (290, 0)+
+		//     (300, 42)  (350, 41)  (325, 21)  (375, 20)  (400, 81) (450, 80)  (425, 0)  (475, 0)
+		auto expectedTransactionInfos = context.extractUtInfos({ 0, 1, 6, 7, 3, 2, 5 });
+		AssertTransactionsInfo(transactionsInfo, BlockFeeMultiplier(23), expectedTransactionInfos);
+
+		// - 7 transactions (2 success notifications each) + 7 transactions (1 failure notification each)
+		//   transactions are processed in sorted order until 7 transactions from first eight are processed
+		context.assertValidatorCalls(7 * 2 + 7);
+	}
+
+	TEST(TEST_CLASS, MinimizeStrategy_CanSelectTransactionsWhereAllFailValidation_WithLimitedFeeTransactions) {
+		// Arrange:
+		TestContext context(TransactionSelectionStrategy::Minimize_Fee);
+		context.seedCacheForSelectionTestsWithLimitedFeeTransactions();
+		context.setValidationFailureAt(0);
+
+		// Act:
+		auto transactionsInfo = context.supply(5);
+
+		// Assert:
+		AssertTransactionsInfo(transactionsInfo, BlockFeeMultiplier(0), {});
+
+		// - 16 transactions (1 failure notification each)
+		context.assertValidatorCalls(16);
+	}
+
 
 	// endregion
 
@@ -380,6 +530,64 @@ namespace catapult { namespace harvesting {
 
 		// - 10 transactions (1 failure notification each)
 		context.assertValidatorCalls(10);
+	}
+
+	TEST(TEST_CLASS, MaximizeStrategy_CanSelectTransactions_WithLimitedFeeTransactions) {
+		// Arrange:
+		TestContext context(TransactionSelectionStrategy::Maximize_Fee);
+		context.seedCacheForSelectionTestsWithLimitedFeeTransactions();
+
+		// Act:
+		auto transactionsInfo = context.supply(8);
+
+		// Assert:
+		// 1. best fee policy is chosen to maximize fees
+		// 2. multiplier is min max multiplier of those (not counting limited fee transactions)
+		//     (150,  0)+ (175,  0)+ (200, 24) (250, 23) (225, 82)+ (275, 81)+ (240, 0)+ (290, 0)+
+		//     (300, 42)  (350, 41)  (325, 21) (375, 20) (400, 81)  (450, 80)  (425, 0)+ (475, 0)+
+		auto expectedTransactionInfos = context.extractUtInfos({ 0, 1, 6, 7, 14, 15, 4, 5 });
+		AssertTransactionsInfo(transactionsInfo, BlockFeeMultiplier(81), expectedTransactionInfos);
+
+		// - 8 transactions (2 success notifications each)
+		context.assertValidatorCalls(8 * 2);
+	}
+
+	TEST(TEST_CLASS, MaximizeStrategy_CanSelectTransactionsWhereSomeFailValidation_WithLimitedFeeTransactions) {
+		// Arrange: trigger the second half of transactions to fail
+		TestContext context(TransactionSelectionStrategy::Maximize_Fee);
+		context.seedCacheForSelectionTestsWithLimitedFeeTransactions();
+		context.setValidationFailureAt(8);
+
+		// Act:
+		auto transactionsInfo = context.supply(7);
+
+		// Assert:
+		// 1. best fee policy is chosen to maximize fees (fewer transactions than requested are selected)
+		// 2. multiplier is min max multiplier of those (not counting limited fee transactions)
+		//     (150,  0)+ (175,  0)+ (200, 24) (250, 23) (225, 82)+ (275, 81)+ (240, 0)+ (290, 0)+
+		//     (300, 42)  (350, 41)  (325, 21) (375, 20) (400, 81)  (450, 80)  (425, 0)+ (475, 0)+
+		auto expectedTransactionInfos = context.extractUtInfos({ 0, 1, 6, 7, 4, 5 });
+		AssertTransactionsInfo(transactionsInfo, BlockFeeMultiplier(81), expectedTransactionInfos);
+
+		// - 7 transactions (2 success notifications each) + 6 transactions (1 failure notification each)
+		//   transactions are processed in sorted order until 7 transactions from first eight are selected
+		context.assertValidatorCalls(7 * 2 + 6);
+	}
+
+	TEST(TEST_CLASS, MaximizeStrategy_CanSelectTransactionsWhereAllFailValidation_WithLimitedFeeTransactions) {
+		// Arrange:
+		TestContext context(TransactionSelectionStrategy::Maximize_Fee);
+		context.seedCacheForSelectionTestsWithLimitedFeeTransactions();
+		context.setValidationFailureAt(0);
+
+		// Act:
+		auto transactionsInfo = context.supply(5);
+
+		// Assert:
+		AssertTransactionsInfo(transactionsInfo, BlockFeeMultiplier(0), {});
+
+		// - 16 transactions (1 failure notification each)
+		context.assertValidatorCalls(16);
 	}
 
 	// endregion

@@ -52,7 +52,12 @@ namespace catapult { namespace cache {
 				DownloadChannel, \
 				Replicator, \
 				Queue, \
-				PriorityQueue, \
+				PriorityQueue,    \
+				LiquidityProvider, \
+				ExchangeSda, \
+				SdaOfferGroup, \
+				DbrbView, \
+				BootKeyReplicator, \
 				Empty \
 		)
 #define CATAPULT_X_(data, elem, i) elem/**/BOOST_PP_COMMA_IF(BOOST_PP_NOT_EQUAL(i, BOOST_PP_DEC(BOOST_PP_SEQ_SIZE(data))))

@@ -21,7 +21,6 @@
 #include "catapult/handlers/MerkleHandlers.h"
 #include "catapult/api/ChainPackets.h"
 #include "tests/catapult/handlers/test/HeightRequestHandlerTests.h"
-#include "tests/test/local/ServiceLocatorTestContext.h"
 
 namespace catapult { namespace handlers {
 
@@ -40,7 +39,7 @@ namespace catapult { namespace handlers {
 		}
 
 		void EnableVerifiableState(test::ServiceTestState& serviceState) {
-			auto state = serviceState.state();
+			auto& state = serviceState.state();
 			const_cast<bool&>(state.pluginManager().immutableConfig().ShouldEnableVerifiableState) = true;
 		}
 	}
@@ -61,12 +60,7 @@ namespace catapult { namespace handlers {
 			}
 
 			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage) {
-				static std::unique_ptr<test::ServiceTestState> pServiceState;
-				pServiceState = std::make_unique<test::ServiceTestState>();
-				EnableVerifiableState(*pServiceState);
-				CopyStorage(storage, pServiceState->state().storage());
-				RegisterSubCacheMerkleRootsHandler(pServiceState->state());
-				handlers = pServiceState->state().packetHandlers();
+				RegisterSubCacheMerkleRootsHandler(handlers, storage, true);
 			}
 		};
 	}
@@ -74,12 +68,13 @@ namespace catapult { namespace handlers {
 	DEFINE_HEIGHT_REQUEST_HANDLER_TESTS(SubCacheMerkleRootsHandlerTraits, SubCacheMerkleRootsHandler)
 
 	namespace {
-		void AssertCanRetrieveSubCacheMerkleRoots(size_t numBlocks, Height requestHeight) {
+		void AssertCanRetrieveSubCacheMerkleRoots(size_t numBlocks, const Height& requestHeight) {
 			// Arrange:
 			auto serviceState = test::ServiceTestState();
 			EnableVerifiableState(serviceState);
 			FillStorage(serviceState.state().storage(), numBlocks);
-			RegisterSubCacheMerkleRootsHandler(serviceState.state());
+			auto& state = serviceState.state();
+			RegisterSubCacheMerkleRootsHandler(state.packetHandlers(), state.storage(), true);
 
 			auto pPacket = ionet::CreateSharedPacket<SubCacheMerkleRootsRequestPacket>();
 			pPacket->Height = requestHeight;
@@ -116,7 +111,8 @@ namespace catapult { namespace handlers {
 		// Arrange:
 		auto serviceState = test::ServiceTestState();
 		EnableVerifiableState(serviceState);
-		RegisterSubCacheMerkleRootsHandler(serviceState.state());
+		auto& state = serviceState.state();
+		RegisterSubCacheMerkleRootsHandler(state.packetHandlers(), state.storage(), true);
 
 		{
 			auto storageModifier = serviceState.state().storage().modifier();

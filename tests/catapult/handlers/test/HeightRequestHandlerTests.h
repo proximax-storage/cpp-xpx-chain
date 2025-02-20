@@ -22,6 +22,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -29,7 +30,7 @@ namespace catapult { namespace test {
 	/// Helpers for creating a block chain with variable sized blocks.
 	struct VariableSizedBlockChain {
 		/// Gets the block size at \a height.
-		static constexpr uint32_t GetBlockSizeAtHeight(Height height) {
+		static constexpr uint32_t GetBlockSizeAtHeight(const Height& height) {
 			return static_cast<uint32_t>(sizeof(model::BlockHeader) + height.unwrap() * 100);
 		}
 
@@ -70,7 +71,7 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		static void AssertWritesEmptyResponse(size_t numBlocks, Height requestHeight) {
+		static void AssertWritesEmptyResponse(size_t numBlocks, const Height& requestHeight) {
 			// Arrange:
 			ionet::ServerPacketHandlers handlers;
 			auto pStorage = CreateStorage(numBlocks);

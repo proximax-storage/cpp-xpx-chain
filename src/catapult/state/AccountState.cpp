@@ -71,5 +71,6 @@ namespace catapult { namespace state {
 		LinkedAccountKey = accountState.LinkedAccountKey;
 		Balances = AccountBalances(this);
 		Balances = accountState.Balances;
+		return *this;
 	}
 }}

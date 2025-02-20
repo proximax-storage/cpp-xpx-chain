@@ -21,6 +21,8 @@
 #pragma once
 #include "NetworkInfo.h"
 #include "PluginConfiguration.h"
+#include "BlockTimeUpdateStrategy.h"
+#include "catapult/dbrb/DbrbDefinitions.h"
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/FileSize.h"
 #include "catapult/utils/MemoryUtils.h"
@@ -29,7 +31,7 @@
 #include "catapult/exceptions.h"
 #include "catapult/types.h"
 #include <unordered_map>
-#include <stdint.h>
+#include <cstdint>
 
 namespace catapult { namespace model {
 
@@ -57,6 +59,9 @@ namespace catapult { namespace model {
 
 		/// Greed exponent parameter.
 		double GreedExponent;
+
+		/// Active inflation amount
+		Amount Inflation;
 
 		/// Number of blocks that should be treated as a group for importance purposes.
 		/// \note Importances will only be calculated at blocks that are multiples of this grouping number.
@@ -140,13 +145,49 @@ namespace catapult { namespace model {
 		double CommitteeEndSyncApproval;
 
 		/// Amount of importance added to the node's importance during the approval stage of node synchronization.
-		uint64_t CommitteeBaseTotalImportance = 100;
+		uint64_t CommitteeBaseTotalImportance;
 
 		/// Weight of the node in synchronization state during the approval stage of node synchronization.
 		double CommitteeNotRunningContribution;
 
+		/// Time period after registration when a network node is allowed to be a DBRB process.
+		utils::TimeSpan DbrbRegistrationDuration;
+
+		/// Grace period during which time a network node is expected to prolong its registration as a DBRB process.
+		utils::TimeSpan DbrbRegistrationGracePeriod;
+
+		/// Public keys of the DBRB bootstrap processes.
+		dbrb::ViewData DbrbBootstrapProcesses;
+
+		/// Allows expiration of harvesters.
+		bool EnableHarvesterExpiration;
+
+		/// Allows removing DBRB process on node shutdown.
+		bool EnableRemovingDbrbProcessOnShutdown;
+
+		/// Special group of harvesters that never expire.
+		std::set<Key> EmergencyHarvesters;
+
+		/// Special group of harvesters that never expire mapped to bootstrap keys of the nodes the harvesters are set up on.
+		std::unordered_map<Key, Key, utils::ArrayHasher<Key>> BootstrapHarvesters;
+
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
+
+		/// Enables DBRB sharding.
+		bool EnableDbrbSharding;
+
+		/// DBRB shard size.
+		uint32_t DbrbShardSize;
+
+		/// Allows block confirmation using DBRB protocol without Weighted Voting.
+		bool EnableDbrbFastFinality;
+
+		/// Number of failed rounds of block generation before checking the network height and synchronizing if necessary.
+		uint32_t CheckNetworkHeightInterval;
+
+		/// Block time update strategy.
+		model::BlockTimeUpdateStrategy BlockTimeUpdateStrategy;
 
 	private:
 		/// Map of plugin configurations.

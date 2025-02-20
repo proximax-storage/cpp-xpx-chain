@@ -37,12 +37,23 @@ namespace catapult { namespace local {
 			}
 
 		public:
-			void loadAll() {
+			void loadConfiguredPlugins(const model::NetworkConfiguration& config) {
+				for (const auto& pair : config.Plugins) {
+					bool load = true;
+					for(const auto& systemName : m_bootstrapper.extensionManager().systemPluginNames()) {
+						if(pair.first == systemName) {
+							load = false;
+							break;
+						}
+					}
+					if(load) loadOne(pair.first);
+				}
+
+			}
+			/// Loads plugins required for system booting
+			void loadSystemPlugins() {
 				for (const auto& pluginName : m_bootstrapper.extensionManager().systemPluginNames())
 					loadOne(pluginName);
-
-				for (const auto& pair : m_bootstrapper.pluginManager().config().Plugins)
-					loadOne(pair.first);
 			}
 
 		private:
@@ -58,9 +69,26 @@ namespace catapult { namespace local {
 		};
 	}
 
-	std::vector<plugins::PluginModule> LoadAllPlugins(extensions::ProcessBootstrapper& bootstrapper) {
+	std::vector<plugins::PluginModule> LoadSystemPlugins(extensions::ProcessBootstrapper& bootstrapper) {
 		BootstrapperPluginLoader loader(bootstrapper);
-		loader.loadAll();
+		loader.loadSystemPlugins();
+		return loader.modules();
+	}
+	bool IsStatePresent(const config::CatapultDataDirectory& dataDirectory) {
+		if (extensions::HasSerializedState(dataDirectory.dir("state")))
+			return false;
+		return true;
+	}
+
+	std::unique_ptr<io::PrunableBlockStorage> CreateStagingBlockStorage(const config::CatapultDataDirectory& dataDirectory, Height nemesisHeight) {
+		auto stagingDirectory = dataDirectory.spoolDir("block_sync").str();
+		boost::filesystem::create_directory(stagingDirectory);
+		return std::make_unique<io::FileBlockStorage>(stagingDirectory, nemesisHeight, io::FileBlockStorageMode::None);
+	}
+
+	std::vector<plugins::PluginModule> LoadConfigurablePlugins(extensions::ProcessBootstrapper& bootstrapper, const model::NetworkConfiguration& config) {
+		BootstrapperPluginLoader loader(bootstrapper);
+		loader.loadConfiguredPlugins(config);
 		return loader.modules();
 	}
 }}

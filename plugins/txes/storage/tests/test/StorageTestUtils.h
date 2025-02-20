@@ -6,6 +6,7 @@
 
 #pragma once
 #include <random>
+#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheDelta.h"
 #include "boost/dynamic_bitset.hpp"
 #include "boost/iterator/counting_iterator.hpp"
@@ -16,6 +17,8 @@
 #include "catapult/model/StorageNotifications.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/BcDriveCacheStorage.h"
+#include "src/cache/BootKeyReplicatorCache.h"
+#include "src/cache/BootKeyReplicatorCacheStorage.h"
 #include "src/cache/DownloadChannelCache.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCache.h"
@@ -24,6 +27,7 @@
 #include "src/cache/QueueCacheStorage.h"
 #include "src/cache/PriorityQueueCache.h"
 #include "src/cache/PriorityQueueCacheStorage.h"
+#include "src/catapult/observers/LiquidityProviderExchangeObserver.h"
 #include "src/model/StorageEntityType.h"
 #include "src/utils/StorageUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
@@ -43,6 +47,7 @@ namespace catapult { namespace test {
 					cache::ReplicatorCache::Id,
 					cache::QueueCache::Id,
 					cache::PriorityQueueCache::Id,
+					cache::BootKeyReplicatorCache::Id,
 			};
 			auto maxId = *std::max_element(cacheIds.begin(), cacheIds.end());
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(maxId + 1);
@@ -52,6 +57,7 @@ namespace catapult { namespace test {
 			subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
 			subCaches[cache::QueueCache::Id] = MakeSubCachePlugin<cache::QueueCache, cache::QueueCacheStorage>(pConfigHolder);
 			subCaches[cache::PriorityQueueCache::Id] = MakeSubCachePlugin<cache::PriorityQueueCache, cache::PriorityQueueCacheStorage>(pConfigHolder);
+			subCaches[cache::BootKeyReplicatorCache::Id] = MakeSubCachePlugin<cache::BootKeyReplicatorCache, cache::BootKeyReplicatorCacheStorage>(pConfigHolder);
 			return subCaches;
 		}
 
@@ -97,6 +103,7 @@ namespace catapult { namespace test {
 						cache::ReplicatorCache::Id,
 						cache::QueueCache::Id,
 						cache::PriorityQueueCache::Id,
+						cache::BootKeyReplicatorCache::Id,
 				};
 				auto maxId = *std::max_element(cacheIds.begin(), cacheIds.end());
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(maxId + 1);
@@ -106,6 +113,7 @@ namespace catapult { namespace test {
                 subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
                 subCaches[cache::QueueCache::Id] = MakeSubCachePlugin<cache::QueueCache, cache::QueueCacheStorage>(pConfigHolder);
 				subCaches[cache::PriorityQueueCache::Id] = MakeSubCachePlugin<cache::PriorityQueueCache, cache::PriorityQueueCacheStorage>(pConfigHolder);
+				subCaches[cache::BootKeyReplicatorCache::Id] = MakeSubCachePlugin<cache::BootKeyReplicatorCache, cache::BootKeyReplicatorCacheStorage>(pConfigHolder);
 				return subCaches;
             }
 
@@ -125,9 +133,9 @@ namespace catapult { namespace test {
 
     /// Creates test download entry.
     state::DownloadChannelEntry CreateDownloadChannelEntry(
-        Hash256 id = test::GenerateRandomByteArray<Hash256>(),
-        Key consumer = test::GenerateRandomByteArray<Key>(),
-		Key drive = test::GenerateRandomByteArray<Key>(),
+        const Hash256& id = test::GenerateRandomByteArray<Hash256>(),
+        const Key& consumer = test::GenerateRandomByteArray<Key>(),
+		const Key& drive = test::GenerateRandomByteArray<Key>(),
 		uint64_t downloadSize = test::Random(),
 		uint16_t downloadApprovalCount = test::Random16(),
 		std::vector<Key> listOfPublicKeys = {test::GenerateRandomByteArray<Key>()},
@@ -171,13 +179,22 @@ namespace catapult { namespace test {
 
     /// Creates test replicator entry.
     state::ReplicatorEntry CreateReplicatorEntry(
-        Key key = test::GenerateRandomByteArray<Key>(),
-        Amount capacity = test::GenerateRandomValue<Amount>(),
+        const Key& key = test::GenerateRandomByteArray<Key>(),
+		VersionType version = 2,
 		uint16_t drivesCount = 2,
-		uint16_t downloadChannelCount = 4);
+		uint16_t downloadChannelCount = 4,
+        const Key& nodeBootKey = test::GenerateRandomByteArray<Key>());
 
-    /// Verifies that \a entry1 is equivalent to \a entry2.
-    void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& entry);
+    /// Verifies that \a expectedEntry is equivalent to \a actualEntry.
+    void AssertEqualReplicatorData(const state::ReplicatorEntry& expectedEntry, const state::ReplicatorEntry& actualEntry);
+
+	/// Creates test node boot key / replicator entry.
+	state::BootKeyReplicatorEntry CreateBootKeyReplicatorEntry(
+		const Key& nodeBootKey = test::GenerateRandomByteArray<Key>(),
+		const Key& replicatorKey = test::GenerateRandomByteArray<Key>());
+
+    /// Verifies that \a expectedEntry is equivalent to \a actualEntry.
+    void AssertEqualBootKeyReplicatorData(const state::BootKeyReplicatorEntry& expectedEntry, const state::BootKeyReplicatorEntry& actualEntry);
 
      /// Cache factory for creating a catapult cache composed of replicator cache and core caches.
     struct ReplicatorCacheFactory {
@@ -188,6 +205,7 @@ namespace catapult { namespace test {
 						cache::DownloadChannelCache::Id,
 						cache::ReplicatorCache::Id,
 						cache::PriorityQueueCache::Id,
+						cache::BootKeyReplicatorCache::Id,
 				};
 				auto maxId = *std::max_element(cacheIds.begin(), cacheIds.end());
                 std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(maxId + 1);
@@ -196,6 +214,7 @@ namespace catapult { namespace test {
 				subCaches[cache::DownloadChannelCache::Id] = MakeSubCachePlugin<cache::DownloadChannelCache, cache::DownloadChannelCacheStorage>(pConfigHolder);
 				subCaches[cache::ReplicatorCache::Id] = MakeSubCachePlugin<cache::ReplicatorCache, cache::ReplicatorCacheStorage>(pConfigHolder);
 				subCaches[cache::PriorityQueueCache::Id] = MakeSubCachePlugin<cache::PriorityQueueCache, cache::PriorityQueueCacheStorage>(pConfigHolder);
+				subCaches[cache::BootKeyReplicatorCache::Id] = MakeSubCachePlugin<cache::BootKeyReplicatorCache, cache::BootKeyReplicatorCacheStorage>(pConfigHolder);
 				return subCaches;
             }
 
@@ -219,7 +238,7 @@ namespace catapult { namespace test {
 			cache::CatapultCache& cache,
 			std::vector<crypto::KeyPair>& replicatorKeyPairs,
 			uint8_t count,
-			Height height = Height(1));
+			const Height& height = Height(1));
 
 	/// Common fields of opinion-based multisignature transactions (DownloadApproval, DataModificationApproval, EndDriveVerification).
 	template<typename TOpinion>
@@ -330,13 +349,41 @@ namespace catapult { namespace test {
 		return data;
 	};
 
+	class LiquidityProviderExchangeObserverImpl : public observers::LiquidityProviderExchangeObserver {
+	public:
+		void creditMosaics(
+				observers::ObserverContext& context,
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
+		void debitMosaics(
+				observers::ObserverContext& context,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				const UnresolvedMosaicId& unresolvedMosaicId,
+				const UnresolvedAmount& mosaicAmount) const override;
+		void creditMosaics(
+				observers::ObserverContext& context,
+				const Key& currencyDebtor,
+				const Key& mosaicCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const override;
+		void debitMosaics(
+				observers::ObserverContext& context,
+				const Key& mosaicDebtor,
+				const Key& currencyCreditor,
+				const UnresolvedMosaicId& mosaicId,
+				const Amount& mosaicAmount) const override;
+	};
+
     /// Creates a transaction.
     template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateTransaction(model::EntityType type, size_t additionalSize = 0) {
         uint32_t entitySize = sizeof(TTransaction) + additionalSize;
         auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
 		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
-		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
+		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, TTransaction::Current_Version);
         pTransaction->Type = type;
         pTransaction->Size = entitySize;
 
@@ -398,6 +445,9 @@ namespace catapult { namespace test {
     model::UniqueEntityPtr<TTransaction> CreateReplicatorOnboardingTransaction() {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ReplicatorOnboarding);
         pTransaction->Capacity = test::GenerateRandomValue<Amount>();
+        pTransaction->NodeBootKey = test::GenerateRandomByteArray<Key>();
+        pTransaction->Message = test::GenerateRandomByteArray<Hash256>();
+        pTransaction->MessageSignature = test::GenerateRandomByteArray<Signature>();
         return pTransaction;
     }
 
@@ -426,6 +476,15 @@ namespace catapult { namespace test {
         pTransaction->ShardId = test::RandomByte();
 		pTransaction->KeyCount = keyCount;
 		pTransaction->JudgingKeyCount = judgingKeyCount;
+        return pTransaction;
+    }
+
+    /// Creates a end drive verification transaction.
+    template<typename TTransaction>
+    model::UniqueEntityPtr<TTransaction> CreateReplicatorsCleanupTransaction(uint16_t replicatorCount) {
+		size_t additionalSize = replicatorCount * Key_Size;
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_ReplicatorsCleanup, additionalSize);
+        pTransaction->ReplicatorCount = replicatorCount;
         return pTransaction;
     }
 }}

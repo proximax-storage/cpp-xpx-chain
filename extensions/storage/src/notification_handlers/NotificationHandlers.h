@@ -28,18 +28,27 @@ namespace catapult { namespace notification_handlers {
 
 	DECLARE_HANDLER(DriveClosure, model::DriveClosureNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
+	DECLARE_HANDLER(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
 	DECLARE_HANDLER(FinishDownload, model::FinishDownloadNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(PeriodicDownloadPayment, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(PeriodicStoragePayment, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(PrepareDrive, model::PrepareDriveNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(ReplicatorOffboarding, model::ReplicatorOffboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
-	DECLARE_HANDLER(ReplicatorOnboarding, model::ReplicatorOnboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+	DECLARE_HANDLER(ReplicatorOnboardingV1, model::ReplicatorOnboardingNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+
+	DECLARE_HANDLER(ReplicatorOnboardingV2, model::ReplicatorOnboardingNotification<2>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
 	DECLARE_HANDLER(Verification, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
-	DECLARE_HANDLER(PeriodicStoragePayment, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+	DECLARE_HANDLER(StreamStart, model::StreamStartNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
-	DECLARE_HANDLER(DownloadStoragePayment, model::BlockNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
+	DECLARE_HANDLER(StreamFinish, model::StreamFinishNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 
+	DECLARE_HANDLER(StreamPayment, model::StreamPaymentNotification<1>)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorService);
 }}

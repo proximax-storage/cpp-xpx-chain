@@ -54,6 +54,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		std::string Summary;
 	};
 
+
 	/// Calculates and logs the nemesis block execution dependent hashes after executing nemesis \a blockElement
 	/// for network configured with \a config with specified cache database cleanup mode (\a databaseCleanupMode).
 	NemesisExecutionHashesDescriptor CalculateAndLogNemesisExecutionHashes(
@@ -61,8 +62,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			const model::BlockElement& blockElement,
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			CacheDatabaseCleanupMode databaseCleanupMode,
-			NemesisTransactions* transactions,
-			plugins::PluginManager* manager = nullptr);
+			NemesisTransactions* transactions);
 
 	namespace detail {
 		observers::ObserverContext CreateObserverContext(
@@ -82,6 +82,69 @@ namespace catapult { namespace tools { namespace nemgen {
 			}
 		}
 	}
+
+	class BaseEntityProvider {
+	public:
+		using OriginalIterator = NemesisTransactions::NemesisTransactionsView::Iterator;
+
+		// Constructor
+		BaseEntityProvider(NemesisTransactions::NemesisTransactionsView& container, const model::BlockElement& block)
+			: m_container(container), m_extraElement(block) {}
+
+		// Custom Iterator
+		class Iterator {
+		public:
+			Iterator(OriginalIterator current, OriginalIterator end, const model::BlockElement* extraElement, bool atExtra)
+				: m_current(current), m_end(end), m_extraElement(extraElement), m_atExtra(atExtra) {}
+
+			// Dereference operator
+			auto operator*() const {
+				return m_atExtra ? model::WeakEntityInfo(m_extraElement->Block, m_extraElement->EntityHash, m_extraElement->Block) : model::WeakEntityInfo(*(*m_current).transaction, (*m_current).entityHash, m_extraElement->Block);
+			}
+
+			// Increment operator
+			Iterator& operator++() {
+				if (m_current != m_end) {
+					++m_current;
+					if (m_current == m_end) {
+						m_atExtra = true; // Switch to returning extra element
+					}
+				} else {
+					m_atExtra = false; // End iteration
+				}
+				return *this;
+			}
+
+			// Equality and inequality operators
+			bool operator==(const Iterator& other) const {
+				return m_current == other.m_current && m_atExtra == other.m_atExtra;
+			}
+
+			bool operator!=(const Iterator& other) const {
+				return !(*this == other);
+			}
+
+		private:
+			OriginalIterator m_current;
+			OriginalIterator m_end;
+			const model::BlockElement* m_extraElement;
+			bool m_atExtra;
+		};
+
+		// Begin iterator
+		Iterator begin() const {
+			return Iterator(m_container.begin(), m_container.end(), &m_extraElement, false);
+		}
+
+		// End iterator
+		Iterator end() const {
+			return Iterator(m_container.end(), m_container.end(), &m_extraElement, false);
+		}
+
+	private:
+		NemesisTransactions::NemesisTransactionsView& m_container;
+		model::BlockElement m_extraElement;
+	};
 
 	template<typename TWeakEntityInfoProvider, typename TWeakEntityInfoProcessor>
 	void ExecuteBlock(const model::BlockElement& blockElement, const chain::BlockExecutionContext& executionContext, TWeakEntityInfoProvider& entityInfoProvider, TWeakEntityInfoProcessor entityPostOp) {

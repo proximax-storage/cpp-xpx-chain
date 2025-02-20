@@ -24,17 +24,26 @@ namespace catapult { namespace config {
 							{ "activityDelta", "0.00001" },
 							{ "activityCommitteeCosignedDelta", "0.01" },
 							{ "activityCommitteeNotCosignedDelta", "0.02" },
+
+							{ "minGreedFeeInterest", "1" },
+							{ "minGreedFeeInterestDenominator", "10" },
+							{ "activityScaleFactor", "1000000000" },
+							{ "weightScaleFactor", "1000000000000000000" },
 						}
 					}
 				};
 			}
 
 			static bool SupportsUnknownProperties() {
-				return false;
+				return true;
 			}
 
-			static bool IsPropertyOptional(const std::string&) {
-				return false;
+			static bool IsPropertyOptional(const std::string& name) {
+				return std::set<std::string>{
+					"minGreedFeeInterest",
+					"minGreedFeeInterestDenominator",
+					"activityScaleFactor",
+					"weightScaleFactor"}.count(name);
 			}
 
 			static bool IsSectionOptional(const std::string&) {
@@ -49,6 +58,10 @@ namespace catapult { namespace config {
 				EXPECT_EQ(0.0, config.ActivityDelta);
 				EXPECT_EQ(0.0, config.ActivityCommitteeCosignedDelta);
 				EXPECT_EQ(0.0, config.ActivityCommitteeNotCosignedDelta);
+				EXPECT_EQ(0, config.MinGreedFeeInterest);
+				EXPECT_EQ(0, config.MinGreedFeeInterestDenominator);
+				EXPECT_EQ(0.0, config.ActivityScaleFactor);
+				EXPECT_EQ(0.0, config.WeightScaleFactor);
 			}
 
 			static void AssertCustom(const CommitteeConfiguration& config) {
@@ -59,6 +72,10 @@ namespace catapult { namespace config {
 				EXPECT_EQ(0.00001, config.ActivityDelta);
 				EXPECT_EQ(0.01, config.ActivityCommitteeCosignedDelta);
 				EXPECT_EQ(0.02, config.ActivityCommitteeNotCosignedDelta);
+				EXPECT_EQ(1, config.MinGreedFeeInterest);
+				EXPECT_EQ(10, config.MinGreedFeeInterestDenominator);
+				EXPECT_EQ(1'000'000'000.0, config.ActivityScaleFactor);
+				EXPECT_EQ(1'000'000'000'000'000'000.0, config.WeightScaleFactor);
 			}
 		};
 	}

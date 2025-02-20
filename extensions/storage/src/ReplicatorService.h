@@ -18,12 +18,14 @@ namespace catapult { namespace storage {
 
     class ReplicatorService {
     public:
-        ReplicatorService(crypto::KeyPair&& keyPair, StorageConfiguration&& storageConfig, std::vector<ionet::Node>&& bootstrapReplicators);
+        ReplicatorService(StorageConfiguration&& storageConfig, std::vector<ionet::Node>&& bootstrapReplicators);
 		~ReplicatorService();
 
     public:
         void start();
         void stop();
+		void restart();
+		void maybeRestart();
 
         void setServiceState(extensions::ServiceState* pServiceState) {
             m_pServiceState = pServiceState;
@@ -60,9 +62,11 @@ namespace catapult { namespace storage {
 
     public:
     	void anotherReplicatorOnboarded(const Key& replicatorKey);
-    	void storageBlockPublished(const Hash256& eventHash);
     	void downloadBlockPublished(const Hash256& eventHash);
     	void addDriveModification(const Key& driveKey, const Hash256& downloadDataCdi, const Hash256& modificationId, const Key& owner, uint64_t dataSizeMegabytes);
+		void startStream(const Key& driveKey, const Hash256& streamId, const Key& streamerKey, const std::string& folder, uint64_t expectedSizeMegabytes);
+		void streamPaymentPublished(const Key& driveKey, const Hash256& streamId);
+		void finishStream(const Key& driveKey, const Hash256& streamId, const Hash256& finishDownloadDataCdi, uint64_t actualSizeMegabytes);
 		void dataModificationApprovalPublished(const Key& driveKey, const Hash256& modificationId, const Hash256& rootHash, std::vector<Key>& replicators);
         void dataModificationSingleApprovalPublished(const Key& driveKey, const Hash256& modificationId);
         void downloadApprovalPublished(const Hash256& approvalTrigger, const Hash256& downloadChannelId);

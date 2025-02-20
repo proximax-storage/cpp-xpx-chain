@@ -28,6 +28,7 @@ namespace catapult { namespace mongo { namespace plugins {
 						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSizeMegabytes)
 						<< "folderName" << ToBinary(pFolderName, modification.FolderName.size())
 						<< "readyForApproval" << modification.ReadyForApproval
+						<< "isStream" << modification.IsStream
 						<< bson_stream::close_document;
 			}
 
@@ -47,7 +48,9 @@ namespace catapult { namespace mongo { namespace plugins {
 						<< "actualUploadSize" << static_cast<int64_t>(modification.ActualUploadSizeMegabytes)
 						<< "folderName" << ToBinary(pFolderName, modification.FolderName.size())
 						<< "readyForApproval" << modification.ReadyForApproval
-						<< "state" << utils::to_underlying_type(modification.State)
+						<< "isStream" << modification.IsStream
+						<< "state" << utils::to_underlying_type(modification.ApprovalState)
+						<< "success" << static_cast<int32_t>(modification.SuccessState)
 						<< bson_stream::close_document;
 			}
 
@@ -91,7 +94,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				builder << "verification" << bson_stream::open_document
 					<< "verificationTrigger" << ToBinary(verification->VerificationTrigger)
 					<< "expiration" << ToInt64(verification->Expiration)
-					<< "duration" << static_cast<int64_t>(verification->Duration);
+					<< "duration" << static_cast<int32_t>(verification->Duration);
 					StreamShards(builder, verification->Shards);
 					builder << bson_stream::close_document;
 			}
@@ -102,6 +105,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			for (const auto& id : downloadShards) {
 				bson_stream::document shardBuilder;
 				shardBuilder << "downloadChannelId" << ToBinary(id);
+				array << shardBuilder;
 			}
 
 			array << bson_stream::close_array;
@@ -122,9 +126,9 @@ namespace catapult { namespace mongo { namespace plugins {
 			for (const auto& pair : dataModificationShards) {
 				bson_stream::document shardBuilder;
 				shardBuilder << "replicator" << ToBinary(pair.first);
-				StreamUploadInfo("actualShardReplicators", shardBuilder, pair.second.m_actualShardMembers);
-				StreamUploadInfo("formerShardReplicators", shardBuilder, pair.second.m_formerShardMembers);
-				shardBuilder << "ownerUpload" << static_cast<int64_t>(pair.second.m_ownerUpload);
+				StreamUploadInfo("actualShardReplicators", shardBuilder, pair.second.ActualShardMembers);
+				StreamUploadInfo("formerShardReplicators", shardBuilder, pair.second.FormerShardMembers);
+				shardBuilder << "ownerUpload" << static_cast<int64_t>(pair.second.OwnerUpload);
 				array << shardBuilder;
 			}
 
@@ -139,10 +143,12 @@ namespace catapult { namespace mongo { namespace plugins {
 				           << "multisigAddress" << ToBinary(accountAddress)
 				           << "owner" << ToBinary(entry.owner())
 				           << "rootHash" << ToBinary(entry.rootHash())
+						   << "lastModificationId" << ToBinary(entry.lastModificationId())
 						   << "size" << static_cast<int64_t>(entry.size())
 				           << "usedSizeBytes" << static_cast<int64_t>(entry.usedSizeBytes())
 				           << "metaFilesSizeBytes" << static_cast<int64_t>(entry.metaFilesSizeBytes())
-				           << "replicatorCount" << static_cast<int32_t>(entry.replicatorCount());
+				           << "replicatorCount" << static_cast<int32_t>(entry.replicatorCount())
+						   << "ownerManagement" << static_cast<int32_t>(entry.ownerManagement());
 
 		StreamActiveDataModifications(builder, entry.activeDataModifications());
 		StreamCompletedDataModifications(builder, entry.completedDataModifications());
@@ -178,7 +184,16 @@ namespace catapult { namespace mongo { namespace plugins {
 				auto binaryFolderName = doc["folderName"].get_binary();
 				std::string folderName((const char*) binaryFolderName.bytes, binaryFolderName.size);
 				auto readyForApproval = doc["readyForApproval"].get_bool();
-				activeDataModifications.emplace_back(state::ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folderName, readyForApproval));
+				auto isStream = doc["isStream"].get_bool();
+				activeDataModifications.emplace_back(state::ActiveDataModification(
+						id,
+						owner,
+						downloadDataCdi,
+						expectedUploadSize,
+						actualUploadSize,
+						folderName,
+						readyForApproval,
+						isStream));
 			}
 		}
 
@@ -197,9 +212,21 @@ namespace catapult { namespace mongo { namespace plugins {
 				auto binaryFolderName = doc["folderName"].get_binary();
 				std::string folderName((const char*) binaryFolderName.bytes, binaryFolderName.size);
 				bool readyForApproval = doc["readyForApproval"].get_bool();
-				auto state = static_cast<state::DataModificationState>(static_cast<uint8_t>(doc["state"].get_int32()));
-
-				completedDataModifications.emplace_back(state::CompletedDataModification{ state::ActiveDataModification(id, owner, downloadDataCdi, expectedUploadSize, actualUploadSize, folderName, readyForApproval), state });
+				bool isStream = doc["isStream"].get_bool();
+				auto state = static_cast<state::DataModificationApprovalState>(static_cast<uint8_t>(doc["state"].get_int32()));
+				auto success = static_cast<uint8_t>(doc["success"].get_int32());
+				completedDataModifications.emplace_back(
+						state::CompletedDataModification { state::ActiveDataModification(
+																   id,
+																   owner,
+																   downloadDataCdi,
+																   expectedUploadSize,
+																   actualUploadSize,
+																   folderName,
+																   readyForApproval,
+																   isStream),
+														   state,
+														   success });
 			}
 		}
 
@@ -244,7 +271,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			verification = state::Verification();
 			DbBinaryToModelArray(verification->VerificationTrigger, dbVerification["verificationTrigger"].get_binary());
 			verification->Expiration = Timestamp(static_cast<uint64_t>(dbVerification["expiration"].get_int64()));
-			verification->Duration = dbVerification["duration"].get_bool();
+			verification->Duration = dbVerification["duration"].get_int32();
 			ReadShards(verification->Shards, dbVerification["shards"].get_array().value);
 		}
 
@@ -253,6 +280,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				auto doc = dbShard.get_document().view();
 				Hash256 downloadChannelId;
 				DbBinaryToModelArray(downloadChannelId, doc["downloadChannelId"].get_binary());
+				downloadShards.emplace(std::move(downloadChannelId));
 			}
 		}
 
@@ -274,7 +302,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				auto& shardsPair = dataModificationShards[replicatorKey];
 //				ReadUploadInfo(shardsPair.m_actualShardMembers, doc["actualShardReplicators"].get_array().value);
 //				ReadUploadInfo(shardsPair.m_formerShardMembers, doc["formerShardReplicators"].get_array().value);
-				shardsPair.m_ownerUpload = static_cast<uint64_t>(doc["ownerUpload"].get_int64());
+				shardsPair.OwnerUpload = static_cast<uint64_t>(doc["ownerUpload"].get_int64());
 			}
 		}
 	}
@@ -295,10 +323,15 @@ namespace catapult { namespace mongo { namespace plugins {
 		DbBinaryToModelArray(rootHash, dbDriveEntry["rootHash"].get_binary());
 		entry.setRootHash(rootHash);
 
+		Hash256 lastModificationId;
+		DbBinaryToModelArray(lastModificationId, dbDriveEntry["lastModificationId"].get_binary());
+		entry.setLastModificationId(lastModificationId);
+
 		entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
 		entry.setUsedSizeBytes(static_cast<uint64_t>(dbDriveEntry["usedSizeBytes"].get_int64()));
 		entry.setMetaFilesSizeBytes(static_cast<uint64_t>(dbDriveEntry["metaFilesSizeBytes"].get_int64()));
 		entry.setReplicatorCount(static_cast<uint16_t>(dbDriveEntry["replicatorCount"].get_int32()));
+		entry.setOwnerManagement(static_cast<state::OwnerManagement>(static_cast<uint8_t>(dbDriveEntry["ownerManagement"].get_int32())));
 
 		ReadActiveDataModifications(entry.activeDataModifications(), dbDriveEntry["activeDataModifications"].get_array().value);
 		ReadCompletedDataModifications(entry.completedDataModifications(), dbDriveEntry["completedDataModifications"].get_array().value);

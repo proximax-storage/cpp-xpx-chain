@@ -180,7 +180,7 @@ namespace catapult { namespace ionet {
 
 			void close() {
 				boost::system::error_code ignored_ec;
-				m_socket.shutdown(socket::shutdown_both, ignored_ec);
+				m_socket.shutdown(NetworkSocket::shutdown_both, ignored_ec);
 				m_socket.close(ignored_ec);
 			}
 
@@ -232,12 +232,12 @@ namespace catapult { namespace ionet {
 			}
 
 		public:
-			socket& impl() {
+			NetworkSocket& impl() {
 				return m_socket;
 			}
 
 		private:
-			socket m_socket;
+			NetworkSocket m_socket;
 			TSocketCallbackWrapper& m_wrapper;
 			WorkingBuffer m_buffer;
 			size_t m_maxPacketDataSize;
@@ -290,11 +290,11 @@ namespace catapult { namespace ionet {
 			}
 
 			std::shared_ptr<PacketIo> buffered() override {
-				return CreateBufferedPacketIo(shared_from_this(), m_strand);
+				return CreateBufferedPacketIo(weak_from_this(), m_strand);
 			}
 
 		public:
-			socket& impl() {
+			NetworkSocket& impl() {
 				return m_socket.impl();
 			}
 

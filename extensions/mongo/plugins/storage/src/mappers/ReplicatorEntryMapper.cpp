@@ -21,7 +21,6 @@ namespace catapult { namespace mongo { namespace plugins {
 				driveBuilder
 						<< "drive" << ToBinary(drivePair.first)
 						<< "lastApprovedDataModificationId" << ToBinary(drivePair.second.LastApprovedDataModificationId)
-						<< "dataModificationIdIsValid" << drivePair.second.DataModificationIdIsValid	// TODO: Double-check if streamed correctly
 						<< "initialDownloadWork" << static_cast<int64_t>(drivePair.second.InitialDownloadWorkMegabytes)
 						<< "lastCompletedCumulativeDownloadWork" << static_cast<int64_t>(drivePair.second.LastCompletedCumulativeDownloadWorkBytes);
 				array << driveBuilder;
@@ -42,7 +41,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		bson_stream::document builder;
 		auto doc = builder << "replicator" << bson_stream::open_document
 				<< "key" << ToBinary(entry.key())
-				<< "version" << static_cast<int32_t>(entry.version());
+				<< "version" << static_cast<int32_t>(entry.version())
+				<< "nodeBootKey" << ToBinary(entry.nodeBootKey());
 
 		StreamDrives(builder, entry.drives());
 		StreamDownloadChannels(builder, entry.downloadChannels());
@@ -64,7 +64,6 @@ namespace catapult { namespace mongo { namespace plugins {
 
 				state::DriveInfo info;
 				DbBinaryToModelArray(info.LastApprovedDataModificationId, doc["lastApprovedDataModificationId"].get_binary());
-				info.DataModificationIdIsValid = doc["dataModificationIdIsValid"].get_bool();	// TODO: Double-check if read correctly
 				info.InitialDownloadWorkMegabytes = doc["initialDownloadWork"].get_int64();
 				info.LastCompletedCumulativeDownloadWorkBytes = doc["lastCompletedCumulativeDownloadWork"].get_int64();
 
@@ -90,6 +89,10 @@ namespace catapult { namespace mongo { namespace plugins {
 		Key key;
 		DbBinaryToModelArray(key, dbReplicatorEntry["key"].get_binary());
 		state::ReplicatorEntry entry(key);
+
+		Key nodeBootKey;
+		DbBinaryToModelArray(nodeBootKey, dbReplicatorEntry["nodeBootKey"].get_binary());
+		entry.setNodeBootKey(nodeBootKey);
 
 		entry.setVersion(static_cast<VersionType>(dbReplicatorEntry["version"].get_int32()));
 

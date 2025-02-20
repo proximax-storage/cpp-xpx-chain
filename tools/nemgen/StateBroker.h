@@ -73,49 +73,54 @@ namespace catapult { namespace tools {  namespace nemgen {
 		static void Rebuild(const model::NetworkIdentifier identifier, const Key& nemesisPublicKey, const cache::CatapultCacheDelta& catapultCache, utils::AccountMigrationManager& manager, Height height, cache::SubCacheId subCacheId, TExecutor executor) {
 			auto& stateCache = catapultCache.sub<cache::NetworkConfigCache>();
 			auto cacheDeltaView = stateCache.template tryMakeBroadIterableView<typename cache::NetworkConfigCacheTypes::PrimaryTypes::BaseSetDeltaType>();
-			//std::vector<typename TSetTypes::BaseSetType::ElementType> results;
 			state::NetworkConfigEntry lastActiveEntry;
+
+			// Pre-emptively check which is the last currently active network configuration
+			auto currentlyActiveHeight = Height(1);
 			for(const auto& val : *cacheDeltaView) {
-				//results.push_back(Convert(manager, val.second));
-				state::NetworkConfigEntry entry = Convert(manager, val.second, entry.height() >= height);
-				if(entry.height() < height && entry.height() > lastActiveEntry.height())
-					lastActiveEntry = entry;
+				auto entryHeight = val.second.height();
+				if(entryHeight < height && entryHeight > currentlyActiveHeight)
+					currentlyActiveHeight = entryHeight;
+			}
+
+			for(const auto& val : *cacheDeltaView) {
+				state::NetworkConfigEntry entry = Convert(manager, val.second, val.second.height() >= currentlyActiveHeight);
 				auto transaction = BuildStateTransaction<cache::NetworkConfigCache, TDescriptor>(identifier, nemesisPublicKey, static_cast<cache::CacheId>(cache::NetworkConfigCache::Id), subCacheId, entry);
 				executor(std::move(transaction));
 			}
 
-			//TODO Generate active network configuration base don lastActiveEntry
+			//TODO Possible work on the currently active entry.
 		}
 	};
 
 	class StateBroker {
 	public:
 
-		StateBroker(const cache::CatapultCacheDelta& catapultCache, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder, crypto::KeyPair* signer) :  m_catapultCache(catapultCache), m_accountMigrationManager("paging", pConfigHolder), m_pHolder(pConfigHolder), m_NemesisAccount(signer){
+		StateBroker(const cache::CatapultCacheDelta& catapultCache, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder, std::string nemesisPrivateKey) :  m_catapultCache(catapultCache), m_accountMigrationManager(nemesisPrivateKey, "paging", pConfigHolder), m_pHolder(pConfigHolder), m_NemesisAccount(crypto::KeyPair::FromString(nemesisPrivateKey)){
 
 		}
 
 	public:
 		template<typename TExecutor>
 		void ProcessCaches(Height height, TExecutor executor) {
-			StateRebuilder<cache::AccountStateCache, cache::AccountStateCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			/// Network config must be the first cache to be converted, so that the account manager properly sets the nemesis account.
+			StateRebuilder<cache::NetworkConfigCache, cache::NetworkConfigCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			StateRebuilder<cache::AccountStateCache, cache::AccountStateCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
 			// Config update must not be set for nemesis block
-			StateRebuilder<cache::NetworkConfigCache, cache::NetworkConfigCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
-			StateRebuilder<cache::ExchangeCache, cache::ExchangeCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
-			StateRebuilder<cache::MosaicCache, cache::MosaicCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
-			StateRebuilder<cache::MosaicCache, cache::MosaicCacheTypes::HeightGroupingTypes, cache::MosaicCacheTypes::HeightGroupingTypesDescriptor>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Height), executor);
-			StateRebuilder<cache::MetadataV1Cache, cache::MetadataV1CacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
-			StateRebuilder<cache::MetadataV1Cache, cache::MetadataV1CacheTypes::HeightGroupingTypes, cache::MetadataV1CacheTypes::HeightGroupingTypesDescriptor>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Height), executor);
-			StateRebuilder<cache::MetadataCache, cache::MetadataCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
-			StateRebuilder<cache::LevyCache, cache::LevyCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			StateRebuilder<cache::ExchangeCache, cache::ExchangeCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			StateRebuilder<cache::MosaicCache, cache::MosaicCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			StateRebuilder<cache::MosaicCache, cache::MosaicCacheTypes::HeightGroupingTypes, cache::MosaicCacheTypes::HeightGroupingTypesDescriptor>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Height), executor);
+			StateRebuilder<cache::MetadataV1Cache, cache::MetadataV1CacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			//StateRebuilder<cache::MetadataV1Cache, cache::MetadataV1CacheTypes::HeightGroupingTypes, cache::MetadataV1CacheTypes::HeightGroupingTypesDescriptor>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Height), executor);
+			StateRebuilder<cache::MetadataCache, cache::MetadataCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			StateRebuilder<cache::LevyCache, cache::LevyCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
 			//RebuildStates<cache::LevyCache, cache::LevyCacheTypes::HeightGroupingTypes, cache::LevyCacheTypes::HeightGroupingTypesDescriptor>(m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Height), executor);
-			StateRebuilder<cache::MultisigCache, cache::MultisigCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
-			StateRebuilder<cache::CommitteeCache, cache::CommitteeCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
-			StateRebuilder<cache::NamespaceCache, cache::NamespaceCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
-			StateRebuilder<cache::NamespaceCache, cache::NamespaceCacheTypes::HeightGroupingTypes, cache::NamespaceCacheTypes::HeightGroupingTypesDescriptor>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Height), executor);
-			StateRebuilder<cache::NamespaceCache, cache::NamespaceCacheTypes::FlatMapTypes, cache::NamespaceCacheTypes::FlatMapTypesDescriptor>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Secondary), executor);
-			StateRebuilder<cache::PropertyCache, cache::PropertyCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
-			StateRebuilder<cache::BcDriveCache, cache::BcDriveCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount->publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			StateRebuilder<cache::MultisigCache, cache::MultisigCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			StateRebuilder<cache::CommitteeCache, cache::CommitteeCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			StateRebuilder<cache::NamespaceCache, cache::NamespaceCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			StateRebuilder<cache::NamespaceCache, cache::NamespaceCacheTypes::HeightGroupingTypes, cache::NamespaceCacheTypes::HeightGroupingTypesDescriptor>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Height), executor);
+			StateRebuilder<cache::NamespaceCache, cache::NamespaceCacheTypes::FlatMapTypes, cache::NamespaceCacheTypes::FlatMapTypesDescriptor>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Secondary), executor);
+			StateRebuilder<cache::PropertyCache, cache::PropertyCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
 		}
 
 		inline void Dump(std::string path) {
@@ -125,7 +130,7 @@ namespace catapult { namespace tools {  namespace nemgen {
 		utils::AccountMigrationManager m_accountMigrationManager;
 		const cache::CatapultCacheDelta& m_catapultCache;
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pHolder;
-		crypto::KeyPair* m_NemesisAccount;
+		crypto::KeyPair m_NemesisAccount;
 
 	};
 

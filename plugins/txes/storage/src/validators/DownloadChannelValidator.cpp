@@ -16,6 +16,10 @@ namespace catapult { namespace validators {
 	  	const auto& pDriveEntry = driveIter.tryGet();
 
 	  	// Check if respective drive exists
+	  	if (notification.DownloadSizeMegabytes == 0)
+		  	return Failure_Storage_Download_Size_Insufficient;
+
+	  	// Check if respective drive exists
 	  	if (!pDriveEntry)
 		  	return Failure_Storage_Drive_Not_Found;
 

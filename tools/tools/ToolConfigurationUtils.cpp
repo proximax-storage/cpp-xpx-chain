@@ -23,9 +23,10 @@
 
 namespace catapult { namespace tools {
 
-	config::BlockchainConfiguration LoadConfiguration(const std::string& resourcesPathStr) {
+	config::BlockchainConfiguration LoadConfiguration(const std::string& resourcesPathStr, bool appendResourcesSegment) {
 		boost::filesystem::path resourcesPath = resourcesPathStr;
-		resourcesPath /= "resources";
+		if(appendResourcesSegment)
+			resourcesPath /= "resources";
 		std::cout << "loading resources from " << resourcesPath << std::endl;
 		return config::BlockchainConfiguration::LoadFromPath(resourcesPath, "server");
 	}

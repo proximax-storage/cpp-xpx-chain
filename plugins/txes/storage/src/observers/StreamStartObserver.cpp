@@ -8,7 +8,7 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(StreamStart, model::StreamStartNotification<1>, [](const model::StreamStartNotification<1>& notification, ObserverContext& context) {
+	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(StreamStart, model::StreamStartNotification<1>, [&liquidityProvider](const model::StreamStartNotification<1>& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (StreamStart)");
 
@@ -23,5 +23,23 @@ namespace catapult { namespace observers {
 			notification.ExpectedUploadSize,
 			notification.FolderName
 		));
+
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
+		std::seed_seq seed(notification.StreamId.begin(), notification.StreamId.end());
+		std::mt19937 rng(seed);
+
+		const auto offboardingReplicators = driveEntry.offboardingReplicators();
+		const auto requiredReplicatorsCount = pluginConfig.MinReplicatorCount * 2 / 3 + 1;
+		const auto maxOffboardingCount = driveEntry.replicators().size() < requiredReplicatorsCount ?
+				0ul :
+				driveEntry.replicators().size() - requiredReplicatorsCount;
+		const auto offboardingCount = std::min(offboardingReplicators.size(), maxOffboardingCount);
+		const auto actualOffboardingReplicators = std::set<Key>(
+				offboardingReplicators.begin(),
+				offboardingReplicators.begin() + offboardingCount);
+
+		utils::RefundDepositsOnOffboarding(notification.DriveKey, actualOffboardingReplicators, context, liquidityProvider);
+		utils::OffboardReplicatorsFromDrive(notification.DriveKey, actualOffboardingReplicators, context, rng);
+		utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
 	});
 }}

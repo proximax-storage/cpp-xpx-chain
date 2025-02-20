@@ -44,6 +44,8 @@ namespace catapult { namespace transactionsink {
 
 				// the service needs to be able to parse the mock transactions sent to it
 				testState().pluginManager().addTransactionSupport(mocks::CreateMockTransactionPlugin());
+
+				const_cast<config::NodeConfiguration&>(testState().config().Node).TransactionBatchSize = 50;
 			}
 
 		public:

@@ -18,11 +18,12 @@ namespace catapult { namespace config {
                         {
                             "replicator",
                             {
+                                    {"key", "0000000000000000000000000000000000000000000000000000000000000000"},
                                     {"host", "127.0.0.1"},
                                     {"port", "5000"},
                                     {"transactionTimeout", "1s"},
                                     {"storageDirectory", "/tmp/storage"},
-                                    {"sandboxDirectory", "/tmp/storage/sandbox"},
+                                    {"logOptions", "LogOptions"},
                                     {"useTcpSocket", "true"},
                             }
                         }
@@ -43,22 +44,24 @@ namespace catapult { namespace config {
 
             static void AssertZero(const storage::StorageConfiguration& config) {
                 // Assert:
+                EXPECT_EQ("", config.Key);
                 EXPECT_EQ("", config.Host);
                 EXPECT_EQ("", config.Port);
                 EXPECT_EQ(utils::TimeSpan::FromHours(0), config.TransactionTimeout);
                 EXPECT_EQ("", config.StorageDirectory);
-                EXPECT_EQ("", config.SandboxDirectory);
+                EXPECT_EQ("", config.LogOptions);
                 EXPECT_EQ(false, config.UseTcpSocket);
             }
 
             static void AssertCustom(const storage::StorageConfiguration& config) {
                 // Assert:
+                EXPECT_EQ("replicator-key", config.Key);
                 EXPECT_EQ("127.0.0.1", config.Host);
                 EXPECT_EQ("5000", config.Port);
                 EXPECT_EQ(utils::TimeSpan::FromSeconds(1), config.TransactionTimeout);
                 EXPECT_EQ("/tmp/storage", config.StorageDirectory);
-                EXPECT_EQ("/tmp/storage/sandbox", config.SandboxDirectory);
                 EXPECT_EQ(true, config.UseTcpSocket);
+                EXPECT_EQ("LogOptions", config.LogOptions);
             }
         };
     }

@@ -18,7 +18,6 @@ namespace catapult { namespace observers {
 
 	  	auto& info = replicatorEntry.drives().at(notification.DriveKey);
 	  	info.LastApprovedDataModificationId = notification.DataModificationId;
-	  	info.DataModificationIdIsValid = true;
 		info.InitialDownloadWorkMegabytes = 0;
 
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
@@ -26,6 +25,6 @@ namespace catapult { namespace observers {
 	  	auto& driveEntry = driveIter.get();
 
 		driveEntry.confirmedUsedSizes()[notification.PublicKey] = driveEntry.usedSizeBytes();
-		driveEntry.confirmedStorageInfos()[notification.PublicKey].m_confirmedStorageSince = context.Timestamp;
+		driveEntry.confirmedStorageInfos()[notification.PublicKey].ConfirmedStorageSince = context.Timestamp;
 	});
 }}

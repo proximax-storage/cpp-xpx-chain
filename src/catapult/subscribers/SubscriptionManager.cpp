@@ -28,11 +28,12 @@
 #include "catapult/cache_tx/AggregatePtCache.h"
 #include "catapult/cache_tx/AggregateUtCache.h"
 #include "catapult/io/AggregateBlockStorage.h"
+#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace subscribers {
 
 	SubscriptionManager::SubscriptionManager(const config::BlockchainConfiguration& config)
-			: m_pStorage(std::make_unique<io::FileBlockStorage>(config.User.DataDirectory)) {
+			: m_pStorage(std::make_unique<io::FileBlockStorage>(config.User.DataDirectory, config.Immutable.NemesisHeight)) {
 		m_subscriberUsedFlags.fill(false);
 	}
 
@@ -106,9 +107,12 @@ namespace catapult { namespace subscribers {
 		public:
 			void notifyStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) override {
 				auto result = validators::ValidationResult(status);
+				auto time = std::chrono::system_clock::to_time_t(utils::ToTimePoint(transaction.Deadline));
+				char deadline[40];
+				std::strftime(deadline, 40 ,"%F %T", std::localtime(&time));
 				CATAPULT_LOG_LEVEL(validators::MapToLogLevel(result))
 						<< "rejected tx " << hash << " at height " << height << " due to result " << result
-						<< " (deadline " << transaction.Deadline << ")";
+						<< " (deadline " << deadline << ")";
 			}
 
 			void flush() override
@@ -146,20 +150,30 @@ namespace catapult { namespace subscribers {
 		return std::move(m_pStorage);
 	}
 
-	std::unique_ptr<cache::MemoryUtCacheProxy> SubscriptionManager::createUtCache(const cache::MemoryCacheOptions& options) {
+	std::unique_ptr<cache::MemoryUtCacheProxy> SubscriptionManager::createUtCache(
+			const cache::MemoryCacheOptions& options,
+			std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator) {
 		if (!m_utChangeSubscribers.empty())
-			return std::make_unique<cache::MemoryUtCacheProxy>(options, cache::CreateAggregateUtCache, createUtChangeSubscriber());
+			return std::make_unique<cache::MemoryUtCacheProxy>(options,
+															   std::move(pTransactionFeeCalculator),
+															   cache::CreateAggregateUtCache,
+															   createUtChangeSubscriber());
 
 		markUsed(SubscriberType::UtChange);
-		return std::make_unique<cache::MemoryUtCacheProxy>(options);
+		return std::make_unique<cache::MemoryUtCacheProxy>(options,
+														   std::move(pTransactionFeeCalculator));
 	}
 
-	std::unique_ptr<cache::MemoryPtCacheProxy> SubscriptionManager::createPtCache(const cache::MemoryCacheOptions& options) {
+	std::unique_ptr<cache::MemoryPtCacheProxy> SubscriptionManager::createPtCache(
+			const cache::MemoryCacheOptions& options,
+			std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator) {
 		if (!m_ptChangeSubscribers.empty())
-			return std::make_unique<cache::MemoryPtCacheProxy>(options, cache::CreateAggregatePtCache, createPtChangeSubscriber());
+			return std::make_unique<cache::MemoryPtCacheProxy>(options,
+															   std::move(pTransactionFeeCalculator),
+															   cache::CreateAggregatePtCache, createPtChangeSubscriber());
 
 		markUsed(SubscriberType::PtChange);
-		return std::make_unique<cache::MemoryPtCacheProxy>(options);
+		return std::make_unique<cache::MemoryPtCacheProxy>(options, std::move(pTransactionFeeCalculator));
 	}
 
 	// endregion

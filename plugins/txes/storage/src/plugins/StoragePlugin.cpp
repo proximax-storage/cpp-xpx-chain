@@ -11,6 +11,8 @@
 #include "src/cache/BcDriveCacheStorage.h"
 #include "src/cache/DownloadChannelCacheStorage.h"
 #include "src/cache/ReplicatorCacheStorage.h"
+#include "src/cache/BootKeyReplicatorCache.h"
+#include "src/cache/BootKeyReplicatorCacheStorage.h"
 #include "src/plugins/PrepareBcDriveTransactionPlugin.h"
 #include "src/plugins/DataModificationTransactionPlugin.h"
 #include "src/plugins/DownloadTransactionPlugin.h"
@@ -26,10 +28,15 @@
 #include "src/plugins/VerificationPaymentTransactionPlugin.h"
 #include "src/plugins/DownloadApprovalTransactionPlugin.h"
 #include "src/plugins/EndDriveVerificationTransactionPlugin.h"
+#include "src/plugins/ReplicatorsCleanupTransactionPlugin.h"
 #include "src/state/StorageStateImpl.h"
 #include "src/validators/Validators.h"
 #include "src/observers/Observers.h"
 #include "catapult/plugins/CacheHandlers.h"
+#include "src/model/DataModificationApprovalTransaction.h"
+#include "src/model/DataModificationSingleApprovalTransaction.h"
+#include "src/model/DownloadApprovalTransaction.h"
+#include "src/model/EndDriveVerificationTransaction.h"
 
 namespace catapult { namespace plugins {
 
@@ -46,28 +53,11 @@ namespace catapult { namespace plugins {
 			return pCast;
 		}
 
-		const auto calculateApprovableDownloadWork(const state::ReplicatorEntry* pReplicatorEntry, const state::BcDriveEntry* pDriveEntry, const Key& driveKey) {
-			const auto& lastApprovedDataModificationId = pReplicatorEntry->drives().at(driveKey).LastApprovedDataModificationId;
-			const auto& dataModificationIdIsValid = pReplicatorEntry->drives().at(driveKey).DataModificationIdIsValid;
-			const auto& completedDataModifications = pDriveEntry->completedDataModifications();
-
-			uint64_t approvableDownloadWork = 0;
-
-			// Iterating over completed data modifications in reverse order (from newest to oldest).
-			for (auto it = completedDataModifications.rbegin(); it != completedDataModifications.rend(); ++it) {
-
-				// Exit the loop as soon as the most recent data modification approved by the replicator is reached. Don't account its size.
-				// dataModificationIdIsValid prevents rare cases of premature exits when the drive had no approved data modifications when the replicator
-				// joined it, but current data modification id happens to match the stored lastApprovedDataModification (zero hash by default).
-				if (dataModificationIdIsValid && it->Id == lastApprovedDataModificationId)
-					break;
-
-				// If current data modification was approved (not cancelled), account its size.
-				if (it->State == state::DataModificationState::Succeeded)
-					approvableDownloadWork += it->ActualUploadSizeMegabytes;
+		template<class TTransactionBody>
+		void setUnlimitedTransactionFee(model::TransactionFeeCalculator& feeCalculator) {
+			for (VersionType i = 1; i <= TTransactionBody::Current_Version; i++) {
+				feeCalculator.addLimitedFeeTransaction(TTransactionBody::Entity_Type, i);
 			}
-
-			return approvableDownloadWork;
 		}
 	}
 
@@ -93,22 +83,16 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateVerificationPaymentTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateDownloadApprovalTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateReplicatorsCleanupTransactionPlugin());
+
+		auto transactionFeeCalculator = manager.transactionFeeCalculator();
+		setUnlimitedTransactionFee<model::DataModificationApprovalTransaction>(*transactionFeeCalculator);
+		setUnlimitedTransactionFee<model::DataModificationSingleApprovalTransaction>(*transactionFeeCalculator);
+		setUnlimitedTransactionFee<model::DownloadApprovalTransaction>(*transactionFeeCalculator);
+		setUnlimitedTransactionFee<model::EndDriveVerificationTransaction>(*transactionFeeCalculator);
 
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 			switch (unresolved.Type) {
-			case UnresolvedAmountType::DownloadPayment: {
-				const auto& pDownloadPayment = castToUnresolvedData<model::DownloadPayment>(unresolved.DataPtr);
-
-				const auto& downloadChannelCache = cache.template sub<cache::DownloadChannelCache>();
-				const auto downloadChannelIter = downloadChannelCache.find(pDownloadPayment->DownloadChannelId);
-				const auto& pDownloadChannelEntry = downloadChannelIter.tryGet();
-
-				if (!pDownloadChannelEntry)
-					break;
-
-				resolved = Amount(pDownloadPayment->DownloadSize * pDownloadChannelEntry->listOfPublicKeys().size());
-				return true;
-			}
 			case UnresolvedAmountType::StreamingWork: {
 				const auto& pStreamingWork = castToUnresolvedData<model::StreamingWork>(unresolved.DataPtr);
 
@@ -138,6 +122,18 @@ namespace catapult { namespace plugins {
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("BC DRIVE C"), [&cache]() {
 				return cache.sub<cache::BcDriveCache>().createView(cache.height())->size();
+			});
+		});
+
+		manager.addCacheSupport<cache::BootKeyReplicatorCacheStorage>(
+			std::make_unique<cache::BootKeyReplicatorCache>(manager.cacheConfig(cache::BootKeyReplicatorCache::Name), pConfigHolder));
+
+		using BootKeyReplicatorCacheHandlersService = CacheHandlers<cache::BootKeyReplicatorCacheDescriptor>;
+		BootKeyReplicatorCacheHandlersService::Register<model::FacilityCode::BootKeyReplicator>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("BOOTKEYREP C"), [&cache]() {
+				return cache.sub<cache::BootKeyReplicatorCache>().createView(cache.height())->size();
 			});
 		});
 
@@ -192,6 +188,11 @@ namespace catapult { namespace plugins {
 		auto pStorageState = std::make_shared<state::StorageStateImpl>();
 		manager.setStorageState(pStorageState);
 
+		const auto& liquidityProviderValidator = manager.liquidityProviderExchangeValidator();
+		const auto& liquidityProviderObserver = manager.liquidityProviderExchangeObserver();
+
+		manager.addDbrbProcessUpdateListener(std::make_unique<observers::StorageDbrbProcessUpdateListener>(liquidityProviderObserver));
+
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateStoragePluginConfigValidator());
@@ -207,7 +208,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDataModificationApprovalRefundValidator())
 				.add(validators::CreateDataModificationCancelValidator())
 				.add(validators::CreateDriveClosureValidator())
-				.add(validators::CreateReplicatorOnboardingValidator())
+				.add(validators::CreateReplicatorOnboardingV1Validator())
+				.add(validators::CreateReplicatorOnboardingV2Validator())
 				.add(validators::CreateReplicatorOffboardingValidator())
 				.add(validators::CreateFinishDownloadValidator())
 				.add(validators::CreateDownloadPaymentValidator())
@@ -221,35 +223,45 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateStreamStartValidator())
 				.add(validators::CreateStreamFinishValidator())
 				.add(validators::CreateStreamPaymentValidator())
-				.add(validators::CreateEndDriveVerificationValidator());
+				.add(validators::CreateEndDriveVerificationValidator())
+				.add(validators::CreateServiceUnitTransferValidator())
+				.add(validators::CreateOwnerManagementProhibitionValidator())
+				.add(validators::CreateReplicatorNodeBootKeyValidator())
+				.add(validators::CreateReplicatorsCleanupValidator());
 		});
 
-		manager.addObserverHook([&state = *pStorageState](auto& builder) {
+		const auto& storageUpdatesListeners = manager.storageUpdatesListeners();
+
+		manager.addObserverHook([&state = *pStorageState, &liquidityProviderObserver, &storageUpdatesListeners](auto& builder) {
 			builder
 				.add(observers::CreatePrepareDriveObserver())
 				.add(observers::CreateDownloadChannelObserver())
-				.add(observers::CreateDataModificationObserver())
+				.add(observers::CreateDataModificationObserver(liquidityProviderObserver))
 				.add(observers::CreateDataModificationApprovalObserver())
-				.add(observers::CreateDataModificationApprovalDownloadWorkObserver())
-				.add(observers::CreateDataModificationApprovalUploadWorkObserver())
-				.add(observers::CreateDataModificationApprovalRefundObserver())
-				.add(observers::CreateDataModificationCancelObserver())
-				.add(observers::CreateDriveClosureObserver())
-				.add(observers::CreateReplicatorOnboardingObserver())
+				.add(observers::CreateDataModificationApprovalDownloadWorkObserver(liquidityProviderObserver))
+				.add(observers::CreateDataModificationApprovalUploadWorkObserver(liquidityProviderObserver))
+				.add(observers::CreateDataModificationApprovalRefundObserver(liquidityProviderObserver))
+				.add(observers::CreateDataModificationCancelObserver(liquidityProviderObserver))
+				.add(observers::CreateDriveClosureObserver(liquidityProviderObserver, storageUpdatesListeners))
+				.add(observers::CreateReplicatorOnboardingV1Observer())
+				.add(observers::CreateReplicatorOnboardingV2Observer())
 				.add(observers::CreateReplicatorOffboardingObserver())
 				.add(observers::CreateDownloadPaymentObserver())
 				.add(observers::CreateDataModificationSingleApprovalObserver())
 				.add(observers::CreateDownloadApprovalObserver())
 				.add(observers::CreateFinishDownloadObserver())
-				.add(observers::CreateDownloadApprovalPaymentObserver())
-				.add(observers::CreateDownloadChannelRefundObserver())
-				.add(observers::CreateStreamStartObserver())
+				.add(observers::CreateDownloadApprovalPaymentObserver(liquidityProviderObserver))
+				.add(observers::CreateDownloadChannelRefundObserver(liquidityProviderObserver))
+				.add(observers::CreateStreamStartObserver(liquidityProviderObserver))
 				.add(observers::CreateStreamFinishObserver())
 				.add(observers::CreateStreamPaymentObserver())
 				.add(observers::CreateStartDriveVerificationObserver(state))
-				.add(observers::CreateEndDriveVerificationObserver())
-				.add(observers::CreatePeriodicStoragePaymentObserver())
-				.add(observers::CreatePeriodicDownloadChannelPaymentObserver());
+				.add(observers::CreateEndDriveVerificationObserver(liquidityProviderObserver))
+				.add(observers::CreatePeriodicStoragePaymentObserver(liquidityProviderObserver, storageUpdatesListeners))
+				.add(observers::CreatePeriodicDownloadChannelPaymentObserver())
+				.add(observers::CreateOwnerManagementProhibitionObserver())
+				.add(observers::CreateReplicatorNodeBootKeyObserver())
+				.add(observers::CreateReplicatorsCleanupObserver(liquidityProviderObserver));
 		});
 	}
 }}

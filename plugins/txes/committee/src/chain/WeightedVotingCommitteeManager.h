@@ -25,14 +25,27 @@ namespace catapult { namespace chain {
 	class WeightedVotingCommitteeManager : public CommitteeManager {
 	public:
 		/// Creates a weighted voting committee manager around \a pAccountCollector.
-		explicit WeightedVotingCommitteeManager(const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector);
+		explicit WeightedVotingCommitteeManager(std::shared_ptr<cache::CommitteeAccountCollector> pAccountCollector);
 
 	public:
-		const Committee& selectCommittee(const model::NetworkConfiguration& config) override;
+		void selectCommittee(const model::NetworkConfiguration& config, const BlockchainVersion& blockchainVersion) override;
+		Key getBootKey(const Key& harvestKey, const model::NetworkConfiguration& config) const override;
 
 		void reset() override;
 
-		double weight(const Key& accountKey) const override;
+		chain::Committee committee() const override {
+			return m_committee;
+		}
+
+		HarvesterWeight weight(const Key& accountKey, const model::NetworkConfiguration& config) const override;
+		HarvesterWeight zeroWeight() const override;
+		void add(HarvesterWeight& weight, const chain::HarvesterWeight& delta) const override;
+		void mul(HarvesterWeight& weight, double multiplier) const override;
+		bool ge(const HarvesterWeight& weight1, const chain::HarvesterWeight& weight2) const override;
+		bool eq(const HarvesterWeight& weight1, const chain::HarvesterWeight& weight2) const override;
+		std::string str(const HarvesterWeight& weight) const override;
+
+		void logCommittee() const override;
 
 	public:
 		cache::AccountMap& accounts() {
@@ -49,5 +62,7 @@ namespace catapult { namespace chain {
 		std::shared_ptr<cache::CommitteeAccountCollector> m_pAccountCollector;
 		std::map<Key, Hash256> m_hashes;
 		cache::AccountMap m_accounts;
+		Timestamp m_timestamp;
+		uint64_t m_phaseTime;
 	};
 }}

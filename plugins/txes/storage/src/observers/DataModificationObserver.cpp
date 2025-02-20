@@ -11,11 +11,12 @@ namespace catapult { namespace observers {
 
 	using Notification = model::DataModificationNotification<1>;
 
-	DECLARE_OBSERVER(DataModification, Notification)() {
-		return MAKE_OBSERVER(DataModification, Notification, ([](const Notification& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(DataModification, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider) {
+		return MAKE_OBSERVER(DataModification, Notification, ([&liquidityProvider](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModification)");
 
+		  	const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
@@ -32,11 +33,18 @@ namespace catapult { namespace observers {
 			std::mt19937 rng(seed);
 
 		  	const auto offboardingReplicators = driveEntry.offboardingReplicators();
+			const auto requiredReplicatorsCount = pluginConfig.MinReplicatorCount * 2 / 3 + 1;
+			const auto maxOffboardingCount = driveEntry.replicators().size() < requiredReplicatorsCount ?
+											 0ul :
+											 driveEntry.replicators().size() - requiredReplicatorsCount;
+			const auto offboardingCount = std::min(offboardingReplicators.size(), maxOffboardingCount);
+			const auto actualOffboardingReplicators = std::set<Key>(
+					offboardingReplicators.begin(),
+					offboardingReplicators.begin() + offboardingCount);
 
-		  	utils::RefundDepositsToReplicators(notification.DriveKey, offboardingReplicators, context);
-			utils::OffboardReplicatorsFromDrive(notification.DriveKey, offboardingReplicators, context, rng);
+			utils::RefundDepositsOnOffboarding(notification.DriveKey, actualOffboardingReplicators, context, liquidityProvider);
+			utils::OffboardReplicatorsFromDrive(notification.DriveKey, actualOffboardingReplicators, context, rng);
 		  	utils::PopulateDriveWithReplicators(notification.DriveKey, context, rng);
-		  	utils::AssignReplicatorsToQueuedDrives(offboardingReplicators, context, rng);
 		}))
 	}
 }}

@@ -72,6 +72,45 @@ namespace catapult { namespace cache {
 	};
 
 	/// A mixin for adding iteration support to a memory based cache.
+	/// A mixin for adding two-stage contains support to a cache.
+	/// First checks if a value is contained in \a TLookupSet; if it is, performs an additional check in \a TTargetSet.
+	template<typename TLookupSet, typename TLookupCacheDescriptor, typename TTargetSet>
+	class LookupContainsMixin {
+	private:
+		using LookupKeyType = typename TLookupCacheDescriptor::KeyType;
+		using LookupValueType = typename TLookupCacheDescriptor::ValueType;
+
+	public:
+		/// Creates a mixin around \a lookupSet and \a targetSet.
+		explicit LookupContainsMixin(
+				const TLookupSet& lookupSet,
+				const TTargetSet& targetSet)
+			: m_lookupSet(lookupSet)
+			, m_targetSet(targetSet)
+		{}
+
+	public:
+		/// Gets a value indicating whether or not target set contains an element corresponding to \a lookupKey.
+		bool contains(const LookupKeyType& lookupKey) const {
+			if (!m_lookupSet.contains(lookupKey))
+				return false;
+
+			const auto lookupValueIter = m_lookupSet.find(lookupKey);
+			const LookupValueType* pLookupValue = lookupValueIter.get();
+
+			if (!pLookupValue)
+				CATAPULT_THROW_RUNTIME_ERROR_1("value not found", lookupKey)
+
+			const auto& targetKey = TLookupCacheDescriptor::ToTargetKey(*pLookupValue);
+			return m_targetSet.contains(targetKey);
+		}
+
+	private:
+		const TLookupSet& m_lookupSet;
+		const TTargetSet& m_targetSet;
+	};
+
+	/// A mixin for adding iteration support to a cache.
 	template<typename TSet>
 	class IterationMixin {
 	public:
@@ -516,8 +555,8 @@ namespace catapult { namespace cache {
 				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder,
 				predicate<const PluginConfig&> cacheEnabledPredicate)
 			: HeightMixin()
-			, m_pConfigHolder(pConfigHolder)
-			, m_cacheEnabledPredicate(cacheEnabledPredicate)
+			, m_pConfigHolder(std::move(pConfigHolder))
+			, m_cacheEnabledPredicate(std::move(cacheEnabledPredicate))
 		{}
 
 	public:
@@ -527,13 +566,12 @@ namespace catapult { namespace cache {
 
 		/// Returns \c true if the cache is enabled, otherwise \c false.
 		bool enabled() const {
-			const auto& blockchainConfig = m_pConfigHolder->Config(height());
-			if (blockchainConfig.Network.Plugins.count(PluginConfig::Name)) {
-				const auto& pluginConfig = blockchainConfig.Network.template GetPluginConfiguration<PluginConfig>();
-				return m_cacheEnabledPredicate(pluginConfig);
-			}
+			return m_cacheEnabledPredicate(pluginConfig());
+		}
 
-			return false;
+		const PluginConfig& pluginConfig() const {
+			const auto& blockchainConfig = m_pConfigHolder->Config(height());
+			return blockchainConfig.Network.template GetPluginConfiguration<PluginConfig>();
 		}
 
 	private:

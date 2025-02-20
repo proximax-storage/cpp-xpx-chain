@@ -36,6 +36,7 @@ namespace catapult { namespace config {
 
 		LOAD_NODE_PROPERTY(Port);
 		LOAD_NODE_PROPERTY(ApiPort);
+		LOAD_NODE_PROPERTY(DbrbPort);
 		LOAD_NODE_PROPERTY(ShouldAllowAddressReuse);
 		LOAD_NODE_PROPERTY(ShouldUseSingleThreadPool);
 		LOAD_NODE_PROPERTY(ShouldUseCacheDatabaseStorage);
@@ -81,6 +82,8 @@ namespace catapult { namespace config {
 		LOAD_NODE_PROPERTY(MaxCacheDatabaseWriteBatchSize);
 		LOAD_NODE_PROPERTY(MaxTrackedNodes);
 
+		LOAD_NODE_PROPERTY(TransactionBatchSize);
+
 #undef LOAD_NODE_PROPERTY
 
 #define LOAD_LOCALNODE_PROPERTY(NAME) utils::LoadIniProperty(bag, "localnode", #NAME, config.Local.NAME)
@@ -111,7 +114,7 @@ namespace catapult { namespace config {
 
 #undef LOAD_IN_CONNECTIONS_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 36 + 4 + 4 + 5);
+		utils::VerifyBagSizeLte(bag, 38 + 4 + 4 + 5);
 		return config;
 	}
 

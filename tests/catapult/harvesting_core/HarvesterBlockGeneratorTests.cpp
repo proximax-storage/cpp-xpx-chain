@@ -23,6 +23,7 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/model/BlockUtils.h"
+#include "catapult/model/TransactionFeeCalculator.h"
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
@@ -108,7 +109,7 @@ namespace catapult { namespace harvesting {
 				blockHeader.Height = blockHeight;
 				blockHeader.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, model::BlockHeader::Current_Version);
 				blockHeader.Size = sizeof(model::BlockHeaderV4);
-				return m_generator(reinterpret_cast<model::Block&>(blockHeader), maxTransactionsPerBlock);
+				return m_generator(reinterpret_cast<model::Block&>(blockHeader), maxTransactionsPerBlock, []() { return false; });
 			}
 
 		public:
@@ -175,7 +176,8 @@ namespace catapult { namespace harvesting {
 
 		// Assert:
 		ASSERT_TRUE(!!pBlock);
-		EXPECT_EQ(0u, model::CalculateBlockTransactionsInfo(*pBlock).Count);
+		model::TransactionFeeCalculator transactionFeeCalculator;
+		EXPECT_EQ(0u, model::CalculateBlockTransactionsInfo(*pBlock, transactionFeeCalculator).Count);
 
 		// - zeroed because no transactions
 		EXPECT_EQ(Hash256(), pBlock->BlockTransactionsHash);
@@ -195,7 +197,8 @@ namespace catapult { namespace harvesting {
 
 		// Assert: 4 (deterministic) transactions should have been added to the block
 		ASSERT_TRUE(!!pBlock);
-		EXPECT_EQ(4u, model::CalculateBlockTransactionsInfo(*pBlock).Count);
+		model::TransactionFeeCalculator transactionFeeCalculator;
+		EXPECT_EQ(4u, model::CalculateBlockTransactionsInfo(*pBlock, transactionFeeCalculator).Count);
 
 		auto i = 0u;
 		for (const auto& transaction : pBlock->Transactions()) {

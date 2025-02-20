@@ -87,7 +87,19 @@ namespace catapult { namespace model {
 		Queue = 0x67,
 		/// Priority queue facility code.
 		PriorityQueue = 0x68,
+		/// Liquidity Provider facility code
+		LiquidityProvider = 0x69,
+		/// SDA-SDA Exchange facility code.
+		ExchangeSda = 0x6A,
+		/// SDA-SDA Offer Group facility code.
+		SdaOfferGroup = 0x6B,
+		/// DBRB facility code.
+		Dbrb = 0x6C,
+		/// View sequence facility code.
+		DbrbView = 0x6D,
+		/// Boot key / replicator facility code.
+		BootKeyReplicator = 0x6E,
 		/// State modifier facility code.
-		ModifyState = 0x69
+		ModifyState = 0x6F
 	};
 }}

@@ -40,9 +40,10 @@ namespace catapult { namespace cache {
 	public:
 		using Size = AddressMixins::Size;
 		using ContainsAddress = AddressMixins::Contains;
-		using ContainsKey = ContainsMixin<
+		using ContainsKey = LookupContainsMixin<
 			AccountStateCacheTypes::KeyLookupMapTypes::BaseSetDeltaType,
-			AccountStateCacheTypes::KeyLookupMapTypesDescriptor>;
+			AccountStateCacheTypes::KeyLookupMapTypesDescriptor,
+			AccountStateCacheTypes::PrimaryTypes::BaseSetDeltaType>;
 		using ConstAccessorAddress = AddressMixins::ConstAccessor;
 		using ConstAccessorKey = KeyMixins::ConstAccessor;
 		using MutableAccessorAddress = AddressMixins::MutableAccessor;
@@ -119,7 +120,7 @@ namespace catapult { namespace cache {
 		void addAccount(const Key& publicKey, Height publicKeyHeight);
 
 		/// If not present, adds an account to the cache using information in \a accountState.
-		void addAccount(const state::AccountState& accountState);
+		void addAccount(const state::AccountState& accountState, bool optimizeAndTrackBalances = true);
 
 	public:
 		/// If \a height matches the height at which account was added, queues removal of account's \a address

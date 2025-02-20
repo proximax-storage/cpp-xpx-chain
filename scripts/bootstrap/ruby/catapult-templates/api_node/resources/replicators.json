@@ -16,7 +16,7 @@
       "publicKey": "E8D4B7BEB2A531ECA8CC7FD93F79A4C828C24BE33F99CF7C5609FF5CE14605F4",
       "endpoint": {
         "host": "192.168.20.20",
-        "port": 7909
+        "port": 7914
       },
       "metadata": {
         "name": "peer-node-0",
@@ -27,7 +27,7 @@
       "publicKey": "7C756F2D5E9F21E7215851FC26C9F6819DB7992F0CDD22D822AFBE764404E976",
       "endpoint": {
         "host": "192.168.20.21",
-        "port": 7914
+        "port": 7924
       },
       "metadata": {
         "name": "peer-node-1",
@@ -38,7 +38,7 @@
       "publicKey": "0A0EAC0E56FE4C052B66D070434621E74793FBF1D6F45286897240681A668BB1",
       "endpoint": {
         "host": "192.168.20.22",
-        "port": 7919
+        "port": 7934
       },
       "metadata": {
         "name": "peer-node-2",
@@ -49,7 +49,7 @@
       "publicKey": "1AAD933111E340E74FE9A44C12CEB359744BC9F8A6630ECA7DEA8B5AECE5C1C5",
       "endpoint": {
         "host": "192.168.20.23",
-        "port": 7924
+        "port": 7944
       },
       "metadata": {
         "name": "peer-node-3",
@@ -60,7 +60,7 @@
       "publicKey": "71FA42E336DE2DD74CE864A7A5A747C23EAB41BC6235CBA4C28E96B1900565FC",
       "endpoint": {
         "host": "192.168.20.24",
-        "port": 7929
+        "port": 7954
       },
       "metadata": {
         "name": "peer-node-4",

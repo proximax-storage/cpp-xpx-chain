@@ -61,6 +61,9 @@ public:
 			queueEntry.setFirst(Key());
 			queueEntry.setLast(Key());
 		}
+
+		entry.setQueuePrevious(Key());
+		entry.setQueueNext(Key());
 		queueEntry.setSize(queueEntry.getSize() - 1);
 	}
 
@@ -91,11 +94,11 @@ public:
 		auto queueIter = m_queueCache.find(m_queueKey);
 		auto& queueEntry = queueIter.get();
 
-		auto iter = m_cache.find(key);
+		auto iter = m_cache.find(key.array());
 		auto& entry = iter.get();
 
 		if (entry.getQueuePrevious() != Key()) {
-			auto previousDriveIter = m_cache.find(entry.getQueuePrevious());
+			auto previousDriveIter = m_cache.find(entry.getQueuePrevious().array());
 			auto& previousDriveEntry = previousDriveIter.get();
 			previousDriveEntry.setQueueNext(entry.getQueueNext());
 		}
@@ -103,25 +106,28 @@ public:
 			// Previous link is "null" so the entry is first in the queue
 			queueEntry.setFirst(entry.getQueueNext());
 			if (entry.getQueueNext() != Key()) {
-				auto nextDriveIter = m_cache.find(entry.getQueueNext());
+				auto nextDriveIter = m_cache.find(entry.getQueueNext().array());
 				auto& nextDriveEntry = nextDriveIter.get();
 				nextDriveEntry.setQueuePrevious(Key());
 			}
 		}
 
 		if (entry.getQueueNext() != Key()) {
-			auto nextDriveIter = m_cache.find(entry.getQueueNext());
+			auto nextDriveIter = m_cache.find(entry.getQueueNext().array());
 			auto& nextDriveEntry = nextDriveIter.get();
 			nextDriveEntry.setQueuePrevious(entry.getQueuePrevious());
 		}
 		else {
 			queueEntry.setLast(entry.getQueuePrevious());
 			if (entry.getQueuePrevious() != Key()) {
-				auto previousDriveIter = m_cache.find(entry.getQueuePrevious());
+				auto previousDriveIter = m_cache.find(entry.getQueuePrevious().array());
 				auto& previousDriveEntry = previousDriveIter.get();
 				previousDriveEntry.setQueueNext(Key());
 			}
 		}
+
+		entry.setQueuePrevious(Key());
+		entry.setQueueNext(Key());
 		queueEntry.setSize(queueEntry.getSize() - 1);
 	}
 

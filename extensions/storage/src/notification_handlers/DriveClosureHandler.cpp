@@ -26,6 +26,7 @@ namespace catapult { namespace notification_handlers {
 			// We could be assigned to the Drive in the same block, so in any case we try to explore new Drives.
 			// It can be optimized if the cache stores all former Drives of the Replicator
 			pReplicatorService->exploreNewReplicatorDrives();
+			pReplicatorService->maybeRestart();
 		});
 	}
 }}

@@ -1,5 +1,5 @@
 /**
-*** Copyright 2021 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -8,31 +8,28 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(DataModificationApprovalDownloadWork, model::DataModificationApprovalDownloadWorkNotification<1>, [](const model::DataModificationApprovalDownloadWorkNotification<1>& notification, ObserverContext& context) {
-	  	if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModificationApprovalDownloadWork)");
+	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DataModificationApprovalDownloadWork, model::DataModificationApprovalDownloadWorkNotification<1>, [&liquidityProvider](const model::DataModificationApprovalDownloadWorkNotification<1>& notification, ObserverContext& context) {
+		if (NotifyMode::Rollback == context.Mode)
+			CATAPULT_THROW_RUNTIME_ERROR(
+					"Invalid observer mode ROLLBACK (DataModificationApprovalDownloadWork)");
 
-	  	auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
+		auto& replicatorCache = context.Cache.sub<cache::ReplicatorCache>();
 		auto& driveCache = context.Cache.sub<cache::BcDriveCache>();
-	  	auto driveIter = driveCache.find(notification.DriveKey);
-	  	auto& driveEntry = driveIter.get();
+		auto driveIter = driveCache.find(notification.DriveKey);
+		auto& driveEntry = driveIter.get();
 
-	  	auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-	  	auto senderIter = accountStateCache.find(notification.DriveKey);
-	  	auto& senderState = senderIter.get();
-
-		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 	  	const auto& currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		const auto& streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
+	  	auto& statementBuilder = context.StatementBuilder();
 
-	  	auto pKey = notification.PublicKeysPtr;
-	  	for (auto i = 0; i < notification.PublicKeysCount; ++i, ++pKey) {
+		auto pKey = notification.PublicKeysPtr;
+		for (auto i = 0; i < notification.PublicKeysCount; ++i, ++pKey) {
 			// All keys have been previously validated in DataModificationApprovalValidator.
 			auto replicatorIter = replicatorCache.find(*pKey);
 			auto& replicatorEntry = replicatorIter.get();
 
 			auto& driveInfo = replicatorEntry.drives().at(notification.DriveKey);
 			const auto& lastApprovedDataModificationId = driveInfo.LastApprovedDataModificationId;
-			const auto& dataModificationIdIsValid = driveInfo.DataModificationIdIsValid;
 			const auto& completedDataModifications = driveEntry.completedDataModifications();
 
 			uint64_t approvableDownloadWork = 0;
@@ -43,25 +40,28 @@ namespace catapult { namespace observers {
 				// Exit the loop as soon as the most recent data modification approved by the replicator is reached. Don't account its size.
 				// dataModificationIdIsValid prevents rare cases of premature exits when the drive had no approved data modifications when the replicator
 				// joined it, but current data modification id happens to match the stored lastApprovedDataModification (zero hash by default).
-				if (dataModificationIdIsValid && it->Id == lastApprovedDataModificationId)
+				if (it->Id == lastApprovedDataModificationId)
 					break;
 
 				// If current data modification was approved (not cancelled), account its size.
-				if (it->State == state::DataModificationState::Succeeded)
+				if (it->ApprovalState == state::DataModificationApprovalState::Approved)
 					approvableDownloadWork += it->ActualUploadSizeMegabytes;
 			}
 
 			// Making mosaic transfers.
-			auto recipientIter = accountStateCache.find(*pKey);
-			auto& recipientState = recipientIter.get();
-			const auto transferAmount = Amount(approvableDownloadWork + driveInfo.InitialDownloadWorkMegabytes);
-			senderState.Balances.debit(streamingMosaicId, transferAmount, context.Height);
-			recipientState.Balances.credit(currencyMosaicId, transferAmount, context.Height);
+			const auto mosaicAmount = Amount(approvableDownloadWork + driveInfo.InitialDownloadWorkMegabytes);
+			liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorEntry.key(), config::GetUnresolvedStreamingMosaicId(context.Config.Immutable), mosaicAmount);
+
+			// Adding Download receipt.
+			const auto receiptType = model::Receipt_Type_Data_Modification_Approval_Download;
+			const model::StorageReceipt receipt(receiptType, driveEntry.key(), replicatorEntry.key(),
+												{ streamingMosaicId, currencyMosaicId }, mosaicAmount);
+			statementBuilder.addTransactionReceipt(receipt);
 
 			// Updating current replicator's drive info.
 			driveInfo.LastApprovedDataModificationId = notification.DataModificationId;
-			driveInfo.DataModificationIdIsValid = true;
+//			driveInfo.DataModificationIdIsValid = true;
 			driveInfo.InitialDownloadWorkMegabytes = 0;
 		}
 	});
-}}
+}} // namespace catapult::observers

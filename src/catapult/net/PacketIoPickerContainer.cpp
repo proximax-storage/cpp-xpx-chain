@@ -49,12 +49,12 @@ namespace catapult { namespace net {
 			const utils::TimeSpan& ioDuration,
 			const Key& identityKey) const {
 		for (const auto& pickerPair : m_pickers) {
-			auto ioPair = pickerPair.second->pickOne(ioDuration);
+			auto ioPair = pickerPair.second->pickOne(ioDuration, identityKey);
 			if (ioPair)
 				return ioPair;
 		}
 
-		return ionet::NodePacketIoPair();
+		return {};
 	}
 
 	std::vector<ionet::NodePacketIoPair> PacketIoPickerContainer::pickMultiple(const utils::TimeSpan& ioDuration) const {

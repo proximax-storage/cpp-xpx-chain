@@ -21,12 +21,13 @@ module Catapult
 
       attr_reader :component_keys
 
-      def hash(index)
+      def hash(index, work_dir)
         {
           rest_gateway_private_key: rest_gateway_private_key(index),
           api_node_host: api_node_host(index),
           api_node_public_key: api_node_public_key(index),
-          mongo_host: Global.mongo_host
+          mongo_host: Global.mongo_host,
+          work_dir: work_dir
         }
       end
 

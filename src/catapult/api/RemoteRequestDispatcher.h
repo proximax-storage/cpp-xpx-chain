@@ -45,9 +45,10 @@ namespace catapult { namespace api {
 					return;
 				}
 
-				auto message = GetErrorMessage(result);
-				CATAPULT_LOG(error) << message << " for " << TFuncTraits::Friendly_Name << " request";
-				pPromise->set_exception(std::make_exception_ptr(catapult_api_error(message)));
+				std::ostringstream message;
+				message << GetErrorMessage(result) << " for " << TFuncTraits::Friendly_Name << " request";
+				CATAPULT_LOG(error) << message.str();
+				pPromise->set_exception(std::make_exception_ptr(catapult_api_error(message.str().data())));
 			});
 
 			return future;

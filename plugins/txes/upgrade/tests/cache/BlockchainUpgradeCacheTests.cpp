@@ -7,6 +7,7 @@
 #include "src/cache/BlockchainUpgradeCache.h"
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -18,7 +19,7 @@ namespace catapult { namespace cache {
 		struct BlockchainUpgradeCacheMixinTraits {
 			class CacheType : public BlockchainUpgradeCache {
 			public:
-				CacheType() : BlockchainUpgradeCache(CacheConfiguration())
+				CacheType() : BlockchainUpgradeCache(CacheConfiguration(), config::CreateMockConfigurationHolder())
 				{}
 			};
 

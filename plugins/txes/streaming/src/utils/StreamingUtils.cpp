@@ -5,35 +5,33 @@
 **/
 
 #pragma once
+#include <catapult/model/LiquidityProviderNotifications.h>
 #include "StreamingUtils.h"
 
 namespace catapult { namespace utils {
 
 	// TODO: Clean up repeating code
 
-	void SwapMosaics(
-			const Key& sender,
-			const Key& receiver,
-			const std::vector<model::UnresolvedMosaic>& mosaics,
-			model::NotificationSubscriber& sub,
-			const config::ImmutableConfiguration& immutableCfg,
-			SwapOperation operation) {
-		auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(immutableCfg);
-		for (auto& mosaic : mosaics) {
-			switch (operation) {
-			case SwapOperation::Buy:
-				sub.notify(model::BalanceDebitNotification<1>(sender, currencyMosaicId, mosaic.Amount));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, mosaic.MosaicId, mosaic.Amount));
-				break;
-			case SwapOperation::Sell:
-				sub.notify(model::BalanceDebitNotification<1>(sender, mosaic.MosaicId, mosaic.Amount));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, currencyMosaicId, mosaic.Amount));
-				break;
-			default:
-				CATAPULT_THROW_INVALID_ARGUMENT_1("unsupported operation", operation);
-			}
-		}
-	}
+//	void SwapMosaics(
+//			const Key& sender,
+//			const Key& receiver,
+//			const std::vector<model::UnresolvedMosaic>& mosaics,
+//			model::NotificationSubscriber& sub,
+//			const config::ImmutableConfiguration& immutableCfg,
+//			SwapOperation operation) {
+//		for (auto& mosaic : mosaics) {
+//			switch (operation) {
+//			case SwapOperation::Buy:
+//				sub.notify(model::CreditMosaicNotification<1>(sender, receiver, mosaic.MosaicId, mosaic.Amount));
+//				break;
+//			case SwapOperation::Sell:
+//				sub.notify(model::DebitMosaicNotification<1>(sender, receiver, mosaic.MosaicId, mosaic.Amount));
+//				break;
+//			default:
+//				CATAPULT_THROW_INVALID_ARGUMENT_1("unsupported operation", operation);
+//			}
+//		}
+//	}
 
 	void SwapMosaics(
 			const Key& sender,
@@ -46,12 +44,10 @@ namespace catapult { namespace utils {
 		for (auto& mosaic : mosaics) {
 			switch (operation) {
 			case SwapOperation::Buy:
-				sub.notify(model::BalanceDebitNotification<1>(sender, currencyMosaicId, mosaic.second));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, mosaic.first, mosaic.second));
+				sub.notify(model::CreditMosaicNotification<1>(sender, receiver, mosaic.first, mosaic.second));
 				break;
 			case SwapOperation::Sell:
-				sub.notify(model::BalanceDebitNotification<1>(sender, mosaic.first, mosaic.second));
-				sub.notify(model::BalanceCreditNotification<1>(receiver, currencyMosaicId, mosaic.second));
+				sub.notify(model::DebitMosaicNotification<1>(sender, receiver, mosaic.first, mosaic.second));
 				break;
 			default:
 				CATAPULT_THROW_INVALID_ARGUMENT_1("unsupported operation", operation);
@@ -59,14 +55,14 @@ namespace catapult { namespace utils {
 		}
 	}
 
-	void SwapMosaics(
-			const Key& account,
-			const std::vector<model::UnresolvedMosaic>& mosaics,
-			model::NotificationSubscriber& sub,
-			const config::ImmutableConfiguration& immutableCfg,
-			SwapOperation operation) {
-		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
-	}
+//	void SwapMosaics(
+//			const Key& account,
+//			const std::vector<model::UnresolvedMosaic>& mosaics,
+//			model::NotificationSubscriber& sub,
+//			const config::ImmutableConfiguration& immutableCfg,
+//			SwapOperation operation) {
+//		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
+//	}
 
 	void SwapMosaics(
 			const Key& account,
@@ -76,4 +72,4 @@ namespace catapult { namespace utils {
 			SwapOperation operation) {
 		return SwapMosaics(account, account, mosaics, sub, immutableCfg, operation);
 	}
-}}
+}} // namespace catapult::utils

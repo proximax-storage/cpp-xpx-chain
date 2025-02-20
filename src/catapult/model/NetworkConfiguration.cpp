@@ -19,6 +19,7 @@
 **/
 
 #include "NetworkConfiguration.h"
+#include "catapult/crypto/KeyUtils.h"
 #include "catapult/utils/ConfigurationUtils.h"
 
 namespace catapult { namespace model {
@@ -33,7 +34,7 @@ namespace catapult { namespace model {
 	}
 
 	NetworkConfiguration NetworkConfiguration::Uninitialized() {
-		return NetworkConfiguration();
+		return {};
 	}
 
 	NetworkConfiguration NetworkConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
@@ -73,6 +74,9 @@ namespace catapult { namespace model {
 
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "chain", #NAME, config.NAME)
 
+		config.Inflation = Amount(0);
+		TRY_LOAD_CHAIN_PROPERTY(Inflation);
+
 		config.EnableUnconfirmedTransactionMinFeeValidation = true;
 		TRY_LOAD_CHAIN_PROPERTY(EnableUnconfirmedTransactionMinFeeValidation);
 		config.EnableDeadlineValidation = true;
@@ -109,6 +113,24 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeBaseTotalImportance);
 		config.CommitteeNotRunningContribution = 0.5;
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeNotRunningContribution);
+		config.DbrbRegistrationDuration = utils::TimeSpan::FromHours(24);
+		TRY_LOAD_CHAIN_PROPERTY(DbrbRegistrationDuration);
+		config.DbrbRegistrationGracePeriod = utils::TimeSpan::FromHours(1);
+		TRY_LOAD_CHAIN_PROPERTY(DbrbRegistrationGracePeriod);
+		config.EnableHarvesterExpiration = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableHarvesterExpiration);
+		config.EnableRemovingDbrbProcessOnShutdown = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableRemovingDbrbProcessOnShutdown);
+		config.EnableDbrbSharding = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableDbrbSharding);
+		config.DbrbShardSize = 6;
+		TRY_LOAD_CHAIN_PROPERTY(DbrbShardSize);
+		config.EnableDbrbFastFinality = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableDbrbFastFinality);
+		config.CheckNetworkHeightInterval = 10;
+		TRY_LOAD_CHAIN_PROPERTY(CheckNetworkHeightInterval);
+		config.BlockTimeUpdateStrategy = BlockTimeUpdateStrategy::IncreaseDecrease_Coefficient;
+		TRY_LOAD_CHAIN_PROPERTY(BlockTimeUpdateStrategy);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 
@@ -127,6 +149,29 @@ namespace catapult { namespace model {
 			numPluginProperties += iter->second.size();
 		}
 
+		auto bootstrapHarvesters = bag.getAllOrdered<std::unordered_set<std::string>>("bootstrap.harvesters");
+		if (bootstrapHarvesters.empty()) {
+			auto dbrbBootstrapProcesses = bag.getAllOrdered<bool>("dbrb.bootstrap.processes");
+			for (const auto& [key, enabled] : dbrbBootstrapProcesses) {
+				if (enabled)
+					config.DbrbBootstrapProcesses.emplace(crypto::ParseKey(key));
+			}
+
+			auto emergencyHarvesters = bag.getAllOrdered<bool>("harvesters");
+			for (const auto& [key, enabled] : emergencyHarvesters) {
+				if (enabled)
+					config.EmergencyHarvesters.emplace(crypto::ParseKey(key));
+			}
+		} else {
+			for (const auto& pair : bootstrapHarvesters) {
+				auto bootKey = crypto::ParseKey(pair.first);
+				config.DbrbBootstrapProcesses.emplace(bootKey);
+				for (const auto& key : pair.second) {
+					config.BootstrapHarvesters.emplace(crypto::ParseKey(key), bootKey);
+				}
+			}
+		}
+
 		return config;
 	}
 
@@ -139,7 +184,7 @@ namespace catapult { namespace model {
 	}
 
 	utils::TimeSpan CalculateRollbackVariabilityBufferDuration(const NetworkConfiguration& config) {
-		// use the greater of 25% of the rollback time or one hour as a buffer against block time variability
+		// use the greatest of 25% of the rollback time or one hour as a buffer against block time variability
 		return utils::TimeSpan::FromHours(4).millis() > CalculateFullRollbackDuration(config).millis()
 				? utils::TimeSpan::FromHours(1)
 				: utils::TimeSpan::FromMilliseconds(CalculateFullRollbackDuration(config).millis() / 4);

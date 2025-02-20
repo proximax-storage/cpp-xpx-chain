@@ -17,14 +17,13 @@ namespace catapult { namespace storage {
     TEST(TEST_CLASS, CanCreateStorageTransactionStatusSubscriber) {
         // Act:
         auto config = config::CreateMockConfigurationHolder();
-        auto keyPair = test::GenerateKeyPair();
-			auto storageConfig = StorageConfiguration::Uninitialized();
-			std::vector<ionet::Node> bootstrapReplicators;
+        auto storageConfig = StorageConfiguration::Uninitialized();
+        storageConfig.Key = "0000000000000000000000000000000000000000000000000000000000000000";
+        std::vector<ionet::Node> bootstrapReplicators;
 
         auto pReplicatorService = std::make_shared<ReplicatorService>(
-                std::move(keyPair),
                 std::move(storageConfig),
-				std::move(bootstrapReplicators));
+                std::move(bootstrapReplicators));
         auto testee = CreateStorageTransactionStatusSubscriber(pReplicatorService);
 
         // Assert:

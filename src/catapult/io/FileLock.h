@@ -20,8 +20,8 @@
 
 #pragma once
 #include "catapult/utils/NonCopyable.h"
-#include "catapult/utils/SpinLock.h"
 #include <string>
+#include <shared_mutex>
 
 namespace catapult { namespace io {
 
@@ -55,7 +55,7 @@ namespace catapult { namespace io {
 
 	private:
 		std::string m_lockFilePath;
-		utils::SpinLock m_spinLock;
+		std::shared_mutex m_mutex;
 		FdType m_fd;
 	};
 }}

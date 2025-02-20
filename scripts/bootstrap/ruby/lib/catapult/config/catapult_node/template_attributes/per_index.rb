@@ -15,10 +15,11 @@ module Catapult
   class Config::CatapultNode
     class TemplateAttributes
       class PerIndex
-        def initialize(parent, index)
+        def initialize(parent, index, work_dir)
           @parent = parent
           @index  = index
           @type   = parent.type
+          @work_dir = work_dir
         end
 
         def hash
@@ -30,7 +31,9 @@ module Catapult
             harvest_key: self.harvest_key?,
             mongo_host: self.mongo_host_for_api_node, # just used when there is an api host
             bootkey: self.private_key,
+            replicator_rpc_port: Peer.port(self.type, self.index) + 5,
             replicator_port: Peer.port(self.type, self.index) + 4,
+            dbrb_port: Peer.port(self.type, self.index) + 3,
             subscriberPort: Peer.port(self.type, self.index) + 2,
             api_port: Peer.port(self.type, self.index) + 1,
             port: Peer.port(self.type, self.index),
@@ -38,12 +41,13 @@ module Catapult
             friendly_name: Peer.name(self.type, self.index),
             replicator_host: Global.replicator_host(self.type, self.index),
             node_index: self.index,
+            work_dir: self.work_dir
           }
         end
 
         protected
 
-        attr_reader :parent, :index, :type
+        attr_reader :parent, :index, :type, :work_dir
 
         def mongo_host_for_api_node
           Global.mongo_host
