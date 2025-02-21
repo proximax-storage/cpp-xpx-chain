@@ -1,11 +1,11 @@
 [network]
 
-publicKey = B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF
+publicKey = {{network_public_key}}
 
 [chain]
 
-blockGenerationTargetTime = 15s
-blockTimeSmoothingFactor = 3000
+blockGenerationTargetTime = 10s
+blockTimeSmoothingFactor = 1000
 
 greedDelta = 0.5
 greedExponent = 3.2
@@ -21,7 +21,6 @@ maxMosaicAtomicUnits = 9'000'000'000'000'000
 
 totalChainImportance = 8'999'999'998'000'000
 minHarvesterBalance = 100'000'000'000
-enableDeadlineValidation = true
 harvestBeneficiaryPercentage = 10
 
 blockPruneInterval = 360
@@ -29,11 +28,11 @@ maxTransactionsPerBlock = 200'000
 
 enableUnconfirmedTransactionMinFeeValidation = true
 
-enableUndoBlock = true
-enableBlockSync = true
+enableUndoBlock = false
+enableBlockSync = false
 
 enableWeightedVoting = false
-committeeSize = 21
+committeeSize = 3
 committeeApproval = 1
 committeePhaseTime = 5s
 minCommitteePhaseTime = 3750ms
@@ -55,10 +54,12 @@ enableRemovingDbrbProcessOnShutdown = true
 enableDbrbSharding = false
 dbrbShardSize = 6
 
-enableDbrbFastFinality = false
+enableDbrbFastFinality = true
 checkNetworkHeightInterval = 10
 
 blockTimeUpdateStrategy = increase-coefficient
+enableCommitteeManagerImprovement = true
+harvestersQueueSize = 3
 
 [bootstrap.harvesters]
 

@@ -16,9 +16,17 @@ namespace catapult { namespace cache { class CatapultCache; } }
 
 namespace catapult { namespace state {
 
+	/// Data modification state.
+	enum class DataModificationApprovalState : uint8_t {
+		/// Data modification has been approved.
+		Approved,
+
+		/// Data modification has been cancelled.
+		Cancelled
+	};
+
 	struct DataModification {
 		Hash256 Id;
-		Key Owner;
 		Key DriveKey;
 		Hash256 DownloadDataCdi;
 		uint64_t ExpectedUploadSize;
@@ -30,24 +38,14 @@ namespace catapult { namespace state {
 
 	struct ApprovedDataModification : DataModification {
 		std::vector<Key> Signers;
-		uint64_t UsedSize;
-	};
-
-	struct Drive {
-		Key Id;
-		Key Owner;
-		Hash256 RootHash;
-		uint64_t Size;
-		utils::SortedKeySet Replicators;
-		std::vector<DataModification> DataModifications;
 	};
 
 	struct DownloadChannel {
 		Hash256 Id;
+		Key DriveKey;
 		uint64_t DownloadSizeMegabytes;
 		std::vector<Key> Consumers;
-		std::vector<Key> Replicators;
-		Key DriveKey;
+		utils::KeySet Replicators;
 		std::optional<Hash256> ApprovalTrigger;
 	};
 
@@ -61,19 +59,44 @@ namespace catapult { namespace state {
 	};
 
 	struct ModificationShard {
-		std::map<Key, uint64_t> m_actualShardMembers;
-		std::map<Key, uint64_t> m_formerShardMembers;
-		uint64_t m_ownerUpload = 0;
+		std::map<Key, uint64_t> ActualShardMembers;
+		std::map<Key, uint64_t> FormerShardMembers;
+		uint64_t OwnerUpload = 0;
 	};
 
 	struct CompletedModification {
+		Hash256 ModificationId;
+		DataModificationApprovalState Status;
+	};
 
-		enum class CompletionStatus {
-			APPROVED, CANCELLED
-		};
+	struct ReplicatorDriveInfo {
+		/// Identifier of the most recent data modification of the drive approved by the replicator.
+		Hash256 LastApprovedDataModificationId;
 
-		Hash256 			ModificationId;
-		CompletionStatus    Status;
+		/// Used drive size at the time of the replicator’s onboarding excluding metafiles size in megabytes.
+		/// Set to \p 0 after replicator’s first data modification approval.
+		uint64_t InitialDownloadWorkMegabytes;
+
+		/// Size of cumulative download work
+		uint64_t LastCompletedCumulativeDownloadWorkBytes;
+	};
+
+	struct Drive {
+		Key Id;
+		Key Owner;
+		Hash256 RootHash;
+		uint64_t Size;
+		utils::KeySet Replicators;
+		std::unordered_map<Key, ReplicatorDriveInfo, utils::ArrayHasher<Key>> ReplicatorInfo;
+		std::unordered_map<Key, ModificationShard, utils::ArrayHasher<Key>> ModificationShards;
+		std::vector<Key> DonatorShard;
+		std::vector<Key> RecipientShard;
+		std::unordered_map<Hash256, std::shared_ptr<DownloadChannel>, utils::ArrayHasher<Hash256>> DownloadChannels;
+		std::vector<DataModification> DataModifications;
+		std::vector<CompletedModification> CompletedModifications;
+		uint64_t DownloadWorkBytes;
+		std::shared_ptr<ApprovedDataModification> LastApprovedDataModificationPtr;
+		std::shared_ptr<DriveVerification> ActiveVerificationPtr;
 	};
 
 	/// Interface for storage state.
@@ -100,38 +123,22 @@ namespace catapult { namespace state {
 			return m_lastBlockElementSupplier;
 		}
 
+		void setReplicatorKey(const Key& replicatorKey) {
+			m_replicatorKey = replicatorKey;
+		}
+
+		const Key& replicatorKey() const {
+			return m_replicatorKey;
+		}
+
 	public:
-		virtual Height getChainHeight() = 0;
-
-		virtual bool isReplicatorRegistered(const Key& key) = 0;
-
-		virtual bool driveExists(const Key& driveKey) = 0;
-		virtual Drive getDrive(const Key& driveKey) = 0;
-		virtual bool isReplicatorAssignedToDrive(const Key& key, const Key& driveKey) = 0;
-		virtual bool isReplicatorAssignedToChannel(const Key& key, const Hash256& channelId) = 0;
-		virtual std::vector<Key> getReplicatorDriveKeys(const Key& replicatorKey) = 0;
-		virtual std::set<Hash256> getReplicatorChannelIds(const Key& replicatorKey) = 0;
-		virtual std::vector<Drive> getReplicatorDrives(const Key& replicatorKey) = 0;
-		virtual std::vector<Key> getDriveReplicators(const Key& driveKey) = 0;
-		virtual std::vector<Hash256> getDriveChannels(const Key& driveKey) = 0;
-		virtual std::vector<Key> getDonatorShard(const Key& driveKey, const Key& replicatorKey) = 0;
-		virtual ModificationShard getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) = 0;
-		virtual std::vector<Key> getRecipientShard(const Key& driveKey, const Key& replicatorKey) = 0;
-//		virtual SizeMap getCumulativeUploadSizesBytes(const Key& driveKey, const Key& replicatorKey) = 0;
-
-        virtual std::unique_ptr<ApprovedDataModification> getLastApprovedDataModification(const Key& driveKey) = 0;
-
-		virtual std::vector<CompletedModification> getCompletedModifications(const Key& driveKey) = 0;
-
-		virtual uint64_t getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) = 0;
-
-		virtual bool downloadChannelExists(const Hash256& id) = 0;
-		virtual std::unique_ptr<DownloadChannel> getDownloadChannel(const Key& replicatorKey, const Hash256& id) = 0;
-
-		virtual std::optional<DriveVerification> getActiveVerification(const Key& driveKey, const Timestamp& blockTimestamp) = 0;
+		virtual bool isReplicatorRegistered() = 0;
+		virtual std::shared_ptr<Drive> getDrive(const Key& driveKey, const Timestamp& timestamp) = 0;
+		virtual std::vector<std::shared_ptr<Drive>> getDrives(const Timestamp& timestamp) = 0;
 
 	protected:
 		cache::CatapultCache* m_pCache;
 		model::BlockElementSupplier m_lastBlockElementSupplier;
+		Key m_replicatorKey;
 	};
 }}

@@ -304,7 +304,7 @@ namespace catapult { namespace net {
 			}
 
 			std::shared_ptr<ionet::SslPacketSocket> addDestructionHook(const std::shared_ptr<ionet::SslPacketSocket>& pSocket) {
-				return std::shared_ptr<ionet::SslPacketSocket>(pSocket.get(), [pSocket, pThis = shared_from_this()](auto* pRawSocket) {
+				return {pSocket.get(), [pSocket, pThis = shared_from_this()](auto* pRawSocket) {
 					if (!pRawSocket)
 						return;
 
@@ -314,7 +314,7 @@ namespace catapult { namespace net {
 					boost::asio::post(pThis->m_acceptorStrand, [pThis] {
 						pThis->handleContextDestructionOnStrand();
 					});
-				});
+				}};
 			}
 
 			void handleContextDestructionOnStrand() {

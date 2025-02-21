@@ -43,12 +43,14 @@ namespace catapult { namespace chain {
 		logHarvesters();
 
 		std::ostringstream out;
-		auto iter = m_accounts.find(m_committee.BlockProposer);
-		if (iter == m_accounts.end())
-			CATAPULT_THROW_RUNTIME_ERROR_1("account not found", m_committee.BlockProposer)
-		logProcess("block proposer ", m_committee.BlockProposer, iter->second.ExpirationTime, out);
+		for (const auto& blockProposer : m_committee.BlockProposers) {
+			auto iter = m_accounts.find(blockProposer);
+			if (iter == m_accounts.end())
+				CATAPULT_THROW_RUNTIME_ERROR_1("account not found", blockProposer)
+			logProcess("block proposer ", blockProposer, iter->second.ExpirationTime, out);
 
-		CATAPULT_LOG(debug) << out.str();
+			CATAPULT_LOG(debug) << out.str();
+		}
 	}
 
 	void WeightedVotingCommitteeManagerV3::selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) {
@@ -56,33 +58,31 @@ namespace catapult { namespace chain {
 
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
 		if (m_committee.Round >= 0) {
-			bool notBootstrapHarvester = (networkConfig.BootstrapHarvesters.find(m_committee.BlockProposer) == networkConfig.BootstrapHarvesters.cend());
-			bool notEmergencyHarvester = (networkConfig.EmergencyHarvesters.find(m_committee.BlockProposer) == networkConfig.EmergencyHarvesters.cend());
-			if (notBootstrapHarvester && notEmergencyHarvester) {
-				auto iter = m_accounts.find(m_committee.BlockProposer);
-				if (iter == m_accounts.end())
-					CATAPULT_THROW_RUNTIME_ERROR_1("block proposer not found", m_committee.BlockProposer)
-				auto blockGenerationTargetTime = utils::TimeSpan::FromMilliseconds(networkConfig.MinCommitteePhaseTime.millis() * chain::CommitteePhaseCount);
-				iter->second.BanPeriod = config.HarvesterBanPeriod.blocks(blockGenerationTargetTime);
-				m_banPeriods[iter->second.BootKey] = iter->second.BanPeriod;
-				CATAPULT_LOG(warning) << "banned harvester " << m_committee.BlockProposer << " (process id " << iter->second.BootKey << ") for " << iter->second.BanPeriod << " blocks";
+			for (const auto& blockProposer : m_committee.BlockProposers) {
+				bool notBootstrapHarvester = (networkConfig.BootstrapHarvesters.find(blockProposer) == networkConfig.BootstrapHarvesters.cend());
+				bool notEmergencyHarvester = (networkConfig.EmergencyHarvesters.find(blockProposer) == networkConfig.EmergencyHarvesters.cend());
+				if (notBootstrapHarvester && notEmergencyHarvester) {
+					auto iter = m_accounts.find(blockProposer);
+					if (iter == m_accounts.end())
+						CATAPULT_THROW_RUNTIME_ERROR_1("block proposer not found", blockProposer)
+					auto blockGenerationTargetTime = utils::TimeSpan::FromMilliseconds(networkConfig.MinCommitteePhaseTime.millis() * chain::CommitteePhaseCount);
+					iter->second.BanPeriod = config.HarvesterBanPeriod.blocks(blockGenerationTargetTime);
+					m_banPeriods[iter->second.BootKey] = iter->second.BanPeriod;
+					CATAPULT_LOG(warning) << "banned harvester " << blockProposer << " (process id " << iter->second.BootKey << ") for " << iter->second.BanPeriod << " blocks";
+				}
 			}
 		}
 
 		auto rates = getCandidates(networkConfig, config, blockchainVersion);
 
-		// The first account may be followed by the accounts with the same rate, select them all as candidates.
-		auto endRateIter = rates.begin();
-		if (endRateIter != rates.end())
-			endRateIter = rates.equal_range(endRateIter->first).second;
 		std::map<Rate, Key, RateGreater> candidates;
-		for (auto rateIter = rates.begin(); rateIter != endRateIter; ++rateIter)
-			candidates.emplace(Rate(rateIter->first, rateIter->second), rateIter->second);
+		for (const auto& [rate, key] : rates)
+			candidates.emplace(Rate(rate, key), key);
 
 		if (candidates.empty())
 			CATAPULT_THROW_RUNTIME_ERROR_1("no block proposer candidates", m_committee.Round);
 
-		// Select block proposer.
+		// Select block proposers.
 		std::map<Rate, Key, RateLess> blockProposerCandidates;
 		for (auto & candidate : candidates) {
 			const auto& key = candidate.second;
@@ -95,18 +95,23 @@ namespace catapult { namespace chain {
 		}
 
 		m_committee.BlockProposer = blockProposerCandidates.begin()->second;
-		CATAPULT_LOG(trace) << "committee: block proposer " << m_committee.BlockProposer << " (stake " << (m_accounts.at(m_committee.BlockProposer).EffectiveBalance.unwrap() / 1'000'000) << " XPX)";
 
-		// Reject this harvester when selecting block proposer for the next round.
-		m_failedBlockProposers.insert(m_committee.BlockProposer);
-		// If all harvesters are failing or ineligible, let the failing ones try again.
-		if (m_failedBlockProposers.size() + m_ineligibleHarvesters.size() == m_accounts.size()) {
-			CATAPULT_LOG(debug) << "clearing failed harvesters";
-			m_failedBlockProposers.clear();
+		for (auto iter = blockProposerCandidates.cbegin(); iter != blockProposerCandidates.cend() && m_committee.BlockProposers.size() < networkConfig.HarvestersQueueSize; ++iter) {
+			const auto& key = iter->second;
+			m_committee.BlockProposers.push_back(key);
+			CATAPULT_LOG(trace) << "committee: block proposer [" << m_committee.BlockProposers.size() << "] " << key << " (stake " << (m_accounts.at(key).EffectiveBalance.unwrap() / 1'000'000) << " XPX)";
+
+			// Reject this harvester when selecting block proposer for the next round.
+			m_failedBlockProposers.insert(key);
+			// If all harvesters are failing or ineligible, let the failing ones try again.
+			if (m_failedBlockProposers.size() + m_ineligibleHarvesters.size() == m_accounts.size()) {
+				CATAPULT_LOG(debug) << "clearing failed harvesters";
+				m_failedBlockProposers.clear();
+			}
 		}
 	}
 
-	std::map<dbrb::ProcessId, BlockDuration> WeightedVotingCommitteeManagerV3::babPeriods() const {
+	std::map<dbrb::ProcessId, BlockDuration> WeightedVotingCommitteeManagerV3::banPeriods() const {
 		std::lock_guard<std::mutex> guard(m_mutex);
 		return m_banPeriods;
 	}

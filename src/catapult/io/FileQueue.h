@@ -23,6 +23,7 @@
 #include "IndexFile.h"
 #include "catapult/functions.h"
 #include <boost/filesystem/path.hpp>
+#include <memory>
 
 namespace catapult { namespace io {
 

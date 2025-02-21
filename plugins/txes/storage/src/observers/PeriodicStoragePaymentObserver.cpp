@@ -5,23 +5,22 @@
 **/
 
 #include "Observers.h"
-#include "src/state/StorageStateImpl.h"
-#include <random>
-#include <boost/multiprecision/cpp_int.hpp>
 #include "src/utils/Queue.h"
 #include "src/utils/AVLTree.h"
-#include "src/utils/StorageUtils.h"
-#include "src/catapult/utils/StorageUtils.h"
+#include "catapult/utils/StorageUtils.h"
+#include <random>
+#include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult { namespace observers {
 
 	using Notification = model::BlockNotification<1>;
 	using BigUint = boost::multiprecision::uint256_t;
 
-	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)
-	(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider,
-	 const std::vector<std::unique_ptr<StorageUpdatesListener>>& updatesListeners) {
-		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([&](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(PeriodicStoragePayment, Notification)(
+			const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider,
+			const std::vector<std::unique_ptr<StorageUpdatesListener>>& updatesListeners,
+			const std::shared_ptr<state::StorageState>& pStorageState) {
+		return MAKE_OBSERVER(PeriodicStoragePayment, Notification, ([&liquidityProvider, &updatesListeners, pStorageState](const Notification& notification, ObserverContext& context) {
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 			if (!pluginConfig.Enabled || context.Height < Height(2))
 				return;
@@ -104,7 +103,9 @@ namespace catapult { namespace observers {
 					const auto replicators = driveEntry.replicators();
 
 					auto keyExtractor = [=, &accountStateCache](const Key& key) {
-						return std::make_pair(accountStateCache.find(key).get().Balances.get(storageMosaicId), key);
+						auto iter = accountStateCache.find(key);
+						const auto& accountState = iter.get();
+						return std::make_pair(accountState.Balances.get(storageMosaicId), key);
 					};
 
 					// Removing replicators from tree before must be performed before refunding
@@ -113,10 +114,14 @@ namespace catapult { namespace observers {
 									state::ReplicatorsSetTree,
 									keyExtractor,
 									[&replicatorCache](const Key& key) -> state::AVLTreeNode {
-								return replicatorCache.find(key).get().replicatorsSetNode();
+								auto iter = replicatorCache.find(key);
+								const auto& replicatorEntry = iter.get();
+								return replicatorEntry.replicatorsSetNode();
 								},
 								[&replicatorCache](const Key& key, const state::AVLTreeNode& node) {
-								replicatorCache.find(key).get().replicatorsSetNode() = node;
+								auto iter = replicatorCache.find(key);
+								auto& replicatorEntry = iter.get();
+								replicatorEntry.replicatorsSetNode() = node;
 							});
 
 					for (const auto& replicatorKey: replicators) {
@@ -135,8 +140,6 @@ namespace catapult { namespace observers {
 								modificationSize +	// Download work
 								modificationSize * (replicators.size() - 1) / replicators.size());	// Upload work
 						for (const auto& replicatorKey : replicators) {
-							auto replicatorIter = accountStateCache.find(replicatorKey);
-							auto& replicatorState = replicatorIter.get();
 							liquidityProvider->debitMosaics(context, driveEntry.key(), replicatorKey,
 															config::GetUnresolvedStreamingMosaicId(context.Config.Immutable),
 															totalReplicatorAmount);
@@ -178,6 +181,8 @@ namespace catapult { namespace observers {
 
 					// Simulate publishing of finish download for all download channels
 
+					std::vector<std::shared_ptr<state::DownloadChannel>> downloadChannels;
+					downloadChannels.reserve(driveEntry.downloadShards().size());
 					for (const auto& key: driveEntry.downloadShards()) {
 						auto downloadIter = downloadCache.find(key);
 						auto& downloadEntry = downloadIter.get();
@@ -185,12 +190,18 @@ namespace catapult { namespace observers {
 							downloadEntry.setFinishPublished(true);
 							downloadQueueAdapter.remove(key.array());
 							downloadEntry.downloadApprovalInitiationEvent() = eventHash;
+
+							auto pChannel = utils::GetDownloadChannel(pStorageState->replicatorKey(), downloadEntry);
+							if (pChannel)
+								downloadChannels.push_back(std::move(pChannel));
 						}
 					}
 
-					for (const auto& updateListener: updatesListeners) {
+					if (!downloadChannels.empty())
+						context.Notifications.push_back(std::make_unique<model::DownloadRewardServiceNotification<1>>(std::move(downloadChannels)));
+
+					for (const auto& updateListener: updatesListeners)
 						updateListener->onDriveClosed(context, driveEntry.key());
-					}
 
 					// Removing the drive from queue, if present
 					if (replicators.size() < driveEntry.replicatorCount()) {
@@ -202,8 +213,16 @@ namespace catapult { namespace observers {
 					}
 
 					// Removing the drive from caches
-					for (const auto& replicatorKey : replicators)
-						replicatorCache.find(replicatorKey).get().drives().erase(driveEntry.key());
+					for (const auto& replicatorKey : replicators) {
+						auto replicatorIter = replicatorCache.find(replicatorKey);
+						if (pluginConfig.EnableCacheImprovement) {
+							auto& replicatorEntry = replicatorIter.get();
+							replicatorEntry.drives().erase(driveEntry.key());
+						} else {
+							auto replicatorEntry = replicatorIter.get();
+							replicatorEntry.drives().erase(driveEntry.key());
+						}
+					}
 
 					// The Drive is Removed, so we should make removal from verification tree
 					utils::AVLTreeAdapter<Key> treeAdapter(
@@ -211,10 +230,14 @@ namespace catapult { namespace observers {
 							state::DriveVerificationsTree,
 							[](const Key& key) { return key; },
 							[&driveCache](const Key& key) -> state::AVLTreeNode {
-								return driveCache.find(key).get().verificationNode();
+								auto iter = driveCache.find(key);
+								const auto& driveEntry = iter.get();
+								return driveEntry.verificationNode();
 							},
 							[&driveCache](const Key& key, const state::AVLTreeNode& node) {
-								driveCache.find(key).get().verificationNode() = node;
+								auto iter = driveCache.find(key);
+								auto& driveEntry = iter.get();
+								driveEntry.verificationNode() = node;
 							});
 					treeAdapter.remove(driveEntry.key());
 
@@ -223,7 +246,9 @@ namespace catapult { namespace observers {
 					// Assigning drive's former replicators to queued drives
 					std::seed_seq seed(eventHash.begin(), eventHash.end());
 					std::mt19937 rng(seed);
-					utils::AssignReplicatorsToQueuedDrives(replicators, context, rng);
+					auto updatedDrives = utils::AssignReplicatorsToQueuedDrives(pStorageState->replicatorKey(), replicators, context, rng);
+
+					context.Notifications.push_back(std::make_unique<model::DrivesUpdateServiceNotification<1>>(std::move(updatedDrives), std::vector<Key>{ driveEntry.key() }, context.Timestamp));
 				}
 			}
         }))

@@ -94,8 +94,17 @@ namespace catapult { namespace model {
 
 	DEFINE_NOTIFICATION_TYPE(All, Storage, ReplicatorsCleanup_v1, 0x001D);
 
+	/// Defines a download reward notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Reward_v1, 0x001E);
+
+	/// Defines a download channel remove notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Channel_Remove_v1, 0x001F);
+
 	/// Defines a replicator onboarding notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x001E);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x0020);
+
+	/// Defines a drives update notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Drives_Update_v1, 0x0021);
 
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
@@ -222,7 +231,7 @@ namespace catapult { namespace model {
 				const Key& owner,
 				const uint64_t& actualUploadSize,
 				const Hash256& streamStructureCdi)
-				: Notification(Notification_Type, sizeof(StreamStartNotification<1>))
+				: Notification(Notification_Type, sizeof(StreamFinishNotification<1>))
 				, StreamId(streamId)
 				, DriveKey(drive)
 				, Owner(owner)
@@ -482,7 +491,7 @@ namespace catapult { namespace model {
 				const Hash256& dataModificationId,
 				const uint8_t publicKeysCount,
 				const Key* publicKeysPtr)
-				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				: Notification(Notification_Type, sizeof(DataModificationApprovalDownloadWorkNotification<1>))
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
 				, PublicKeysCount(publicKeysCount)
@@ -523,7 +532,7 @@ namespace catapult { namespace model {
 				const Key* publicKeysPtr,
 				const uint8_t* presentOpinionsPtr,
 				const uint64_t* opinionsPtr)
-				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				: Notification(Notification_Type, sizeof(DataModificationApprovalUploadWorkNotification<1>))
 				, DriveKey(driveKey)
 				, ModificationId(modificationId)
 				, JudgingKeysCount(judgingKeysCount)
@@ -577,7 +586,7 @@ namespace catapult { namespace model {
 				const Hash256& dataModificationId,
 				const uint64_t metaFilesSizeBytes,
 				const uint64_t usedDriveSizeBytes)
-				: Notification(Notification_Type, sizeof(DataModificationApprovalNotification<1>))
+				: Notification(Notification_Type, sizeof(DataModificationApprovalRefundNotification<1>))
 				, DriveKey(driveKey)
 				, DataModificationId(dataModificationId)
 				, MetaFilesSizeBytes(metaFilesSizeBytes)

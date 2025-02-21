@@ -134,6 +134,11 @@ namespace catapult { namespace subscribers {
 		return std::make_unique<AggregateNodeSubscriber<>>(std::move(m_nodeSubscribers));
 	}
 
+	notification_handlers::AggregateNotificationHandlerPointer SubscriptionManager::createNotificationSubscriber() {
+		markUsed(SubscriberType::Notifications);
+		return m_notificationSubscriberBuilder.build();
+	}
+
 	// endregion
 
 	// region create - container

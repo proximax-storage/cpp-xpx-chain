@@ -22,16 +22,10 @@ namespace catapult { namespace notification_handlers {
 		HandlerContext(
 				const config::BlockchainConfiguration& config,
 				catapult::Height height,
-				Timestamp blockTime,
-				const model::ResolverContext& resolvers,
-				const cache::ReadOnlyCatapultCache& cache)
+				Timestamp blockTime)
 				: Config(config)
                 , Height(height)
                 , BlockTime(blockTime)
-				, NetworkIdentifier(config.Immutable.NetworkIdentifier)
-				, Network(config.Network.Info)
-				, Resolvers(resolvers)
-				, Cache(cache)
 		{}
 
 	public:
@@ -43,17 +37,5 @@ namespace catapult { namespace notification_handlers {
 
 		/// Current block time.
 		const Timestamp BlockTime;
-
-		/// Network identifier.
-		const model::NetworkIdentifier NetworkIdentifier;
-
-		/// Network info.
-		const model::NetworkInfo Network;
-
-		/// Alias resolvers.
-		const model::ResolverContext Resolvers;
-
-		/// Catapult cache.
-		const cache::ReadOnlyCatapultCache& Cache;
 	};
 }}

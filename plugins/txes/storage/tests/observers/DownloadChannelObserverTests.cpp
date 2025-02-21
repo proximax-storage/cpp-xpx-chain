@@ -7,6 +7,7 @@
 #include "tests/test/StorageTestUtils.h"
 #include "catapult/model/StorageNotifications.h"
 #include "src/observers/Observers.h"
+#include "tests/test/other/mocks/MockStorageState.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -14,17 +15,15 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS DownloadChannelObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(DownloadChannel,)
+    DEFINE_COMMON_OBSERVER_TESTS(DownloadChannel, nullptr)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::StorageCacheFactory>;
         using Notification = model::DownloadNotification<1>;
 
         const Key Consumer = test::GenerateRandomByteArray<Key>();
-        constexpr Amount Transaction_Fee(100);
 		constexpr auto Replicator_Count = 5;
         constexpr auto Download_Size = 100;
-        constexpr Amount Storage_Units(Download_Size);
         constexpr Height Current_Height(15);
 
 		auto CreateConfig() {
@@ -93,7 +92,8 @@ namespace catapult { namespace observers {
                 Download_Size,
 				0u,
 				nullptr);
-            auto pObserver = CreateDownloadChannelObserver();
+			auto pStorageState = std::make_shared<mocks::MockStorageState>();
+            auto pObserver = CreateDownloadChannelObserver(pStorageState);
 			auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& driveCache = context.cache().sub<cache::BcDriveCache>();
 			auto& downloadChannelCache = context.cache().sub<cache::DownloadChannelCache>();

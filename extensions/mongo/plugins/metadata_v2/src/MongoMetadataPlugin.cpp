@@ -20,8 +20,11 @@
 **/
 
 #include "AccountMetadataMapper.h"
+#include "AccountExtendedMetadataMapper.h"
 #include "MosaicMetadataMapper.h"
+#include "MosaicExtendedMetadataMapper.h"
 #include "NamespaceMetadataMapper.h"
+#include "NamespaceExtendedMetadataMapper.h"
 #include "storages/MongoMetadataCacheStorage.h"
 #include "mongo/src/MongoPluginManager.h"
 
@@ -29,8 +32,11 @@ extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	// transaction support
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateAccountMetadataTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateAccountExtendedMetadataTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicMetadataTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicExtendedMetadataTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateNamespaceMetadataTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateNamespaceExtendedMetadataTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoMetadataCacheStorage(

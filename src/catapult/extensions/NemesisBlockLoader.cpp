@@ -309,9 +309,10 @@ namespace catapult { namespace extensions {
 		auto readOnlyCache = m_cacheDelta.toReadOnly();
 		auto resolverContext = m_pluginManager.createResolverContext(readOnlyCache);
 		auto blockStatementBuilder = model::BlockStatementBuilder();
+		std::vector<std::unique_ptr<model::Notification>> notifications;
 		auto observerState = config.Immutable.ShouldEnableVerifiableReceipts
-				? observers::ObserverState(m_cacheDelta, catapultState, blockStatementBuilder)
-				: observers::ObserverState(m_cacheDelta, catapultState);
+				? observers::ObserverState(m_cacheDelta, catapultState, blockStatementBuilder, notifications)
+				: observers::ObserverState(m_cacheDelta, catapultState, notifications);
 		chain::ExecuteBlock(nemesisBlockElement, { *m_pObserver, resolverContext, configHolder, observerState });
 
 		// 4. check the funded balances are reasonable

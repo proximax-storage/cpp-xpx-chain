@@ -74,7 +74,9 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto pCacheDelta = cacheDetachedDelta.tryLock();
 		auto catapultState = state::CatapultState();
 		auto blockStatementBuilder = model::BlockStatementBuilder();
-		auto observerState = observers::ObserverState(*pCacheDelta, catapultState, blockStatementBuilder);
+		std::vector<std::unique_ptr<model::Notification>> notifications;
+		auto observerState = observers::ObserverState(*pCacheDelta, catapultState, blockStatementBuilder, notifications);
+
 
 		// 4. prepare resolvers
 		auto readOnlyCache = pCacheDelta->toReadOnly();

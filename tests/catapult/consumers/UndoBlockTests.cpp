@@ -72,7 +72,8 @@ namespace catapult { namespace consumers {
 			auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
 
 			state::CatapultState catapultState;
-			observers::ObserverState state(delta, catapultState);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			observers::ObserverState state(delta, catapultState, notifications);
 
 			auto blockElement = test::BlockToBlockElement(*pBlock);
 
@@ -141,7 +142,8 @@ namespace catapult { namespace consumers {
 			auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
 
 			state::CatapultState catapultState;
-			observers::ObserverState state(delta, catapultState);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			observers::ObserverState state(delta, catapultState, notifications);
 
 			auto blockElement = test::BlockToBlockElement(*pBlock);
 			blockElement.SubCacheMerkleRoots = { Hash256(), Hash256() }; // trigger clear of account state cache

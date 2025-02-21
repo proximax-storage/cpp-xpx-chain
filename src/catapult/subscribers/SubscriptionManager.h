@@ -28,6 +28,7 @@
 #include "catapult/cache_tx/UtChangeSubscriber.h"
 #include "catapult/io/BlockChangeSubscriber.h"
 #include "catapult/io/FileBlockStorage.h"
+#include "catapult/notification_handlers/DemuxHandlerBuilder.h"
 #include "catapult/utils/Casting.h"
 
 namespace catapult { namespace config { class BlockchainConfiguration; } }
@@ -68,6 +69,13 @@ namespace catapult { namespace subscribers {
 		/// Adds a node subscriber (\a pSubscriber).
 		void addNodeSubscriber(std::unique_ptr<NodeSubscriber>&& pSubscriber);
 
+		/// Adds a notification subscriber.
+		template<typename TNotification>
+		void addNotificationSubscriber(notification_handlers::DemuxHandlerBuilder::NotificationHandlerPointerT<TNotification>&& pHandler) {
+			requireUnused(SubscriberType::Notifications);
+			m_notificationSubscriberBuilder.add(std::move(pHandler));
+		}
+
 	public:
 		/// Creates the block change subscriber.
 		std::unique_ptr<io::BlockChangeSubscriber> createBlockChangeSubscriber();
@@ -90,6 +98,9 @@ namespace catapult { namespace subscribers {
 		/// Creates the node subscriber.
 		std::unique_ptr<NodeSubscriber> createNodeSubscriber();
 
+		/// Creates the notification subscriber.
+		notification_handlers::AggregateNotificationHandlerPointer createNotificationSubscriber();
+
 	public:
 		/// Creates the block storage and sets \a pSubscriber to the created block change subscriber.
 		/// \note createBlockChangeSubscriber cannot be called if this function is called.
@@ -108,7 +119,7 @@ namespace catapult { namespace subscribers {
 				std::shared_ptr<model::TransactionFeeCalculator> pTransactionFeeCalculator);
 
 	private:
-		enum class SubscriberType : uint32_t { BlockChange, UtChange, PtChange, TransactionStatus, StateChange, Node, PostBlockCommit, Count };
+		enum class SubscriberType : uint32_t { BlockChange, UtChange, PtChange, TransactionStatus, StateChange, Node, PostBlockCommit, Notifications, Count };
 
 	private:
 		void requireUnused(SubscriberType subscriberType) const;
@@ -126,5 +137,6 @@ namespace catapult { namespace subscribers {
 		std::vector<std::unique_ptr<TransactionStatusSubscriber>> m_transactionStatusSubscribers;
 		std::vector<std::unique_ptr<StateChangeSubscriber>> m_stateChangeSubscribers;
 		std::vector<std::unique_ptr<NodeSubscriber>> m_nodeSubscribers;
+		notification_handlers::DemuxHandlerBuilder m_notificationSubscriberBuilder;
 	};
 }}

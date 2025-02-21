@@ -6,6 +6,7 @@
 
 #include "src/observers/Observers.h"
 #include "tests/test/StorageTestUtils.h"
+#include "tests/test/other/mocks/MockStorageState.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -15,7 +16,7 @@ namespace catapult { namespace observers {
 
 	const std::unique_ptr<observers::LiquidityProviderExchangeObserver>  Liquidity_Provider = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
 
-    DEFINE_COMMON_OBSERVER_TESTS(DriveClosure, Liquidity_Provider, {})
+    DEFINE_COMMON_OBSERVER_TESTS(DriveClosure, Liquidity_Provider, {}, nullptr)
 
     const auto billingPeriodSeconds = 20000;
 
@@ -88,7 +89,8 @@ namespace catapult { namespace observers {
             // Arrange:
             ObserverTestContext context(mode, Current_Height, CreateConfig());
             Notification notification(Hash256(), driveToRemove, test::GenerateRandomByteArray<Key>());
-            auto pObserver = CreateDriveClosureObserver(Liquidity_Provider, {});
+			auto pStorageState = std::make_shared<mocks::MockStorageState>();
+            auto pObserver = CreateDriveClosureObserver(Liquidity_Provider, {}, pStorageState);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
         	auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
@@ -121,13 +123,13 @@ namespace catapult { namespace observers {
             // Assert: check the cache
 			EXPECT_FALSE(bcDriveCache.find(driveToRemove).tryGet());
 
-//          for (const auto& entry : values.ExpectedReplicatorEntries) {
-//				auto replicatorIter = replicatorCache.find(entry.key());
-//				const auto &actualEntry = replicatorIter.get();
-//				test::AssertEqualReplicatorData(entry, actualEntry);
-//				EXPECT_EQ(accountStateCache.find(entry.key()).get().Balances.get(Currency_Mosaic_Id), Expected_Replicator_Balance);
-//			}
-//			EXPECT_EQ(accountStateCache.find(Owner_Key).get().Balances.get(Currency_Mosaic_Id), Expected_Owner_Balance);
+          	for (const auto& entry : values.ExpectedReplicatorEntries) {
+				auto replicatorIter = replicatorCache.find(entry.key());
+				const auto &actualEntry = replicatorIter.get();
+				test::AssertEqualReplicatorData(entry, actualEntry);
+				EXPECT_TRUE(actualEntry.drives().find(driveToRemove) == actualEntry.drives().end());
+				EXPECT_EQ(accountStateCache.find(entry.key()).get().Balances.get(Currency_Mosaic_Id), Expected_Replicator_Balance);
+			}
 
             auto& queueCacheEntry = queueStateCache.find(state::DrivePaymentQueueKey).get();
             auto driveKey = queueCacheEntry.getFirst();

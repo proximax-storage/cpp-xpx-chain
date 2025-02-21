@@ -21,7 +21,7 @@ namespace catapult { namespace validators {
 			if (committee.Round != notification.Round)
 				return Failure_Committee_Invalid_Committee_Round;
 
-			if (committee.BlockProposer != notification.BlockSigner)
+			if (!committee.validateBlockProposer(notification.BlockSigner))
 				return Failure_Committee_Invalid_Block_Signer;
 
 			return ValidationResult::Success;

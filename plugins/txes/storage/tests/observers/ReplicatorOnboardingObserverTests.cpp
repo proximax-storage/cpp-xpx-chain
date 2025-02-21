@@ -6,6 +6,7 @@
 
 #include "tests/test/StorageTestUtils.h"
 #include "src/observers/Observers.h"
+#include "tests/test/other/mocks/MockStorageState.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -13,8 +14,8 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS ReplicatorOnboardingObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboardingV1,)
-	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboardingV2,)
+	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboardingV1, nullptr)
+	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorOnboardingV2, nullptr)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::StorageCacheFactory>;
@@ -147,33 +148,37 @@ namespace catapult { namespace observers {
         // Arrange:
         TestValues values(1);
 		PrepareTestValues(values);
+		auto pStorageState = std::make_shared<mocks::MockStorageState>();
 
         // Assert:
-        RunTest(CreateReplicatorOnboardingV1Observer(), NotifyMode::Commit, values, Current_Height);
+        RunTest(CreateReplicatorOnboardingV1Observer(pStorageState), NotifyMode::Commit, values, Current_Height);
     }
 
     TEST(TEST_CLASS, ReplicatorOnboarding_CommitV2) {
         // Arrange:
         TestValues values(2);
 		PrepareTestValues(values);
+		auto pStorageState = std::make_shared<mocks::MockStorageState>();
 
         // Assert:
-        RunTest(CreateReplicatorOnboardingV2Observer(), NotifyMode::Commit, values, Current_Height);
+        RunTest(CreateReplicatorOnboardingV2Observer(pStorageState), NotifyMode::Commit, values, Current_Height);
     }
 
     TEST(TEST_CLASS, ReplicatorOnboarding_RollbackV1) {
         // Arrange:
 		TestValues values(1);
+		auto pStorageState = std::make_shared<mocks::MockStorageState>();
 
         // Assert
-		EXPECT_THROW(RunTest(CreateReplicatorOnboardingV1Observer(), NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
+		EXPECT_THROW(RunTest(CreateReplicatorOnboardingV1Observer(pStorageState), NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
     }
 
     TEST(TEST_CLASS, ReplicatorOnboarding_RollbackV2) {
         // Arrange:
 		TestValues values(2);
+		auto pStorageState = std::make_shared<mocks::MockStorageState>();
 
         // Assert
-		EXPECT_THROW(RunTest(CreateReplicatorOnboardingV2Observer(), NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
+		EXPECT_THROW(RunTest(CreateReplicatorOnboardingV2Observer(pStorageState), NotifyMode::Rollback, values, Current_Height), catapult_runtime_error);
     }
 }}

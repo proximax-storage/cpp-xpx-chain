@@ -44,6 +44,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because a metadata value change (truncation) is irreversible.
 	DEFINE_METADATA_RESULT(Value_Change_Irreversible, 5);
 
+	/// Validation failed because a metadata value is immutable.
+	DEFINE_METADATA_RESULT(Value_Is_Immutable, 6);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

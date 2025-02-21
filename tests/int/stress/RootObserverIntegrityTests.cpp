@@ -134,7 +134,8 @@ namespace catapult { namespace extensions {
 				auto resolverContext = test::CreateResolverContextXor();
 
 				auto delta = m_cache.createDelta();
-				auto observerState = observers::ObserverState(delta, m_state);
+				std::vector<std::unique_ptr<model::Notification>> notifications;
+				auto observerState = observers::ObserverState(delta, m_state, notifications);
 				auto blockExecutionContext = chain::BlockExecutionContext(rootObserver, resolverContext, m_pPluginManager->configHolder(), observerState);
 
 				// Act: use BlockExecutor to execute all transactions and blocks

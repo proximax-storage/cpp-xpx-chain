@@ -7,6 +7,7 @@
 #include "tests/test/StorageTestUtils.h"
 #include "catapult/model/StorageNotifications.h"
 #include "src/observers/Observers.h"
+#include "tests/test/other/mocks/MockStorageState.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -14,7 +15,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS DataModificationApprovalObserverTests
 
-    DEFINE_COMMON_OBSERVER_TESTS(DataModificationApproval,)
+    DEFINE_COMMON_OBSERVER_TESTS(DataModificationApproval, nullptr)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -88,7 +89,8 @@ namespace catapult { namespace observers {
 				Judged_Keys_Count,
 				pPublicKeys.get(),
 				pPresentOpinions.get());
-            auto pObserver = CreateDataModificationApprovalObserver();
+			auto pStorageState = std::make_shared<mocks::MockStorageState>();
+            auto pObserver = CreateDataModificationApprovalObserver(pStorageState);
             auto& bcDriveCache = context.cache().sub<cache::BcDriveCache>();
 
             // Populate cache.

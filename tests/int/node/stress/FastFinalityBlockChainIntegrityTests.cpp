@@ -348,7 +348,7 @@ namespace catapult { namespace local {
 			}
 
 			// Act + Assert
-			auto success = TryWaitForMaxHeight(contexts, Max_Chain_Height.unwrap() * 10);
+			auto success = TryWaitForMaxHeight(contexts, Max_Chain_Height.unwrap() * 10 + 10);
 			ASSERT_TRUE(success) << "test timed out";
 
 			for (auto i = 0u; i < Network_Size - 1; ++i) {

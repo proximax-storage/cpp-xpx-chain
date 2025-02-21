@@ -33,6 +33,9 @@ namespace catapult { namespace net {
 	/* Self connection was detected and bypassed. */ \
 	ENUM_VALUE(Self_Connection_Error) \
 	\
+	/* Peer socket type is invalid. */ \
+	ENUM_VALUE(Invalid_Socket_Type) \
+	\
 	/* Verification timed out. */ \
 	ENUM_VALUE(Timed_Out) \
 	\

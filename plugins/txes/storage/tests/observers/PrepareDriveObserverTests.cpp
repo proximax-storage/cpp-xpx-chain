@@ -7,6 +7,7 @@
 #include "tests/test/StorageTestUtils.h"
 #include "src/observers/Observers.h"
 #include "src/utils/AVLTree.h"
+#include "tests/test/other/mocks/MockStorageState.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -14,7 +15,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PrepareDriveObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive,)
+	DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive, nullptr)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
@@ -131,7 +132,8 @@ namespace catapult { namespace observers {
 				Drive_Key,
 				Drive_Size,
 				Replicator_Count);
-            auto pObserver = CreatePrepareDriveObserver();
+			auto pStorageState = std::make_shared<mocks::MockStorageState>();
+            auto pObserver = CreatePrepareDriveObserver(pStorageState);
             auto& driveCache = context.cache().sub<cache::BcDriveCache>();
 			auto& priorityQueueCache = context.cache().sub<cache::PriorityQueueCache>();
             auto& replicatorCache = context.cache().sub<cache::ReplicatorCache>();

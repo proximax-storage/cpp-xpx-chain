@@ -10,7 +10,7 @@ namespace catapult { namespace observers {
 
 	using Notification = model::DataModificationCancelNotification<1>;
 
-	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DataModificationCancel, model::DataModificationCancelNotification<1>, [&liquidityProvider](const Notification& notification, ObserverContext& context) {
+	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DataModificationCancel, Notification, ([&liquidityProvider, pStorageState](const Notification& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DataModificationCancel)");
 
@@ -88,5 +88,15 @@ namespace catapult { namespace observers {
 				0U
 		});
 		activeDataModifications.erase(cancelingDataModificationIter);
-    });
+
+		const auto& replicators = driveEntry.replicators();
+		if (replicators.find(pStorageState->replicatorKey()) == replicators.end())
+			return;
+
+		auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
+		auto& downloadChannelCache = context.Cache.template sub<cache::DownloadChannelCache>();
+		auto pDrive = utils::GetDrive(notification.DriveKey, pStorageState->replicatorKey(), context.Timestamp, driveCache, replicatorCache, downloadChannelCache);
+		if (pDrive)
+			context.Notifications.push_back(std::make_unique<model::DataModificationCancelServiceNotification<1>>(std::move(pDrive), notification.DataModificationId));
+    }));
 }}

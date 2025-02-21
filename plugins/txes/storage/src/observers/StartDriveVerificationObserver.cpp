@@ -6,13 +6,13 @@
 
 #include "Observers.h"
 #include "src/utils/AVLTree.h"
-#include "src/catapult/utils/StorageUtils.h"
+#include "catapult/utils/StorageUtils.h"
 
 namespace catapult { namespace observers {
 
 	using Notification = model::BlockNotification<1>;
 
-	void Observe(const Notification& notification, ObserverContext& context, state::StorageState& state) {
+	void Observe(const Notification& notification, ObserverContext& context, const std::shared_ptr<state::StorageState>& pStorageState) {
 		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::StorageConfiguration>();
 		if (!pluginConfig.Enabled || context.Height <= context.Config.Immutable.NemesisHeight)
 			return;
@@ -22,7 +22,7 @@ namespace catapult { namespace observers {
 
 		uint64_t verificationInterval = pluginConfig.VerificationInterval.seconds();
 
-		auto pLastBlockElement = state.lastBlockElementSupplier()();
+		auto pLastBlockElement = pStorageState->lastBlockElementSupplier()();
 		auto lastBlockTimestamp = pLastBlockElement->Block.Timestamp;
 		uint64_t blockGenerationTimeSeconds = (notification.Timestamp - lastBlockTimestamp).unwrap() / 1000;
 
@@ -35,10 +35,14 @@ namespace catapult { namespace observers {
 				state::DriveVerificationsTree,
 				[](const Key& key) { return key; },
 				[&driveCache](const Key& key) -> state::AVLTreeNode {
-					return driveCache.find(key).get().verificationNode();
+					auto iter = driveCache.find(key);
+					const auto& driveEntry = iter.get();
+					return driveEntry.verificationNode();
 				},
 				[&driveCache](const Key& key, const state::AVLTreeNode& node) {
-					driveCache.find(key).get().verificationNode() = node;
+					auto iter = driveCache.find(key);
+					auto& driveEntry = iter.get();
+					driveEntry.verificationNode() = node;
 				});
 
 		auto totalDrives = treeAdapter.size();
@@ -61,6 +65,7 @@ namespace catapult { namespace observers {
 
 		auto drivesToVerify = guaranteedVerifications + additionalVerifications;
 
+		std::unordered_map<Key, std::shared_ptr<state::DriveVerification>, utils::ArrayHasher<Key>> verifications;
 		for (uint i = 0; i < drivesToVerify; i++) {
 
 			uint32_t index = rng() % totalDrives;
@@ -113,40 +118,48 @@ namespace catapult { namespace observers {
 				verification->Shards = state::Shards{
 					std::set<Key>(std::make_move_iterator(replicators.begin()),
 					std::make_move_iterator(replicators.end()))};
-				continue;
-			}
+			} else {
+				std::shuffle(replicators.begin(), replicators.end(), rng);
 
-			std::shuffle(replicators.begin(), replicators.end(), rng);
+				auto shardCount = replicatorCount / shardSize;
 
-			auto shardCount = replicatorCount / shardSize;
+				state::Shards shards;
+				shards.resize(shardCount);
 
-			state::Shards shards;
-			shards.resize(shardCount);
-
-			auto replicatorIt = replicators.begin();
-			for (int i = 0; i < replicatorCount / shardCount; i++) {
-				// We have the possibility to add at least one Replicator to each shard;
-				for (auto& shard : shards) {
-					shard.emplace(*replicatorIt);
-					replicatorIt++;
+				auto replicatorIt = replicators.begin();
+				for (int i = 0; i < replicatorCount / shardCount; i++) {
+					// We have the possibility to add at least one Replicator to each shard;
+					for (auto& shard : shards) {
+						shard.emplace(*replicatorIt);
+						replicatorIt++;
+					}
 				}
+
+				auto shardIt = shards.begin();
+				while (replicatorIt != replicators.end()) {
+					// The number of replicators left is less than the number of shards
+					shardIt->emplace(*replicatorIt);
+					replicatorIt++;
+					shardIt++;
+				}
+
+				verification->Shards = std::move(shards);
 			}
 
-			auto shardIt = shards.begin();
-			while (replicatorIt != replicators.end()) {
-				// The number of replicators left is less than the number of shards
-				shardIt->emplace(*replicatorIt);
-				replicatorIt++;
-				shardIt++;
-			}
+			const auto& driveReplicators = driveEntry.replicators();
+			if (driveReplicators.find(pStorageState->replicatorKey()) == driveReplicators.end())
+				return;
 
-			verification->Shards = std::move(shards);
+			verifications.emplace(driveEntry.key(), utils::GetDriveVerification(driveEntry, context.Timestamp));
 		}
+
+		if (!verifications.empty())
+			context.Notifications.push_back(std::make_unique<model::StartDriveVerificationServiceNotification<1>>(std::move(verifications)));
 	}
 
-	DECLARE_OBSERVER(StartDriveVerification, Notification)(state::StorageState& state) {
-		return MAKE_OBSERVER(StartDriveVerification, Notification, ([&state](const Notification& notification, ObserverContext& context) {
-			Observe(notification, context, state);
+	DECLARE_OBSERVER(StartDriveVerification, Notification)(const std::shared_ptr<state::StorageState>& pStorageState) {
+		return MAKE_OBSERVER(StartDriveVerification, Notification, ([pStorageState](const Notification& notification, ObserverContext& context) {
+			Observe(notification, context, pStorageState);
 		}))
 	}
 }}
