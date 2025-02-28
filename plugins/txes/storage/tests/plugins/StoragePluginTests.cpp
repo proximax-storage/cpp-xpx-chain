@@ -109,8 +109,9 @@ namespace catapult { namespace plugins {
 					"EndDriveVerificationValidator",
 					"OwnerManagementProhibitionValidator",
 					"ReplicatorNodeBootKeyValidator",
-					"ReplicatorsCleanupValidator",
+					"ReplicatorsCleanupV1Validator",
 					"ReplicatorOnboardingV2Validator",
+					"ReplicatorsCleanupV2Validator",
 				};
 			}
 
@@ -142,8 +143,9 @@ namespace catapult { namespace plugins {
 					"EndDriveVerificationObserver",
 					"OwnerManagementProhibitionObserver",
 					"ReplicatorNodeBootKeyObserver",
-					"ReplicatorsCleanupObserver",
+					"ReplicatorsCleanupV1Observer",
 					"ReplicatorOnboardingV2Observer",
+					"ReplicatorsCleanupV2Observer",
 				};
 			}
 

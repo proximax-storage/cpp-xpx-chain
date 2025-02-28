@@ -398,7 +398,7 @@
 		{
 			"name": "replicatorsCleanup",
 			"type": "16482",
-			"supportedVersions": [1]
+			"supportedVersions": [1, 2]
 		}
 	]
 }
