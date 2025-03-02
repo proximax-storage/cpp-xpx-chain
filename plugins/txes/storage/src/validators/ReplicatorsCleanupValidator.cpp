@@ -9,9 +9,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ReplicatorsCleanupNotification<1>;
-
-	DEFINE_STATEFUL_VALIDATOR(ReplicatorsCleanup, ([](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(ReplicatorsCleanupV1, model::ReplicatorsCleanupNotification<1>, ([](const model::ReplicatorsCleanupNotification<1>& notification, const ValidatorContext& context) {
 		if (!notification.ReplicatorCount)
 			return Failure_Storage_No_Replicators_To_Remove;
 
@@ -25,6 +23,22 @@ namespace catapult { namespace validators {
 
 			if (pEntry->nodeBootKey() != Key())
 				return Failure_Storage_Replicator_Is_Bound_With_Boot_Key;
+		}
+
+		return ValidationResult::Success;
+	}));
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(ReplicatorsCleanupV2, model::ReplicatorsCleanupNotification<2>, ([](const model::ReplicatorsCleanupNotification<2>& notification, const ValidatorContext& context) {
+		if (!notification.ReplicatorCount)
+			return Failure_Storage_No_Replicators_To_Remove;
+
+		const auto& cache = context.Cache.sub<cache::ReplicatorCache>();
+		auto pReplicatorKey = notification.ReplicatorKeysPtr;
+		for (auto i = 0u; i < notification.ReplicatorCount; ++i, ++pReplicatorKey) {
+			auto iter = cache.find(*pReplicatorKey);
+			auto pEntry = iter.tryGet();
+			if (!pEntry)
+				return Failure_Storage_Replicator_Not_Found;
 		}
 
 		return ValidationResult::Success;

@@ -23,6 +23,11 @@ namespace catapult { namespace plugins {
 				break;
 			}
 
+			case 2: {
+				sub.notify(ReplicatorsCleanupNotification<2>(transaction.ReplicatorCount, transaction.ReplicatorKeysPtr()));
+				break;
+			}
+
 			default:
 				CATAPULT_LOG(debug) << "invalid version of ReplicatorsCleanupTransaction: " << transaction.EntityVersion();
 			}

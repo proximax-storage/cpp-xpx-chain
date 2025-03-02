@@ -14,12 +14,15 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ReplicatorsCleanupValidatorTests
 
-    DEFINE_COMMON_VALIDATOR_TESTS(ReplicatorsCleanup, )
+    DEFINE_COMMON_VALIDATOR_TESTS(ReplicatorsCleanupV1, )
 
     namespace {
-        using Notification = model::ReplicatorsCleanupNotification<1>;
-
-        void AssertValidationResult(ValidationResult expectedResult, const std::vector<std::pair<Key, Key>>& keysToInsert, const std::vector<Key>& keysToRemove) {
+		template<typename TNotification>
+        void AssertValidationResult(
+				ValidationResult expectedResult,
+				const std::vector<std::pair<Key, Key>>& keysToInsert,
+				const std::vector<Key>& keysToRemove,
+				std::unique_ptr<const stateful::NotificationValidatorT<TNotification>> pValidator) {
             // Arrange:
             auto cache = test::StorageCacheFactory::Create();
             {
@@ -32,8 +35,7 @@ namespace catapult { namespace validators {
 				}
                 cache.commit(Height(1));
             }
-            Notification notification(keysToRemove.size(), keysToRemove.data());
-            auto pValidator = CreateReplicatorsCleanupValidator();
+			TNotification notification(keysToRemove.size(), keysToRemove.data());
 
             // Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -43,7 +45,7 @@ namespace catapult { namespace validators {
         }
     }
 
-    TEST(TEST_CLASS, FailureWhenNoReplicatorsToRemove) {
+    TEST(TEST_CLASS, FailureWhenNoReplicatorsToRemoveV1) {
         // Arrange:
 		std::vector<std::pair<Key, Key>> keysToInsert{
 			{ Key({ 1 }), Key({ 5 }) },
@@ -54,13 +56,32 @@ namespace catapult { namespace validators {
 		std::vector<Key> keysToRemove{};
 
         // Assert:
-        AssertValidationResult(
+        AssertValidationResult<model::ReplicatorsCleanupNotification<1>>(
 			Failure_Storage_No_Replicators_To_Remove,
 			keysToInsert,
-			keysToRemove);
+			keysToRemove,
+			CreateReplicatorsCleanupV1Validator());
     }
 
-    TEST(TEST_CLASS, FailureWhenReplicatorNotFound) {
+    TEST(TEST_CLASS, FailureWhenNoReplicatorsToRemoveV2) {
+        // Arrange:
+		std::vector<std::pair<Key, Key>> keysToInsert{
+			{ Key({ 1 }), Key({ 5 }) },
+			{ Key({ 2 }), Key() },
+			{ Key({ 3 }), Key() },
+			{ Key({ 4 }), Key() },
+		};
+		std::vector<Key> keysToRemove{};
+
+        // Assert:
+        AssertValidationResult<model::ReplicatorsCleanupNotification<2>>(
+			Failure_Storage_No_Replicators_To_Remove,
+			keysToInsert,
+			keysToRemove,
+			CreateReplicatorsCleanupV2Validator());
+    }
+
+    TEST(TEST_CLASS, FailureWhenReplicatorNotFoundV1) {
         // Arrange:
 		std::vector<std::pair<Key, Key>> keysToInsert{
 			{ Key({ 1 }), Key({ 5 }) },
@@ -77,13 +98,38 @@ namespace catapult { namespace validators {
 		};
 
         // Assert:
-        AssertValidationResult(
+        AssertValidationResult<model::ReplicatorsCleanupNotification<1>>(
 			Failure_Storage_Replicator_Not_Found,
 			keysToInsert,
-			keysToRemove);
+			keysToRemove,
+			CreateReplicatorsCleanupV1Validator());
     }
 
-    TEST(TEST_CLASS, FailureWhenReplicatorIsBoundWithBootKey) {
+    TEST(TEST_CLASS, FailureWhenReplicatorNotFoundV2) {
+        // Arrange:
+		std::vector<std::pair<Key, Key>> keysToInsert{
+			{ Key({ 1 }), Key({ 5 }) },
+			{ Key({ 2 }), Key() },
+			{ Key({ 3 }), Key() },
+			{ Key({ 4 }), Key() },
+		};
+		std::vector<Key> keysToRemove{
+			Key({ 2 }),
+			Key({ 3 }),
+			Key({ 4 }),
+			Key({ 7 }),
+			Key({ 1 }),
+		};
+
+        // Assert:
+        AssertValidationResult<model::ReplicatorsCleanupNotification<2>>(
+			Failure_Storage_Replicator_Not_Found,
+			keysToInsert,
+			keysToRemove,
+			CreateReplicatorsCleanupV2Validator());
+    }
+
+    TEST(TEST_CLASS, FailureWhenReplicatorIsBoundWithBootKeyV1) {
         // Arrange:
 		std::vector<std::pair<Key, Key>> keysToInsert{
 			{ Key({ 1 }), Key({ 5 }) },
@@ -98,13 +144,14 @@ namespace catapult { namespace validators {
 		};
 
         // Assert:
-        AssertValidationResult(
+        AssertValidationResult<model::ReplicatorsCleanupNotification<1>>(
 			Failure_Storage_Replicator_Is_Bound_With_Boot_Key,
 			keysToInsert,
-			keysToRemove);
+			keysToRemove,
+			CreateReplicatorsCleanupV1Validator());
     }
 
-    TEST(TEST_CLASS, Success) {
+    TEST(TEST_CLASS, SuccessV1) {
         // Arrange:
 		std::vector<std::pair<Key, Key>> keysToInsert{
 			{ Key({ 1 }), Key({ 5 }) },
@@ -119,9 +166,32 @@ namespace catapult { namespace validators {
 		};
 
         // Assert:
-        AssertValidationResult(
+        AssertValidationResult<model::ReplicatorsCleanupNotification<1>>(
 			ValidationResult::Success,
 			keysToInsert,
-			keysToRemove);
+			keysToRemove,
+			CreateReplicatorsCleanupV1Validator());
+	}
+
+    TEST(TEST_CLASS, SuccessV2) {
+        // Arrange:
+		std::vector<std::pair<Key, Key>> keysToInsert{
+			{ Key({ 1 }), Key({ 5 }) },
+			{ Key({ 2 }), Key() },
+			{ Key({ 3 }), Key() },
+			{ Key({ 4 }), Key() },
+		};
+		std::vector<Key> keysToRemove{
+			Key({ 2 }),
+			Key({ 3 }),
+			Key({ 4 }),
+		};
+
+        // Assert:
+        AssertValidationResult<model::ReplicatorsCleanupNotification<2>>(
+			ValidationResult::Success,
+			keysToInsert,
+			keysToRemove,
+			CreateReplicatorsCleanupV2Validator());
 	}
 }}

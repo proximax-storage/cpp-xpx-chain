@@ -1,5 +1,5 @@
 /**
-*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Copyright 2024 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -18,7 +18,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS ReplicatorsCleanupTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ReplicatorsCleanup, 1, 1,)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ReplicatorsCleanup, 2, 2,)
 
 		template<typename TTraits>
 		auto CreateTransaction(uint16_t replicatorCount) {
@@ -71,7 +71,7 @@ namespace catapult { namespace plugins {
 
 		// Assert:
         ASSERT_EQ(1u, sub.numNotifications());
-		EXPECT_EQ(Storage_ReplicatorsCleanup_v1_Notification, sub.notificationTypes()[0]);
+		EXPECT_EQ(Storage_ReplicatorsCleanup_v2_Notification, sub.notificationTypes()[0]);
 	}
 
 	// endregion
@@ -80,7 +80,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishReplicatorsCleanupNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ReplicatorsCleanupNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<ReplicatorsCleanupNotification<2>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransaction<TTraits>(10);
