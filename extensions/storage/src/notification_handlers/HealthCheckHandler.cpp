@@ -13,25 +13,16 @@ namespace catapult { namespace notification_handlers {
 
 	DECLARE_HANDLER(HealthCheck, Notification)(const std::weak_ptr<storage::ReplicatorService>& pReplicatorServiceWeak) {
 		return MAKE_HANDLER(HealthCheck, [pReplicatorServiceWeak](const Notification& notification, const HandlerContext& context) {
-			CATAPULT_LOG(warning) << "======================================================> replicator health check: start notification processing";
 			auto pReplicatorService = pReplicatorServiceWeak.lock();
-			if (!pReplicatorService) {
-				CATAPULT_LOG(warning) << "======================================================> replicator health check: no replicator service";
+			if (!pReplicatorService)
 				return;
-			}
 
 			pReplicatorService->post([](const auto& pReplicatorService) {
-				if (!pReplicatorService->registered()) {
-					CATAPULT_LOG(warning) << "======================================================> replicator health check: replicator is not registered";
+				if (!pReplicatorService->registered())
 					return;
-				}
 
-				if (!pReplicatorService->isAlive()) {
-					CATAPULT_LOG(warning) << "======================================================> replicator health check: starting replicator";
+				if (!pReplicatorService->isAlive())
 					pReplicatorService->start();
-				} else {
-					CATAPULT_LOG(warning) << "======================================================> replicator health check: replicator is alive";
-				}
 			});
 		});
 	}

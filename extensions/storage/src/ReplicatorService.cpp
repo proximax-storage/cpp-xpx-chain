@@ -50,7 +50,6 @@ namespace catapult { namespace storage {
                 if (storageState.isReplicatorRegistered()) {
 					m_pReplicatorService->post([](const auto& pReplicatorService) {
 						CATAPULT_LOG(debug) << "starting replicator service";
-						CATAPULT_LOG(warning) << "======================================================> starting replicator service";
 						pReplicatorService->markRegistered();
 						pReplicatorService->start();
 					});
@@ -87,7 +86,7 @@ namespace catapult { namespace storage {
 		{}
 
     public:
-        void start(const StorageConfiguration& storageConfig, const Timestamp& timestamp) {
+        void start(const StorageConfiguration& storageConfig, const Timestamp& timestamp, ReplicatorEventHandler& handler) {
 			const auto& config = m_serviceState.config();
 			if (storageConfig.UseRpcReplicator) {
 				gHandleLostConnection = storageConfig.RpcHandleLostConnection;
@@ -101,7 +100,7 @@ namespace catapult { namespace storage {
 						storageConfig.StorageDirectory,
 						resolveBootstrapAddresses(),
 						storageConfig.UseTcpSocket,
-						*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
+						handler, // TODO: pass unique_ptr instead of ref.
 						nullptr,
 						Service_Name,
 						storageConfig.LogOptions);
@@ -114,7 +113,7 @@ namespace catapult { namespace storage {
 						storageConfig.StorageDirectory,
 						resolveBootstrapAddresses(),
 						storageConfig.UseTcpSocket,
-						*m_pReplicatorEventHandler, // TODO: pass unique_ptr instead of ref.
+						handler, // TODO: pass unique_ptr instead of ref.
 						nullptr,
 						Service_Name,
 						storageConfig.LogOptions);
@@ -583,7 +582,6 @@ namespace catapult { namespace storage {
         state::StorageState& m_storageState;
 
         std::shared_ptr<sirius::drive::Replicator> m_pReplicator;
-        std::unique_ptr<sirius::drive::ReplicatorEventHandler> m_pReplicatorEventHandler;
         std::shared_ptr<TransactionStatusHandler> m_pTransactionStatusHandler;
 		const std::vector<ionet::Node>& m_bootstrapReplicators;
 
@@ -633,7 +631,6 @@ namespace catapult { namespace storage {
 	}
 
     void ReplicatorService::start() {
-		CATAPULT_LOG(warning) << "======================================================> replicator starting";
         if (m_pImpl)
 			CATAPULT_THROW_RUNTIME_ERROR("replicator service already started");
 
@@ -642,7 +639,7 @@ namespace catapult { namespace storage {
 			*m_pServiceState,
 			m_pServiceState->pluginManager().storageState(),
 			m_bootstrapReplicators);
-        m_pImpl->start(m_storageConfig, m_pServiceState->timeSupplier()());
+        m_pImpl->start(m_storageConfig, m_pServiceState->timeSupplier()(), *this);
     }
 
     void ReplicatorService::stop() {
