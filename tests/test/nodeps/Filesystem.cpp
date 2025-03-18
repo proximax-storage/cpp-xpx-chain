@@ -21,6 +21,7 @@
 #include "Filesystem.h"
 #include "catapult/exceptions.h"
 #include <boost/dll.hpp>
+#include <boost/filesystem.hpp>
 
 #ifdef CATAPULT_DOCKER_TESTS
 extern int global_argc;
@@ -35,7 +36,7 @@ namespace catapult { namespace test {
 		constexpr auto Temp_Directory_Root = "../_temp";
 
 		boost::filesystem::path PathFromDirectoryName(const std::string& directoryName) {
-			if (std::string::npos != directoryName.find("/"))
+			if (std::string::npos != directoryName.find('/'))
 				CATAPULT_THROW_INVALID_ARGUMENT_1("TempDirectoryGuard only supports directory names", directoryName);
 
 			return boost::filesystem::path(TempDirectoryGuard::DefaultName()) / directoryName;

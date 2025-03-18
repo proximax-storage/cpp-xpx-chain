@@ -222,7 +222,7 @@ namespace catapult { namespace storage {
 			m_pReplicator->asyncAddDownloadChannelInfo(
 					pChannel->DriveKey.array(),
 					std::make_unique<sirius::drive::DownloadRequest>(sirius::drive::DownloadRequest{
-							pChannel->Id.array(),
+						pChannel->Id.array(),
 						utils::FileSize::FromMegabytes(pChannel->DownloadSizeMegabytes).bytes(),
 						castReplicatorKeys<sirius::Key>(pChannel->Replicators),
 						castReplicatorKeys<sirius::Key>(pChannel->Consumers)}));
@@ -347,11 +347,8 @@ namespace catapult { namespace storage {
 			}
 
 			auto& pDrive = iter->second;
-			pDrive->Replicators = pUpdatedDrive->Replicators;
 			m_pReplicator->asyncSetReplicators(pDrive->Id.array(), std::make_unique<sirius::drive::ReplicatorList>(castReplicatorKeys<sirius::Key>(pUpdatedDrive->Replicators)));
-			pDrive->DonatorShard = pUpdatedDrive->DonatorShard;
 			m_pReplicator->asyncSetShardDonator(pDrive->Id.array(), std::make_unique<sirius::drive::ReplicatorList>(castReplicatorKeys<sirius::Key>(pUpdatedDrive->DonatorShard)));
-			pDrive->RecipientShard = pUpdatedDrive->RecipientShard;
 			m_pReplicator->asyncSetShardRecipient(pDrive->Id.array(), std::make_unique<sirius::drive::ReplicatorList>(castReplicatorKeys<sirius::Key>(pUpdatedDrive->RecipientShard)));
 
 			for (const auto& [_, pChannel] : pUpdatedDrive->DownloadChannels) {
@@ -368,7 +365,7 @@ namespace catapult { namespace storage {
 				}
 			}
 
-			m_drives[pDrive->Id] = pDrive;
+			m_drives[pDrive->Id] = pUpdatedDrive;
 		}
 
 		void removeDrive(const Key& driveKey) {

@@ -1,3 +1,5 @@
+# For running nodes locally
+
 FROM debian:bookworm AS basic
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -13,6 +15,19 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libczmq-dev \
   libsasl2-dev \
   libssl-dev \
+  libboost-dev \
+  libboost-atomic-dev \
+  libboost-date-time-dev \
+  libboost-regex-dev \
+  libboost-system-dev \
+  libboost-timer-dev \
+  libboost-chrono-dev \
+  libboost-log-dev \
+  libboost-thread-dev \
+  libboost-filesystem-dev \
+  libboost-program-options-dev \
+  libboost-stacktrace-dev \
+  libboost-random-dev \
   libmongoc-1.0-0 \
   libmongoc-dev \
   libzstd-dev \
@@ -20,33 +35,26 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libzmq3-dev \
   cppzmq-dev
 
-WORKDIR /usr/local/src
-
-# boost
-RUN curl -OL https://archives.boost.io/release/1.86.0/source/boost_1_86_0.tar.gz \
-  && tar xzf boost_1_86_0.tar.gz && cd boost_1_86_0 \
-  && ./bootstrap.sh && ./b2 toolset=gcc install --prefix=/usr/local -j$(nproc)
-
 # Install mongo-cxx
 RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.7/mongo-cxx-driver-r3.6.7.tar.gz && \
   tar -xzf mongo-cxx-driver-r3.6.7.tar.gz && \
   cd mongo-cxx-driver-r3.6.7/build && \
   cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBSONCXX_POLY_USE_BOOST=1 .. && \
-  make -j$(nproc) && \
+  make -j $(nproc) && \
   make install
 
-# Remove downloads
-RUN rm mongo-cxx-driver-r3.6.7.tar.gz && rm boost_1_86_0.tar.gz
+# Clean Downloads
+RUN rm mongo-cxx-driver-r3.6.7.tar.gz
 
-# Copy local directory to image
+WORKDIR /catapult
 COPY . /catapult
 
 # Build Catapult Server
 RUN cd /catapult \
     && rm -rf _build \
     && mkdir _build && cd _build \
-    && cmake -DCMAKE_BUILD_TYPE=Release  \
-    -DCMAKE_CXX_FLAGS="-pthread" \
+    && cmake -DCMAKE_BUILD_TYPE=Debug  \
+    -DCMAKE_CXX_FLAGS="-pthread -g" \
     .. \
     && make publish \
     && make \
@@ -135,10 +143,6 @@ RUN cd /catapult \
     storage-crypto \
     torrent-sirius \
     utils \
-    -j$(nproc)
-
-RUN cd /catapult/_build && make \
-# Catapult
     sirius.bc \
     catapult.broker \
     catapult.recovery \
@@ -149,29 +153,88 @@ RUN cd /catapult/_build && make \
     catapult.tools.nemgen.blockhashes \
     catapult.tools.network \
     catapult.tools.statusgen \
-    -j$(nproc)
+    -j $(nproc)
 
-# script for copying required libs to temporary folder /deps
-RUN /catapult/scripts/release-script/copyDeps.sh /catapult/_build/bin/ /deps
-WORKDIR /deps/sirius
-RUN cp -r /catapult/_build/lib /deps/sirius/ && \
-    rm -rf /deps/home
+RUN rm -r _build/inc \
+    && rm -r _build/resources \
+    && rm -r _build/spammer \
+    && rm -r _build/tests \
+    && rm -r _build/tools \
+    && rm -r _build/cpp-xpx-storage-sdk \
+    && rm -r _build/extensions \
+    && rm -r _build/external \
+    && rm -r _build/plugins \
+    && rm -r _build/sdk \
+    && rm -r _build/src
+
 
 #------------------------
 # Actual target image which only contains the required binaries
 #------------------------
 FROM debian:bookworm
 
-# copy required libs
-COPY --from=basic /deps/sirius/ /sirius/
-COPY --from=basic /deps/usr/ /usr/
-COPY --from=basic /deps/lib/ /lib/
+RUN apt-get update && apt-get install --no-install-recommends -y \
+  software-properties-common \
+  curl \
+  build-essential \
+  pkg-config \
+  libgtest-dev \
+  libbenchmark-dev \
+  librocksdb-dev \
+  libczmq-dev \
+  libsasl2-dev \
+  libssl-dev \
+  libboost-dev \
+  libboost-atomic-dev \
+  libboost-date-time-dev \
+  libboost-regex-dev \
+  libboost-system-dev \
+  libboost-timer-dev \
+  libboost-chrono-dev \
+  libboost-log-dev \
+  libboost-thread-dev \
+  libboost-filesystem-dev \
+  libboost-program-options-dev \
+  libboost-stacktrace-dev \
+  libboost-random-dev \
+  libmongoc-1.0-0 \
+  libmongoc-dev \
+  libzstd-dev \
+  googletest \
+  libzmq3-dev \
+  cppzmq-dev \
+  openssh-server \
+  gdbserver \
+  nano \
+  apt-utils \
+  gcc \
+  g++ \
+  cmake \
+  gdb \
+  rsync
 
-# copy executables
-COPY --from=basic /catapult/_build/bin /sirius/bin
+WORKDIR /catapult
 
-# sirius.bc as the entry point
-ENTRYPOINT ["/sirius/bin/sirius.bc"]
+# copy required libs && executables
+COPY --from=basic /catapult /catapult
+
+RUN mkdir /var/run/sshd
+
+RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config && \
+    echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config && \
+    echo 'Port 2222' >> /etc/ssh/sshd_config && \
+    echo 'ListenAddress 0.0.0.0' >> /etc/ssh/sshd_config
+
+RUN echo 'root:1234' | chpasswd
+
+# ssh
+EXPOSE 2222
+
+# gdb server
+EXPOSE 1234
+
+# sirius.bc as the entry point and ssh as a daemon
+CMD ["/catapult/_build/bin/sirius.bc"]
 
 # set the config directory by default
 CMD ["/chainconfig"]

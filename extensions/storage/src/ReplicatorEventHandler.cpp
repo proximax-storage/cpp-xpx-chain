@@ -107,7 +107,8 @@ namespace catapult { namespace storage {
 			if (!pReplicator)
 				return;
 
-			if (!pThis->driveAdded(info.m_driveKey)) {
+			auto pDrive = pThis->getDrive(info.m_driveKey);
+			if (!pDrive) {
 				CATAPULT_LOG(warning) << "received modification opinion for a non existing drive";
 				return;
 			}
@@ -141,7 +142,6 @@ namespace catapult { namespace storage {
 				return;
 			}
 
-			const auto pDrive = pThis->getDrive(info.m_driveKey);
 			const auto& replicators = pDrive->Replicators;
 			auto it = replicators.find(opinion.m_replicatorKey);
 			if (it == replicators.end()) {
