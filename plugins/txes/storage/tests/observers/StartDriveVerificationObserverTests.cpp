@@ -15,6 +15,8 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS StartDriveVerificationObserverTests
 
+    DEFINE_COMMON_OBSERVER_TESTS(StartDriveVerification, nullptr)
+
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::BcDriveCacheFactory>;
 		using Notification = model::BlockNotification<1>;
@@ -76,19 +78,19 @@ namespace catapult { namespace observers {
 				Timestamp lastBlockTime(i);
 				Timestamp notificationTimestamp(lastBlockTime + Timestamp(15 * 1000));
 				Notification notification(
-						test::GenerateRandomByteArray<Key>(),
-						test::GenerateRandomByteArray<Key>(),
-						notificationTimestamp,
-						test::GenerateRandomValue<Difficulty>(),
-						0,
-						0);
-				mocks::MockStorageState storageState;
-				storageState.setLastBlockElementSupplier([lastBlockTime] {
+					test::GenerateRandomByteArray<Key>(),
+					test::GenerateRandomByteArray<Key>(),
+					notificationTimestamp,
+					test::GenerateRandomValue<Difficulty>(),
+					0,
+					0);
+				auto pStorageState = std::make_shared<mocks::MockStorageState>();
+				pStorageState->setLastBlockElementSupplier([lastBlockTime] {
 					model::Block block;
 					block.Timestamp = lastBlockTime;
 					return std::make_shared<model::BlockElement>(block);
 				});
-				auto pObserver = CreateStartDriveVerificationObserver(storageState);
+				auto pObserver = CreateStartDriveVerificationObserver(pStorageState);
 				test::ObserveNotification(*pObserver, notification, context);
 				lastBlockTime = notificationTimestamp;
 			}
@@ -104,18 +106,15 @@ namespace catapult { namespace observers {
 							std::max(expectedEntry.replicators().size() / (pluginConfig.ShardSize / 2), 1ul);
 					ASSERT_EQ(expectedShardsNumber, actualEntry.verification()->Shards.size());
 					if (expectedShardsNumber == 1) {
-						ASSERT_EQ(
-								expectedEntry.replicators().size(), actualEntry.verification()->Shards.front().size());
+						ASSERT_EQ(expectedEntry.replicators().size(), actualEntry.verification()->Shards.front().size());
 					} else {
 						auto expectedSmallShardsSize = expectedEntry.replicators().size() / expectedShardsNumber;
 						auto expectedLargeShardsSize = expectedSmallShardsSize + 1;
 						auto expectedLargeShardsNumber = expectedEntry.replicators().size() % expectedShardsNumber;
-						for (auto i = 0; i < expectedLargeShardsNumber; i++) {
+						for (auto i = 0; i < expectedLargeShardsNumber; i++)
 							ASSERT_EQ(expectedLargeShardsSize, actualEntry.verification()->Shards[i].size());
-						}
-						for (auto i = expectedLargeShardsNumber; i < expectedShardsNumber; i++) {
+						for (auto i = expectedLargeShardsNumber; i < expectedShardsNumber; i++)
 							ASSERT_EQ(expectedSmallShardsSize, actualEntry.verification()->Shards[i].size());
-						}
 					}
 				}
 			}
@@ -129,12 +128,10 @@ namespace catapult { namespace observers {
 		state::BcDriveEntry initialEntry(key);
 		initialEntry.setUsedSizeBytes(utils::FileSize::FromGigabytes(11).bytes());
 		initialEntry.setRootHash(test::GenerateRandomByteArray<Hash256>());
-		for (int i = 0; i < 123; i++) {
+		for (int i = 0; i < 123; i++)
 			initialEntry.replicators().insert(test::GenerateRandomByteArray<Key>());
-		}
-		for (const auto& replicator : initialEntry.replicators()) {
+		for (const auto& replicator : initialEntry.replicators())
 			initialEntry.confirmedStorageInfos()[replicator] = { Timestamp(0), Timestamp(0) };
-		}
 
 		auto expectedBcDriveEntry = initialEntry;
 		expectedBcDriveEntry.verification() = state::Verification();

@@ -8,286 +8,53 @@
 #include "src/cache/ReplicatorCache.h"
 #include "src/cache/BcDriveCache.h"
 #include "src/cache/DownloadChannelCache.h"
+#include "src/utils/StorageUtils.h"
 
 namespace catapult { namespace state {
 
-    namespace {
-        Drive GetDrive(const Key& driveKey, const cache::BcDriveCacheView& driveCacheView) {
-            auto driveIter = driveCacheView.find(driveKey);
-            auto driveEntry = driveIter.get();
-
-            std::vector<DataModification> dataModifications;
-            const auto& activeDataModifications = driveEntry.activeDataModifications();
-            dataModifications.reserve(activeDataModifications.size());
-            for (const auto& modification: activeDataModifications)
-                dataModifications.emplace_back(DataModification{
-					modification.Id,
-					modification.Owner,
-					driveKey,
-					modification.DownloadDataCdi,
-					modification.ExpectedUploadSizeMegabytes,
-					modification.ActualUploadSizeMegabytes,
-					modification.FolderName,
-					modification.ReadyForApproval,
-					modification.IsStream });
-
-			return Drive{
-				driveEntry.key(),
-				driveEntry.owner(),
-				driveEntry.rootHash(),
-				driveEntry.size(),
-				driveEntry.replicators(),
-				dataModifications
-            };
-        }
-
-		std::optional<DriveVerification> GetActiveVerification(const Key& driveKey, const cache::BcDriveCacheView& driveCacheView, const Timestamp& blockTimestamp) {
-			auto driveIter = driveCacheView.find(driveKey);
-			const auto& driveEntry = driveIter.get();
-
-			if (driveEntry.verification()) {
-
-				const auto& verification = *driveEntry.verification();
-				return DriveVerification{driveKey,
-				    verification.Duration,
-					verification.expired(blockTimestamp),
-					verification.VerificationTrigger,
-				   	driveEntry.lastModificationId(),
-					verification.Shards};
-			}
-
-			return {};
-		}
-    }
-
-    Height StorageStateImpl::getChainHeight() {
-    	return m_pCache->height();
-    }
-
-    bool StorageStateImpl::isReplicatorRegistered(const Key& key) {
+    bool StorageStateImpl::isReplicatorRegistered() {
 		auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-		return pReplicatorCacheView->contains(key);
+		return pReplicatorCacheView->contains(m_replicatorKey);
     }
 
-    bool StorageStateImpl::driveExists(const Key& driveKey) {
-        auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-        return pDriveCacheView->contains(driveKey);
+	std::shared_ptr<Drive> StorageStateImpl::getDrive(const Key& driveKey, const Timestamp& timestamp) {
+		auto height = m_pCache->height();
+		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(height);
+		auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(height);
+		auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(height);
+        return utils::GetDrive(
+			driveKey,
+			m_replicatorKey,
+			timestamp,
+			*pDriveCacheView,
+			*pReplicatorCacheView,
+			*pDownloadChannelCacheView);
     }
 
-    Drive StorageStateImpl::getDrive(const Key& driveKey) {
-        return GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
-    }
+    std::vector<std::shared_ptr<Drive>> StorageStateImpl::getDrives(const Timestamp& timestamp) {
+		auto height = m_pCache->height();
+		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(height);
+		auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(height);
+		auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(height);
 
-    bool StorageStateImpl::isReplicatorAssignedToDrive(const Key& replicatorKey, const Key& driveKey) {
-		auto m_pReplicatorCache = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-		auto replicatorIter = m_pReplicatorCache->find(replicatorKey);
-		const auto* replicatorEntry = replicatorIter.tryGet();
-		if (!replicatorEntry) {
-			return false;
-		}
-		const auto& drives = replicatorEntry->drives();
-		return drives.find(driveKey) != drives.end();
-    }
-
-    bool StorageStateImpl::isReplicatorAssignedToChannel(const Key& replicatorKey, const Hash256& channelId) {
-    	auto m_pReplicatorCache = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-    	auto replicatorIter = m_pReplicatorCache->find(replicatorKey);
-    	const auto* replicatorEntry = replicatorIter.tryGet();
-    	if (!replicatorEntry) {
-    		return false;
-    	}
-    	const auto& downloadChannels = replicatorEntry->downloadChannels();
-    	return downloadChannels.find(channelId) != downloadChannels.end();
-    }
-
-    std::vector<Key> StorageStateImpl::getReplicatorDriveKeys(const Key& replicatorKey) {
-    	auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-
-    	auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
-    	const auto& replicatorEntry = replicatorIter.get();
-
-    	std::vector<Key> drives;
-    	drives.reserve(replicatorEntry.drives().size());
-    	for (const auto& [key, _]: replicatorEntry.drives())
-    		drives.emplace_back(key);
-
-    	return drives;
-	}
-
-    std::vector<Drive> StorageStateImpl::getReplicatorDrives(const Key& replicatorKey) {
-        auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-        auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-
-        auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
+        auto replicatorIter = pReplicatorCacheView->find(m_replicatorKey);
 		const auto& replicatorEntry = replicatorIter.get();
 
-        std::vector<Drive> drives;
+        std::vector<std::shared_ptr<Drive>> drives;
         drives.reserve(replicatorEntry.drives().size());
-        for (const auto& pair: replicatorEntry.drives())
-            drives.emplace_back(GetDrive(pair.first, *pDriveCacheView));
+        for (const auto& [driveKey, _]: replicatorEntry.drives()) {
+			auto pDrive = utils::GetDrive(
+				driveKey,
+				m_replicatorKey,
+				timestamp,
+				*pDriveCacheView,
+				*pReplicatorCacheView,
+				*pDownloadChannelCacheView);
+			if (!pDrive)
+				CATAPULT_THROW_RUNTIME_ERROR_1("drive not found", driveKey)
+			drives.emplace_back(pDrive);
+		}
 
         return drives;
     }
-
-    std::vector<Hash256> StorageStateImpl::getDriveChannels(const Key& driveKey) {
-    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-    	auto driveIter = pDriveCacheView->find(driveKey);
-    	const auto& driveEntry = driveIter.get();
-
-    	std::vector<Hash256> downloadChannels(driveEntry.downloadShards().begin(), driveEntry.downloadShards().end());
-		return downloadChannels;
-	}
-	std::set<Hash256> StorageStateImpl::getReplicatorChannelIds(const Key& replicatorKey) {
-    	auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-    	auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
-		const auto& replicatorEntry = replicatorIter.get();
-
-		return replicatorEntry.downloadChannels();
-	}
-
-	std::vector<Key> StorageStateImpl::getDriveReplicators(const Key& driveKey) {
-        auto drive = GetDrive(driveKey, *m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height()));
-        return {drive.Replicators.begin(), drive.Replicators.end()};
-    }
-
-    std::vector<Key> StorageStateImpl::getDonatorShard(const Key& driveKey, const Key& replicatorKey) {
-    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-    	auto driveIter = pDriveCacheView->find(driveKey);
-    	const auto& driveEntry = driveIter.get();
-    	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
-    	std::vector<Key> keys;
-		for (const auto& [key, _]: shard.ActualShardMembers) {
-			keys.push_back(key);
-		}
-		return keys;
-	}
-
-	ModificationShard StorageStateImpl::getDonatorShardExtended(const Key& driveKey, const Key& replicatorKey) {
-    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-    	auto driveIter = pDriveCacheView->find(driveKey);
-    	const auto& driveEntry = driveIter.get();
-    	const auto& shard = driveEntry.dataModificationShards().at(replicatorKey);
-
-    	return {shard.ActualShardMembers, shard.FormerShardMembers, shard.OwnerUpload };
-    }
-
-	std::vector<Key> StorageStateImpl::getRecipientShard(const Key& driveKey, const Key& replicatorKey) {
-		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-		auto driveIter = pDriveCacheView->find(driveKey);
-		const auto& driveEntry = driveIter.get();
-
-		std::vector<Key> donatorShard;
-
-		for (const auto& [key, shard]: driveEntry.dataModificationShards()){
-			const auto& actualShard = shard.ActualShardMembers;
-			if (actualShard.find(replicatorKey) != actualShard.end())
-			{
-				donatorShard.push_back(key);
-			}
-		}
-
-		return donatorShard;
-	}
-
-	std::unique_ptr<ApprovedDataModification> StorageStateImpl::getLastApprovedDataModification(const Key& driveKey) {
-        auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-        auto driveIter = pDriveCacheView->find(driveKey);
-		const auto& driveEntry = driveIter.get();
-
-		if (driveEntry.ownerManagement() == OwnerManagement::PERMANENTLY_FORBIDDEN) {
-			return {};
-		}
-
-        auto completedModificationsIter = driveEntry.completedDataModifications().rbegin();
-        while (completedModificationsIter != driveEntry.completedDataModifications().rend()) {
-            if (completedModificationsIter->ApprovalState == state::DataModificationApprovalState::Approved)
-                break;
-
-            ++completedModificationsIter;
-        }
-
-        if (completedModificationsIter == driveEntry.completedDataModifications().rend())
-            return nullptr;
-
-        std::vector<Key> signers;
-        for (const auto& state : driveEntry.confirmedStates()) {
-            if (state.second == completedModificationsIter->Id)
-                signers.emplace_back(state.first);
-        }
-
-        return std::make_unique<ApprovedDataModification>(ApprovedDataModification{
-			completedModificationsIter->Id,
-			driveEntry.owner(),
-			driveEntry.key(),
-			completedModificationsIter->DownloadDataCdi,
-			completedModificationsIter->ExpectedUploadSizeMegabytes,
-			completedModificationsIter->ActualUploadSizeMegabytes,
-			completedModificationsIter->FolderName,
-			completedModificationsIter->ReadyForApproval,
-			completedModificationsIter->IsStream,
-			signers,
-		    driveEntry.usedSizeBytes()});
-    }
-
-    std::vector<CompletedModification> StorageStateImpl::getCompletedModifications(const Key& driveKey) {
-    	auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-    	auto driveIter = pDriveCacheView->find(driveKey);
-    	const auto& driveEntry = driveIter.get();
-
-		std::vector<CompletedModification> completedModifications;
-
-    	for( const auto& modification: driveEntry.completedDataModifications() ) {
-			CompletedModification completedModification;
-			completedModification.ModificationId = modification.Id;
-			if ( modification.ApprovalState == DataModificationApprovalState::Cancelled ) {
-				completedModification.Status = CompletedModification::CompletionStatus::CANCELLED;
-			}
-			else {
-				completedModification.Status = CompletedModification::CompletionStatus::APPROVED;
-			}
-			completedModifications.push_back(completedModification);
-		}
-		return completedModifications;
-    }
-
-    uint64_t StorageStateImpl::getDownloadWorkBytes(const Key& replicatorKey, const Key& driveKey) {
-        auto pReplicatorCacheView = m_pCache->sub<cache::ReplicatorCache>().createView(m_pCache->height());
-        auto replicatorIter = pReplicatorCacheView->find(replicatorKey);
-        const auto& replicatorEntry = replicatorIter.get();
-
-        return replicatorEntry.drives().find(driveKey)->second.LastCompletedCumulativeDownloadWorkBytes;
-    }
-
-    bool StorageStateImpl::downloadChannelExists(const Hash256& id) {
-        auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
-        return pDownloadChannelCacheView->contains(id);
-    }
-
-	std::unique_ptr<DownloadChannel> StorageStateImpl::getDownloadChannel(const Key& replicatorKey, const Hash256& id) {
-        auto pDownloadChannelCacheView = m_pCache->sub<cache::DownloadChannelCache>().createView(m_pCache->height());
-        auto channelIter = pDownloadChannelCacheView->find(id);
-        const auto& channelEntry = channelIter.get();
-
-        const auto& replicators = channelEntry.shardReplicators();
-        if (replicators.find(replicatorKey) == replicators.end())
-			return nullptr;
-
-        auto consumers = channelEntry.listOfPublicKeys();
-        consumers.emplace_back(channelEntry.consumer());
-
-        return std::make_unique<DownloadChannel>(DownloadChannel{
-			channelEntry.id(),
-			channelEntry.downloadSize(),
-			consumers,
-			{replicators.begin(), replicators.end()},
-			channelEntry.drive(),
-			channelEntry.downloadApprovalInitiationEvent(),
-		});
-    }
-
-	std::optional<DriveVerification> StorageStateImpl::getActiveVerification(const Key& driveKey, const Timestamp& blockTimestamp) {
-		auto pDriveCacheView = m_pCache->sub<cache::BcDriveCache>().createView(m_pCache->height());
-		return GetActiveVerification(driveKey, *pDriveCacheView, blockTimestamp);
-	}
 }}

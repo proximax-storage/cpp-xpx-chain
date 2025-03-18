@@ -147,7 +147,8 @@ namespace catapult { namespace local {
 	private:
 		Hash256 execute(const model::BlockElement& blockElement) const {
 			auto cacheDelta = m_stateRef.Cache.createDelta();
-			auto observerState = observers::ObserverState(cacheDelta, m_stateRef.State);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			auto observerState = observers::ObserverState(cacheDelta, m_stateRef.State, notifications);
 
 			auto readOnlyCache = cacheDelta.toReadOnly();
 			auto resolverContext = m_pluginManager.createResolverContext(readOnlyCache);

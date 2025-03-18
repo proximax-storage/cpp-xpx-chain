@@ -116,7 +116,8 @@ namespace catapult { namespace chain {
 		auto pBlock = test::GenerateBlockWithTransactions(0, Height(10));
 
 		state::CatapultState catapultState;
-		observers::ObserverState state(delta, catapultState);
+		std::vector<std::unique_ptr<model::Notification>> notifications;
+		observers::ObserverState state(delta, catapultState, notifications);
 
 		// Act:
 		TTraits::ProcessBlock(*pBlock, observer, state);
@@ -136,7 +137,8 @@ namespace catapult { namespace chain {
 		auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
 
 		state::CatapultState catapultState;
-		observers::ObserverState state(delta, catapultState);
+		std::vector<std::unique_ptr<model::Notification>> notifications;
+		observers::ObserverState state(delta, catapultState, notifications);
 
 		// Act:
 		TTraits::ProcessBlock(*pBlock, observer, state);
@@ -156,7 +158,8 @@ namespace catapult { namespace chain {
 		auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
 
 		state::CatapultState catapultState;
-		observers::ObserverState state(delta, catapultState);
+		std::vector<std::unique_ptr<model::Notification>> notifications;
+		observers::ObserverState state(delta, catapultState, notifications);
 
 		// Act:
 		TTraits::ProcessBlock(*pBlock, observer, state);
@@ -176,7 +179,8 @@ namespace catapult { namespace chain {
 		auto pBlock2 = test::GenerateBlockWithTransactions(3, Height(25));
 
 		state::CatapultState catapultState;
-		observers::ObserverState state(delta, catapultState);
+		std::vector<std::unique_ptr<model::Notification>> notifications;
+		observers::ObserverState state(delta, catapultState, notifications);
 
 		// Act:
 		TTraits::ProcessBlock(*pBlock1, observer, state);
@@ -203,7 +207,8 @@ namespace catapult { namespace chain {
 		{
 			auto delta = cache.createDelta();
 			state::CatapultState catapultState;
-			observers::ObserverState state(delta, catapultState);
+			std::vector<std::unique_ptr<model::Notification>> notifications;
+			observers::ObserverState state(delta, catapultState, notifications);
 
 			// - add three accounts and queue a removal
 			Address address{ { 2 } };

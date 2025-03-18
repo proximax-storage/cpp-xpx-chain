@@ -7,7 +7,6 @@
 #include "Observers.h"
 #include "src/utils/Queue.h"
 #include "src/utils/AVLTree.h"
-#include "src/utils/StorageUtils.h"
 #include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult { namespace observers {
@@ -15,9 +14,11 @@ namespace catapult { namespace observers {
 	using Notification = model::DriveClosureNotification<1>;
 	using BigUint = boost::multiprecision::uint128_t;
 
-	DECLARE_OBSERVER(DriveClosure, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider,
-	 											 const std::vector<std::unique_ptr<StorageUpdatesListener>>& updatesListeners) {
-		return MAKE_OBSERVER(DriveClosure, Notification, ([&](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(DriveClosure, Notification)(
+			const std::unique_ptr<LiquidityProviderExchangeObserver>& liquidityProvider,
+			const std::vector<std::unique_ptr<StorageUpdatesListener>>& updatesListeners,
+			const std::shared_ptr<state::StorageState>& pStorageState) {
+		return MAKE_OBSERVER(DriveClosure, Notification, ([&liquidityProvider, &updatesListeners, pStorageState](const Notification& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
 				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DriveClosure)");
 
@@ -39,7 +40,7 @@ namespace catapult { namespace observers {
 			auto& driveOwnerState = driveOwnerIter.get();
 
 			// The value will be used after removing drive entry. That's why the copy is needed
-			const auto replicators = driveEntry.replicators();
+			const auto& replicators = driveEntry.replicators();
 
 			// Removing replicators from tree before must be performed before refunding
 			auto replicatorKeyExtractor = [&storageMosaicId, &accountStateCache](const Key& key) {
@@ -57,9 +58,8 @@ namespace catapult { namespace observers {
 						replicatorCache.find(key).get().replicatorsSetNode() = node;
 					});
 
-			for (const auto& replicatorKey : replicators) {
+			for (const auto& replicatorKey : replicators)
 				replicatorTreeAdapter.remove(replicatorKeyExtractor(replicatorKey));
-			}
 
 			RefundDepositsOnDriveClosure(driveEntry.key(), replicators, context);
 
@@ -190,6 +190,8 @@ namespace catapult { namespace observers {
 			// Simulate publishing of finish download for all download channels
 			auto& downloadCache = context.Cache.sub<cache::DownloadChannelCache>();
 			utils::QueueAdapter<cache::DownloadChannelCache> downloadQueueAdapter(queueCache, state::DownloadChannelPaymentQueueKey, downloadCache);
+			std::vector<std::shared_ptr<state::DownloadChannel>> downloadChannels;
+			downloadChannels.reserve(driveEntry.downloadShards().size());
 			for (const auto& key: driveEntry.downloadShards()) {
 				auto downloadIter = downloadCache.find(key);
 				auto& downloadEntry = downloadIter.get();
@@ -197,12 +199,18 @@ namespace catapult { namespace observers {
 					downloadEntry.setFinishPublished(true);
 					downloadQueueAdapter.remove(key.array());
 					downloadEntry.downloadApprovalInitiationEvent() = notification.TransactionHash;
+
+					auto pChannel = utils::GetDownloadChannel(pStorageState->replicatorKey(), downloadEntry);
+					if (pChannel)
+						downloadChannels.push_back(std::move(pChannel));
 				}
 			}
 
-			for (const auto& updateListener: updatesListeners) {
+			if (!downloadChannels.empty())
+				context.Notifications.push_back(std::make_unique<model::DownloadRewardServiceNotification<1>>(std::move(downloadChannels)));
+
+			for (const auto& updateListener: updatesListeners)
 				updateListener->onDriveClosed(context, notification.DriveKey);
-			}
 
 			// Removing the drive from caches
 			for (const auto& replicatorKey : replicators) {
@@ -216,7 +224,9 @@ namespace catapult { namespace observers {
 			// Assigning drive's former replicators to queued drives
 			std::seed_seq seed(notification.TransactionHash.begin(), notification.TransactionHash.end());
 			std::mt19937 rng(seed);
-			utils::AssignReplicatorsToQueuedDrives(replicators, context, rng);
+			auto updatedDrives = utils::AssignReplicatorsToQueuedDrives(pStorageState->replicatorKey(), replicators, context, rng);
+
+			context.Notifications.push_back(std::make_unique<model::DrivesUpdateServiceNotification<1>>(std::move(updatedDrives), std::vector<Key>{ notification.DriveKey }, context.Timestamp));
 		}))
 	}
 }}

@@ -8,7 +8,9 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DataModificationApprovalDownloadWork, model::DataModificationApprovalDownloadWorkNotification<1>, [&liquidityProvider](const model::DataModificationApprovalDownloadWorkNotification<1>& notification, ObserverContext& context) {
+	using Notification = model::DataModificationApprovalDownloadWorkNotification<1>;
+
+	DEFINE_OBSERVER_WITH_LIQUIDITY_PROVIDER(DataModificationApprovalDownloadWork, Notification, [&liquidityProvider](const Notification& notification, ObserverContext& context) {
 		if (NotifyMode::Rollback == context.Mode)
 			CATAPULT_THROW_RUNTIME_ERROR(
 					"Invalid observer mode ROLLBACK (DataModificationApprovalDownloadWork)");

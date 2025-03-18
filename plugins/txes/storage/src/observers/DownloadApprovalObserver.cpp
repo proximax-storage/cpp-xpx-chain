@@ -8,13 +8,21 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(DownloadApproval, model::DownloadApprovalNotification<1>, [](const model::DownloadApprovalNotification<1>& notification, ObserverContext& context) {
-		if (NotifyMode::Rollback == context.Mode)
-			CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadApproval)");
+	using Notification = model::DownloadApprovalNotification<1>;
 
-	  	auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
-	  	auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
-	  	auto& downloadChannelEntry = downloadChannelIter.get();
-		downloadChannelEntry.downloadApprovalInitiationEvent().reset();
-	});
+	DECLARE_OBSERVER(DownloadApproval, Notification)(const std::shared_ptr<state::StorageState>& pStorageState) {
+		return MAKE_OBSERVER(DownloadApproval, Notification, ([pStorageState](const Notification& notification, ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (DownloadApproval)");
+
+			auto& downloadChannelCache = context.Cache.sub<cache::DownloadChannelCache>();
+			auto downloadChannelIter = downloadChannelCache.find(notification.DownloadChannelId);
+			auto& downloadChannelEntry = downloadChannelIter.get();
+			auto pChannel = utils::GetDownloadChannel(pStorageState->replicatorKey(), downloadChannelEntry);
+			downloadChannelEntry.downloadApprovalInitiationEvent().reset();
+
+			if (pChannel)
+				context.Notifications.push_back(std::make_unique<model::DownloadApprovalServiceNotification<1>>(std::move(pChannel), false));
+		}))
+	}
 }}

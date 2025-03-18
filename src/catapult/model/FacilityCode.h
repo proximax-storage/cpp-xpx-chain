@@ -103,5 +103,7 @@ namespace catapult { namespace model {
 		DriveContract = 0x6F,
 		/// Boot key / replicator facility code.
 		BootKeyReplicator = 0x70,
+		/// Replicator service facility code.
+		ReplicatorService = 0x71,
 	};
 }}

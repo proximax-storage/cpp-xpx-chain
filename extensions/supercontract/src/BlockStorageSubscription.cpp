@@ -39,9 +39,7 @@ namespace catapult { namespace contract {
 				auto handlerContext = notification_handlers::HandlerContext(
 					config,
 					blockElement.Block.Height,
-					blockElement.Block.Timestamp,
-					m_pluginManager.createResolverContext(readCache),
-					readCache
+					blockElement.Block.Timestamp
 				);
 				notification_handlers::HandlerNotificationSubscriber handleSubscriber(*m_pHandler, handlerContext);
 				for (const auto& entity : ExtractEntityInfos(blockElement)) {

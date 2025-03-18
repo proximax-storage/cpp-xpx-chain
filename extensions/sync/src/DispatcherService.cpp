@@ -41,6 +41,7 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NodeContainer.h"
+#include "catapult/notification_handlers/HandlerContext.h"
 #include "catapult/subscribers/StateChangeSubscriber.h"
 #include "catapult/subscribers/TransactionStatusSubscriber.h"
 #include "catapult/thread/MultiServicePool.h"
@@ -180,10 +181,18 @@ namespace catapult { namespace sync {
 			syncHandlers.PreStateWritten = [](const auto&, const auto&, auto) {};
 			syncHandlers.TransactionsChange = state.hooks().transactionsChangeHandler();
 			syncHandlers.CommitStep = CreateCommitStepHandler(dataDirectory);
-			syncHandlers.PostBlockCommit = [&](const std::vector<model::BlockElement>& elements) {
-				for (const auto& element : elements) {
+			syncHandlers.PostBlockCommit = [&state](const std::vector<model::BlockElement>& elements) {
+				for (const auto& element : elements)
 					state.postBlockCommitSubscriber().notifyBlock(element);
-				}
+			};
+			syncHandlers.PostBlockCommitNotifications = [&state](const model::BlockElement& blockElement, const std::vector<std::unique_ptr<model::Notification>>& notifications) {
+				const auto& notificationSubscriber = state.notificationSubscriber();
+				auto handlerContext = notification_handlers::HandlerContext(
+						state.config(blockElement.Block.Height),
+						blockElement.Block.Height,
+						blockElement.Block.Timestamp);
+				for (const auto& pNotification : notifications)
+					notificationSubscriber.handle(*pNotification, handlerContext);
 			};
 
 			if (state.config().Node.ShouldUseCacheDatabaseStorage)

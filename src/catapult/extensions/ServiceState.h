@@ -26,6 +26,7 @@
 #include "catapult/net/PacketIoPickerContainer.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/thread/Task.h"
+#include "catapult/notification_handlers/NotificationHandlerTypes.h"
 
 namespace catapult {
 	namespace cache {
@@ -65,6 +66,7 @@ namespace catapult { namespace extensions {
 				subscribers::StateChangeSubscriber& stateChangeSubscriber,
 				subscribers::NodeSubscriber& nodeSubscriber,
 				io::BlockChangeSubscriber& postBlockCommitSubscriber,
+				const notification_handlers::AggregateNotificationHandler& notificationSubscriber,
 				const std::vector<utils::DiagnosticCounter>& counters,
 				const plugins::PluginManager& pluginManager,
 				thread::MultiServicePool& pool)
@@ -79,6 +81,7 @@ namespace catapult { namespace extensions {
 				, m_stateChangeSubscriber(stateChangeSubscriber)
 				, m_nodeSubscriber(nodeSubscriber)
 				, m_postBlockCommitSubscriber(postBlockCommitSubscriber)
+				, m_notificationSubscriber(notificationSubscriber)
 				, m_counters(counters)
 				, m_pluginManager(pluginManager)
 				, m_pool(pool)
@@ -152,6 +155,11 @@ namespace catapult { namespace extensions {
 			return m_postBlockCommitSubscriber;
 		}
 
+		/// Gets the notification subscriber.
+		const auto& notificationSubscriber() const {
+			return m_notificationSubscriber;
+		}
+
 		/// Gets the (basic) counters.
 		/// \note These counters are node counters and do not include counters registered via ServiceLocator.
 		const auto& counters() const {
@@ -194,7 +202,7 @@ namespace catapult { namespace extensions {
 		}
 
 		/// Gets the network identifier.
-		auto& networkIdentifier() {
+		auto networkIdentifier() const {
 			return config().Immutable.NetworkIdentifier;
 		}
 
@@ -220,6 +228,7 @@ namespace catapult { namespace extensions {
 		subscribers::StateChangeSubscriber& m_stateChangeSubscriber;
 		subscribers::NodeSubscriber& m_nodeSubscriber;
 		io::BlockChangeSubscriber& m_postBlockCommitSubscriber;
+		const notification_handlers::AggregateNotificationHandler& m_notificationSubscriber;
 
 		const std::vector<utils::DiagnosticCounter>& m_counters;
 		const plugins::PluginManager& m_pluginManager;
