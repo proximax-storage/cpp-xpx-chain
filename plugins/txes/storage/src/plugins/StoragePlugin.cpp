@@ -235,7 +235,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateServiceUnitTransferValidator())
 				.add(validators::CreateOwnerManagementProhibitionValidator())
 				.add(validators::CreateReplicatorNodeBootKeyValidator())
-				.add(validators::CreateReplicatorsCleanupValidator());
+				.add(validators::CreateReplicatorsCleanupV1Validator())
+				.add(validators::CreateReplicatorsCleanupV2Validator());
 		});
 
 		const auto& storageUpdatesListeners = manager.storageUpdatesListeners();
@@ -269,7 +270,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreatePeriodicDownloadChannelPaymentObserver(pStorageState))
 				.add(observers::CreateOwnerManagementProhibitionObserver())
 				.add(observers::CreateReplicatorNodeBootKeyObserver())
-				.add(observers::CreateReplicatorsCleanupObserver(liquidityProviderObserver));
+				.add(observers::CreateReplicatorsCleanupV1Observer(liquidityProviderObserver))
+				.add(observers::CreateReplicatorsCleanupV2Observer());
 		});
 	}
 }}

@@ -38,7 +38,7 @@ namespace catapult { namespace net {
 				const ionet::ServerPacketHandlers& handlers,
 				const ionet::ReaderIdentity& identity,
 				ChainedReaderCompletionCode& completionCode) {
-			return CreateChainedSocketReader(pSocket, handlers, identity, [&completionCode](auto code) {
+			return CreateChainedSocketReader(pSocket, pSocket->buffered(), handlers, identity, [&completionCode](auto code) {
 				completionCode = code;
 			});
 		}

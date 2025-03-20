@@ -94,8 +94,19 @@ namespace catapult { namespace model {
 
 	DEFINE_NOTIFICATION_TYPE(All, Storage, ReplicatorsCleanup_v1, 0x001D);
 
+	/// Defines a download reward notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Reward_v1, 0x001E);
+
+	/// Defines a download channel remove notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Download_Channel_Remove_v1, 0x001F);
+
 	/// Defines a replicator onboarding notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x001E);
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Replicator_Onboarding_v2, 0x0020);
+
+	/// Defines a drives update notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Storage, Drives_Update_v1, 0x0021);
+
+	DEFINE_NOTIFICATION_TYPE(All, Storage, ReplicatorsCleanup_v2, 0x0022);
 
 	struct DownloadPayment : public UnresolvedAmountData {
 	public:
@@ -1206,18 +1217,11 @@ namespace catapult { namespace model {
 		Key DriveKey;
 	};
 
-	template<VersionType version>
-	struct ReplicatorsCleanupNotification;
-
-	template<>
-	struct ReplicatorsCleanupNotification<1> : public Notification {
+	template<typename TDerivedNotification>
+	struct BasicReplicatorsCleanupNotification : public Notification {
 	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Storage_ReplicatorsCleanup_v1_Notification;
-
-	public:
-		explicit ReplicatorsCleanupNotification(uint16_t replicatorCount, const Key* pReplicatorKeys)
-			: Notification(Notification_Type, sizeof(ReplicatorsCleanupNotification<1>))
+		BasicReplicatorsCleanupNotification(uint16_t replicatorCount, const Key* pReplicatorKeys)
+			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 			, ReplicatorCount(replicatorCount)
 			, ReplicatorKeysPtr(pReplicatorKeys)
 		{}
@@ -1228,5 +1232,32 @@ namespace catapult { namespace model {
 
 		/// Replicator keys.
 		const Key* ReplicatorKeysPtr;
+	};
+
+	template<VersionType version>
+	struct ReplicatorsCleanupNotification;
+
+	template<>
+	struct ReplicatorsCleanupNotification<1> : public BasicReplicatorsCleanupNotification<ReplicatorsCleanupNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_ReplicatorsCleanup_v1_Notification;
+
+	public:
+		explicit ReplicatorsCleanupNotification(uint16_t replicatorCount, const Key* pReplicatorKeys)
+			: BasicReplicatorsCleanupNotification(replicatorCount, pReplicatorKeys)
+		{}
+	};
+
+	template<>
+	struct ReplicatorsCleanupNotification<2> : public BasicReplicatorsCleanupNotification<ReplicatorsCleanupNotification<2>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Storage_ReplicatorsCleanup_v2_Notification;
+
+	public:
+		explicit ReplicatorsCleanupNotification(uint16_t replicatorCount, const Key* pReplicatorKeys)
+			: BasicReplicatorsCleanupNotification(replicatorCount, pReplicatorKeys)
+		{}
 	};
 }}

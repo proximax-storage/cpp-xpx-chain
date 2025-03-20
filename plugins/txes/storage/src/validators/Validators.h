@@ -177,5 +177,9 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to replicators cleanup notifications and validates that:
 	/// - replicators are registered
 	/// - replicators are not bound with boot keys
-	DECLARE_STATEFUL_VALIDATOR(ReplicatorsCleanup, model::ReplicatorsCleanupNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorsCleanupV1, model::ReplicatorsCleanupNotification<1>)();
+
+	/// A validator implementation that applies to replicators cleanup notifications and validates that:
+	/// - replicators are registered
+	DECLARE_STATEFUL_VALIDATOR(ReplicatorsCleanupV2, model::ReplicatorsCleanupNotification<2>)();
 }}

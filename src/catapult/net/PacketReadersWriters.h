@@ -10,16 +10,14 @@
 #include "PacketIoPicker.h"
 #include "PeerConnectResult.h"
 #include "catapult/ionet/PacketHandlers.h"
+#include "catapult/ionet/SslPacketSocket.h"
+#include "catapult/ionet/PacketSocket.h"
 #include <memory>
 
 namespace catapult {
 	namespace crypto { class KeyPair; }
 	namespace extensions { class ServiceState; }
-	namespace ionet {
-		class Node;
-		class PacketSocket;
-		class SslPacketSocketInfo;
-	}
+	namespace ionet { class Node; }
 	namespace net { struct Packet; }
 	namespace thread { class IoThreadPool; }
 }
@@ -36,8 +34,11 @@ namespace catapult { namespace net {
 		/// Attempts to connect to \a node and calls \a callback on completion.
 		virtual void connect(const ionet::Node& node, const ConnectCallback& callback) = 0;
 
-		/// Accepts a connection represented by \a socketInfo and calls \a callback on completion.
+		/// Accepts a secure connection represented by \a socketInfo and calls \a callback on completion.
 		virtual void accept(const ionet::SslPacketSocketInfo& socketInfo, const ConnectCallback& callback) = 0;
+
+		/// Accepts an insecure connection represented by \a socketInfo and calls \a callback on completion.
+		virtual void accept(const ionet::AcceptedPacketSocketInfo& socketInfo, const ConnectCallback& callback) = 0;
 
 		/// Closes all active connections.
 		virtual void closeActiveConnections() = 0;
@@ -58,5 +59,6 @@ namespace catapult { namespace net {
 			const ionet::ServerPacketHandlers& handlers,
 			const crypto::KeyPair& keyPair,
 			const ConnectionSettings& settings,
-			extensions::ServiceState& state);
+			extensions::ServiceState& state,
+			bool secure);
 }}

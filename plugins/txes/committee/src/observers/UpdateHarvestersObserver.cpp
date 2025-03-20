@@ -233,7 +233,7 @@ namespace catapult { namespace observers {
 			auto committee = pCommitteeManager->committee();
 			CATAPULT_LOG(debug) << "block " << context.Height << ": committee round " << notification.Round;
 			auto accounts = pCommitteeManager->accounts();
-			auto blockProposerIter = committeeCache.find(committee.BlockProposer);
+			auto blockProposerIter = committeeCache.find(notification.BlockSigner);
 			auto& entry = blockProposerIter.get();
 			entry.setLastSigningBlockHeight(context.Height);
 			entry.setFeeInterest(notification.FeeInterest);

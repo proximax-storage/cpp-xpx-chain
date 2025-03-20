@@ -20,7 +20,7 @@ namespace catapult { namespace model {
 		using TransactionType = ReplicatorsCleanupTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_ReplicatorsCleanup, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_ReplicatorsCleanup, 2)
 
 	public:
 		/// The number of replicators to remove.

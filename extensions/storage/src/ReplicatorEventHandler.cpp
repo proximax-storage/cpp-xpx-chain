@@ -119,11 +119,9 @@ namespace catapult { namespace storage {
 			}
 
 			const auto& uploadLayout = info.m_opinions[0].m_uploadLayout;
-			for (int i = 0; i < uploadLayout.size() - 1; i++) {
-				if (Key(uploadLayout[i + 1].m_key) < Key(uploadLayout[i].m_key)) {
-					CATAPULT_LOG(error) << "received unsorted modification opinion";
-					return;
-				}
+			if (!std::is_sorted(uploadLayout.begin(), uploadLayout.end(), [](const auto& lhs, const auto& rhs) { return Key(lhs.m_key) < Key(rhs.m_key); })) {
+				CATAPULT_LOG(error) << "received unsorted modification opinion";
+				return;
 			}
 
 			const auto& opinion = info.m_opinions.at(0);
@@ -235,16 +233,8 @@ namespace catapult { namespace storage {
 				return;
 			}
 
-			bool sorted = true;
-
 			const auto& uploadLayout = info.m_opinions[0].m_downloadLayout;
-			for (int i = 0; i < uploadLayout.size() - 1 && sorted; i++) {
-				if (Key(uploadLayout[i + 1].m_key) < Key(uploadLayout[i].m_key)) {
-					sorted = false;
-				}
-			}
-
-			if (!sorted) {
+			if (!std::is_sorted(uploadLayout.begin(), uploadLayout.end(), [](const auto& lhs, const auto& rhs) { return Key(lhs.m_key) < Key(rhs.m_key); })) {
 				CATAPULT_LOG(error) << "received unsorted modification opinion";
 				return;
 			}

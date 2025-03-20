@@ -35,10 +35,14 @@ namespace catapult { namespace observers {
 				state::DriveVerificationsTree,
 				[](const Key& key) { return key; },
 				[&driveCache](const Key& key) -> state::AVLTreeNode {
-					return driveCache.find(key).get().verificationNode();
+					auto iter = driveCache.find(key);
+					const auto& driveEntry = iter.get();
+					return driveEntry.verificationNode();
 				},
 				[&driveCache](const Key& key, const state::AVLTreeNode& node) {
-					driveCache.find(key).get().verificationNode() = node;
+					auto iter = driveCache.find(key);
+					auto& driveEntry = iter.get();
+					driveEntry.verificationNode() = node;
 				});
 
 		auto totalDrives = treeAdapter.size();

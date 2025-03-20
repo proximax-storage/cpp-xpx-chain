@@ -35,8 +35,17 @@ namespace catapult { namespace chain {
 		/// Public key of the block proposer.
 		Key BlockProposer;
 
+		/// Queue of the block proposers.
+		std::vector<Key> BlockProposers;
+
 		/// Committee round (number of attempts to generate a block).
 		int64_t Round;
+
+		/// Committee round start time.
+		Timestamp RoundStart;
+
+	public:
+		bool validateBlockProposer(const Key& key) const;
 	};
 
 	/// Interface for committee manager.
@@ -59,7 +68,7 @@ namespace catapult { namespace chain {
 		virtual Committee committee() const = 0;
 
 		/// Returns mapping of DBRB process identifiers (boot keys) to ban periods.
-		virtual std::map<dbrb::ProcessId, BlockDuration> babPeriods() const {
+		virtual std::map<dbrb::ProcessId, BlockDuration> banPeriods() const {
 			return {};
 		}
 

@@ -7,10 +7,11 @@
 #include "PacketReadersWriters.h"
 #include "SslClientConnector.h"
 #include "SslServerConnector.h"
+#include "ClientConnector.h"
+#include "ServerConnector.h"
 #include "ChainedSocketReader.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/ionet/SslPacketSocket.h"
 #include "catapult/ionet/SocketReader.h"
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/utils/ModificationSafeIterableContainer.h"
@@ -18,15 +19,13 @@
 namespace catapult { namespace net {
 
 	namespace {
-		using SocketPointer = std::shared_ptr<ionet::SslPacketSocket>;
-		using WeakSocketPointer = std::weak_ptr<ionet::SslPacketSocket>;
-
 		enum class ConnectionType { Connected, Accepted };
 
+		template<typename TPacketSocket>
 		struct ReaderWriterState {
 			net::ConnectionType ConnectionType;
 			ionet::Node Node;
-			WeakSocketPointer pSocketWeak;
+			std::weak_ptr<TPacketSocket> pSocketWeak;
 			std::shared_ptr<ionet::PacketIo> pBufferedIo;
 			std::weak_ptr<ChainedSocketReader> pReader;
 		};
@@ -35,10 +34,11 @@ namespace catapult { namespace net {
 		// accept : insert -> remove
 		// connect: prepareConnect -> abortConnect
 		// connect: prepareConnect -> insert -> remove
+		template<typename TPacketSocket>
 		class WriterContainer {
 		private:
-			using ReaderWriterContainer = std::unordered_map<Key, ReaderWriterState, utils::ArrayHasher<Key>>;
-			using ChainedSocketReaderFactory = std::function<std::shared_ptr<ChainedSocketReader> (const SocketPointer&, const std::shared_ptr<ionet::PacketIo>&)>;
+			using ReaderWriterContainer = std::unordered_map<Key, ReaderWriterState<TPacketSocket>, utils::ArrayHasher<Key>>;
+			using ChainedSocketReaderFactory = std::function<std::shared_ptr<ChainedSocketReader> (const std::shared_ptr<TPacketSocket>&, const std::shared_ptr<ionet::PacketIo>&)>;
 
 		public:
 			size_t size() const {
@@ -63,7 +63,7 @@ namespace catapult { namespace net {
 				return peers;
 			}
 
-			bool pickOne(ReaderWriterState& state, const Key& identityKey) {
+			bool pickOne(ReaderWriterState<TPacketSocket>& state, const Key& identityKey) {
 				std::shared_lock guard(m_mutex);
 				auto iter = m_connectedWriters.find(identityKey);
 				if (iter != m_connectedWriters.end()) {
@@ -98,11 +98,11 @@ namespace catapult { namespace net {
 				m_connectingNodeIdentityKeys.erase(node.identityKey());
 			}
 
-			bool insert(net::ConnectionType connectionType, ionet::Node node, const SocketPointer& pSocket, const ChainedSocketReaderFactory& readerFactory) {
+			bool insert(net::ConnectionType connectionType, ionet::Node node, const std::shared_ptr<TPacketSocket>& pSocket, const ChainedSocketReaderFactory& readerFactory) {
 				std::unique_lock guard(m_mutex);
 
 				const auto& identityKey = node.identityKey();
-				ReaderWriterState* pState = nullptr;
+				ReaderWriterState<TPacketSocket>* pState = nullptr;
 				switch (connectionType) {
 					case ConnectionType::Connected: {
 						if (!m_connectedNodeIdentityKeys.emplace(identityKey).second) {
@@ -195,10 +195,10 @@ namespace catapult { namespace net {
 
 		public:
 			ErrorHandlingPacketIo(
-					const std::shared_ptr<ionet::PacketIo>& pPacketIo,
-					const ErrorCallback& errorCallback)
-					: m_pPacketIo(pPacketIo)
-					, m_errorCallback(errorCallback)
+					std::shared_ptr<ionet::PacketIo> pPacketIo,
+					ErrorCallback errorCallback)
+					: m_pPacketIo(std::move(pPacketIo))
+					, m_errorCallback(std::move(errorCallback))
 			{}
 
 		public:
@@ -232,20 +232,19 @@ namespace catapult { namespace net {
 			ErrorCallback m_errorCallback;
 		};
 
-		class DefaultPacketReadersWriters
-				: public PacketReadersWriters
-				, public std::enable_shared_from_this<DefaultPacketReadersWriters> {
+		template<typename TPacketSocket, typename TClientConnector, typename TServerConnector>
+		class BasePacketReadersWriters : public PacketReadersWriters {
+		private:
+			using SocketPointer = std::shared_ptr<TPacketSocket>;
+			using WeakSocketPointer = std::weak_ptr<TPacketSocket>;
+
 		public:
-			DefaultPacketReadersWriters(
-					const std::shared_ptr<thread::IoThreadPool>& pPool,
-					const ionet::ServerPacketHandlers& handlers,
-					const crypto::KeyPair& keyPair,
-					const ConnectionSettings& settings,
-					extensions::ServiceState& state)
+			BasePacketReadersWriters(
+				const std::shared_ptr<thread::IoThreadPool>& pPool,
+				const ionet::ServerPacketHandlers& handlers,
+				extensions::ServiceState& state)
 					: m_pPool(pPool)
 					, m_handlers(handlers)
-					, m_pClientConnector(CreateSslClientConnector(*m_pPool, keyPair, settings))
-					, m_pServerConnector(CreateSslServerConnector(*m_pPool, keyPair, settings))
 					, m_state(state)
 			{}
 
@@ -262,16 +261,15 @@ namespace catapult { namespace net {
 				return m_writers.peers();
 			}
 
-		public:
 			void write(const Key& identityKey, const ionet::PacketPayload& payload, const WriteCallback& callback) override {
-				ReaderWriterState state;
+				ReaderWriterState<TPacketSocket> state;
 				if (!m_writers.pickOne(state, identityKey)) {
 					CATAPULT_LOG(debug) << "no packet io available for sending " << payload.header() << " to " << identityKey;
 					callback(ionet::SocketOperationCode::Not_Connected);
 					return;
 				}
 
-				auto errorHandler = [pThis = shared_from_this(), pSocketWeak = state.pSocketWeak, node = state.Node, connectionType = state.ConnectionType]() {
+				auto errorHandler = [pThis = get_shared_from_this(), pSocketWeak = state.pSocketWeak, node = state.Node, connectionType = state.ConnectionType]() {
 					CATAPULT_LOG(warning) << "error handler triggered for " << node << " " << node.identityKey();
 					pThis->removeWriter(pSocketWeak, node.identityKey(), connectionType);
 				};
@@ -282,57 +280,29 @@ namespace catapult { namespace net {
 				pPacketIo->write(payload, callback);
 			}
 
-		public:
-			void connect(const ionet::Node& node, const ConnectCallback& callback) override {
-				if (!m_writers.prepareConnect(node))
-					return callback(PeerConnectCode::Already_Connected);
-
-				m_pServerConnector->connect(node, [pThis = shared_from_this(), node, callback](
-						auto connectCode,
-						const auto& verifiedSocketInfo) {
-					// abort the connection if it failed or is redundant
-					if (PeerConnectCode::Accepted != connectCode || !pThis->addWriter(node, verifiedSocketInfo, ConnectionType::Connected)) {
-						pThis->m_writers.abortConnect(node);
-
-						if (PeerConnectCode::Accepted == connectCode)
-							connectCode = PeerConnectCode::Already_Connected;
-					}
-
-					callback({ connectCode, node.identityKey() });
-				});
-			}
-
-			void accept(const ionet::SslPacketSocketInfo& socketInfo, const ConnectCallback& callback) override {
-				m_pClientConnector->accept(socketInfo, [pThis = shared_from_this(), host = socketInfo.host(), callback](
-						auto connectCode,
-						const auto& pVerifiedSocket,
-						const auto& remoteKey) {
-					ionet::SslPacketSocketInfo verifiedSocketInfo(host, remoteKey, pVerifiedSocket);
-					if (PeerConnectCode::Accepted == connectCode) {
-						if (!pThis->addWriter(remoteKey, verifiedSocketInfo, ConnectionType::Accepted)) {
-							connectCode = PeerConnectCode::Already_Connected;
-						} else {
-							CATAPULT_LOG(debug) << "accepted connection from '" << verifiedSocketInfo.host() << "' as " << remoteKey;
-						}
-					}
-
-					callback({ connectCode, remoteKey });
-				});
-			}
-
 			void closeActiveConnections() override {
 				m_writers.clear(false);
 			}
 
-		private:
-			bool addWriter(const Key& key, const ionet::SslPacketSocketInfo& socketInfo, ConnectionType connectionType) {
-				auto node = ionet::Node(key, ionet::NodeEndpoint(), ionet::NodeMetadata(m_state.networkIdentifier()));
-				return addWriter(node, socketInfo, connectionType);
+			bool closeOne(const Key& identityKey) override {
+				m_writers.remove(identityKey);
 			}
 
-			bool addWriter(const ionet::Node& node, const ionet::SslPacketSocketInfo& socketInfo, ConnectionType connectionType) {
-				const auto& pSocket = socketInfo.socket();
-				auto identity = ionet::ReaderIdentity{ node.identityKey(), socketInfo.host() };
+			void shutdown() override {
+				CATAPULT_LOG(info) << "closing all connections in PacketReadersWriters";
+				m_pClientConnector->shutdown();
+				m_pServerConnector->shutdown();
+				m_writers.clear(true);
+			}
+
+		protected:
+			bool addWriter(const Key& key, const SocketPointer& pSocket, const std::string& host, ConnectionType connectionType) {
+				auto node = ionet::Node(key, ionet::NodeEndpoint(), ionet::NodeMetadata(m_state.networkIdentifier()));
+				return addWriter(node, pSocket, host, connectionType);
+			}
+
+			bool addWriter(const ionet::Node& node, const SocketPointer& pSocket, const std::string& host, ConnectionType connectionType) {
+				auto identity = ionet::ReaderIdentity{ node.identityKey(), host };
 				return m_writers.insert(connectionType, node, pSocket, [this, identity, connectionType](const auto& pSocket, const auto& pBufferedIo) {
 					return this->createReader(pSocket, pBufferedIo, identity, connectionType);
 				});
@@ -352,30 +322,146 @@ namespace catapult { namespace net {
 					const ionet::ReaderIdentity& identity,
 					ConnectionType connectionType) {
 				WeakSocketPointer pSocketWeak = pSocket;
-				return CreateChainedSocketReader(pSocket, pBufferedIo, m_handlers, identity, [pThis = shared_from_this(), pSocketWeak, identityKey = identity.PublicKey, connectionType](auto code) {
+				return CreateChainedSocketReader(pSocket, pBufferedIo, m_handlers, identity, [pThis = get_shared_from_this(), pSocketWeak, identityKey = identity.PublicKey, connectionType](auto code) {
 					pThis->removeWriter(pSocketWeak, identityKey, connectionType);
 				});
 			}
 
-		public:
-			bool closeOne(const Key& identityKey) override {
-				m_writers.remove(identityKey);
-			}
+			virtual std::shared_ptr<BasePacketReadersWriters> get_shared_from_this() = 0;
 
-			void shutdown() override {
-				CATAPULT_LOG(info) << "closing all connections in PacketReadersWriters";
-				m_pClientConnector->shutdown();
-				m_pServerConnector->shutdown();
-				m_writers.clear(true);
-			}
-
-		private:
+		protected:
 			std::shared_ptr<thread::IoThreadPool> m_pPool;
 			const ionet::ServerPacketHandlers& m_handlers;
-			std::shared_ptr<SslClientConnector> m_pClientConnector;
-			std::shared_ptr<SslServerConnector> m_pServerConnector;
+			std::shared_ptr<TClientConnector> m_pClientConnector;
+			std::shared_ptr<TServerConnector> m_pServerConnector;
 			extensions::ServiceState& m_state;
-			WriterContainer m_writers;
+			WriterContainer<TPacketSocket> m_writers;
+		};
+
+		class SslPacketReadersWriters
+			: public BasePacketReadersWriters<ionet::SslPacketSocket, SslClientConnector, SslServerConnector>
+			, public std::enable_shared_from_this<SslPacketReadersWriters> {
+		public:
+			SslPacketReadersWriters(
+				const std::shared_ptr<thread::IoThreadPool>& pPool,
+				const ionet::ServerPacketHandlers& handlers,
+				const crypto::KeyPair& keyPair,
+				const ConnectionSettings& settings,
+				extensions::ServiceState& state)
+					: BasePacketReadersWriters(pPool, handlers, state) {
+				m_pClientConnector = CreateSslClientConnector(*m_pPool, keyPair, settings);
+				m_pServerConnector = CreateSslServerConnector(*m_pPool, keyPair, settings);
+			}
+
+		public:
+			void connect(const ionet::Node& node, const ConnectCallback& callback) override {
+				if (!m_writers.prepareConnect(node))
+					return callback(PeerConnectCode::Already_Connected);
+
+				m_pServerConnector->connect(node, [pThis = shared_from_this(), node, callback](
+						auto connectCode,
+						const auto& verifiedSocketInfo) {
+					// abort the connection if it failed or is redundant
+					if (PeerConnectCode::Accepted != connectCode || !pThis->addWriter(node, verifiedSocketInfo.socket(), verifiedSocketInfo.host(), ConnectionType::Connected)) {
+						pThis->m_writers.abortConnect(node);
+
+						if (PeerConnectCode::Accepted == connectCode)
+							connectCode = PeerConnectCode::Already_Connected;
+					}
+
+					callback({ connectCode, node.identityKey() });
+				});
+			}
+
+			void accept(const ionet::SslPacketSocketInfo& socketInfo, const ConnectCallback& callback) override {
+				m_pClientConnector->accept(socketInfo, [pThis = shared_from_this(), host = socketInfo.host(), callback](
+						auto connectCode,
+						const auto& pVerifiedSocket,
+						const auto& remoteKey) {
+					if (PeerConnectCode::Accepted == connectCode) {
+						if (!pThis->addWriter(remoteKey, pVerifiedSocket, host, ConnectionType::Accepted)) {
+							connectCode = PeerConnectCode::Already_Connected;
+						} else {
+							CATAPULT_LOG(debug) << "accepted connection from '" << host << "' as " << remoteKey;
+						}
+					}
+
+					callback({ connectCode, remoteKey });
+				});
+			}
+
+			void accept(const ionet::AcceptedPacketSocketInfo& socketInfo, const ConnectCallback& callback) override {
+				CATAPULT_LOG(warning) << "rejecting insecure connection from " << socketInfo.host();
+				callback({ PeerConnectCode::Invalid_Socket_Type, Key() });
+			}
+
+		protected:
+			std::shared_ptr<BasePacketReadersWriters> get_shared_from_this() override {
+				return shared_from_this();
+			}
+		};
+
+		class DefaultPacketReadersWriters
+			: public BasePacketReadersWriters<ionet::PacketSocket, ClientConnector, ServerConnector>
+			, public std::enable_shared_from_this<DefaultPacketReadersWriters> {
+		public:
+			DefaultPacketReadersWriters(
+				const std::shared_ptr<thread::IoThreadPool>& pPool,
+				const ionet::ServerPacketHandlers& handlers,
+				const crypto::KeyPair& keyPair,
+				const ConnectionSettings& settings,
+				extensions::ServiceState& state)
+					: BasePacketReadersWriters(pPool, handlers, state) {
+				m_pClientConnector = CreateClientConnector(m_pPool, keyPair, settings);
+				m_pServerConnector = CreateServerConnector(m_pPool, keyPair, settings);
+			}
+
+		public:
+			void connect(const ionet::Node& node, const ConnectCallback& callback) override {
+				if (!m_writers.prepareConnect(node))
+					return callback(PeerConnectCode::Already_Connected);
+
+				m_pServerConnector->connect(node, [pThis = shared_from_this(), node, callback](
+						auto connectCode,
+						const auto& pVerifiedSocket) {
+					// abort the connection if it failed or is redundant
+					if (PeerConnectCode::Accepted != connectCode || !pThis->addWriter(node, pVerifiedSocket, node.endpoint().Host, ConnectionType::Connected)) {
+						pThis->m_writers.abortConnect(node);
+
+						if (PeerConnectCode::Accepted == connectCode)
+							connectCode = PeerConnectCode::Already_Connected;
+					}
+
+					callback({ connectCode, node.identityKey() });
+				});
+			}
+
+			void accept(const ionet::SslPacketSocketInfo& socketInfo, const ConnectCallback& callback) override {
+				CATAPULT_LOG(warning) << "rejecting secure connection from " << socketInfo.host() << " : " << socketInfo.publicKey();
+				callback({ PeerConnectCode::Invalid_Socket_Type, socketInfo.publicKey() });
+			}
+
+			void accept(const ionet::AcceptedPacketSocketInfo& socketInfo, const ConnectCallback& callback) override {
+				m_pClientConnector->accept(socketInfo.socket(), [pThis = shared_from_this(), host = socketInfo.host(), callback](
+						auto connectCode,
+						const auto& pVerifiedSocket,
+						const auto& remoteKey) {
+					if (PeerConnectCode::Accepted == connectCode) {
+						if (!pThis->addWriter(remoteKey, pVerifiedSocket, host, ConnectionType::Accepted)) {
+							connectCode = PeerConnectCode::Already_Connected;
+						} else {
+							CATAPULT_LOG(debug) << "accepted connection from '" << host << "' as " << remoteKey;
+						}
+					}
+
+					callback({ connectCode, remoteKey });
+				});
+			}
+
+		protected:
+			std::shared_ptr<BasePacketReadersWriters> get_shared_from_this() override {
+				return shared_from_this();
+			}
 		};
 	}
 
@@ -384,7 +470,12 @@ namespace catapult { namespace net {
 			const ionet::ServerPacketHandlers& handlers,
 			const crypto::KeyPair& keyPair,
 			const ConnectionSettings& settings,
-			extensions::ServiceState& state) {
-		return std::make_shared<DefaultPacketReadersWriters>(pPool, handlers, keyPair, settings, state);
+			extensions::ServiceState& state,
+			bool secure) {
+		if (secure) {
+			return std::make_shared<SslPacketReadersWriters>(pPool, handlers, keyPair, settings, state);
+		} else {
+			return std::make_shared<DefaultPacketReadersWriters>(pPool, handlers, keyPair, settings, state);
+		}
 	}
 }}

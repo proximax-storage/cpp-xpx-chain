@@ -151,8 +151,8 @@ namespace catapult { namespace fastfinality {
 				pFsmShared->dbrbProcess().registerDbrbPullNodesHandler(pFsmShared->packetHandlers());
 
 				auto connectionSettings = extensions::GetSslConnectionSettings(config);
-				auto pWriters = pServiceGroup->pushService(net::CreatePacketReadersWriters, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, state);
-				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, [&acceptor = *pWriters](
+				auto pWriters = pServiceGroup->pushService(net::CreatePacketReadersWriters, pFsmShared->packetHandlers(), locator.keyPair(), connectionSettings, state, false);
+				extensions::BootServer(*pServiceGroup, config.Node.DbrbPort, Service_Id, config, 0, [&acceptor = *pWriters](
 					const auto& socketInfo,
 					const auto& callback) {
 					acceptor.accept(socketInfo, callback);
@@ -171,11 +171,12 @@ namespace catapult { namespace fastfinality {
 				actions.DownloadBlocks = CreateFastFinalityDownloadBlocksAction(pFsmShared, state, blockRangeConsumer);
 				actions.DetectRound = CreateFastFinalityDetectRoundAction(pFsmShared, lastBlockElementSupplier, state);
 				actions.CheckConnections = CreateFastFinalityCheckConnectionsAction(pFsmShared, state);
+				actions.StartRound = CreateFastFinalityStartRoundAction(pFsmShared, state);
 				actions.SelectBlockProducer = CreateFastFinalitySelectBlockProducerAction(pFsmShared, state);
 				actions.GenerateBlock = CreateFastFinalityGenerateBlockAction(pFsmShared, state, pConfigHolder, CreateHarvesterBlockGenerator(state), lastBlockElementSupplier);
 				actions.WaitForBlock = CreateFastFinalityWaitForBlockAction(pFsmShared, pConfigHolder);
 				actions.CommitBlock = CreateFastFinalityCommitBlockAction(pFsmShared, blockRangeConsumer, state);
-				actions.IncrementRound = CreateFastFinalityIncrementRoundAction(pFsmShared, pConfigHolder);
+				actions.IncrementRound = CreateFastFinalityIncrementRoundAction(pFsmShared, state);
 				actions.ResetRound = CreateFastFinalityResetRoundAction(pFsmShared, state);
 
 				m_pTransactionSender.reset();

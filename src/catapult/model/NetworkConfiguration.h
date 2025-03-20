@@ -189,6 +189,12 @@ namespace catapult { namespace model {
 		/// Block time update strategy.
 		model::BlockTimeUpdateStrategy BlockTimeUpdateStrategy;
 
+		/// The size of the queue of harvesters.
+		uint8_t HarvestersQueueSize;
+
+		/// Allows round time calculation improvement in committee manager.
+		bool EnableCommitteeManagerImprovement;
+
 	private:
 		/// Map of plugin configurations.
 		mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> m_pluginConfigs;

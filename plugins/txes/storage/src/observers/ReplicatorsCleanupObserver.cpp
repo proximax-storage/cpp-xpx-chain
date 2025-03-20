@@ -9,12 +9,10 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::ReplicatorsCleanupNotification<1>;
-
-	DECLARE_OBSERVER(ReplicatorsCleanup, Notification)(const std::unique_ptr<LiquidityProviderExchangeObserver>& pLiquidityProvider) {
-		return MAKE_OBSERVER(ReplicatorsCleanup, Notification, ([&pLiquidityProvider](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(ReplicatorsCleanupV1, model::ReplicatorsCleanupNotification<1>)(const std::unique_ptr<LiquidityProviderExchangeObserver>& pLiquidityProvider) {
+		return MAKE_OBSERVER(ReplicatorsCleanupV1, model::ReplicatorsCleanupNotification<1>, ([&pLiquidityProvider](const model::ReplicatorsCleanupNotification<1>& notification, ObserverContext& context) {
 			if (NotifyMode::Rollback == context.Mode)
-				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorsCleanup)");
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorsCleanupV1)");
 
 			auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
 			auto pReplicatorKey = notification.ReplicatorKeysPtr;
@@ -32,6 +30,21 @@ namespace catapult { namespace observers {
 				}
 
 				replicatorCache.remove(*pReplicatorKey);
+			}
+        }))
+	};
+
+	DECLARE_OBSERVER(ReplicatorsCleanupV2, model::ReplicatorsCleanupNotification<2>)() {
+		return MAKE_OBSERVER(ReplicatorsCleanupV2, model::ReplicatorsCleanupNotification<2>, ([](const model::ReplicatorsCleanupNotification<2>& notification, ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				CATAPULT_THROW_RUNTIME_ERROR("Invalid observer mode ROLLBACK (ReplicatorsCleanupV2)");
+
+			auto& replicatorCache = context.Cache.template sub<cache::ReplicatorCache>();
+			auto pReplicatorKey = notification.ReplicatorKeysPtr;
+			for (auto i = 0u; i < notification.ReplicatorCount; ++i, ++pReplicatorKey) {
+				auto replicatorIter = replicatorCache.find(*pReplicatorKey);
+				auto& replicatorEntry = replicatorIter.get();
+				replicatorEntry.drives().clear();
 			}
         }))
 	};

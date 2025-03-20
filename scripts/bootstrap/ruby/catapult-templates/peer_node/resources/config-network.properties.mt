@@ -58,6 +58,8 @@ enableDbrbFastFinality = true
 checkNetworkHeightInterval = 10
 
 blockTimeUpdateStrategy = increase-coefficient
+enableCommitteeManagerImprovement = true
+harvestersQueueSize = 3
 
 [bootstrap.harvesters]
 
@@ -237,6 +239,7 @@ verificationExpirationCoefficient = 0.24
 verificationExpirationConstant = 10
 
 enableReplicatorBootKeyBinding = true
+enableCacheImprovement = true
 
 [plugin:catapult.plugins.streaming]
 

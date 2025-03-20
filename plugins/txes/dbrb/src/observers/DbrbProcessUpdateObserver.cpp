@@ -27,7 +27,7 @@ namespace catapult { namespace observers {
 				return;
 
 			const auto& committeeManager = pluginManager.getCommitteeManager(Block_Version);
-			auto banPeriods = committeeManager.babPeriods();
+			auto banPeriods = committeeManager.banPeriods();
 			auto& cache = context.Cache.sub<cache::DbrbViewCache>();
 			auto processIds = cache.processIds();
 			for (const auto& processId : processIds) {

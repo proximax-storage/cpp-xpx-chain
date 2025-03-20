@@ -15,13 +15,12 @@ namespace catapult { namespace observers {
 
 	const std::unique_ptr<observers::LiquidityProviderExchangeObserver>  Liquidity_Provider_Ptr = std::make_unique<test::LiquidityProviderExchangeObserverImpl>();
 
-	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorsCleanup, Liquidity_Provider_Ptr)
+	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorsCleanupV1, Liquidity_Provider_Ptr)
 
     namespace {
         using ObserverTestContext = test::ObserverTestContextT<test::StorageCacheFactory>;
-        using Notification = model::ReplicatorsCleanupNotification<1>;
 
-        void RunTest(NotifyMode mode) {
+        void RunV1Test(NotifyMode mode) {
             // Arrange:
             ObserverTestContext context(mode, Height(1));
 			std::vector<Key> replicatorKeys{
@@ -31,11 +30,11 @@ namespace catapult { namespace observers {
 				Key({ 7 }),
 				Key({ 9 }),
 			};
-            Notification notification(replicatorKeys.size(), replicatorKeys.data());
+			model::ReplicatorsCleanupNotification<1> notification(replicatorKeys.size(), replicatorKeys.data());
 			auto& cache = context.cache().sub<cache::ReplicatorCache>();
 			for (uint8_t i = 1; i <= 10; ++i)
 				cache.insert(state::ReplicatorEntry(Key({ i })));
-			auto pObserver = CreateReplicatorsCleanupObserver(Liquidity_Provider_Ptr);
+			auto pObserver = CreateReplicatorsCleanupV1Observer(Liquidity_Provider_Ptr);
 
             // Sanity
 			for (uint8_t i = 1; i <= 10; ++i)
@@ -53,13 +52,62 @@ namespace catapult { namespace observers {
         }
     }
 
-    TEST(TEST_CLASS, ReplicatorsCleanup_Commit) {
+    TEST(TEST_CLASS, ReplicatorsCleanupV1_Commit) {
         // Assert:
-        RunTest(NotifyMode::Commit);
+        RunV1Test(NotifyMode::Commit);
     }
 
-    TEST(TEST_CLASS, ReplicatorsCleanup_Rollback) {
+    TEST(TEST_CLASS, ReplicatorsCleanupV1_Rollback) {
         // Assert
-		EXPECT_THROW(RunTest(NotifyMode::Rollback), catapult_runtime_error);
+		EXPECT_THROW(RunV1Test(NotifyMode::Rollback), catapult_runtime_error);
+    }
+
+	DEFINE_COMMON_OBSERVER_TESTS(ReplicatorsCleanupV2)
+
+    namespace {
+        using ObserverTestContext = test::ObserverTestContextT<test::StorageCacheFactory>;
+
+        void RunV2Test(NotifyMode mode) {
+            // Arrange:
+            ObserverTestContext context(mode, Height(1));
+			std::vector<Key> replicatorKeys{
+				Key({ 1 }),
+				Key({ 3 }),
+				Key({ 5 }),
+				Key({ 7 }),
+				Key({ 9 }),
+			};
+			model::ReplicatorsCleanupNotification<2> notification(replicatorKeys.size(), replicatorKeys.data());
+			auto& cache = context.cache().sub<cache::ReplicatorCache>();
+			for (uint8_t i = 1; i <= 10; ++i) {
+				auto entry = state::ReplicatorEntry(Key({ i }));
+				for (uint8_t j = 1; j <= 5; ++j)
+					entry.drives().emplace(Key({ static_cast<uint8_t>(10 + j) }), state::DriveInfo{});
+				cache.insert(entry);
+			}
+			auto pObserver = CreateReplicatorsCleanupV2Observer();
+
+            // Act:
+            test::ObserveNotification(*pObserver, notification, context);
+
+            // Assert: check the cache
+			for (uint8_t i = 1; i <= 10; ++i) {
+				auto replicatorKey = Key({ i });
+				auto iter = cache.find(replicatorKey);
+				const auto& entry = iter.get();
+				auto driveCount = (1 == i % 2) ? 0u : 5u;
+				ASSERT_EQ(driveCount, entry.drives().size());
+			}
+        }
+    }
+
+    TEST(TEST_CLASS, ReplicatorsCleanupV2_Commit) {
+        // Assert:
+        RunV2Test(NotifyMode::Commit);
+    }
+
+    TEST(TEST_CLASS, ReplicatorsCleanupV2_Rollback) {
+        // Assert
+		EXPECT_THROW(RunV2Test(NotifyMode::Rollback), catapult_runtime_error);
     }
 }}

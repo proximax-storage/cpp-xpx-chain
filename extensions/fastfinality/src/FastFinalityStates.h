@@ -14,6 +14,7 @@ namespace catapult { namespace fastfinality {
 	struct BlocksDownloading{};
 	struct ConnectionChecking{};
 	struct RoundDetection{};
+	struct RoundStart{};
 	struct BlockProducerSelection{};
 	struct BlockGeneration{};
 	struct BlockWaiting{};
