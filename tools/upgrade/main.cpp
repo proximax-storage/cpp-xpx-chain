@@ -164,7 +164,7 @@ namespace catapult { namespace tools { namespace upgrade {
 			void writeTransactionsToApiSocket(
 				std::shared_ptr<ionet::PacketSocket> pConnectedSocket,
 				std::list<std::shared_ptr<model::Transaction>>& transactions,
-				boost::asio::executor_work_guard<boost::asio::io_service::executor_type>& guard) {
+				boost::asio::executor_work_guard<boost::asio::io_context::executor_type>& guard) {
 				CATAPULT_LOG(info) << "writing transaction " << transactions.front()->Type;
 				auto packet = ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Push_Transactions, transactions.front());
 				transactions.pop_front();
@@ -181,8 +181,8 @@ namespace catapult { namespace tools { namespace upgrade {
 			}
 
 			void sendTransactionsToApiNode(std::list<std::shared_ptr<model::Transaction>> transactions) {
-				boost::asio::io_service service;
-				boost::asio::executor_work_guard guard(boost::asio::make_work_guard(service));
+				boost::asio::io_context context;
+				boost::asio::executor_work_guard guard(boost::asio::make_work_guard(context));
 
 				crypto::KeyPair keyPair = crypto::KeyPair::FromString(m_restKey);
 				net::VerifiedPeerInfo serverPeerInfo;
@@ -199,7 +199,7 @@ namespace catapult { namespace tools { namespace upgrade {
 				packetSocketOptions.MaxPacketDataSize = catapult::utils::FileSize::FromMegabytes(5).bytes();
 
 				auto cancel = ionet::Connect(
-					service,
+					context,
 					packetSocketOptions,
 					endpoint,
 					[&](auto connectResult, const std::shared_ptr<ionet::PacketSocket>& pConnectedSocket) {
@@ -215,13 +215,13 @@ namespace catapult { namespace tools { namespace upgrade {
 					}
 				);
 
-				service.run();
+				context.run();
 			}
 
 			void writeTransactionsToRestSocket(
 					boost::asio::ip::tcp::socket& socket,
 					std::list<std::shared_ptr<model::Transaction>>& transactions,
-					boost::asio::executor_work_guard<boost::asio::io_service::executor_type>& guard) {
+					boost::asio::executor_work_guard<boost::asio::io_context::executor_type>& guard) {
 				auto packet = ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Push_Transactions, transactions.front());
 				transactions.pop_front();
 				const uint8_t* data = packet.buffers()[0].pData;
@@ -270,19 +270,19 @@ namespace catapult { namespace tools { namespace upgrade {
 			}
 
 			void sendTransactionsToRestServer(std::list<std::shared_ptr<model::Transaction>> transactions) {
-				boost::asio::io_service service;
-				boost::asio::executor_work_guard guard(boost::asio::make_work_guard(service));
-				boost::asio::ip::tcp::socket socket(service);
+				boost::asio::io_context context;
+				boost::asio::executor_work_guard guard(boost::asio::make_work_guard(context));
+				boost::asio::ip::tcp::socket socket(context);
 				socket.open(boost::asio::ip::tcp::v4());
 				socket.set_option(boost::asio::ip::tcp::no_delay(false));
 				socket.set_option(boost::asio::socket_base::keep_alive(true));
 				socket.set_option(boost::asio::socket_base::reuse_address(true));
-				boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(m_host), m_port);
+				boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(m_host), m_port);
 				socket.connect(endpoint);
 
 				writeTransactionsToRestSocket(socket, transactions, guard);
 
-				service.run();
+				context.run();
 			}
 
 		private:

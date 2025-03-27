@@ -66,7 +66,7 @@ namespace catapult { namespace ionet {
 		test::FillWithRandomData(buffer);
 
 		// Assert:
-		auto pContextBuffer = boost::asio::buffer_cast<uint8_t*>(context.buffer());
+		auto pContextBuffer = static_cast<uint8_t*>(context.buffer().data());
 		auto contextBufferSize = boost::asio::buffer_size(context.buffer());
 		ASSERT_EQ(100u, contextBufferSize);
 		EXPECT_TRUE(std::equal(buffer.begin() + 12, buffer.end(), pContextBuffer, pContextBuffer + contextBufferSize));
@@ -80,7 +80,7 @@ namespace catapult { namespace ionet {
 		test::FillWithRandomData(buffer);
 
 		// Assert:
-		auto pContextBuffer = boost::asio::buffer_cast<uint8_t*>(context.buffer());
+		auto pContextBuffer = static_cast<uint8_t*>(context.buffer().data());
 		auto contextBufferSize = boost::asio::buffer_size(context.buffer());
 		ASSERT_EQ(50u, contextBufferSize);
 		EXPECT_TRUE(std::equal(buffer.begin() + 8, buffer.end(), pContextBuffer, pContextBuffer + contextBufferSize));

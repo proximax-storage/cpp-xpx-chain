@@ -198,20 +198,20 @@ int main(int argc, const char** argv) {
 
 	using namespace boost::asio;
 
-	io_service svc;
-	ip::tcp::socket sock(svc);
+	io_context context;
+	ip::tcp::socket sock(context);
 
 	if (options.Mode == "rest") {
 		sock.open(ip::tcp::v4());
 		sock.set_option(ip::tcp::no_delay(false));
 		sock.set_option(socket_base::keep_alive(true));
 		sock.set_option(socket_base::reuse_address(true));
-		ip::tcp::endpoint endpoint(ip::address::from_string(options.Host), options.Port);
+		ip::tcp::endpoint endpoint(ip::make_address(options.Host), options.Port);
 		sock.connect(endpoint);
 		sendRest(hash, sock, options);
 
-		io_service::work some_work(svc);
-		svc.run();
+		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard = boost::asio::make_work_guard(context);
+		context.run();
 	} else if (options.Mode == "node") {
 
 		crypto::KeyPair keyPair = GenerateRandomKeyPair();
@@ -229,7 +229,7 @@ int main(int argc, const char** argv) {
 		packetSocketOptions.MaxPacketDataSize = catapult::utils::FileSize::FromMegabytes(150).bytes();
 
 		auto cancel = ionet::Connect(
-				svc,
+				context,
 				packetSocketOptions,
 				endpoint,
 				[&](auto, const shared_ptr<ionet::PacketIo>& pConnectedSocket) {
@@ -238,8 +238,8 @@ int main(int argc, const char** argv) {
 					});
 				});
 
-		io_service::work some_work(svc);
-		svc.run();
+		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard = boost::asio::make_work_guard(context);
+		context.run();
 	}
 
 	return 0;

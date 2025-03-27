@@ -96,7 +96,7 @@ namespace catapult { namespace tools { namespace health {
 					: m_socket(ioContext)
 					, m_resolver(ioContext)
 					, m_host(host + ":" + std::to_string(port))
-					, m_query(host, std::to_string(port))
+					, m_port(std::to_string(port))
 			{}
 
 		public:
@@ -114,17 +114,17 @@ namespace catapult { namespace tools { namespace health {
 
 		public:
 			void start() {
-				m_resolver.async_resolve(m_query, [this](const auto& ec, auto iterator) {
+				m_resolver.async_resolve(m_host, m_port, [this](const auto& ec, const auto& iterator) {
 					this->handleResolve(ec, iterator);
 				});
 			}
 
 		private:
-			void handleResolve(const boost::system::error_code& ec, const ResolverType::iterator& iterator) {
-				if (ShouldAbort(ec, m_host, "resolving address"))
+			void handleResolve(const boost::system::error_code& ec, const ResolverType::results_type& results) {
+				if (ShouldAbort(ec, m_host, "resolving address") || results.empty())
 					return complete(ionet::ConnectResult::Resolve_Error);
 
-				m_endpoint = iterator->endpoint();
+				m_endpoint = results.begin()->endpoint();
 				m_socket.async_connect(m_endpoint, [this](const auto& connectEc) {
 					this->handleConnect(connectEc);
 				});
@@ -147,7 +147,7 @@ namespace catapult { namespace tools { namespace health {
 			ResolverType m_resolver;
 
 			std::string m_host;
-			ResolverType::query m_query;
+			std::string m_port;
 
 			boost::asio::ip::tcp::endpoint m_endpoint;
 			thread::promise<ionet::ConnectResult> m_promise;
