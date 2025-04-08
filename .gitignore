@@ -37,3 +37,5 @@ out
 gen
 cmake-build-*
 temp
+tests/test/nodeps/data/NemesisMemoryBlockStorage_data.h
+seed/mijin-test-reconstructor/00000/

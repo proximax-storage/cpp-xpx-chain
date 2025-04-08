@@ -6,7 +6,7 @@ generationHash = {{network_generation_hash}}
 shouldEnableVerifiableState = true
 shouldEnableVerifiableReceipts = true
 
-nemesisHeight = 6812897
+nemesisHeight = 6904601
 currencyMosaicId = 0x402B'2F57'9FAE'BC59
 harvestingMosaicId = 0x402B'2F57'9FAE'BC59
 storageMosaicId = 0x42F1'1DF7'3D00'296A

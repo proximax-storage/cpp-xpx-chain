@@ -70,10 +70,9 @@ namespace catapult { namespace tools {  namespace nemgen {
 	template<typename TDescriptor>
 	struct StateRebuilder<cache::NetworkConfigCache, cache::NetworkConfigCacheTypes::PrimaryTypes, TDescriptor> {
 		template<typename TExecutor>
-		static void Rebuild(const model::NetworkIdentifier identifier, const Key& nemesisPublicKey, const cache::CatapultCacheDelta& catapultCache, utils::AccountMigrationManager& manager, Height height, cache::SubCacheId subCacheId, TExecutor executor) {
+		static void Rebuild(const model::NetworkIdentifier identifier, const Key& nemesisPublicKey, const cache::CatapultCacheDelta& catapultCache, utils::AccountMigrationManager& manager, Height height, cache::SubCacheId subCacheId, TExecutor executor, std::unique_ptr<model::NetworkConfiguration>& lastActiveEntry) {
 			auto& stateCache = catapultCache.sub<cache::NetworkConfigCache>();
 			auto cacheDeltaView = stateCache.template tryMakeBroadIterableView<typename cache::NetworkConfigCacheTypes::PrimaryTypes::BaseSetDeltaType>();
-			state::NetworkConfigEntry lastActiveEntry;
 
 			// Pre-emptively check which is the last currently active network configuration
 			auto currentlyActiveHeight = Height(1);
@@ -85,6 +84,10 @@ namespace catapult { namespace tools {  namespace nemgen {
 
 			for(const auto& val : *cacheDeltaView) {
 				state::NetworkConfigEntry entry = Convert(manager, val.second, val.second.height() >= currentlyActiveHeight);
+				if(entry.height() == currentlyActiveHeight) {
+					std::istringstream inputBlock(entry.networkConfig());
+					lastActiveEntry = std::make_unique<model::NetworkConfiguration>(model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock)));
+				}
 				auto transaction = BuildStateTransaction<cache::NetworkConfigCache, TDescriptor>(identifier, nemesisPublicKey, static_cast<cache::CacheId>(cache::NetworkConfigCache::Id), subCacheId, entry);
 				executor(std::move(transaction));
 			}
@@ -104,7 +107,7 @@ namespace catapult { namespace tools {  namespace nemgen {
 		template<typename TExecutor>
 		void ProcessCaches(Height height, TExecutor executor) {
 			/// Network config must be the first cache to be converted, so that the account manager properly sets the nemesis account.
-			StateRebuilder<cache::NetworkConfigCache, cache::NetworkConfigCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
+			StateRebuilder<cache::NetworkConfigCache, cache::NetworkConfigCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor, m_activeConfiguration);
 			StateRebuilder<cache::AccountStateCache, cache::AccountStateCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height, static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
 			// Config update must not be set for nemesis block
 			StateRebuilder<cache::ExchangeCache, cache::ExchangeCacheTypes::PrimaryTypes>::Rebuild(m_pHolder->Config().Immutable.NetworkIdentifier, m_NemesisAccount.publicKey(), m_catapultCache, m_accountMigrationManager, height,  static_cast<cache::SubCacheId>(cache::GeneralSubCache::Main), executor);
@@ -126,11 +129,16 @@ namespace catapult { namespace tools {  namespace nemgen {
 		inline void Dump(std::string path) {
 			m_accountMigrationManager.writeToFile(path);
 		}
+
+		model::NetworkConfiguration& GetActiveConfiguration() {
+			return *m_activeConfiguration;
+		}
 	private:
 		utils::AccountMigrationManager m_accountMigrationManager;
 		const cache::CatapultCacheDelta& m_catapultCache;
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pHolder;
 		crypto::KeyPair m_NemesisAccount;
+		std::unique_ptr<model::NetworkConfiguration> m_activeConfiguration;
 
 	};
 

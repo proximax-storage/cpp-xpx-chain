@@ -87,6 +87,11 @@ namespace catapult { namespace config {
 		/// Loads a blockchain configuration from \a resourcesPath given the specified extensions host (\a extensionsHost).
 		/// \note This function is expected to be called be before logging is enabled.
 		static BlockchainConfiguration LoadFromPath(const boost::filesystem::path& resourcesPath, const std::string& extensionsHost);
+
+
+		/// Loads a blockchain configuration from \a resourcesPath given a network configuration (\a networkConfiguration) and the specified extensions host (\a extensionsHost).
+		/// \note This function is expected to be called be before logging is enabled.
+		static BlockchainConfiguration LoadFromPath(const boost::filesystem::path& resourcesPath, const model::NetworkConfiguration& networkConfiguration, const std::string& extensionsHost);
 	};
 
 	/// Extracts a node representing the local node from \a config.

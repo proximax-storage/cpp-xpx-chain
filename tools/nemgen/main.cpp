@@ -145,8 +145,6 @@ namespace catapult { namespace tools { namespace nemgen {
 
 
 				if(is_reconstructor) {
-					// 1. load and validate the configuration
-					auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
 
 					auto databaseCleanupMode = options["useTemporaryCacheDatabase"].as<bool>()
 													   ? CacheDatabaseCleanupMode::Purge
@@ -189,6 +187,8 @@ namespace catapult { namespace tools { namespace nemgen {
 					// Load secondary base config holder
 					pluginManager.reset();
 					pRCConfigHolder.reset();
+					auto config = LoadConfiguration(nemesisConfig.ResourcesPath, false, broker.GetActiveConfiguration());
+					auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
 					auto executionHashesDescriptor = CalculateAndLogNemesisExecutionHashes(nemesisConfig, blockElement, pConfigHolder, databaseCleanupMode, &transactions);
 
 					if (!options["no-summary"].as<bool>()) {

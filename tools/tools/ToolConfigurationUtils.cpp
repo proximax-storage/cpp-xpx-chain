@@ -31,6 +31,14 @@ namespace catapult { namespace tools {
 		return config::BlockchainConfiguration::LoadFromPath(resourcesPath, "server");
 	}
 
+	config::BlockchainConfiguration LoadConfiguration(const std::string& resourcesPathStr, bool appendResourcesSegment, const model::NetworkConfiguration& networkConfig) {
+		boost::filesystem::path resourcesPath = resourcesPathStr;
+		if(appendResourcesSegment)
+			resourcesPath /= "resources";
+		std::cout << "loading resources from " << resourcesPath << std::endl;
+		return config::BlockchainConfiguration::LoadFromPath(resourcesPath, networkConfig, "server");
+	}
+
 	std::vector<ionet::Node> LoadOptionalApiPeers(const std::string& resourcesPath, model::NetworkIdentifier networkIdentifier) {
 		std::vector<ionet::Node> apiNodes;
 		auto apiPeersFilename = boost::filesystem::path(resourcesPath) / "resources" / "peers-api.json";

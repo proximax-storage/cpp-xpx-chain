@@ -195,7 +195,7 @@ namespace catapult { namespace io {
 	}
 
 	Height FileBlockStorage::chainHeight() const {
-		return m_indexFile.exists() ? Height(m_indexFile.get()) : Height(0);
+		return m_indexFile.exists() ? Height(m_indexFile.get()) : m_zeroHeight;
 	}
 
 	model::HashRange FileBlockStorage::loadHashesFrom(Height height, size_t maxHashes) const {
