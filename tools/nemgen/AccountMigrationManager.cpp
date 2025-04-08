@@ -20,6 +20,7 @@
 
 #include "AccountMigrationManager.h"
 #include "catapult/io/RawFile.h"
+#include <fstream>
 
 namespace catapult { namespace utils {
 

@@ -6,4 +6,6 @@ set(PLUGIN_DEPS_FOLDERS config model validators observers utils)
 
 
 add_subdirectory(src)
-add_subdirectory(tests)
+if(DO_NOT_SKIP_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
