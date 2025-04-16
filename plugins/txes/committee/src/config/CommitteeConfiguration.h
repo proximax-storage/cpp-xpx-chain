@@ -77,6 +77,9 @@ namespace catapult { namespace config {
 		/// Enables validation of block producers.
 		bool EnableBlockProducerValidation;
 
+		/// Enables improvement of block producer selection.
+		bool EnableBlockProducerSelectionImprovement;
+
 	private:
 		CommitteeConfiguration() = default;
 

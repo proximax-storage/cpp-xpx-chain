@@ -44,6 +44,8 @@ namespace catapult { namespace config {
 		TRY_LOAD_CHAIN_PROPERTY(HarvesterBanPeriod);
 		config.EnableBlockProducerValidation = false;
 		TRY_LOAD_CHAIN_PROPERTY(EnableBlockProducerValidation);
+		config.EnableBlockProducerSelectionImprovement = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableBlockProducerSelectionImprovement);
 #undef TRY_LOAD_CHAIN_PROPERTY
 
 		config.InitialActivityInt = static_cast<int64_t>(config.InitialActivity * config.ActivityScaleFactor);
