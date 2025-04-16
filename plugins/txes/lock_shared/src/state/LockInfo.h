@@ -37,18 +37,24 @@ namespace catapult { namespace state {
 	struct LockInfo {
 	protected:
 		/// Creates a default lock info.
-		LockInfo() : Status(LockStatus::Unused)
+		LockInfo()
+			: Version(1)
+			, Status(LockStatus::Unused)
 		{}
 
 		/// Creates a lock info around \a account, \a mosaicId, \a amount and \a height.
-		explicit LockInfo(const Key& account, MosaicId mosaicId, Amount amount, Height height)
-				: Account(account)
+		explicit LockInfo(const Key& account, MosaicId mosaicId, Amount amount, Height height, const VersionType& version = 1)
+				: Version(version)
+				, Account(account)
 				, Mosaics{{mosaicId,  amount}}
 				, Height(height)
 				, Status(LockStatus::Unused)
 		{}
 
 	public:
+		/// Entry data version
+		VersionType Version;
+		
 		/// Account.
 		Key Account;
 
@@ -59,7 +65,7 @@ namespace catapult { namespace state {
 
 		/// Flag indicating whether or not the lock was already used.
 		LockStatus Status;
-
+		
 	public:
 		/// Returns status of lock.
 		constexpr LockStatus status() const {

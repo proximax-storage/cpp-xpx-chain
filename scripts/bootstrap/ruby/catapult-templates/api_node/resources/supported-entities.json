@@ -68,7 +68,7 @@
 		{
 			"name": "Hash_Lock",
 			"type": "16712",
-			"supportedVersions": [1]
+			"supportedVersions": [2]
 		},
 		{
 			"name": "Network_Config",
@@ -103,7 +103,7 @@
 		{
 			"name": "Secret_Lock",
 			"type": "16722",
-			"supportedVersions": [1]
+			"supportedVersions": [2]
 		},
 		{
 			"name": "Modify_Contract",

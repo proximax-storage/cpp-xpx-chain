@@ -33,6 +33,7 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1:
+			case 2:
 				sub.notify(AccountAddressNotification<1>(transaction.Recipient));
 				sub.notify(SecretLockDurationNotification<1>(transaction.Duration));
 				sub.notify(SecretLockHashAlgorithmNotification<1>(transaction.HashAlgorithm));
@@ -44,7 +45,8 @@ namespace catapult { namespace plugins {
 					transaction.Duration,
 					transaction.HashAlgorithm,
 					transaction.Secret,
-					transaction.Recipient));
+					transaction.Recipient,
+					transaction.EntityVersion()));
 				break;
 
 			default:

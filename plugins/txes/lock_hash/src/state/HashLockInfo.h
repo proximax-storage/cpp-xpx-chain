@@ -36,8 +36,9 @@ namespace catapult { namespace state {
 				catapult::MosaicId mosaicId,
 				catapult::Amount amount,
 				catapult::Height height,
-				const Hash256& hash)
-				: LockInfo(account, mosaicId, amount, height)
+				const Hash256& hash,
+				const VersionType& version = 1)
+				: LockInfo(account, mosaicId, amount, height, version)
 				, Hash(hash)
 		{}
 

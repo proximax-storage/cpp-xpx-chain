@@ -34,14 +34,40 @@ namespace catapult { namespace observers {
 
 		lockInfoCache.processUnusedExpiredLocks(context.Height, [&context, &accountStateCache, ownerAccountIdSupplier](
 				const auto& lockInfo) {
+			
 			auto accountStateIter = accountStateCache.find(ownerAccountIdSupplier(lockInfo));
 			auto& accountState = accountStateIter.get();
-			if (NotifyMode::Commit == context.Mode)
-				for (const auto& pair : lockInfo.Mosaics)
-					accountState.Balances.credit(pair.first, pair.second, context.Height);
-			else
-				for (const auto& pair : lockInfo.Mosaics)
-					accountState.Balances.debit(pair.first, pair.second, context.Height);
+			
+			auto applyPayment = [lockInfo, context](auto& account) {
+				if (NotifyMode::Commit == context.Mode)
+					for (const auto& pair : lockInfo.Mosaics)
+						account.Balances.credit(pair.first, pair.second, context.Height);
+				else
+					for (const auto& pair : lockInfo.Mosaics)
+						account.Balances.debit(pair.first, pair.second, context.Height);
+			};
+			
+			switch (lockInfo.Version) {
+			
+			case 1:
+				applyPayment(accountState);
+				break;
+			
+			case 2:
+				if (state::AccountType::Remote != accountState.AccountType) {
+					applyPayment(accountState);
+					return;
+				}
+				
+				auto linkedAccountStateIter = accountStateCache.find(accountState.LinkedAccountKey);
+				auto &linkedAccountState = linkedAccountStateIter.get();
+				
+				// this check is merely a precaution and will only fire if there is a bug that has corrupted links
+				RequireLinkedRemoteAndMainAccounts(accountState, linkedAccountState);
+					
+				applyPayment(linkedAccountState);
+				break;
+			}
 		});
 	}
 }}
