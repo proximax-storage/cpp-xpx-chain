@@ -22,7 +22,7 @@ namespace catapult { namespace fastfinality {
 
 	namespace {
 		constexpr VersionType Block_Version = 7;
-		constexpr uint Max_Failed_Node_State_Retrieval_Attempt = 10;
+		constexpr uint Max_Failed_Node_State_Retrieval_Attempt = 100;
 
 		bool ApprovalRatingSufficient(
 				const double approvalRating,
@@ -293,6 +293,8 @@ namespace catapult { namespace fastfinality {
 					}
 				});
 
+				CATAPULT_LOG(debug) << "requesting blocks from " << identityKey << " starting at height " << startHeight << " to " << targetHeight;
+
 				bool pullBlocksFailure = false;
 				std::vector<std::shared_ptr<model::Block>> blocks;
 				try {
@@ -515,8 +517,9 @@ namespace catapult { namespace fastfinality {
 			view.Data.erase(dbrbProcess.id());
 			auto pMessageSender = dbrbProcess.messageSender();
 			auto unreachableNodeCount = pMessageSender->getUnreachableNodeCount(view.Data);
+			CATAPULT_LOG(warning) << "unreachable node count " << unreachableNodeCount << " / limit " << maxUnreachableNodeCount << " (view size " << (view.Data.size() + 1) << ")";
 			if (unreachableNodeCount > maxUnreachableNodeCount) {
-				CATAPULT_LOG(warning) << "unreachable node count " << unreachableNodeCount << " exceeds the limit " << maxUnreachableNodeCount << " (view size " << (view.Data.size() + 1) << ")";
+				CATAPULT_LOG(warning) << "unreachable node count exceeds the limit";
 				const auto& config = state.config(pFsmShared->fastFinalityData().currentBlockHeight()).Network;
 				DelayAction(pFsmShared, pFsmShared->timer(), config.CommitteeChainHeightRequestInterval.millis(), [pFsmWeak] {
 					TRY_GET_FSM()
@@ -581,7 +584,6 @@ namespace catapult { namespace fastfinality {
 
 			auto committee = pluginManager.getCommitteeManager(Block_Version).committee();
 			auto round = fastFinalityData.round();
-			CATAPULT_LOG(debug) << "time slice index: " << round.TimeSliceIndex;
 			const auto& blockProducer = committee.BlockProposers[round.TimeSliceIndex];
 
 			auto accounts = fastFinalityData.unlockedAccounts()->view();
@@ -593,7 +595,7 @@ namespace catapult { namespace fastfinality {
 
 			CATAPULT_LOG(debug) << "block producer selection result: block " << fastFinalityData.currentBlockHeight() << ", is block producer = "
 				<< isBlockProducer << ", round start " << GetTimeString(round.RoundStart) << ", round time = " << round.RoundTimeMillis << "ms"
-				<< ", time slice start " << GetTimeString(round.TimeSliceStart) << ", time slice = " << round.TimeSliceMillis << "ms";
+				<< ", time slice index " << round.TimeSliceIndex << ", time slice start " << GetTimeString(round.TimeSliceStart) << ", time slice = " << round.TimeSliceMillis << "ms";
 
 			bool skipBlockProducing = ((state.timeSupplier()().unwrap() - utils::FromTimePoint(round.TimeSliceStart).unwrap()) > round.TimeSliceMillis / 2);
 			if (isBlockProducer && !skipBlockProducing) {

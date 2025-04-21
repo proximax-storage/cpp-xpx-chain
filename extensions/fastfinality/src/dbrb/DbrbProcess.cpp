@@ -599,8 +599,6 @@ namespace catapult { namespace dbrb {
 			if (!pThis)
 				return;
 
-			pThis->m_pMessageSender->clearQueue();
-
 			pThis->m_currentView = view;
 			pThis->m_bootstrapView = bootstrapView;
 			auto bootstrapViewCopy = bootstrapView;

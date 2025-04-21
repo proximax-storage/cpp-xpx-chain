@@ -106,6 +106,7 @@ enableEqualWeights = true
 enableBlockchainVersionValidation = true
 enableHarvesterRotation = true
 enableBlockProducerValidation = true
+enableBlockProducerSelectionImprovement = true
 
 harvesterBanPeriod = 1h
 

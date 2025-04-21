@@ -537,7 +537,6 @@ namespace catapult { namespace dbrb {
 			if (!pThis)
 				return;
 
-			pThis->m_pMessageSender->clearQueue();
 			pThis->m_broadcastData.clear();
 
 			pThis->m_pMessageSender->connectNodes(view.Data);

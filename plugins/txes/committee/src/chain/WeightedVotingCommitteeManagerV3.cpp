@@ -48,9 +48,8 @@ namespace catapult { namespace chain {
 			if (iter == m_accounts.end())
 				CATAPULT_THROW_RUNTIME_ERROR_1("account not found", blockProposer)
 			logProcess("block proposer ", blockProposer, iter->second.ExpirationTime, out);
-
-			CATAPULT_LOG(debug) << out.str();
 		}
+		CATAPULT_LOG(debug) << out.str();
 	}
 
 	void WeightedVotingCommitteeManagerV3::selectCommittee(const model::NetworkConfiguration& networkConfig, const BlockchainVersion& blockchainVersion) {
@@ -83,30 +82,47 @@ namespace catapult { namespace chain {
 			CATAPULT_THROW_RUNTIME_ERROR_1("no block proposer candidates", m_committee.Round);
 
 		// Select block proposers.
-		std::map<Rate, Key, RateLess> blockProposerCandidates;
-		for (auto & candidate : candidates) {
-			const auto& key = candidate.second;
-			const auto& data = m_accounts.at(key);
-			auto greed = static_cast<double>(data.FeeInterest) / static_cast<double>(data.FeeInterestDenominator);
-			auto minGreed = static_cast<double>(config.MinGreedFeeInterest) / static_cast<double>(config.MinGreedFeeInterestDenominator);
-			greed = std::max(greed, minGreed);
-			auto hit = *reinterpret_cast<const uint64_t*>(m_hashes[key].data());
-			blockProposerCandidates.emplace(Rate(static_cast<int64_t>(greed * static_cast<double>(hit)), key), key);
-		}
+		if (config.EnableBlockProducerSelectionImprovement) {
+			m_committee.BlockProposer = candidates.begin()->second;
+			for (auto iter = candidates.cbegin(); iter != candidates.cend() && m_committee.BlockProposers.size() < networkConfig.HarvestersQueueSize; ++iter) {
+				const auto& key = iter->second;
+				m_committee.BlockProposers.push_back(key);
+				CATAPULT_LOG(trace) << "committee: block proposer [" << m_committee.BlockProposers.size() << "] " << key << " (stake " << (m_accounts.at(key).EffectiveBalance.unwrap() / 1'000'000) << " XPX)";
 
-		m_committee.BlockProposer = blockProposerCandidates.begin()->second;
+				// Reject this harvester when selecting block proposer for the next round.
+				m_failedBlockProposers.insert(key);
+				// If all harvesters are failing or ineligible, let the failing ones try again.
+				if (m_failedBlockProposers.size() + m_ineligibleHarvesters.size() == m_accounts.size()) {
+					CATAPULT_LOG(debug) << "clearing failed harvesters";
+					m_failedBlockProposers.clear();
+				}
+			}
+		} else {
+			std::map<Rate, Key, RateLess> blockProposerCandidates;
+			for (auto & candidate : candidates) {
+				const auto& key = candidate.second;
+				const auto& data = m_accounts.at(key);
+				auto greed = static_cast<double>(data.FeeInterest) / static_cast<double>(data.FeeInterestDenominator);
+				auto minGreed = static_cast<double>(config.MinGreedFeeInterest) / static_cast<double>(config.MinGreedFeeInterestDenominator);
+				greed = std::max(greed, minGreed);
+				auto hit = *reinterpret_cast<const uint64_t*>(m_hashes[key].data());
+				blockProposerCandidates.emplace(Rate(static_cast<int64_t>(greed * static_cast<double>(hit)), key), key);
+			}
 
-		for (auto iter = blockProposerCandidates.cbegin(); iter != blockProposerCandidates.cend() && m_committee.BlockProposers.size() < networkConfig.HarvestersQueueSize; ++iter) {
-			const auto& key = iter->second;
-			m_committee.BlockProposers.push_back(key);
-			CATAPULT_LOG(trace) << "committee: block proposer [" << m_committee.BlockProposers.size() << "] " << key << " (stake " << (m_accounts.at(key).EffectiveBalance.unwrap() / 1'000'000) << " XPX)";
+			m_committee.BlockProposer = blockProposerCandidates.begin()->second;
 
-			// Reject this harvester when selecting block proposer for the next round.
-			m_failedBlockProposers.insert(key);
-			// If all harvesters are failing or ineligible, let the failing ones try again.
-			if (m_failedBlockProposers.size() + m_ineligibleHarvesters.size() == m_accounts.size()) {
-				CATAPULT_LOG(debug) << "clearing failed harvesters";
-				m_failedBlockProposers.clear();
+			for (auto iter = blockProposerCandidates.cbegin(); iter != blockProposerCandidates.cend() && m_committee.BlockProposers.size() < networkConfig.HarvestersQueueSize; ++iter) {
+				const auto& key = iter->second;
+				m_committee.BlockProposers.push_back(key);
+				CATAPULT_LOG(trace) << "committee: block proposer [" << m_committee.BlockProposers.size() << "] " << key << " (stake " << (m_accounts.at(key).EffectiveBalance.unwrap() / 1'000'000) << " XPX)";
+
+				// Reject this harvester when selecting block proposer for the next round.
+				m_failedBlockProposers.insert(key);
+				// If all harvesters are failing or ineligible, let the failing ones try again.
+				if (m_failedBlockProposers.size() + m_ineligibleHarvesters.size() == m_accounts.size()) {
+					CATAPULT_LOG(debug) << "clearing failed harvesters";
+					m_failedBlockProposers.clear();
+				}
 			}
 		}
 	}

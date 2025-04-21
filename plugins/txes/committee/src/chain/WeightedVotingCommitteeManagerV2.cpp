@@ -264,17 +264,20 @@ namespace catapult { namespace chain {
 
 			if (networkConfig.BootstrapHarvesters.empty()) {
 				if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp && notEmergencyHarvester) {
+					CATAPULT_LOG(debug) << "ineligible harvester " << key << " (expired at " << accountData.ExpirationTime << ")";
 					m_ineligibleHarvesterHandler(key);
 					continue;
 				}
 			} else {
 				if (notBootstrapHarvester) {
 					if (networkConfig.EnableHarvesterExpiration && accountData.ExpirationTime <= m_timestamp) {
+						CATAPULT_LOG(debug) << "ineligible harvester " << key << " (expired at " << accountData.ExpirationTime << ")";
 						m_ineligibleHarvesterHandler(key);
 						continue;
 					}
 
 					if (accountData.BootKey == Key()) {
+						CATAPULT_LOG(debug) << "ineligible harvester " << key << " (boot key not registered)";
 						m_ineligibleHarvesterHandler(key);
 						continue;
 					}
