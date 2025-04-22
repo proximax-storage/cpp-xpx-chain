@@ -19,6 +19,7 @@
 **/
 
 #include "NodeInteractionsContainer.h"
+#include <algorithm>
 
 namespace catapult { namespace ionet {
 
