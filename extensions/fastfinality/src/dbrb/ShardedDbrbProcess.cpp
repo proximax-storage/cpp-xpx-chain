@@ -549,6 +549,8 @@ namespace catapult { namespace dbrb {
 	}
 
 	void ShardedDbrbProcess::registerDbrbProcess(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const Timestamp& now, const Height& height) {
+		m_pMessageSender->clearQueue();
+
 		boost::asio::post(m_strand, [pThisWeak = weak_from_this(), pConfigHolder, now, height]() {
 			auto pThis = pThisWeak.lock();
 			if (!pThis)
