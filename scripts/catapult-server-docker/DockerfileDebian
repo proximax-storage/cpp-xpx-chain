@@ -27,6 +27,15 @@ RUN curl -OL https://archives.boost.io/release/1.86.0/source/boost_1_86_0.tar.gz
   && tar xzf boost_1_86_0.tar.gz && cd boost_1_86_0 \
   && ./bootstrap.sh && ./b2 toolset=gcc install --prefix=/usr/local -j$(nproc)
 
+# grpc++
+RUN apt-get install --no-install-recommends -y autoconf libtool libre2-dev
+RUN git clone --recurse-submodules -b v1.72.0 --depth 1 --shallow-submodules https://github.com/grpc/grpc && \
+  mkdir -p grpc/cmake/build && \
+  cd grpc/cmake/build && \
+  cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=/usr/local ../.. && \
+  make -j$(nproc) && \
+  make install
+
 # Install mongo-cxx
 RUN curl -OL https://github.com/mongodb/mongo-cxx-driver/releases/download/r3.6.7/mongo-cxx-driver-r3.6.7.tar.gz && \
   tar -xzf mongo-cxx-driver-r3.6.7.tar.gz && \
