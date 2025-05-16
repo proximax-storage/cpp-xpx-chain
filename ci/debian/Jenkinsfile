@@ -17,7 +17,8 @@ pipeline {
             when {
                 anyOf {
                     tag 'v*-bookworm';
-                    tag 'v*-bullseye'
+                    tag 'v*-bullseye';
+                    tag "release-sc-develop-r1"
                 }
             }
             parallel {
