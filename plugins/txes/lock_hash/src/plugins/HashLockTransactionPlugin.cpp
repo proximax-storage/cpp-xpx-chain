@@ -33,12 +33,13 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1:
+			case 2:
 				sub.notify(HashLockDurationNotification<1>(transaction.Duration));
 				sub.notify(HashLockMosaicNotification<1>(transaction.Mosaic));
 				sub.notify(BalanceDebitNotification<1>(transaction.Signer, transaction.Mosaic.MosaicId, transaction.Mosaic.Amount));
-				sub.notify(HashLockNotification<1>(transaction.Signer, transaction.Mosaic, transaction.Duration, transaction.Hash));
+				sub.notify(HashLockNotification<1>(transaction.Signer, transaction.Mosaic, transaction.Duration, transaction.Hash, transaction.EntityVersion()));
 				break;
-
+			
 			default:
 				CATAPULT_LOG(debug) << "invalid version of HashLockTransaction: " << transaction.EntityVersion();
 			}

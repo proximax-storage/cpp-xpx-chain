@@ -102,8 +102,9 @@ namespace catapult { namespace model {
 				BlockDuration duration,
 				LockHashAlgorithm hashAlgorithm,
 				const Hash256& secret,
-				const UnresolvedAddress& recipient)
-				: BaseLockNotification(signer, &mosaic, 1, duration)
+				const UnresolvedAddress& recipient,
+				const VersionType& version = 1)
+				: BaseLockNotification(signer, &mosaic, 1, duration, version)
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)
 				, Recipient(recipient)

@@ -28,7 +28,7 @@ namespace catapult { namespace state {
 	/// Policy for saving and loading lock info data.
 	template<typename TLockInfo, typename TLockInfoSerializer, VersionType version>
 	struct LockInfoSerializer;
-
+		
 	/// Policy for saving and loading lock info data.
 	template<typename TLockInfo, typename TLockInfoSerializer>
 	struct LockInfoSerializer<TLockInfo, TLockInfoSerializer, 1> {
@@ -36,11 +36,23 @@ namespace catapult { namespace state {
 		static constexpr VersionType Version = 1;
 
 	public:
+		static TLockInfo LoadLockInfo(io::InputStream& input) {
+			TLockInfo lockInfo;
+			io::Read(input, lockInfo.Account);
+			auto mosaicId = MosaicId{io::Read64(input)};
+			auto amount = Amount{io::Read64(input)};
+			lockInfo.Mosaics.emplace(mosaicId,  amount);
+			io::Read(input, lockInfo.Height);
+			lockInfo.Status = static_cast<LockStatus>(io::Read8(input));
+			
+			return lockInfo;
+		}
+		
 		/// Saves \a lockInfo to \a output.
 		static void Save(const TLockInfo& lockInfo, io::OutputStream& output){
 			// write version
 			io::Write32(output, Version);
-
+			
 			io::Write(output, lockInfo.Account);
 			io::Write(output, lockInfo.Mosaics.begin()->first);
 			io::Write(output, lockInfo.Mosaics.begin()->second);
@@ -55,14 +67,8 @@ namespace catapult { namespace state {
 			VersionType version = io::Read32(input);
 			if (version != Version)
 				CATAPULT_THROW_RUNTIME_ERROR_2("invalid version of LockInfo (expected, actual)", Version, version);
-
-			TLockInfo lockInfo;
-			io::Read(input, lockInfo.Account);
-			auto mosaicId = MosaicId{io::Read64(input)};
-			auto amount = Amount{io::Read64(input)};
-			lockInfo.Mosaics.emplace(mosaicId,  amount);
-			io::Read(input, lockInfo.Height);
-			lockInfo.Status = static_cast<LockStatus>(io::Read8(input));
+			
+			TLockInfo lockInfo = LoadLockInfo(input);
 			TLockInfoSerializer::Load(input, lockInfo);
 			return lockInfo;
 		}
@@ -75,30 +81,8 @@ namespace catapult { namespace state {
 		static constexpr VersionType Version = 2;
 
 	public:
-		/// Saves \a lockInfo to \a output.
-		static void Save(const TLockInfo& lockInfo, io::OutputStream& output) {
-			// write version
-			io::Write32(output, Version);
-
-			io::Write(output, lockInfo.Account);
-			io::Write(output, lockInfo.Height);
-			io::Write8(output, utils::to_underlying_type(lockInfo.Status));
-			io::Write8(output, utils::checked_cast<size_t, uint8_t>(lockInfo.Mosaics.size()));
-			for (const auto& pair : lockInfo.Mosaics) {
-				io::Write(output, pair.first);
-				io::Write(output, pair.second);
-			}
-
-			TLockInfoSerializer::Save(lockInfo, output);
-		}
-
-		/// Loads a single value from \a input.
-		static TLockInfo Load(io::InputStream& input) {
-			// read version
-			VersionType version = io::Read32(input);
-			if (version != Version)
-				CATAPULT_THROW_RUNTIME_ERROR_2("invalid version of LockInfo (expected, actual)", Version, version);
-
+		
+		static TLockInfo LoadLockInfo(io::InputStream& input) {
 			TLockInfo lockInfo;
 			io::Read(input, lockInfo.Account);
 			io::Read(input, lockInfo.Height);
@@ -109,7 +93,76 @@ namespace catapult { namespace state {
 				auto amount = Amount{io::Read64(input)};
 				lockInfo.Mosaics.emplace(mosaicId,  amount);
 			}
+			return lockInfo;
+		}
+		
+		/// Saves \a lockInfo to \a output.
+		static void Save(const TLockInfo& lockInfo, io::OutputStream& output) {
+			// write version
+			io::Write32(output, Version);
+			
+			io::Write(output, lockInfo.Account);
+			io::Write(output, lockInfo.Height);
+			io::Write8(output, utils::to_underlying_type(lockInfo.Status));
+			io::Write8(output, utils::checked_cast<size_t, uint8_t>(lockInfo.Mosaics.size()));
+			for (const auto& pair : lockInfo.Mosaics) {
+				io::Write(output, pair.first);
+				io::Write(output, pair.second);
+			}
+			
+			TLockInfoSerializer::Save(lockInfo, output);
+		}
+
+		/// Loads a single value from \a input.
+		static TLockInfo Load(io::InputStream& input) {
+			VersionType version = io::Read32(input);
+			if (version != Version)
+				CATAPULT_THROW_RUNTIME_ERROR_2("invalid version of LockInfo (expected, actual)", Version, version);
+			
+			TLockInfo lockInfo = LoadLockInfo(input);
 			TLockInfoSerializer::Load(input, lockInfo);
+			return lockInfo;
+		}
+	};
+		
+	/// Policy for saving and loading lock info data.
+	template<typename TLockInfo, typename TLockInfoSerializer>
+	struct LockInfoSerializer<TLockInfo, TLockInfoSerializer, 3> {
+	
+	public:
+		/// Saves \a lockInfo to \a output.
+		static void Save(const TLockInfo& lockInfo, io::OutputStream& output) {
+			switch(lockInfo.Version) {
+				case 1:
+					LockInfoSerializer<TLockInfo,TLockInfoSerializer,1>::Save(lockInfo, output);
+					break;
+				case 2:
+					LockInfoSerializer<TLockInfo,TLockInfoSerializer,2>::Save(lockInfo, output);
+					break;
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("Invalid version of LockInfo", lockInfo.Version);
+			}
+		}
+		
+		/// Loads a single value from \a input.
+		static TLockInfo Load(io::InputStream& input) {
+			TLockInfo lockInfo;
+			VersionType version = io::Read32(input);
+			
+			switch(version) {
+				case 1:
+					lockInfo = LockInfoSerializer<TLockInfo,TLockInfoSerializer,1>::LoadLockInfo(input);
+					break;
+				case 2:
+					lockInfo = LockInfoSerializer<TLockInfo,TLockInfoSerializer,2>::LoadLockInfo(input);
+					break;
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("Invalid version of LockInfo", version);
+				
+			}
+			
+			TLockInfoSerializer::Load(input, lockInfo);
+			lockInfo.Version = version;
 			return lockInfo;
 		}
 	};

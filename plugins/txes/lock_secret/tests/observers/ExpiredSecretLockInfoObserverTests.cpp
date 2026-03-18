@@ -63,6 +63,6 @@ namespace catapult { namespace observers {
 			}
 		};
 	}
-
-	DEFINE_EXPIRED_LOCK_INFO_OBSERVER_TESTS(ExpiredSecretLockInfoTraits)
+	
+	DEFINE_EXPIRED_LOCK_INFO_WITH_LINKED_OBSERVER_TESTS(ExpiredSecretLockInfoTraits)
 }}
